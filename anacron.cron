@@ -1,0 +1,5 @@
+# /etc/cron.d/anacron: crontab entries for the anacron package
+
+SHELL=/bin/sh
+
+30 * * * *   root	/usr/bin/systemctl start anacron >/dev/null

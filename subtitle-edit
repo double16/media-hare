@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -e
+
+source /etc/environment
+export DISPLAY
+
+PWD0="$(pwd)"
+
+cd /usr/share/subtitle-edit
+
+FILE="$1"
+if ! [[ -e "${FILE}" ]]; then
+    FILE="${PWD0}/${FILE}"
+fi
+
+mono SubtitleEdit.exe /convert "${FILE}" srt /ocrengine:tesseract /FixCommonErrors /BalanceLines
+

@@ -1,0 +1,13 @@
+[Unit]
+Description=xorg dummy server
+After=
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/X -config /etc/xorg-dummy.conf
+ExecStop=/usr/bin/pkill X
+StandardOutput=journal
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

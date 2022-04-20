@@ -1,0 +1,243 @@
+^god[!,.-]+
+^jesus[!,.-]+
+^god almighty[!,.-]+
+^god$
+^jesus$
+^bejesus$
+^je[.]sus$
+^je[.][.]sus$
+^je[.][.][.]sus$
+oh god
+oh god almighty
+oh my god
+swear to god
+^my god[!,.-]+
+^by god[!,.-]+
+^dear god[!,.-]+
+^holy god[!,.-]+
+oh lord
+oh my lord
+good god
+good lord
+jesus christ[!,.-]+
+christ[!,.-]+
+oh christ
+for christ sake
+for christ's sake
+for christ’s sake
+for christ sakes
+for christ's sakes
+for christ’s sakes
+for god sake
+for god's sake
+for god’s sake
+for god sakes
+for god's sakes
+for god’s sakes
+shit
+oh shit
+shits
+shit's
+shit’s
+shitty
+shittin
+shitting
+shitin
+shiting
+holy shit
+shitstorm
+shit storm
+shit-storm
+shitshow
+shit show
+shit-show
+shitface
+shit face
+shit-face
+bullshit
+bull[ -]shit
+piece[ -]of[ -]shit
+crap
+oh crap
+craps
+crappy
+holy crap
+crapface
+crap face
+crap-face
+piece[ -]of[ -]crap
+bullcrap
+bull[ -]crap
+crappier
+damn
+damn it
+goddamn
+god[ -]damn
+goddamned
+god[ -]damned
+goddamn it
+god[ -]damn it
+oh damn
+hotdamn
+hot damn
+hot-damn
+damned
+damn you
+darn
+darn it
+darn you
+bitch
+bitchs
+bitches
+son of a bitch
+sons of bitches
+sons of bitchs
+bitchin
+bitch-in
+biatch
+son of a biatch
+son of a gun
+son of a [.]+
+screw you
+screw them
+screw him
+screw her
+screw it
+screw[ -]up
+screw yourself
+screw your self
+go screw yourself
+go screw your self
+screw the pooch
+screwed the pooch
+are screwed
+fuck
+oh fuck
+fucks
+fuck you
+fuck it
+fuck[ -]up
+the fuck
+fuck yourself
+fuck your self
+go fuck yourself
+go fuck your self
+fucker
+fucking
+what the f[.]*
+what the fu[.]*
+what the fuc[.]*
+what the fuck
+motherfucker
+mother-fucker
+mother fucker
+motherfucking
+mother-fucking
+mother fucking
+that mother[.]+
+you mother[.]+
+freakin
+freaking
+friggin
+frigging
+bastard
+bastards
+whore
+whores
+hell
+oh hell
+bloody hell
+the hell
+sure as hell
+the hell's
+the hell’s
+hell's
+hell’s
+hellhole
+hellholes
+hell hole
+hell holes
+hell-hole
+hell-holes
+heck
+oh heck
+the heck
+sure as heck
+the heck's
+the heck’s
+ass
+ass's
+ass’s
+asses
+badass
+badasses
+bad ass
+bad asses
+bad-ass
+bad-asses
+big ass
+big-ass
+kick[ -]ass
+kicks[ -]ass
+kicking[ -]ass
+ass[ -]kicking
+ass[ -]kicked
+ass[ -]kick
+kick .* ass
+up .* ass
+up .* butt
+jackass
+jackasses
+jack ass
+jack asses
+jack-ass
+jack-asses
+dumbass
+dumbasses
+dumb ass
+dumb asses
+dumb-ass
+dumb-asses
+asshole
+ass hole
+ass-hole
+assholes
+ass holes
+ass-holes
+a-hole
+a-holes
+ass[ -]eyes
+half[ -]ass
+half[ -]assed
+kiss my ass
+kiss my butt
+lick my ass
+lick my butt
+ass[ -]sniffer
+butt[ -]sniffer
+piss
+piss[ -]off
+pissing
+suck it[!,]
+pee drinking
+pee-drinking
+fag
+fags
+faggot
+faggots
+ballsy
+has balls
+has some balls
+have balls
+have some balls
+got balls
+got some balls
+has a pair[.!]
+grow a pair
+grow some balls
+balls to bones
+prick
+little prick
+jack[ -]off
+jag[ -]off
+hot legs
