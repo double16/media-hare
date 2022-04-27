@@ -3,6 +3,12 @@ name: Create and publish the Docker image
 on:
   release:
     types: [published]
+  push:
+    branches:    
+      - 'main'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   workflow_dispatch:
 
 env:
