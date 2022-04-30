@@ -35,9 +35,10 @@ jobs:
 
       - name: test
         run: |
+          apt-get install hunspell
           pip install -r requirements.txt
           cd dvrprocess
-          python3 -m unittest discover .
+          python -m unittest discover .
 
   build-and-push-image:
     runs-on: ubuntu-latest
