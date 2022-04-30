@@ -31,8 +31,8 @@ jobs:
 
       - name: test
         run: |
-          cd dvrprocess
           pip install -r requirements.txt
+          cd dvrprocess
           python3 -m unittest discover .
 
   build-and-push-image:
