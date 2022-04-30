@@ -543,7 +543,10 @@ def do_dvr_post_process(input_file,
     # Check again because there is time between the initial check and when we write to the file
     if common.assert_not_transcoding(input_file, exit=False) != 0:
         return 255
-    Path(common.TEMPFILENAME).touch(mode=0o664, exist_ok=False)
+    try:
+        Path(common.TEMPFILENAME).touch(mode=0o664, exist_ok=False)
+    except FileExistsError:
+        return 255
 
     logger.info(f"Starting transcode of {filename} to {common.TEMPFILENAME}")
     logger.info(f"{common.array_as_command(arguments)}")

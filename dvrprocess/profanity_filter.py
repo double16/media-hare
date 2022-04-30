@@ -461,7 +461,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     # Check again because there is time between the initial check and when we write to the file
     if common.assert_not_transcoding(input_file, exit=False) != 0:
         return CMD_RESULT_ERROR
-    Path(common.TEMPFILENAME).touch(mode=0o664, exist_ok=False)
+    try:
+        Path(common.TEMPFILENAME).touch(mode=0o664, exist_ok=False)
+    except FileExistsError:
+        return CMD_RESULT_ERROR
 
     logger.info(f"Starting filtering of {filename} to {common.TEMPFILENAME}")
     logger.info(f"{common.array_as_command(arguments)}")
