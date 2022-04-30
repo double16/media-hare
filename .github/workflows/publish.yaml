@@ -22,6 +22,19 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: test
+        run: |
+          cd dvrprocess
+          pip install -r requirements.txt
+          python3 -m unittest discover .
+
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
