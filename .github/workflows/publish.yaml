@@ -33,9 +33,11 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Install hunspell
+        run:  sudo apt-get install -y hunspell
+
       - name: test
         run: |
-          sudo apt-get install -y hunspell
           pip install -r requirements.txt
           cd dvrprocess
           python -m unittest discover .
