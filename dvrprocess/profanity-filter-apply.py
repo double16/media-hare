@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import logging
 import os
 import random
 import sys
@@ -9,7 +9,6 @@ import time
 from subprocess import CalledProcessError
 
 import requests
-from pip._internal.utils import logging
 
 import common
 from multiprocessing import Pool
