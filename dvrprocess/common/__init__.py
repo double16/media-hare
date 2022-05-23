@@ -157,15 +157,22 @@ def finisher(func):
 
 
 ffmpeg_path = None
+ffmpeg_version: float = 0.0
 
 
 def find_ffmpeg():
-    global ffmpeg_path
+    global ffmpeg_path, ffmpeg_version
     if ffmpeg_path is None:
         _once_lock.acquire()
         try:
             if ffmpeg_path is None:
-                ffmpeg_path = _find_ffmpeg()
+                _maybe_path = _find_ffmpeg()
+                _maybe_version = float(
+                    re.search(r"version (\d+[.]\d+)", subprocess.check_output([_maybe_path, '-version'], text=True))[1])
+                if int(_maybe_version) not in [4, 5]:
+                    raise FileNotFoundError('ffmpeg version [4,5] not found')
+                ffmpeg_path = _maybe_path
+                ffmpeg_version = _maybe_version
         finally:
             _once_lock.release()
     return ffmpeg_path
@@ -187,15 +194,22 @@ def _find_ffmpeg():
 
 
 ffprobe_path = None
+ffprobe_version: float = 0.0
 
 
 def find_ffprobe():
-    global ffprobe_path
+    global ffprobe_path, ffprobe_version
     if ffprobe_path is None:
         _once_lock.acquire()
         try:
             if ffprobe_path is None:
-                ffprobe_path = _find_ffprobe()
+                _maybe_path = _find_ffprobe()
+                _maybe_version = float(
+                    re.search(r"version (\d+[.]\d+)", subprocess.check_output([_maybe_path, '-version'], text=True))[1])
+                if int(_maybe_version) not in [4, 5]:
+                    raise FileNotFoundError('ffprobe version [4,5] not found')
+                ffprobe_path = _maybe_path
+                ffprobe_version = _maybe_version
         finally:
             _once_lock.release()
     return ffprobe_path
@@ -279,34 +293,92 @@ def get_plex_url():
 
 
 def load_keyframes_by_seconds(filepath) -> list[float]:
-    ffprobe_keyframes = [find_ffprobe(), "-loglevel", "error", "-skip_frame", "nokey", "-select_streams", "v:0",
-                         "-show_entries", "frame=pkt_pts_time", "-of", "csv=print_section=0", filepath]
-    keyframes = list(map(lambda s: float(s),
+    ffprobe_keyframes = [find_ffprobe(), "-loglevel", "error", "-skip_frame", "nointra", "-select_streams", "v:0",
+                         "-show_entries",
+                         "frame=pkt_pts_time" if int(ffprobe_version) == 4 else "frame=pts_time",
+                         "-of", "csv=print_section=0", filepath]
+    keyframes = list(map(lambda s: float(re.search(r'[\d.]+', s)[0]),
                          filter(lambda s: len(s) > 0,
                                 subprocess.check_output(ffprobe_keyframes, universal_newlines=True,
                                                         text=True).splitlines())))
+    if len(keyframes) == 0:
+        raise ChildProcessError("No key frames returned, suspect ffprobe command line is broken")
+
     return keyframes
 
 
-def find_desired_keyframe(keyframes: list[float], start: float, force_after=False) -> float:
+class KeyframeSearchPreference(Enum):
+    CLOSEST = 0
+    AFTER = 1
+    BEFORE = 2
+
+
+def find_desired_keyframe(keyframes: list[float], target_time: float,
+                          search_preference: KeyframeSearchPreference = KeyframeSearchPreference.CLOSEST) -> float:
+    """
+    Find the desired keyframe for the target_time.
+    :param keyframes: list of keyframes in the video with times directly from the video
+    :param target_time: time we want, zero based, because it's a human-readable time
+    :param search_preference:
+    :return:
+    """
     if len(keyframes) == 0:
-        return start
+        return target_time
+
+    return _find_desired_keyframe(keyframes, target_time, keyframes[0], search_preference)
+
+
+def _find_desired_keyframe(keyframes: list[float], target_time: float, start_time: float,
+                           search_preference: KeyframeSearchPreference = KeyframeSearchPreference.CLOSEST,
+                           ) -> float:
+    if len(keyframes) == 0:
+        return target_time
     elif len(keyframes) == 1:
         return keyframes[0]
     elif len(keyframes) == 2:
-        if force_after:
+        if search_preference == KeyframeSearchPreference.AFTER:
+            if _keyframe_compare(keyframes[0], target_time, start_time) > 0:
+                return keyframes[0]
             return keyframes[1]
-        d1 = abs(keyframes[0] - start)
-        d2 = abs(keyframes[1] - start)
+        elif search_preference == KeyframeSearchPreference.BEFORE:
+            if _keyframe_compare(keyframes[0], target_time, start_time) < 0:
+                return keyframes[1]
+            return keyframes[0]
+
+        d1 = abs(keyframes[0] - target_time)
+        d2 = abs(keyframes[1] - target_time)
         if d1 <= d2:
             return keyframes[0]
         else:
             return keyframes[1]
+
     mid = len(keyframes) // 2
-    if start < keyframes[mid]:
-        return find_desired_keyframe(keyframes[:mid + 1], start)
+    c = _keyframe_compare(keyframes[mid], target_time, start_time)
+    if c == 0:
+        return keyframes[mid]
+    if c > 0:
+        return _find_desired_keyframe(keyframes[:mid + 1], target_time, start_time, search_preference)
     else:
-        return find_desired_keyframe(keyframes[mid:], start)
+        return _find_desired_keyframe(keyframes[mid:], target_time, start_time, search_preference)
+
+
+def _keyframe_compare(keyframe: float, operand: float, start_time: float, tolerance: float = 0.002) -> int:
+    """
+    Compare a raw key frame and a zero based time.
+    :param keyframe:
+    :param operand:
+    :param start_time:
+    :param tolerance:
+    :return: 0 if times are equal, -1 if keyframe < operand, 1 if keyframe > operand
+    """
+    keyframe_adjusted = keyframe - start_time
+    if abs(keyframe_adjusted - operand) <= tolerance:
+        return 0
+    if keyframe_adjusted < operand:
+        return -1
+    if keyframe_adjusted > operand:
+        return 1
+    return 0
 
 
 def fix_closed_caption_report(input_info, ffprobe, filename):

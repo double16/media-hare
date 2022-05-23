@@ -22,8 +22,19 @@ logger = logging.getLogger(__name__)
 
 def usage():
     print(f"""
-Remove commercial from video file using EDL file
+Remove commercial from video file using EDL file.
      (If no EDL file is found, comskip will be used to generate one)
+
+Cut start is inclusive, end is exclusive with respect to I-frame. For example, comskip generates the real times of the
+commercials regardless of frame type. Cutting without recoding requires cutting at I-frames. Start times not on an
+I-frame are backed up to the nearest preceding I-frame. End times not on an I-frame are moved to the next I-frame, but
+that I-frame is NOT included in the cut.
+
+When generating cut lists based on I-frame, the start frame must be the first frame of the cut. The end I-frame must be
+the first frame of the desired content, i.e. first I-frame AFTER the cut.
+
+NOTE: Times in the EDL are zero based! For example, if you use avidemux to get I-frame times, they are zero based and
+should be used. The time markers in the keyframes may not be zero based, they will be adjusted.
 
 Usage: {sys.argv[0]} infile [outfile]
 --keep-edl
@@ -84,6 +95,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     if len(list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
         # If we are recoding, we aren't restricted to key frames
         keyframes = common.load_keyframes_by_seconds(infile)
+        logger.debug("Loaded %s keyframes", len(keyframes))
 
     # sanity check edl to ensure it hasn't already been applied, i.e. check if last cut is past duration
     if len(edl_events) > 0:
@@ -140,9 +152,15 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     continue
 
                 end = edl_event.start
-                end = common.find_desired_keyframe(keyframes, end)
-                startnext = edl_event.end
-                startnext = common.find_desired_keyframe(keyframes, startnext)
+                end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.BEFORE)
+                if end != edl_event.start:
+                    logger.debug("Moved cut start from %f to keyframe %f", edl_event.start, end)
+
+                start_next = edl_event.end
+                start_next = common.find_desired_keyframe(keyframes, start_next, common.KeyframeSearchPreference.AFTER)
+                if start_next != edl_event.end:
+                    logger.debug("Moved cut end from %f to keyframe %f", edl_event.end, start_next)
+
                 duration = end - start
                 if duration > 1:
                     hascommercials = True
@@ -188,13 +206,14 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     partsfd.write(f"inpoint {start}\n")
                     partsfd.write(f"outpoint {end}\n")
 
-                totalcutduration = totalcutduration + startnext - end
-                start = startnext
+                totalcutduration = totalcutduration + start_next - end
+                start = start_next
 
             # add the final part from last commercial to end of file
             end = float(input_info[common.K_FORMAT]['duration'])
             duration = end - start
             if duration > 1:
+                logger.debug("Including last %f seconds, start = %f, end = %f", duration, start, end)
                 if copychapters:
                     while len(chapters) > 0:
                         i += 1
