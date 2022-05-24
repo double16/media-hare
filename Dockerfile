@@ -17,21 +17,24 @@ RUN cd Comskip &&\
 
 FROM ubuntu:21.10
 
-ARG APT_PROXY
 ARG SYSTEMCTL_VER=1.5.4505
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY requirements.txt /tmp/
 
-RUN if [ -n "${APT_PROXY}" ]; then echo "Acquire::HTTP::Proxy \"${APT_PROXY}\";\nAcquire::HTTPS::Proxy false;\n" >> /etc/apt/apt.conf.d/01proxy; cat /etc/apt/apt.conf.d/01proxy; fi && \
-    apt-get -q update && \
-    apt-get install -qy zsh ffmpeg x264 x265 vainfo curl python3 python3-pip python3-venv python3-dev cron anacron sshfs vim-tiny mkvtoolnix mono-complete xserver-xorg-video-dummy unzip libhunspell-dev tesseract-ocr-eng libargtable2-0 libavformat58 libsdl1.2-compat logrotate &&\
-    pip -q --no-input install -r /tmp/requirements.txt &&\
+# mono-* deps line must match Subtitle-Edit version
+RUN apt-get -q update && \
+    apt-get install -qy zsh ffmpeg x264 x265 vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate \
+    mono-runtime libmono-system-windows-forms4.0-cil libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy \
+    libargtable2-0 libavformat58 libsdl1.2-compat &&\
+    pip -q --no-input install -r /tmp/requirements.txt && \
+    apt-get remove -y python3-pip &&\
+    apt-get autoremove -y &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
-    rm -f /etc/apt/apt.conf.d/01proxy &&\
     rm -rf /tmp/*
+
 RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.5/SE365.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
@@ -72,7 +75,6 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     chmod +x /usr/local/bin/* /usr/sbin/sendmail &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
-    systemctl disable mono-xsp4 &&\
     echo "DISPLAY=:0" >> /etc/environment
 
 CMD [ "/usr/bin/systemctl", "default" ]

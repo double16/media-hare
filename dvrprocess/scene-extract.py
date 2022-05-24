@@ -52,39 +52,52 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
     for edl_event in filter(lambda e: e.event_type == common.EdlType.SCENE, edl_events):
         start = edl_event.start
         end = edl_event.end
-        start = common.find_desired_keyframe(keyframes, start)
-        end = common.find_desired_keyframe(keyframes, end)
+        start = common.find_desired_keyframe(keyframes, start, common.KeyframeSearchPreference.CLOSEST)
+        end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.CLOSEST)
         logger.debug(f"start {common.s_to_ts(edl_event.start)} moved to {common.s_to_ts(start)}")
         logger.debug(f"end {common.s_to_ts(edl_event.end)} moved to {common.s_to_ts(end)}")
         title = edl_event.title
         if not title:
-            scenefile = os.path.join(outfile_dir, f"{outfile_base} - Part {part_num}.{outextension}")
+            scene_file = os.path.join(outfile_dir, f"{outfile_base} - Part {part_num}.{outextension}")
             part_num += 1
         else:
             title_sanitized_for_filesystem = re.sub(r"['\"?:!]", " ", title)
             if re.search(r"S\d+E\d+", title):
-                scenefile = os.path.join(outfile_dir, f"{title_sanitized_for_filesystem}.{outextension}")
+                scene_file = os.path.join(outfile_dir, f"{title_sanitized_for_filesystem}.{outextension}")
             else:
-                scenefile = os.path.join(outfile_dir,
+                scene_file = os.path.join(outfile_dir,
                                          f"{outfile_base} - {title_sanitized_for_filesystem}.{outextension}")
+
+        parts_file = os.path.join(outfile_dir, f"{scene_file}.parts.txt")
+        with open(parts_file, "w") as partsfd:
+            partsfd.write("ffconcat version 1.0\n")
+            partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', infile))
+            partsfd.write(f"inpoint {start}\n")
+            partsfd.write(f"outpoint {end}\n")
 
         ffmpeg_command = [ffmpeg, "-hide_banner", "-loglevel",
                           "info" if verbose else "error",
                           "-nostdin",
-                          "-ss", str(start+0.3),
-                          "-i", infile,
-                          "-t", str(end - start),
-                          "-codec", "copy", "-map", "0", "-avoid_negative_ts", "1", "-y"]
+                          "-f", "concat", "-safe", "0", "-i", parts_file,
+                          "-codec", "copy", "-map", "0",
+                          '-max_muxing_queue_size', '1024',
+                          '-async', '1',
+                          '-max_interleave_delta', '0',
+                          "-avoid_negative_ts", "1",
+                          "-y"]
 
         if title:
             ffmpeg_command.extend(["-metadata", f'title={title}'])
 
-        ffmpeg_command.append(scenefile)
+        ffmpeg_command.append(scene_file)
 
-        if dry_run:
-            logger.info(common.array_as_command(ffmpeg_command))
-        else:
-            subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
+        try:
+            if dry_run:
+                logger.info(common.array_as_command(ffmpeg_command))
+            else:
+                subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
+        finally:
+            os.remove(parts_file)
 
     return 0
 

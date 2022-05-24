@@ -11,27 +11,27 @@ class FindDesiredKeyframeTest(unittest.TestCase):
         self.assertEqual(100.0, common.find_desired_keyframe([], 100.0))
 
     def test_single_entry(self):
-        l = [100.0]
+        l = [0.0, 100.0]
         self.assertEqual(100.0, common.find_desired_keyframe(l, 100.0))
         self.assertEqual(100.0, common.find_desired_keyframe(l, 90.0))
         self.assertEqual(100.0, common.find_desired_keyframe(l, 110.0))
 
     def test_single_two(self):
-        l = [50.5, 100.0]
+        l = [0.0, 50.5, 100.0]
         self.assertEqual(100.0, common.find_desired_keyframe(l, 100.0))
         self.assertEqual(100.0, common.find_desired_keyframe(l, 90.0))
         self.assertEqual(100.0, common.find_desired_keyframe(l, 110.0))
 
     def test_exact(self):
-        l = [25.0, 50.5, 100.0, 201.2]
+        l = [0.0, 25.0, 50.5, 100.0, 201.2]
         self.assertEqual(25.0, common.find_desired_keyframe(l, 25.0))
         self.assertEqual(50.5, common.find_desired_keyframe(l, 50.5))
         self.assertEqual(100.0, common.find_desired_keyframe(l, 100.0))
         self.assertEqual(201.2, common.find_desired_keyframe(l, 201.2))
 
     def test_closest(self):
-        l = [25.0, 50.5, 100.0, 201.2]
-        self.assertEqual(25.0, common.find_desired_keyframe(l, 10.0))
+        l = [0.0, 25.0, 50.5, 100.0, 201.2]
+        self.assertEqual(0.0, common.find_desired_keyframe(l, 10.0))
         self.assertEqual(25.0, common.find_desired_keyframe(l, 21.0))
         self.assertEqual(25.0, common.find_desired_keyframe(l, 27.0))
         self.assertEqual(50.5, common.find_desired_keyframe(l, 48.0))
@@ -41,14 +41,26 @@ class FindDesiredKeyframeTest(unittest.TestCase):
         self.assertEqual(100.0, common.find_desired_keyframe(l, 150.0))
         self.assertEqual(201.2, common.find_desired_keyframe(l, 220.0))
 
+    def test_closest_offset(self):
+        l = [1.0, 26.0, 51.5, 101.0, 202.2]
+        self.assertEqual(1.0, common.find_desired_keyframe(l, 10.0))
+        self.assertEqual(26.0, common.find_desired_keyframe(l, 21.0))
+        self.assertEqual(26.0, common.find_desired_keyframe(l, 27.0))
+        self.assertEqual(51.5, common.find_desired_keyframe(l, 48.0))
+        self.assertEqual(51.5, common.find_desired_keyframe(l, 51.0))
+        self.assertEqual(51.5, common.find_desired_keyframe(l, 60.0))
+        self.assertEqual(101.0, common.find_desired_keyframe(l, 88.0))
+        self.assertEqual(101.0, common.find_desired_keyframe(l, 150.0))
+        self.assertEqual(202.2, common.find_desired_keyframe(l, 220.0))
+
     def test_force_after(self):
-        l = [25.0, 50.5, 100.0, 201.2]
-        self.assertEqual(25.0, common.find_desired_keyframe(l, 10.0, True))
-        self.assertEqual(25.0, common.find_desired_keyframe(l, 21.0, True))
-        self.assertEqual(25.0, common.find_desired_keyframe(l, 27.0, True))
-        self.assertEqual(50.5, common.find_desired_keyframe(l, 48.0, True))
-        self.assertEqual(50.5, common.find_desired_keyframe(l, 51.0, True))
-        self.assertEqual(50.5, common.find_desired_keyframe(l, 60.0, True))
-        self.assertEqual(100.0, common.find_desired_keyframe(l, 88.0, True))
-        self.assertEqual(100.0, common.find_desired_keyframe(l, 150.0, True))
-        self.assertEqual(201.2, common.find_desired_keyframe(l, 220.0, True))
+        l = [0.0, 25.0, 50.5, 100.0, 201.2]
+        self.assertEqual(25.0, common.find_desired_keyframe(l, 10.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(25.0, common.find_desired_keyframe(l, 21.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(50.5, common.find_desired_keyframe(l, 27.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(50.5, common.find_desired_keyframe(l, 48.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(100.0, common.find_desired_keyframe(l, 51.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(100.0, common.find_desired_keyframe(l, 60.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(100.0, common.find_desired_keyframe(l, 88.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(201.2, common.find_desired_keyframe(l, 150.0, common.KeyframeSearchPreference.AFTER))
+        self.assertEqual(201.2, common.find_desired_keyframe(l, 220.0, common.KeyframeSearchPreference.AFTER))
