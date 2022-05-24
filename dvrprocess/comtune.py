@@ -448,19 +448,24 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
             f"expected_adjusted_duration_diff = {common.seconds_to_timespec(expected_adjusted_duration_diff)}, "
             f"count_of_non_defaults = {count_of_non_defaults}"
         )
-        return fitness_value(sigma, expected_adjusted_duration_diff, count_of_non_defaults)
+        return fitness_value(sigma, expected_adjusted_duration_diff, count_of_non_defaults, episode_common_duration)
 
     return f, genes, gene_space, gene_type
 
 
-def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of_non_defaults: float):
+def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of_non_defaults: float,
+                  episode_common_duration: int = 60):
     # sigma good values 0 - 120
     # expected_adjusted_duration_diff good values 0 - 240
     # count_of_non_defaults good values 0 - 16
-    # return 1.0 / (sigma + 0.001) + \
-    #        1.0 / (count_of_non_defaults + 1000.0)
+
+    if episode_common_duration <= 30:
+        duration_tolerance = 30.0
+    else:
+        duration_tolerance = 60.0
+
     return 1.1 / (sigma + 0.001) + \
-           1.0 / max(expected_adjusted_duration_diff, 60.0) + \
+           1.2 / max(0.001, abs(expected_adjusted_duration_diff) - duration_tolerance) + \
            1.0 / (count_of_non_defaults + 1000.0)
 
 
