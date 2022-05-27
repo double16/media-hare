@@ -14,5 +14,4 @@ if ! [[ -e "${FILE}" ]]; then
     FILE="${PWD0}/${FILE}"
 fi
 
-mono SubtitleEdit.exe /convert "${FILE}" srt /ocrengine:tesseract /FixCommonErrors /BalanceLines
-
+mono SubtitleEdit.exe /convert "${FILE}" srt /ocrengine:tesseract /FixCommonErrors /MergeSameTimeCodes /RedoCasing /BalanceLines

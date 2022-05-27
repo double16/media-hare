@@ -26,7 +26,7 @@ and configured. On some architectures it's difficult or may conflict with other 
 The following will run the tools periodically and limit runs by size of content changed and run time.
 
 ```shell
-$ docker run -d -v /path/to/media:/home/Dropbox ghcr.io/double16/media-hare:main
+$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/home/Dropbox ghcr.io/double16/media-hare:main
 ```
 
 ## Development Recommendation
