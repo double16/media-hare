@@ -970,7 +970,7 @@ $HorzAlign          =   Center
     <LineOcrMinHeightSplit>0</LineOcrMinHeightSplit>
     <LineOcrAdvancedItalic>False</LineOcrAdvancedItalic>
     <LineOcrLastLanguages />
-    <LineOcrLastSpellCheck />
+    <LineOcrLastSpellCheck>True</LineOcrLastSpellCheck>
     <LineOcrLinesToAutoGuess>100</LineOcrLinesToAutoGuess>
     <LineOcrMinLineHeight>0</LineOcrMinLineHeight>
     <LineOcrMaxLineHeight>0</LineOcrMaxLineHeight>
