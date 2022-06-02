@@ -3,7 +3,9 @@
 import atexit
 import getopt
 import logging
+import math
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Iterable
@@ -33,32 +35,34 @@ The file closest to the input file will be taken. Comments start with '#'.
 
 {sys.argv[0]} [options] file
 
+--dry-run
+    Output command that would be used but do nothing.
+--keep
+    Keep original file in a backup prefixed by ".~".
 --vcodec=h264[,hvec,...]
-    The video codec: h264 (default), h265, mpeg2
+    The video codec: h264 (default), h265, mpeg2.
 --acodec=opus[,aac,...]
     The audio codec: opus (default), aac, ac3, ...
 --height=480
-    Scale down to this height, maintaining aspect ratio
+    Scale down to this height, maintaining aspect ratio.
 --output-type=mkv
     Output type: mkv (default), ts, mp4, ...
---dry-run
-    Output command that would be used but do nothing
---keep
-    Keep original file in a backup prefixed by ".~"
 --prevent-larger=true,false
-    Prevent conversion to a larger file (default is true)
+    Prevent conversion to a larger file (default is true).
 --hwaccel=false,auto,full
-    Enable hardware acceleration, if available (default is false)
+    Enable hardware acceleration, if available (default is false).
 --stereo
-    Scale down audio to stereo
+    Scale down audio to stereo.
 --preset=copy,medium,fast,veryfast
-    Set ffmpeg preset, with a special "copy" for only copying streams
+    Set ffmpeg preset, with a special "copy" for only copying streams.
 --tune=[animation,...]
-    Set ffmpeg tune value
+    Set ffmpeg tune value.
 --rerun
-    Re-encode streams already in the desired codec
+    Re-encode streams already in the desired codec.
 --profanity-filter
-    Include profanity filter in output
+    Include profanity filter in output.
+--crop-frame
+    Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
 """, file=sys.stderr)
 
 
@@ -106,6 +110,7 @@ def parse_args(argv) -> (list[str], dict):
     rerun = None
     ignore_errors = None
     profanity_filter = False
+    crop_frame = False
 
     try:
         opts, args = getopt.getopt(common.get_arguments_from_config(argv, '.dvrconfig') + list(argv),
@@ -113,7 +118,7 @@ def parse_args(argv) -> (list[str], dict):
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
                                     "prevent-larger=", "stereo", "rerun", "no-rerun", "ignore-errors",
-                                    "profanity-filter"])
+                                    "profanity-filter", "crop-frame"])
     except getopt.GetoptError:
         return None
     for opt, arg in opts:
@@ -150,8 +155,10 @@ def parse_args(argv) -> (list[str], dict):
             desired_frame_rate = FRAME_RATE_NAMES.get(arg, arg)
         elif opt in ("-c", "--ignore-errors"):
             ignore_errors = True
-        elif opt == "profanity-filter":
+        elif opt == "--profanity-filter":
             profanity_filter = True
+        elif opt == "--crop-frame":
+            crop_frame = True
 
     if len(args) == 0:
         return None
@@ -171,6 +178,7 @@ def parse_args(argv) -> (list[str], dict):
         'stereo': stereo,
         'rerun': rerun,
         'profanity_filter': profanity_filter,
+        'crop_frame': crop_frame,
         'ignore_errors': ignore_errors,
     }
 
@@ -208,6 +216,7 @@ def do_dvr_post_process(input_file,
                         stereo=False,
                         rerun=None,
                         profanity_filter=False,
+                        crop_frame=False,
                         ignore_errors=None,
                         verbose=False,
                         require_audio=True,
@@ -293,8 +302,50 @@ def do_dvr_post_process(input_file,
         target_height = height
     adjust_frame_rate = desired_frame_rate and round(eval(frame_rate), 0) != round(eval(desired_frame_rate), 0)
     target_video_codec = common.resolve_video_codec(desired_video_codecs, target_height, video_info)
+
+    # Find crop frame dimensions
+    # cropdetect output (ffmpeg v4, v5) looks like:
+    # [Parsed_cropdetect_1 @ 0x7f8ba9010d40] x1:246 x2:1676 y1:9 y2:1079 w:1424 h:1056 x:250 y:18 pts:51298 t:51.298000 crop=1424:1056:250:18
+    crop_frame_filter = None
+    if crop_frame:
+        logger.info("Running crop frame detection")
+        crop_frame_rect_histo = {}
+        # duration = float(input_info['format']['duration'])
+        crop_detect_command = [ffmpeg, '-hide_banner', '-skip_frame', 'nointra', '-i', filename,
+                               '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',
+                               '-f', 'null', '/dev/null']
+        logger.info(common.array_as_command(crop_detect_command))
+        crop_detect_process = subprocess.Popen(crop_detect_command, stderr=subprocess.PIPE, universal_newlines=True)
+        crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9.:]+)\b'
+        crop_line_last_t = None
+        crop_line_last_filter = None
+        for line in crop_detect_process.stderr:
+            m = re.search(crop_detect_regex, line)
+            if m:
+                crop_line_this_t = float(m.group(1))
+                crop_line_this_filter = m.group(2)
+                if crop_line_last_t is not None:
+                    if crop_line_this_filter == crop_line_last_filter:
+                        crop_frame_rect_histo[crop_line_this_filter] = crop_frame_rect_histo.get(crop_line_this_filter,
+                                                                                                 0) + (
+                                                                                   crop_line_this_t - crop_line_last_t)
+                crop_line_last_t = crop_line_this_t
+                crop_line_last_filter = crop_line_this_filter
+
+                # print(f"crop detect: {int(crop_line_this_t * 100 / duration)}%", end="\033[0G")
+        if len(crop_frame_rect_histo) > 0:
+            crop_frame_rect_histo_list = list(crop_frame_rect_histo.items())
+            crop_frame_rect_histo_list.sort(key=lambda e: e[1], reverse=True)
+            logger.debug("crop detect histo %s", crop_frame_rect_histo_list)
+            crop_frame_filter = crop_frame_rect_histo_list[0][0]
+            # Only crop if the width is cropped a noticeable amount.
+            # Widescreen content intentionally has top and bottom black frames.
+            if width - common.get_crop_filter_parts(crop_frame_filter)[0] < 40:
+                crop_frame_filter = None
+        logger.info("crop frame filter is %s", crop_frame_filter)
+
     logger.debug("input video codec = %s, target video codec = %s", input_video_codec, target_video_codec)
-    copy_video = not scale_height and not adjust_frame_rate and (
+    copy_video = not scale_height and not adjust_frame_rate and crop_frame_filter is None and (
             preset == "copy" or (input_video_codec == target_video_codec and not rerun))
 
     crf, bitrate, qp = common.recommended_video_quality(target_height, target_video_codec)
@@ -442,9 +493,10 @@ def do_dvr_post_process(input_file,
     if copy_video:
         arguments.extend(["-map", video_input_stream, f"-c:{current_output_stream}", "copy"])
     elif hwaccel_inited and hwaccel_requested == "full" and has_hw_codec(ffmpeg, vainfo,
-                                                                         target_video_codec) and not scale_height:
+                                                                         target_video_codec) and not scale_height and not crop_frame_filter:
         transcoding = True
         # FIXME: Handle scale_height
+        # FIXME: Handle crop_frame_filter
         target_framerate = desired_frame_rate if desired_frame_rate else "30"
         arguments.extend(
             ["-map", video_input_stream, f"-c:{current_output_stream}", "-hwaccel_output_format", "vaapi",
@@ -455,6 +507,9 @@ def do_dvr_post_process(input_file,
         transcoding = True
         filter_complex = f"[{video_input_stream}]yadif[0];[0]format=pix_fmts=nv12"
         filter_stage = 1
+        if crop_frame_filter is not None:
+            filter_complex += f"[{filter_stage}];[{filter_stage}]{crop_frame_filter}"
+            filter_stage += 1
         if scale_height:
             filter_complex += f"[{filter_stage}];[{filter_stage}]scale=-2:{desired_height}:flags=bicubic"
             filter_stage += 1
@@ -470,8 +525,16 @@ def do_dvr_post_process(input_file,
              "-map", f"[v{current_output_stream}]",
              f"-c:{current_output_stream}", common.ffmpeg_codec(target_video_codec),
              f"-crf:{current_output_stream}", str(crf)])
+
         if aspect_ratio:
+            if crop_frame_filter:
+                aspect_ratio_parts = [int(i) for i in aspect_ratio.split(':')]
+                crop_parts = common.get_crop_filter_parts(crop_frame_filter)
+                aspect_ratio_adjusted_w = aspect_ratio_parts[0] * crop_parts[0] / width
+                aspect_ratio_adjusted_h = aspect_ratio_parts[1] * crop_parts[1] / height
+                aspect_ratio = f"{math.ceil(aspect_ratio_adjusted_w)}:{math.ceil(aspect_ratio_adjusted_h)}"
             arguments.extend([f"-aspect:{current_output_stream}", aspect_ratio])
+
         # Do not copy Closed Captions, they will be extracted into a subtitle stream
         if target_video_codec == 'h264' and output_type != 'ts':
             arguments.extend(['-a53cc', '0'])

@@ -1205,3 +1205,14 @@ def get_common_episode_duration(video_infos: list[dict]):
     stats_list = list(stats.items())
     stats_list.sort(key=lambda e: e[1], reverse=True)
     return stats_list[0][0]
+
+
+def get_crop_filter_parts(crop_filter):
+    """
+    Split the parts of the crop filter into integers.
+    :param crop_filter: similar to crop=100:100:20:8
+    :return: ints [width, height, x, y]
+    """
+    if crop_filter is None:
+        return None
+    return [int(i) for i in crop_filter.split('=')[1].split(':')]
