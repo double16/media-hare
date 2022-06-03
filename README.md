@@ -9,6 +9,8 @@ The tools here are intended to groom your media files for various purposes such 
 2. cut commercials from DVR recordings
 3. profanity filtering
 
+![https://www.buymeacoffee.com/patDj](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)
+
 ## Work in Progress
 
 This repository is a work in progress! I wrote it for my personal needs and thought others may benefit. Over time I
@@ -26,7 +28,7 @@ and configured. On some architectures it's difficult or may conflict with other 
 The following will run the tools periodically and limit runs by size of content changed and run time.
 
 ```shell
-$ docker run -d -v /path/to/media:/home/Dropbox ghcr.io/double16/media-hare:main
+$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/home/Dropbox ghcr.io/double16/media-hare:main
 ```
 
 ## Development Recommendation
