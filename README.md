@@ -9,6 +9,8 @@ The tools here are intended to groom your media files for various purposes such 
 2. cut commercials from DVR recordings
 3. profanity filtering
 
+![https://www.buymeacoffee.com/patDj](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)
+
 ## Work in Progress
 
 This repository is a work in progress! I wrote it for my personal needs and thought others may benefit. Over time I

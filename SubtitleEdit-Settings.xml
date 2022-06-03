@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Settings>
-  <Version>3.6.4.0</Version>
+  <Version>3.6.6.0</Version>
   <Compare>
     <ShowOnlyDifferences>False</ShowOnlyDifferences>
     <OnlyLookForDifferenceInText>True</OnlyLookForDifferenceInText>
@@ -21,7 +21,7 @@
         <SubtitleMaximumDisplayMilliseconds>8000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>400</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>24</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>33</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -36,7 +36,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithoutSpace</DialogStyle>
@@ -51,7 +51,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -66,7 +66,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashSecondLineWithoutSpace</DialogStyle>
@@ -81,7 +81,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -96,7 +96,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -111,7 +111,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithoutSpace</DialogStyle>
@@ -126,7 +126,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>84</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashSecondLineWithoutSpace</DialogStyle>
@@ -141,7 +141,7 @@
         <SubtitleMaximumDisplayMilliseconds>10000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>200</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -156,7 +156,7 @@
         <SubtitleMaximumDisplayMilliseconds>7007</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>280</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>125</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashSecondLineWithoutSpace</DialogStyle>
@@ -171,7 +171,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>280</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>120</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>43</MergeLinesShorterThan>
         <DialogStyle>DashSecondLineWithoutSpace</DialogStyle>
@@ -186,7 +186,7 @@
         <SubtitleMaximumDisplayMilliseconds>7007</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>125</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>46</MergeLinesShorterThan>
         <DialogStyle>DashSecondLineWithSpace</DialogStyle>
@@ -201,7 +201,7 @@
         <SubtitleMaximumDisplayMilliseconds>7000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>120</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>46</MergeLinesShorterThan>
         <DialogStyle>DashSecondLineWithSpace</DialogStyle>
@@ -216,7 +216,7 @@
         <SubtitleMaximumDisplayMilliseconds>8008</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>280</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>125</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -231,7 +231,7 @@
         <SubtitleMaximumDisplayMilliseconds>8000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>280</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>120</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -246,7 +246,7 @@
         <SubtitleMaximumDisplayMilliseconds>5005</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>125</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -261,7 +261,7 @@
         <SubtitleMaximumDisplayMilliseconds>5000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>120</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -276,7 +276,7 @@
         <SubtitleMaximumDisplayMilliseconds>5005</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>167</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -291,7 +291,7 @@
         <SubtitleMaximumDisplayMilliseconds>5000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>160</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -306,7 +306,7 @@
         <SubtitleMaximumDisplayMilliseconds>5005</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>250</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -321,7 +321,7 @@
         <SubtitleMaximumDisplayMilliseconds>5000</SubtitleMaximumDisplayMilliseconds>
         <SubtitleMaximumWordsPerMinute>300</SubtitleMaximumWordsPerMinute>
         <MinimumMillisecondsBetweenLines>240</MinimumMillisecondsBetweenLines>
-        <CpsIncludesSpace>True</CpsIncludesSpace>
+        <CpsLineLengthStrategy />
         <MaxNumberOfLines>2</MaxNumberOfLines>
         <MergeLinesShorterThan>41</MergeLinesShorterThan>
         <DialogStyle>DashBothLinesWithSpace</DialogStyle>
@@ -338,6 +338,7 @@
     <ShowToolbarFixCommonErrors>False</ShowToolbarFixCommonErrors>
     <ShowToolbarRemoveTextForHi>False</ShowToolbarRemoveTextForHi>
     <ShowToolbarVisualSync>True</ShowToolbarVisualSync>
+    <ShowToolbarBurnIn>False</ShowToolbarBurnIn>
     <ShowToolbarSpellCheck>True</ShowToolbarSpellCheck>
     <ShowToolbarNetflixGlyphCheck>True</ShowToolbarNetflixGlyphCheck>
     <ShowToolbarSettings>False</ShowToolbarSettings>
@@ -350,7 +351,7 @@
     <ShowWaveform>True</ShowWaveform>
     <ShowSpectrogram>True</ShowSpectrogram>
     <DefaultFrameRate>23.976</DefaultFrameRate>
-    <DefaultSubtitleFormat>SubRip</DefaultSubtitleFormat>
+    <DefaultSubtitleFormat>SubRip (.srt)</DefaultSubtitleFormat>
     <DefaultSaveAsFormat />
     <FavoriteSubtitleFormats />
     <DefaultEncoding>UTF-8 with BOM</DefaultEncoding>
@@ -377,11 +378,11 @@
     <RememberSelectedLine>True</RememberSelectedLine>
     <StartLoadLastFile>True</StartLoadLastFile>
     <StartRememberPositionAndSize>True</StartRememberPositionAndSize>
-    <StartPosition>468;203</StartPosition>
+    <StartPosition>380;150</StartPosition>
     <StartSize>983;673</StartSize>
-    <SplitContainerMainSplitterDistance>251</SplitContainerMainSplitterDistance>
+    <SplitContainerMainSplitterDistance>225</SplitContainerMainSplitterDistance>
     <SplitContainer1SplitterDistance>721</SplitContainer1SplitterDistance>
-    <SplitContainerListViewAndTextSplitterDistance>105</SplitContainerListViewAndTextSplitterDistance>
+    <SplitContainerListViewAndTextSplitterDistance>93</SplitContainerListViewAndTextSplitterDistance>
     <StartInSourceView>False</StartInSourceView>
     <RemoveBlankLinesWhenOpening>False</RemoveBlankLinesWhenOpening>
     <RemoveBadCharsWhenOpening>True</RemoveBadCharsWhenOpening>
@@ -396,8 +397,7 @@
     <AutoWrapLineWhileTyping>False</AutoWrapLineWhileTyping>
     <SubtitleMaximumCharactersPerSeconds>25</SubtitleMaximumCharactersPerSeconds>
     <SubtitleOptimalCharactersPerSeconds>15</SubtitleOptimalCharactersPerSeconds>
-    <CharactersPerSecondsIgnoreWhiteSpace>False</CharactersPerSecondsIgnoreWhiteSpace>
-    <IgnoreArabicDiacritics>False</IgnoreArabicDiacritics>
+    <CpsLineLengthStrategy>CalcAll</CpsLineLengthStrategy>
     <SubtitleMaximumWordsPerMinute>400</SubtitleMaximumWordsPerMinute>
     <DialogStyle>DashBothLinesWithSpace</DialogStyle>
     <ContinuationStyle>None</ContinuationStyle>
@@ -484,9 +484,9 @@
     <DisableVideoAutoLoading>False</DisableVideoAutoLoading>
     <AllowVolumeBoost>False</AllowVolumeBoost>
     <RightToLeftMode>False</RightToLeftMode>
-    <LastSaveAsFormat />
+    <LastSaveAsFormat>SubRip</LastSaveAsFormat>
     <CheckForUpdates>True</CheckForUpdates>
-    <LastCheckForUpdates>2021-12-23</LastCheckForUpdates>
+    <LastCheckForUpdates>2022-06-02</LastCheckForUpdates>
     <AutoSave>False</AutoSave>
     <PreviewAssaText>ABCDEFGHIJKL abcdefghijkl 123</PreviewAssaText>
     <TagsInToggleHiTags>[;]</TagsInToggleHiTags>
@@ -501,8 +501,17 @@
     <TitleBarFullFileName>False</TitleBarFullFileName>
     <MeasurementConverterCloseOnInsert>True</MeasurementConverterCloseOnInsert>
     <MeasurementConverterCategories>Length;Kilometers;Meters</MeasurementConverterCategories>
+    <SubtitleTextBoxAutoVerticalScrollBars>False</SubtitleTextBoxAutoVerticalScrollBars>
     <SubtitleTextBoxMaxHeight>300</SubtitleTextBoxMaxHeight>
     <AllowLetterShortcutsInTextBox>False</AllowLetterShortcutsInTextBox>
+    <LastColorPickerColor>#ffffffff</LastColorPickerColor>
+    <LastColorPickerColor1>#ffff00ff</LastColorPickerColor1>
+    <LastColorPickerColor2>#ff0080ff</LastColorPickerColor2>
+    <LastColorPickerColor3>#ff0000ff</LastColorPickerColor3>
+    <LastColorPickerColor4>#ffffffff</LastColorPickerColor4>
+    <LastColorPickerColor5>#ff0000ff</LastColorPickerColor5>
+    <LastColorPickerColor6>#ff00ffff</LastColorPickerColor6>
+    <LastColorPickerColor7>#ffff8cff</LastColorPickerColor7>
     <DarkThemeBackColor>-14803426</DarkThemeBackColor>
     <DarkThemeForeColor>-6579301</DarkThemeForeColor>
     <UseDarkTheme>False</UseDarkTheme>
@@ -536,7 +545,8 @@
     <OcrTrainFonts>Arial;Calibri;Corbel;Futura Std Book;Futura Bis;Helvetica Neue;Lucida Console;Tahoma;Trebuchet MS;Verdana</OcrTrainFonts>
     <OcrTrainMergedLetters>ff ft fi fj fy fl rf rt rv rw ry rt rz ryt tt TV tw yt yw wy wf ryt xy</OcrTrainMergedLetters>
     <OcrTrainSrtFile />
-    <BDOpenIn />
+    <OcrUseWordSplitList>True</OcrUseWordSplitList>
+    <BDOpenIn>OCR</BDOpenIn>
     <Interjections>Ah;Ahem;Ahh;Ahhh;Ahhhh;Eh;Ehh;Ehhh;Hm;Hmm;Hmmm;Huh;Mm;Mmm;Mmmm;Phew;Gah;Oh;Ohh;Ohhh;Ow;Oww;Owww;Ugh;Ughh;Uh;Uhh;Uhhh;Whew</Interjections>
     <MicrosoftBingApiId />
     <MicrosoftTranslatorApiKey />
@@ -565,6 +575,10 @@
     <Color2>Red</Color2>
     <Color3>Lime</Color3>
     <Color4>Cyan</Color4>
+    <Color5>Black</Color5>
+    <Color6>White</Color6>
+    <Color7>Orange</Color7>
+    <Color8>Pink</Color8>
     <ListViewShowColumnStartTime>True</ListViewShowColumnStartTime>
     <ListViewShowColumnEndTime>True</ListViewShowColumnEndTime>
     <ListViewShowColumnDuration>True</ListViewShowColumnDuration>
@@ -573,6 +587,7 @@
     <ListViewShowColumnGap>False</ListViewShowColumnGap>
     <ListViewShowColumnActor>False</ListViewShowColumnActor>
     <ListViewShowColumnRegion>False</ListViewShowColumnRegion>
+    <ListViewMultipleReplaceShowColumnRuleInfo>False</ListViewMultipleReplaceShowColumnRuleInfo>
     <SplitAdvanced>False</SplitAdvanced>
     <SplitOutputFolder />
     <SplitNumberOfParts>3</SplitNumberOfParts>
@@ -694,7 +709,8 @@
     <MusicSymbolStyle>Double</MusicSymbolStyle>
     <BinEditBackgroundColor>-16777216</BinEditBackgroundColor>
     <BinEditImageBackgroundColor>-16776961</BinEditImageBackgroundColor>
-    <BinEditVerticalMargin>10</BinEditVerticalMargin>
+    <BinEditTopMargin>10</BinEditTopMargin>
+    <BinEditBottomMargin>10</BinEditBottomMargin>
     <BinEditLeftMargin>10</BinEditLeftMargin>
     <BinEditRightMargin>10</BinEditRightMargin>
     <BridgeGapMilliseconds>100</BridgeGapMilliseconds>
@@ -756,6 +772,29 @@
     <AssaProgressBarFontSize>30</AssaProgressBarFontSize>
     <AssaProgressBarTopAlign>False</AssaProgressBarTopAlign>
     <AssaProgressBarTextAlign>left</AssaProgressBarTextAlign>
+    <AssaBgBoxPaddingLeft>10</AssaBgBoxPaddingLeft>
+    <AssaBgBoxPaddingRight>10</AssaBgBoxPaddingRight>
+    <AssaBgBoxPaddingTop>6</AssaBgBoxPaddingTop>
+    <AssaBgBoxPaddingBottom>6</AssaBgBoxPaddingBottom>
+    <AssaBgBoxDrawingMarginH>0</AssaBgBoxDrawingMarginH>
+    <AssaBgBoxDrawingMarginV>0</AssaBgBoxDrawingMarginV>
+    <AssaBgBoxDrawingAlignment />
+    <AssaBgBoxColor>#c80000ff</AssaBgBoxColor>
+    <AssaBgBoxOutlineColor>#c85050ff</AssaBgBoxOutlineColor>
+    <AssaBgBoxShadowColor>#640000ff</AssaBgBoxShadowColor>
+    <AssaBgBoxTransparentColor>#ff00ffff</AssaBgBoxTransparentColor>
+    <AssaBgBoxStyle>square</AssaBgBoxStyle>
+    <AssaBgBoxStyleRadius>30</AssaBgBoxStyleRadius>
+    <AssaBgBoxStyleCircleAdjustY>30</AssaBgBoxStyleCircleAdjustY>
+    <AssaBgBoxStyleSpikesStep>15</AssaBgBoxStyleSpikesStep>
+    <AssaBgBoxStyleSpikesHeight>30</AssaBgBoxStyleSpikesHeight>
+    <AssaBgBoxStyleBubblesStep>75</AssaBgBoxStyleBubblesStep>
+    <AssaBgBoxStyleBubblesHeight>40</AssaBgBoxStyleBubblesHeight>
+    <AssaBgBoxOutlineWidth>0</AssaBgBoxOutlineWidth>
+    <AssaBgBoxLayer>-11893</AssaBgBoxLayer>
+    <AssaBgBoxDrawingFileWatch>True</AssaBgBoxDrawingFileWatch>
+    <AssaBgBoxDrawingOnly>False</AssaBgBoxDrawingOnly>
+    <AssaBgBoxDrawing />
     <GenVideoEncoding>libx264</GenVideoEncoding>
     <GenVideoPreset>medium</GenVideoPreset>
     <GenVideoCrf>23</GenVideoCrf>
@@ -768,6 +807,8 @@
     <GenVideoNonAssaBox>True</GenVideoNonAssaBox>
     <GenVideoNonAssaAlignRight>False</GenVideoNonAssaAlignRight>
     <GenVideoNonAssaFixRtlUnicode>False</GenVideoNonAssaFixRtlUnicode>
+    <VoskPostProcessing>True</VoskPostProcessing>
+    <VoskModel />
   </Tools>
   <SubtitleSettings>
     <AssaStyleStorageCategories />
@@ -831,8 +872,11 @@ $HorzAlign          =   Center
     <WebVttCueAn7>position:20% line:20%</WebVttCueAn7>
     <WebVttCueAn8>line:20%</WebVttCueAn8>
     <WebVttCueAn9>position:80% line:20%</WebVttCueAn9>
+    <MPlayer2Extension>.txt</MPlayer2Extension>
     <TeletextItalicFix>True</TeletextItalicFix>
     <MccDebug>False</MccDebug>
+    <BluRaySupSkipMerge>False</BluRaySupSkipMerge>
+    <BluRaySupForceMergeAll>False</BluRaySupForceMergeAll>
     <WebVttUseXTimestampMap>True</WebVttUseXTimestampMap>
   </SubtitleSettings>
   <Proxy>
@@ -1017,9 +1061,11 @@ $HorzAlign          =   Center
     <GeneralGoToNextSubtitleAndPlay />
     <GeneralAutoCalcCurrentDuration />
     <GeneralAutoCalcCurrentDurationByOptimalReadingSpeed />
+    <GeneralAutoCalcCurrentDurationByMinReadingSpeed />
     <GeneralPlayFirstSelected />
     <GeneralToggleBookmarks />
     <GeneralToggleBookmarksWithText>Control+Shift+B</GeneralToggleBookmarksWithText>
+    <GeneralEditBookmarks />
     <GeneralClearBookmarks />
     <GeneralGoToBookmark />
     <GeneralGoToNextBookmark />
@@ -1057,6 +1103,8 @@ $HorzAlign          =   Center
     <MainEditMultipleReplace>Control+Alt+M</MainEditMultipleReplace>
     <MainEditGoToLineNumber>Control+G</MainEditGoToLineNumber>
     <MainEditRightToLeft>Control+Shift+Alt+R</MainEditRightToLeft>
+    <MainToolsAdjustDuration />
+    <MainToolsAdjustDurationLimits />
     <MainToolsFixCommonErrors>Control+Shift+F</MainToolsFixCommonErrors>
     <MainToolsFixCommonErrorsPreview>Control+P</MainToolsFixCommonErrorsPreview>
     <MainToolsMergeShortLines />
@@ -1121,6 +1169,7 @@ $HorzAlign          =   Center
     <MainVideoReset>Control+D0</MainVideoReset>
     <MainVideoToggleBrightness />
     <MainVideoToggleContrast />
+    <MainVideoAudioToText />
     <MainSpellCheck>Control+Shift+S</MainSpellCheck>
     <MainSpellCheckFindDoubleWords>Control+Shift+D</MainSpellCheckFindDoubleWords>
     <MainSpellCheckAddWordToNames>Control+Shift+L</MainSpellCheckAddWordToNames>
@@ -1152,8 +1201,13 @@ $HorzAlign          =   Center
     <MainListViewColor2 />
     <MainListViewColor3 />
     <MainListViewColor4 />
+    <MainListViewColor5 />
+    <MainListViewColor6 />
+    <MainListViewColor7 />
+    <MainListViewColor8 />
     <MainRemoveFormatting />
     <MainListViewCopyText />
+    <MainListViewCopyPlainText />
     <MainListViewCopyTextFromOriginalToCurrent />
     <MainListViewAutoDuration />
     <MainListViewColumnDeleteText />
@@ -1164,10 +1218,24 @@ $HorzAlign          =   Center
     <MainListViewColumnTextDown />
     <MainListViewGoToNextError>F8</MainListViewGoToNextError>
     <MainListViewListErrors>Control+F8</MainListViewListErrors>
+    <MainListViewSortByNumber />
+    <MainListViewSortByStartTime />
+    <MainListViewSortByEndTime />
+    <MainListViewSortByDuration />
+    <MainListViewSortByGap />
+    <MainListViewSortByText />
+    <MainListViewSortBySingleLineMaxLen />
+    <MainListViewSortByTextTotalLength />
+    <MainListViewSortByCps />
+    <MainListViewSortByWpm />
+    <MainListViewSortByNumberOfLines />
+    <MainListViewSortByActor />
+    <MainListViewSortByStyle />
     <GeneralRemoveBlankLines />
     <GeneralApplyAssaOverrideTags />
     <GeneralSetAssaPosition />
     <GeneralSetAssaResolution />
+    <GeneralTakeAutoBackup />
     <MainListViewRemoveTimeCodes />
     <MainEditFixRTLViaUnicodeChars />
     <MainEditRemoveRTLUnicodeChars />
@@ -1248,6 +1316,8 @@ $HorzAlign          =   Center
     <MainWaveformInsertAtCurrentPosition>Insert</MainWaveformInsertAtCurrentPosition>
     <MainInsertBefore>Control+Shift+Insert</MainInsertBefore>
     <MainMergeDialog />
+    <MainMergeDialogWithNext />
+    <MainMergeDialogWithPrevious />
     <MainToggleFocus />
     <MainToggleFocusWaveform />
     <WaveformAdd />

@@ -9,11 +9,14 @@ REAL_TESSERACT="/usr/bin/tesseract.orig"
 declare -a ENGINE_OPTS ORIG_OPTS
 
 ORIG_OPTS=("$@")
+OEM=3
 
 function finish() {
     if [[ -z "${COMPLETE}" ]] || [[ -n "${ABORT}" ]] || [[ -z "${INJECTED}" ]]; then
-        exec "${REAL_TESSERACT}" --oem 0 "${ORIG_OPTS[@]}" >> /var/log/tesseract.log 2>&1
+        echo "${REAL_TESSERACT}" --oem ${OEM} "${ORIG_OPTS[@]}" >> /var/log/tesseract.log 2>&1
+        exec "${REAL_TESSERACT}" --oem ${OEM} "${ORIG_OPTS[@]}" >> /var/log/tesseract.log 2>&1
     else
+        echo "${REAL_TESSERACT}" "${ENGINE_OPTS[@]}" >> /var/log/tesseract.log 2>&1
         exec "${REAL_TESSERACT}" "${ENGINE_OPTS[@]}" >> /var/log/tesseract.log 2>&1
     fi
 }
@@ -40,9 +43,17 @@ for OPT in "$@"; do
         #  1    Neural nets LSTM engine only.
         #  2    Legacy + LSTM engines.
         #  3    Default, based on what is available, which is related to the installed models.
-        ENGINE_OPTS+=("3")
+        ENGINE_OPTS+=("${OEM}")
         SKIP_OPT=1
         INJECTED=1
+    fi
+
+    if [[ -f "${OPT}" ]]; then
+      if identify -verbose "${OPT}" | grep -i transpar | grep -v none | grep -q .; then
+        echo "Transparency found" >> /var/log/tesseract.log
+        identify -verbose "${OPT}" >> /var/log/tesseract.log 2>&1
+        exit 255
+      fi
     fi
 
     LAST="${OPT}"
