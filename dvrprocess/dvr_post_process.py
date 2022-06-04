@@ -260,6 +260,7 @@ def do_dvr_post_process(input_file,
     vainfo = "/usr/bin/vainfo"
 
     input_info = common.find_input_info(filename)
+    duration = float(input_info['format']['duration'])
 
     if dry_run:
         logger.info(f"{input_info}")
@@ -310,7 +311,6 @@ def do_dvr_post_process(input_file,
     if crop_frame:
         logger.info("Running crop frame detection")
         crop_frame_rect_histo = {}
-        # duration = float(input_info['format']['duration'])
         crop_detect_command = [ffmpeg, '-hide_banner', '-skip_frame', 'nointra', '-i', filename,
                                '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',
                                '-f', 'null', '/dev/null']
@@ -328,18 +328,25 @@ def do_dvr_post_process(input_file,
                     if crop_line_this_filter == crop_line_last_filter:
                         crop_frame_rect_histo[crop_line_this_filter] = crop_frame_rect_histo.get(crop_line_this_filter,
                                                                                                  0) + (
-                                                                                   crop_line_this_t - crop_line_last_t)
+                                                                               crop_line_this_t - crop_line_last_t)
                 crop_line_last_t = crop_line_this_t
                 crop_line_last_filter = crop_line_this_filter
 
                 # print(f"crop detect: {int(crop_line_this_t * 100 / duration)}%", end="\033[0G")
+
+        # Filter out undesirable frames
+        # 1. Only crop if the width is cropped a noticeable amount. Widescreen content intentionally has top and bottom black frames.
+        # 2. Crop is over 10% the duration
+        logger.debug("crop raw histo %s", crop_frame_rect_histo)
+        crop_frame_rect_histo = dict(
+            filter(lambda e: (width - common.get_crop_filter_parts(e[0])[0] >= 40) and e[1] > duration / 10,
+                   crop_frame_rect_histo.items()))
+        logger.debug("crop filtered histo %s", crop_frame_rect_histo)
         if len(crop_frame_rect_histo) > 0:
             crop_frame_rect_histo_list = list(crop_frame_rect_histo.items())
             crop_frame_rect_histo_list.sort(key=lambda e: e[1], reverse=True)
             logger.debug("crop detect histo %s", crop_frame_rect_histo_list)
             crop_frame_filter = crop_frame_rect_histo_list[0][0]
-            # Only crop if the width is cropped a noticeable amount.
-            # Widescreen content intentionally has top and bottom black frames.
             if width - common.get_crop_filter_parts(crop_frame_filter)[0] < 40:
                 crop_frame_filter = None
         logger.info("crop frame filter is %s", crop_frame_filter)
@@ -375,7 +382,7 @@ def do_dvr_post_process(input_file,
 
                 bitrate_threshold = bitrate
                 # Increase threshold for short videos because there isn't enough content to compress to our expectations
-                if float(input_info['format']['duration']) < SHORT_VIDEO_SECONDS:
+                if duration < SHORT_VIDEO_SECONDS:
                     bitrate_threshold *= 2
 
                 if bitrate and (video_bitrate_fps / 1024) > bitrate_threshold:
