@@ -1,5 +1,9 @@
 # Media Hare
 
+[![GitHub Issues](https://img.shields.io/github/issues-raw/double16/media-hare.svg)](https://github.com/double16/media-hare/issues)
+[![Build](https://github.com/double16/media-hare/workflows/Build/badge.svg)](https://github.com/double16/media-hare/actions?query=workflow%3ABuild)
+[![](https://img.shields.io/badge/Donate-Buy%20me%20a%20coffee-orange.svg)](https://www.buymeacoffee.com/patDj)
+
 ![](docs/media-hare.jpg)
 
 Sundry tools for maintaining a personal media library. Rabbits (hares) like to be clean and are frequently grooming.
@@ -8,8 +12,6 @@ The tools here are intended to groom your media files for various purposes such 
 1. transcode to storage optimized codecs
 2. cut commercials from DVR recordings
 3. profanity filtering
-
-![https://www.buymeacoffee.com/patDj](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)
 
 ## Work in Progress
 
