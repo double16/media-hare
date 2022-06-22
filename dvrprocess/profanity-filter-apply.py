@@ -1,24 +1,18 @@
 #!/usr/bin/env python3
+import getopt
 import logging
 import os
 import random
 import sys
-import getopt
-import tempfile
 import time
+from multiprocessing import Pool
 from subprocess import CalledProcessError
 
 import requests
 
 import common
-from multiprocessing import Pool
-from profanity_filter import profanity_filter
 from find_need_transcode import need_transcode_generator, TranscodeFileInfo
-
-# Stop processing after this amount of file content has been modified
-# 10G
-DEFAULT_SIZE_LIMIT = 10 * 1024 * 1024 * 1024
-DEFAULT_TIME_LIMIT = 3600
+from profanity_filter import profanity_filter
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +24,9 @@ Searches for content on which to apply the profanity filter.
 Usage: {sys.argv[0]} [options] [media_paths|--url=.]
 
 --work-dir=/tmp
---bytes-limit={DEFAULT_SIZE_LIMIT}
+--bytes-limit={common.get_global_config_bytes('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
---time-limit={DEFAULT_TIME_LIMIT}
+--time-limit={common.get_global_config_time_seconds('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --processes=2
 --dry-run
@@ -59,12 +53,15 @@ def os_walk_generator(media_paths):
                 yield TranscodeFileInfo(file, filepath, None, None, None, None)
 
 
-def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None, size_limit=DEFAULT_SIZE_LIMIT,
-                           time_limit=DEFAULT_TIME_LIMIT, processes=1, check_compute=True):
+def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
+                           size_limit=common.get_global_config_bytes('background_limits', 'size_limit'),
+                           time_limit=common.get_global_config_time_seconds('background_limits', 'time_limit'),
+                           processes=1,
+                           check_compute=True):
     logger.info(f"Applying profanity filter to media files in {plex_url or ','.join(media_paths)}")
 
     if workdir is None:
-        workdir = tempfile.gettempdir()
+        workdir = common.get_work_dir()
 
     bytes_processed = 0
     time_start = None
@@ -164,17 +161,18 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
 
 def profanity_filter_apply_cli(argv):
-    workdir = None
+    workdir = common.get_work_dir()
     dry_run = False
-    bytes_limit = DEFAULT_SIZE_LIMIT
-    time_limit = DEFAULT_TIME_LIMIT
+    bytes_limit = common.get_global_config_bytes('background_limits', 'size_limit')
+    time_limit = common.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
     plex_url = None
 
-    processes = max(1, int(common.core_count() / 2) - 1)
+    processes = common.get_global_config_int('background_limits', 'processes',
+                                             fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'profanity-filter-apply.txt') + list(argv),
+        opts, args = getopt.getopt(list(argv),
                                    "nb:t:p:u:",
                                    ["dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=", "url="])
     except getopt.GetoptError:

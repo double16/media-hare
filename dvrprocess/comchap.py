@@ -55,19 +55,8 @@ Usage: {sys.argv[0]} infile [outfile]
 """, file=sys.stderr)
 
 
-def get_comskip_ini_sources():
-    script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
-    return [f"{os.environ['HOME']}/.comskip.ini",
-            f"{script_dir}/comskip.ini",
-            f"/etc/comskip.ini"]
-
-
 def find_comskip_ini():
-    for f in get_comskip_ini_sources():
-        if os.access(f, os.R_OK):
-            return f
-
-    raise OSError(f"Cannot find comskip.ini in any of {','.join(get_comskip_ini_sources())}")
+    return common.find_config('comskip.ini')
 
 
 def get_expected_adjusted_duration(video_info):
@@ -275,7 +264,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         return 1
 
     if workdir is None:
-        workdir = tempfile.gettempdir()
+        workdir = common.get_work_dir()
 
     if not comskipini:
         try:
@@ -512,22 +501,22 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
 
 
 def comchap_cli(argv):
-    delete_edl = True
+    delete_edl = not common.get_global_config_boolean('general', 'keep_edl')
     backup_edl = False
-    delete_meta = True
+    delete_meta = not common.get_global_config_boolean('general', 'keep_meta')
     delete_log = True
     delete_logo = True
     delete_txt = True
     delete_ini = True
     verbose = False
-    workdir = None
+    workdir = common.get_work_dir()
     comskipini = None
     modify_video = True
     force = False
     debug = False
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'comchap.txt') + list(argv), "fk",
+        opts, args = getopt.getopt(list(argv), "fk",
                                    ["keep-edl", "only-edl", "keep-meta", "keep-log", "keep-ini", "keep-all", "verbose",
                                     "comskip-ini=", "debug", "work-dir=", "force", "backup-edl"])
     except getopt.GetoptError:

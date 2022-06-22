@@ -8,15 +8,17 @@ from subprocess import CalledProcessError
 import requests
 
 import common
-from dvr_post_process import dvr_post_process, DESIRED_VIDEO_CODECS, DESIRED_AUDIO_CODECS
+from dvr_post_process import dvr_post_process
 from find_need_transcode import need_transcode_generator
 
 logger = logging.getLogger(__name__)
 
 
 def usage():
-    print(f'{sys.argv[0]} --dry-run --verbose -u http://192.168.1.254:32400 '
-          f'-v {",".join(DESIRED_VIDEO_CODECS)} -a {",".join(DESIRED_AUDIO_CODECS)} --maxres=480')
+    video_codecs = common.get_global_config_option('video', 'codecs')
+    audio_codecs = common.get_global_config_option('audio', 'codecs')
+    print(f'{sys.argv[0]} --dry-run --verbose -u http://localhost:32400 '
+          f'-v {video_codecs} -a {audio_codecs} --maxres=480')
 
 
 def transcode_apply(plex_url, dry_run=False, desired_video_codecs=None, desired_audio_codecs=None, max_resolution=None,
@@ -59,7 +61,7 @@ def transcode_apply_cli(argv):
         max_resolution = 480
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'transcode-apply.txt') + list(argv),
+        opts, args = getopt.getopt(list(argv),
                                    "hnu:v:a:",
                                    ["dry-run", "ignore-compute", "url=", "video=", "audio=", "maxres=", "verbose"])
     except getopt.GetoptError:

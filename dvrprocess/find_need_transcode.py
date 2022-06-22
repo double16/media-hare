@@ -5,9 +5,10 @@ import os
 import random
 import sys
 import xml.etree.ElementTree as ET
+
 import requests
+
 import common
-from dvr_post_process import DESIRED_VIDEO_CODECS, DESIRED_AUDIO_CODECS
 
 #
 # List files encoded with mpeg2 from the Plex database. Terminated with null.
@@ -28,8 +29,10 @@ dropbox_home = '/home/Dropbox/Media/'
 
 
 def usage():
-    print(f'{sys.argv[0]} -u http://192.168.1.254:32400 -t "\\n" -d /home/Dropbox2/ '
-          f'-v {",".join(DESIRED_VIDEO_CODECS)} -a {",".join(DESIRED_AUDIO_CODECS)} --maxres=480')
+    video_codecs = common.get_global_config_option('video', 'codecs')
+    audio_codecs = common.get_global_config_option('audio', 'codecs')
+    print(f'{sys.argv[0]} -u http://localhost:32400 -t "\\n" -d /home/Dropbox2/ '
+          f'-v {video_codecs} -a {audio_codecs} --maxres=480')
 
 
 def find_need_transcode_cli(argv):
@@ -128,7 +131,7 @@ def need_transcode_generator(
         max_resolution=None
 ):
     if desired_video_codecs is None and desired_audio_codecs is None:
-        desired_video_codecs = DESIRED_VIDEO_CODECS
+        desired_video_codecs = common.get_global_config_option('video', 'codecs')
     if host_home is None:
         host_home = common.get_media_base()
 
@@ -141,7 +144,8 @@ def need_transcode_generator(
         if library.tag == 'Directory' and library.attrib['type'] == 'movie':
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
-            yield from process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home, section_response,
+            yield from process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
+                                      section_response,
                                       max_resolution)
         elif library.tag == 'Directory' and library.attrib['type'] == 'show' and 'DVR' not in library.attrib['title']:
             section_response = requests.get(
@@ -158,7 +162,8 @@ def need_transcode_generator(
                                           max_resolution)
 
 
-def process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str], file_names, host_home, show_response, max_resolution):
+def process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str], file_names, host_home,
+                   show_response, max_resolution):
     episodes = list(filter(
         lambda el: el.tag == 'Video' and (
                 el.attrib['type'] == 'episode' or el.attrib['type'] == 'movie'),

@@ -43,7 +43,7 @@ Usage: {sys.argv[0]} infile [outfile]
 --comskip-ini=
 --work-dir=
 --preset=veryslow,slow,medium,fast,veryfast
-    Set ffmpeg preset, defaults to veryslow
+    Set ffmpeg preset, defaults to {common.get_global_config_option('ffmpeg', 'preset')}
 """, file=sys.stderr)
 
 
@@ -339,16 +339,16 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
 
 def comcut_cli(argv):
-    delete_edl = True
-    delete_meta = True
+    delete_edl = not common.get_global_config_boolean('general', 'keep_edl')
+    delete_meta = not common.get_global_config_boolean('general', 'keep_meta')
     verbose = False
     debug = False
     comskipini = None
-    workdir = None
+    workdir = common.get_work_dir()
     preset = None
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'comcut.txt') + list(argv), "p",
+        opts, args = getopt.getopt(list(argv), "p",
                                    ["keep-edl", "keep-meta", "verbose", "debug", "comskip-ini=", "work-dir=",
                                     "preset="])
     except getopt.GetoptError:
@@ -379,7 +379,7 @@ def comcut_cli(argv):
         return 255
 
     if not preset:
-        preset = os.environ.get('PRESET', "veryslow")
+        preset = os.environ.get('PRESET', common.get_global_config_option('ffmpeg', 'preset'))
 
     atexit.register(common.finish)
 

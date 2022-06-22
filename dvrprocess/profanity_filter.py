@@ -9,7 +9,6 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from shutil import which
 
@@ -88,7 +87,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     input_type = base_filename.split(".")[-1]
     dir_filename = os.path.dirname(filename)
     if workdir is None:
-        workdir = tempfile.gettempdir()
+        workdir = common.get_work_dir()
 
     logger.info(f"filtering {filename}")
 
@@ -764,11 +763,11 @@ if __name__ == '__main__':
     force = False
     filter_skip = None
     language = common.LANGUAGE_ENGLISH
-    workdir = None
+    workdir = common.get_work_dir()
 
     try:
         opts, args = getopt.getopt(
-            common.get_arguments_from_config(argv, 'profanity_filter.txt') + list(argv), "nkdrf",
+            list(argv), "nkdrf",
             ["dry-run", "keep", "debug", "remove", "force", "work-dir="])
     except getopt.GetoptError:
         usage()

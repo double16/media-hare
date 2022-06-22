@@ -27,7 +27,6 @@ COL_FRAME = 0
 COL_BRIGHTNESS = 1
 COL_UNIFORM = 4
 COL_SOUND = 5
-DEFAULT_TIME_LIMIT = 3600
 VERSION_VIDEO_STATS = "1"
 VERSION_GAD_TUNING = "2"
 
@@ -105,7 +104,7 @@ Automated tuning of comskip configurations. Considers show seasons as a group.
 Usage: {sys.argv[0]} file | dir
 
 -p, --processes=2
--t, --time-limit={DEFAULT_TIME_LIMIT}
+-t, --time-limit={common.get_global_config_time_seconds('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --verbose
 -n, --dry-run
@@ -515,6 +514,7 @@ def find_comskip_starter_ini():
     raise OSError(f"Cannot find comskip-starter.ini in any of {','.join(get_comskip_starter_ini_sources())}")
 
 
+# FIXME: check for stopping processing so we don't overload the machine
 def tune_show(season_dir, pool, files, workdir, dry_run, force):
     if len(files) < 5:
         logger.warning("too few video files %d to tune %s, need 5", len(files), season_dir)
@@ -596,16 +596,17 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force):
 
 def comtune_cli(argv):
     verbose = False
-    workdir = None
+    workdir = common.get_work_dir()
     force = 0
     dry_run = False
     check_compute = True
-    time_limit = DEFAULT_TIME_LIMIT
+    time_limit = int(common.get_global_config_time_seconds('background_limits', 'time_limit'))
 
-    processes = max(1, int(common.core_count() / 2) - 1)
+    processes = common.get_global_config_int('background_limits', 'processes',
+                                             fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'comtune.txt') + list(argv), "hfnp:t:",
+        opts, args = getopt.getopt(list(argv), "hfnp:t:",
                                    ["help", "verbose", "work-dir=", "force", "dry-run", "processes=", "time-limit="])
     except getopt.GetoptError:
         usage()
@@ -701,6 +702,9 @@ def comtune_cli(argv):
                             logger.error(f"Skipping show {season_dir}, uncaught exception", exc_info=e)
                     else:
                         for file in files:
+                            if should_stop():
+                                pool.close()
+                                return return_code.code()
                             filepath = os.path.join(root, file)
                             if common.is_video_file(filepath):
                                 single_file_tune(filepath)

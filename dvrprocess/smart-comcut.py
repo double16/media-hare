@@ -5,7 +5,6 @@ import logging
 import math
 import os
 import sys
-import tempfile
 from statistics import stdev, mean
 
 import common
@@ -45,11 +44,11 @@ def smart_comcut(argv):
     strict = False
     all_videos = False
     keep = False
-    workdir = None
+    workdir = common.get_work_dir()
     sigma = None
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'smart-comcut.txt') + list(argv), "nkca",
+        opts, args = getopt.getopt(list(argv), "nkca",
                                    ["help", "dry-run", "keep", "commercial-details", "strict", "all", "work-dir=",
                                     "verbose", "sigma="])
     except getopt.GetoptError:
@@ -81,7 +80,7 @@ def smart_comcut(argv):
         return 255
 
     if not workdir:
-        workdir = tempfile.gettempdir()
+        workdir = common.get_work_dir()
 
     for arg in args:
         for root, dirs, files in os.walk(arg, topdown=True):
