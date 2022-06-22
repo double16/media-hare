@@ -22,10 +22,10 @@ there by this program.
 Usage: {sys.argv[0]} [options] media_paths ...
 
 --comskip-ini=comskip.ini
---work-dir=/tmp
--b, --bytes-limit={common.get_global_config_bytes('background_limits', 'size_limit')}
+--work-dir={common.get_work_dir()}
+-b, --bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
--t, --time-limit={common.get_global_config_time_seconds('background_limits', 'time_limit')}
+-t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --processes=2
 --dry-run
