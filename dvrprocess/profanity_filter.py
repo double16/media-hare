@@ -56,7 +56,7 @@ Filter audio and subtitles for profanity.
     Keep original file in a backup prefixed by ".~"
 --debug
     Only create hidden output file for debugging
---work-dir=/tmp
+--work-dir={common.get_work_dir()}
 --remove
     Remove filtering
 --force

@@ -23,15 +23,15 @@ Searches for content on which to apply the profanity filter.
 
 Usage: {sys.argv[0]} [options] [media_paths|--url=.]
 
---work-dir=/tmp
---bytes-limit={common.get_global_config_bytes('background_limits', 'size_limit')}
+--work-dir={common.get_work_dir()}
+--bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
---time-limit={common.get_global_config_time_seconds('background_limits', 'time_limit')}
+--time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --processes=2
 --dry-run
 --url=
-    Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for the default.
+    Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for the configured value.
 """, file=sys.stderr)
 
 

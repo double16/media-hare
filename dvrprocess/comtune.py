@@ -104,11 +104,11 @@ Automated tuning of comskip configurations. Considers show seasons as a group.
 Usage: {sys.argv[0]} file | dir
 
 -p, --processes=2
--t, --time-limit={common.get_global_config_time_seconds('background_limits', 'time_limit')}
+-t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --verbose
 -n, --dry-run
---work-dir=
+--work-dir={common.get_work_dir()}
 -f, --force
     Force re-running tuning algorithm even if tuning is present. Give this option twice to re-run comskip CSV.
 """, file=sys.stderr)
@@ -635,7 +635,7 @@ def comtune_cli(argv):
         logger.warning(f"not enough compute available")
         return 255
 
-    logger.debug("work_dir is %s", workdir)
+    logger.debug("work_dir is %s, processes is %s", workdir, processes)
 
     if not args:
         args = common.get_media_paths()

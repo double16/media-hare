@@ -47,7 +47,7 @@ Usage: {sys.argv[0]} infile [outfile]
 -k, --keep-all
 --verbose
 --comskip-ini=
---work-dir=
+--work-dir={common.get_work_dir()}
 --force
     Force re-running comskip even if an edl file is present
 --debug

@@ -41,7 +41,7 @@ Usage: {sys.argv[0]} infile [outfile]
 --keep-meta
 --verbose
 --comskip-ini=
---work-dir=
+--work-dir={common.get_work_dir()}
 --preset=veryslow,slow,medium,fast,veryfast
     Set ffmpeg preset, defaults to {common.get_global_config_option('ffmpeg', 'preset')}
 """, file=sys.stderr)

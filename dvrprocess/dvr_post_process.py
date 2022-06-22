@@ -39,17 +39,17 @@ The file closest to the input file will be taken. Comments start with '#'.
 --keep
     Keep original file in a backup prefixed by ".~".
 --vcodec=h264[,hvec,...]
-    The video codec: h264 (default), h265, mpeg2.
+    The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 --acodec=opus[,aac,...]
-    The audio codec: opus (default), aac, ac3, ...
+    The audio codec: {common.get_global_config_option('audio', 'codecs')} (default), aac, ac3, ...
 --height=480
     Scale down to this height, maintaining aspect ratio.
 --output-type=mkv
     Output type: mkv (default), ts, mp4, ...
 --prevent-larger=true,false
-    Prevent conversion to a larger file (default is true).
+    Prevent conversion to a larger file (default is {common.get_global_config_boolean('post_process', 'prevent_larger')}).
 --hwaccel=false,auto,full
-    Enable hardware acceleration, if available (default is false).
+    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel')}).
 --stereo
     Scale down audio to stereo.
 --preset=copy,medium,fast,veryfast
@@ -102,7 +102,7 @@ def parse_args(argv) -> (list[str], dict):
     prevent_larger_file = common.get_global_config_boolean('post_process', 'prevent_larger')
     output_type = "mkv"
     tune = None
-    hwaccel_requested = None
+    hwaccel_requested = common.get_global_config_option('ffmpeg', 'hwaccel', fallback=None)
     dry_run = False
     keep = False
     stereo = False

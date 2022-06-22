@@ -34,7 +34,7 @@ Cuts commercials only when a season fits closely within the average of length po
     Sigma limit in seconds
 -a, --all
     Cut all files regardless of fit
---work-dir=
+--work-dir={common.get_work_dir()}
 """, file=sys.stderr)
 
 
