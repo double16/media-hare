@@ -56,7 +56,7 @@ ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
 COPY dvrprocess/comskip*.ini /etc/
-COPY media-hare.defaults.ini media-hare.ini /etc/
+COPY dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini /etc/
 COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply

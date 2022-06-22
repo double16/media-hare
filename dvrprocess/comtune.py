@@ -635,6 +635,8 @@ def comtune_cli(argv):
         logger.warning(f"not enough compute available")
         return 255
 
+    logger.debug("work_dir is %s", workdir)
+
     if not args:
         args = common.get_media_paths()
 

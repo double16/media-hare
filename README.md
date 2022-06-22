@@ -63,7 +63,7 @@ Configuration is in `media-hare.ini`. This can be found in `/etc/media-hare.ini`
 media directories, you can also add `media-hare.ini` and override configurations for content in that directory and
 subdirectories.
 
-See `media-hare.defaults.ini` for all available options and documentation. Edit `media-hare.ini` in one of the
+See `dvrprocess/media-hare.defaults.ini` for all available options and documentation. Edit `media-hare.ini` in one of the
 paths specified above to override.
 
 ## dvr_post_process.py
