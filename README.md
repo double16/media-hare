@@ -12,6 +12,7 @@ The tools here are intended to groom your media files for various purposes such 
 1. transcode to storage optimized codecs
 2. cut commercials from DVR recordings
 3. profanity filtering
+4. be nice to low powered (compute, iops) machines
 
 ## Work in Progress
 
@@ -56,9 +57,18 @@ $ podman build -t media-hare:latest .
 $ podman run -it --rm --entrypoint /bin/zsh -v /Movies:/Movies -v /home/Dropbox:/home/Dropbox -v .:/Workspace media-hare:latest
 ```
 
+## Configuration
+
+Configuration is in `media-hare.ini`. This can be found in `/etc/media-hare.ini` or `${HOME}/.media-hare.ini`. In your
+media directories, you can also add `media-hare.ini` and override configurations for content in that directory and
+subdirectories.
+
+See `media-hare.defaults.ini` for all available options and documentation. Edit `media-hare.ini` in one of the
+paths specified above to override.
+
 ## dvr_post_process.py
 
-TODO
+Transcodes videos to target codecs and other settings. See [docs/dvr_post_process.md].
 
 ## transcode-apply.py
 
