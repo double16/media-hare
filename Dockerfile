@@ -56,6 +56,7 @@ ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
 COPY dvrprocess/comskip*.ini /etc/
+COPY dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini /etc/
 COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
@@ -66,7 +67,6 @@ COPY anacron.cron /etc/cron.d/anacron
 COPY tesseract-wrapper.sh /usr/bin/tesseract
 ADD *.service /etc/systemd/system/
 RUN chmod 0644 /etc/logrotate.d/dvr &&\
-    echo "--work-dir=/tmp" >> /etc/comtune.txt &&\
     find /etc/cron* -type f -print0 | xargs -r0 chmod 0755 &&\
     ln -s /usr/local/share/dvrprocess/dvr_post_process.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/profanity_filter.py /usr/local/bin/ &&\

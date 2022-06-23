@@ -1,5 +1,6 @@
 import _thread
 import code
+import configparser
 import datetime
 import json
 import logging
@@ -8,6 +9,7 @@ import re
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import traceback
@@ -83,6 +85,7 @@ def get_media_base():
 
 def get_media_paths():
     base = get_media_base()
+    # TODO: move this to config
     return [f"{base}/Movies",
             f"{base}/DVRShows",
             f"{base}/TVShows",
@@ -94,6 +97,7 @@ def get_media_paths():
 
 
 def find_media_base():
+    # TODO: move this to config
     for p in psutil.disk_partitions(all=True):
         base = os.path.join(p.mountpoint, 'Media')
         if os.path.isdir(os.path.join(base, 'Movies')):
@@ -179,6 +183,7 @@ def find_ffmpeg():
 
 
 def _find_ffmpeg():
+    # Never use Plex's version. We have no guarantees on version or patches applied. Keep the code so people know we tried.
     ffmpeg = "x /usr/lib/plexmediaserver/Plex\\ Transcoder"
 
     if os.access(ffmpeg, os.X_OK):
@@ -186,7 +191,7 @@ def _find_ffmpeg():
     else:
         ffmpeg = which("ffmpeg")
     if len(ffmpeg) == 0:
-        fatal("'/usr/lib/plexmediaserver/Plex Transcoder' nor 'ffmpeg' found")
+        fatal("'ffmpeg' not found")
     if not os.access(ffmpeg, os.X_OK):
         fatal(f"{ffmpeg} is not an executable")
 
@@ -289,7 +294,7 @@ def _find_mkvpropedit():
 
 
 def get_plex_url():
-    return "http://192.168.1.254:32400"
+    return get_global_config_option('plex', 'url', fallback=None)
 
 
 def load_keyframes_by_seconds(filepath) -> list[float]:
@@ -1216,3 +1221,156 @@ def get_crop_filter_parts(crop_filter):
     if crop_filter is None:
         return None
     return [int(i) for i in crop_filter.split('=')[1].split(':')]
+
+
+def _get_config_sources(filename: str):
+    script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    # TODO: check Windows places
+    return [f"{os.environ['HOME']}/.{filename}",
+            f"/etc/{filename}",
+            f"{script_dir}/{filename}"]
+
+
+def find_config(filename: str) -> str:
+    """
+    Locate a config file from a list of common locations. The first one found is returned.
+    See _get_config_sources for locations.
+    :param filename: filename, like 'config.ini'
+    :return: resolved path to a file that exists
+    """
+    sources = _get_config_sources(filename)
+    for f in sources:
+        if os.access(f, os.R_OK):
+            return f
+    raise OSError(f"Cannot find {filename} in any of {','.join(sources)}")
+
+
+def load_config(filename: str, start_path=None, input_info=None,
+                config: configparser.ConfigParser = None) -> configparser.ConfigParser:
+    """
+    Load configuration from one or more INI files. Overrides to the common configuration can be made by creating file(s)
+    named :filename: in the directory tree of :start_path: or location of :input_info:.
+
+    :param filename: the name of the config file, usually something like 'config.ini'
+    :param start_path: the lowest directory or file of the directory tree to search for overrides
+    :param input_info: if specified and the info contains the filename, set start_path from this
+    :param config: an existing config to update
+    :return: ConfigParser object
+    """
+    filenames = [find_config(filename)]
+
+    if not start_path and input_info:
+        input_path = input_info.get(K_FORMAT, {}).get("filename")
+        if input_path:
+            if os.path.isfile(input_path):
+                start_path = os.path.dirname(input_path)
+            elif os.path.isdir(input_path):
+                start_path = input_path
+
+    if start_path:
+        path = start_path
+        insert_idx = len(filenames)
+        while True:
+            p = os.path.dirname(os.path.abspath(path))
+            if not p or p == path:
+                break
+            conf = os.path.join(p, filename)
+            if os.path.isfile(conf):
+                filenames.insert(insert_idx, conf)
+            path = p
+
+    if not config:
+        config = configparser.ConfigParser()
+    config.read(filenames)
+
+    return config
+
+
+config_obj: [configparser.ConfigParser, None] = None
+_UNSET = object()
+
+
+def get_global_config_option(section: str, option: str, fallback: str = _UNSET):
+    """
+    Get an option from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
+    :param section:
+    :param option:
+    :param fallback:
+    :return:
+    """
+    if fallback is not _UNSET:
+        return get_global_config().get(section, option, fallback=fallback)
+    return get_global_config().get(section, option)
+
+
+def get_global_config_boolean(section: str, option: str, fallback: bool = None):
+    """
+    Get a boolean from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
+    :param section:
+    :param option:
+    :param fallback:
+    :return:
+    """
+    if fallback is not None:
+        return get_global_config().getboolean(section, option, fallback=fallback)
+    return get_global_config().getboolean(section, option)
+
+
+def get_global_config_int(section: str, option: str, fallback: int = None):
+    """
+    Get an int from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
+    :param section:
+    :param option:
+    :param fallback:
+    :return:
+    """
+    if fallback is not None:
+        return get_global_config().getint(section, option, fallback=fallback)
+    return get_global_config().getint(section, option)
+
+
+def get_global_config_time_seconds(section: str, option: str, fallback: int = None):
+    """
+    Get number of seconds from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
+    :param section:
+    :param option:
+    :param fallback:
+    :return:
+    """
+    if fallback is not None:
+        return parse_seconds(get_global_config().get(section, option, fallback=fallback))
+    return parse_seconds(get_global_config().get(section, option))
+
+
+def get_global_config_bytes(section: str, option: str, fallback: int = None):
+    """
+    Get number of bytes from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
+    :param section:
+    :param option:
+    :param fallback:
+    :return:
+    """
+    if fallback is not None:
+        return parse_bytes(get_global_config().get(section, option, fallback=fallback))
+    return parse_bytes(get_global_config().get(section, option))
+
+
+def get_work_dir() -> str:
+    return get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
+
+
+def get_global_config() -> configparser.ConfigParser:
+    global config_obj
+    if config_obj is None:
+        _once_lock.acquire()
+        try:
+            if config_obj is None:
+                config_obj = _load_media_hare_config()
+        finally:
+            _once_lock.release()
+    return config_obj
+
+
+def _load_media_hare_config() -> configparser.ConfigParser:
+    defaults = load_config('media-hare.defaults.ini')
+    return load_config('media-hare.ini', config=defaults)

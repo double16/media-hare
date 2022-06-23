@@ -11,13 +11,12 @@ import sys
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import mkstemp
+
 import common
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
 FRAME_RATE_NAMES = {'ntsc': '30000/1001', 'pal': '25.0', 'film': '24.0', 'ntsc_film': '24000/1001'}
-DESIRED_VIDEO_CODECS = ['h264', 'h265']
-DESIRED_AUDIO_CODECS = ['opus']
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +39,17 @@ The file closest to the input file will be taken. Comments start with '#'.
 --keep
     Keep original file in a backup prefixed by ".~".
 --vcodec=h264[,hvec,...]
-    The video codec: h264 (default), h265, mpeg2.
+    The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 --acodec=opus[,aac,...]
-    The audio codec: opus (default), aac, ac3, ...
+    The audio codec: {common.get_global_config_option('audio', 'codecs')} (default), aac, ac3, ...
 --height=480
     Scale down to this height, maintaining aspect ratio.
 --output-type=mkv
     Output type: mkv (default), ts, mp4, ...
 --prevent-larger=true,false
-    Prevent conversion to a larger file (default is true).
+    Prevent conversion to a larger file (default is {common.get_global_config_boolean('post_process', 'prevent_larger')}).
 --hwaccel=false,auto,full
-    Enable hardware acceleration, if available (default is false).
+    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel')}).
 --stereo
     Scale down audio to stereo.
 --preset=copy,medium,fast,veryfast
@@ -100,16 +99,16 @@ def parse_args(argv) -> (list[str], dict):
     desired_frame_rate = None
     desired_height = None
     preset = None
-    prevent_larger_file = True
+    prevent_larger_file = common.get_global_config_boolean('post_process', 'prevent_larger')
     output_type = "mkv"
     tune = None
-    hwaccel_requested = None
+    hwaccel_requested = common.get_global_config_option('ffmpeg', 'hwaccel', fallback=None)
     dry_run = False
     keep = False
     stereo = False
     rerun = None
     ignore_errors = None
-    profanity_filter = False
+    profanity_filter = common.get_global_config_boolean('post_process', 'profanity_filter')
     crop_frame = False
 
     try:
@@ -206,7 +205,7 @@ def do_dvr_post_process(input_file,
                         # medium is the ffmpeg default
                         preset=None,
                         # If defined, keep the original file if the transcoded file is larger
-                        prevent_larger_file=True,
+                        prevent_larger_file=common.get_global_config_boolean('post_process', 'prevent_larger'),
                         output_type="mkv",
                         tune=None,
                         # True to attempt to use hardware acceleration for decoding and encoding as available. Falls back to software.
@@ -215,20 +214,20 @@ def do_dvr_post_process(input_file,
                         keep=False,
                         stereo=False,
                         rerun=None,
-                        profanity_filter=False,
+                        profanity_filter=common.get_global_config_boolean('post_process', 'profanity_filter'),
                         crop_frame=False,
                         ignore_errors=None,
                         verbose=False,
                         require_audio=True,
                         ):
     if preset is None:
-        preset = os.environ.get('PRESET', "veryslow")
+        preset = os.environ.get('PRESET', common.get_global_config_option('ffmpeg', 'preset'))
 
     if desired_video_codecs is None:
-        desired_video_codecs = DESIRED_VIDEO_CODECS
+        desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
 
     if desired_audio_codecs is None:
-        desired_audio_codecs = DESIRED_AUDIO_CODECS
+        desired_audio_codecs = common.get_global_config_option('audio', 'codecs').split(',')
 
     if not os.path.isfile(input_file):
         logger.error(f"{input_file} does not exist")
@@ -418,10 +417,10 @@ def do_dvr_post_process(input_file,
                                                                                                     os.W_OK):
             mount_point = dir_filename
         (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=mount_point, prefix=".~tmplnk.",
-                                                                       suffix=output_type)
+                                                                       suffix='.' + output_type)
         if not os.path.isfile(common.FILENAME_CLEAN_LINK):
             (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=dir_filename, prefix=".~tmplnk.",
-                                                                           suffix=output_type)
+                                                                           suffix='.' + output_type)
             if not os.path.isfile(common.FILENAME_CLEAN_LINK):
                 logger.error(f"Could not create temp file link in {mount_point} or {dir_filename}")
                 return 255

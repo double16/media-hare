@@ -62,7 +62,7 @@ def comcut_restore_cli(argv):
     dry_run = False
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'dropbox-comcut-restore.txt') + list(argv),
+        opts, args = getopt.getopt(list(argv),
                                    "hnv",
                                    ["help", "verbose", "dry-run"])
     except getopt.GetoptError:

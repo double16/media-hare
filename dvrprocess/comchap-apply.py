@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
+import getopt
 import logging
 import os
 import random
 import sys
-import getopt
-import tempfile
 import time
+from multiprocessing import Pool
 from subprocess import CalledProcessError
 
 import common
-from multiprocessing import Pool
 from comchap import comchap, find_comskip_ini, compute_comskip_ini_hash
 
 logger = logging.getLogger(__name__)
-
-# Stop processing after this amount of file content has been modified
-# 10G
-DEFAULT_SIZE_LIMIT = 10 * 1024 * 1024 * 1024
-DEFAULT_TIME_LIMIT = 3600
 
 
 def usage():
@@ -28,10 +22,10 @@ there by this program.
 Usage: {sys.argv[0]} [options] media_paths ...
 
 --comskip-ini=comskip.ini
---work-dir=/tmp
--b, --bytes-limit={DEFAULT_SIZE_LIMIT}
+--work-dir={common.get_work_dir()}
+-b, --bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
--t, --time-limit={DEFAULT_TIME_LIMIT}
+-t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --processes=2
 --dry-run
@@ -42,12 +36,15 @@ Usage: {sys.argv[0]} [options] media_paths ...
 
 
 def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, force=False,
-                  size_limit=DEFAULT_SIZE_LIMIT, time_limit=DEFAULT_TIME_LIMIT, processes=1, check_compute=True,
+                  size_limit=common.get_global_config_bytes('background_limits', 'size_limit'),
+                  time_limit=common.get_global_config_time_seconds('background_limits', 'time_limit'),
+                  processes=1,
+                  check_compute=True,
                   delete_log=True):
     logger.info(f"Applying comchap to media files in {','.join(media_paths)}")
 
     if workdir is None:
-        workdir = tempfile.gettempdir()
+        workdir = common.get_work_dir()
 
     if not comskip_ini:
         try:
@@ -162,19 +159,20 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
 
 
 def comchap_apply_cli(argv):
-    workdir = None
+    workdir = common.get_work_dir()
     comskipini = None
     dry_run = False
     force = False
-    bytes_limit = DEFAULT_SIZE_LIMIT
-    time_limit = DEFAULT_TIME_LIMIT
+    bytes_limit = common.get_global_config_bytes('background_limits', 'size_limit')
+    time_limit = common.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
     delete_log = True
 
-    processes = max(1, int(common.core_count() / 3) - 1)
+    processes = common.get_global_config_int('background_limits', 'processes',
+                                             fallback=max(1, int(common.core_count() / 3) - 1))
 
     try:
-        opts, args = getopt.getopt(common.get_arguments_from_config(argv, 'comchap-apply.txt') + list(argv), "nfb:t:p:",
+        opts, args = getopt.getopt(list(argv), "nfb:t:p:",
                                    ["dry-run", "force", "comskip-ini=", "work-dir=", "bytes-limit=", "time-limit=",
                                     "processes=", "keep-log"])
     except getopt.GetoptError:
