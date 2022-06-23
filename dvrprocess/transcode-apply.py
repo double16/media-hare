@@ -86,6 +86,10 @@ def transcode_apply_cli(argv):
         elif opt == '--ignore-compute':
             check_compute = False
 
+    if not plex_url:
+        logger.error("No plex URL, configure in media-hare.ini, section plex, option url")
+        return 255
+
     if common.check_already_running():
         return 0
 

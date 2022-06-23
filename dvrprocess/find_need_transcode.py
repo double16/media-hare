@@ -130,6 +130,8 @@ def need_transcode_generator(
         desired_audio_codecs: list[str] = None,
         max_resolution=None
 ):
+    if not plex_url:
+        raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
     if desired_video_codecs is None and desired_audio_codecs is None:
         desired_video_codecs = common.get_global_config_option('video', 'codecs')
     if host_home is None:

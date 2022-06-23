@@ -206,6 +206,10 @@ def profanity_filter_apply_cli(argv):
     else:
         media_paths = common.get_media_paths()
 
+    if not plex_url:
+        logger.error("No plex URL, configure in media-hare.ini, section plex, option url")
+        return 255
+
     if common.check_already_running():
         return 0
 

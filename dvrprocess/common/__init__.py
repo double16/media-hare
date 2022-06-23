@@ -1227,8 +1227,8 @@ def _get_config_sources(filename: str):
     script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
     # TODO: check Windows places
     return [f"{os.environ['HOME']}/.{filename}",
-            f"{script_dir}/{filename}",
-            f"/etc/{filename}"]
+            f"/etc/{filename}",
+            f"{script_dir}/{filename}"]
 
 
 def find_config(filename: str) -> str:
