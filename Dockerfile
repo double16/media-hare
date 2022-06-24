@@ -82,6 +82,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/tesseract && \
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
+    systemctl enable localtime &&\
     echo "DISPLAY=:0" >> /etc/environment
 
 CMD [ "/usr/bin/systemctl", "default" ]

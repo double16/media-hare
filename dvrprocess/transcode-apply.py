@@ -17,8 +17,24 @@ logger = logging.getLogger(__name__)
 def usage():
     video_codecs = common.get_global_config_option('video', 'codecs')
     audio_codecs = common.get_global_config_option('audio', 'codecs')
-    print(f'{sys.argv[0]} --dry-run --verbose -u http://localhost:32400 '
-          f'-v {video_codecs} -a {audio_codecs} --maxres=480')
+    print(f"""{sys.argv[0]}
+
+Transcode content not matching desired video or audio codecs. This program is sensitive to current compute usage and
+will not start running on a system under load and also will stop if the system becomes too loaded.
+
+--dry-run
+--verbose
+-u, --url=
+    Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400, default is {common.get_plex_url()}
+-v, --video=
+    Desired video codecs. Defaults to {video_codecs}
+-a, --audio=
+    Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
+--maxres=480
+    Limit to specified height. Use to keep a lower powered machine from processing HD videos.
+--ignore-compute
+    Ignore current compute availability.
+""", file=sys.stderr)
 
 
 def transcode_apply(plex_url, dry_run=False, desired_video_codecs=None, desired_audio_codecs=None, max_resolution=None,

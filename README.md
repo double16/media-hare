@@ -22,39 +22,50 @@ like a codec or directory path, please make it configurable.
 
 Assumptions:
 1. Target codecs are H.264 (video) and Opus (audio). Text subtitles are SRT or ASS. Standard DVD and Blu-ray subtitles are kept.
-2. Dropbox is my "backup" solution, so base directory is /home/Dropbox and temp files are ".~" because Dropbox ignores them.
-3. My media is served by Plex. Code generally does not depend on Plex, but supports interacting with it.
+2. Container is MKV. It supports multiple audio and subtitle streams and custom tags. This would be difficult to change. 
+3. Dropbox is my "backup" solution. Code doesn't depend on that but some choices are made because of it. For example, temp files start with ".~" because Dropbox ignores them.
+4. My media is served by Plex. Code generally does not depend on Plex, but supports interacting with it. I'm open to expanding support to other media servers.
 
 The tools are intended to be run in a Docker container because there is specific software that needs to be installed
 and configured. On some architectures it's difficult or may conflict with other software. So I use a Docker container.
 
+If people want to support running outside of Docker, I'll take PRs for that, but I can't do much with support since I
+won't be using it this way.
+
 The following will run the tools periodically and limit runs by size of content changed and run time.
 
 ```shell
-$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/home/Dropbox ghcr.io/double16/media-hare:main
+$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media ghcr.io/double16/media-hare:main
 ```
 
 ## Development Recommendation
+
+### media-hare.ini
+
+Create a config file specific to your setup in your home directory as `.media-hare.ini` (notice the leading period
+because POSIX people like that). You could also place in `/etc/media-hare.ini` if you'd like.
 
 ### docker / Docker Desktop
 
 ```shell
 $ docker build -t media-hare:latest .
 
-$ docker run -it --rm --entrypoint /bin/zsh -v ~/Movies:/Movies -v ~/Mounts/dropbox:/home/Dropbox -v .:/Workspace media-hare:latest
+$ docker run -it --rm --entrypoint /bin/zsh -v ~/Movies:/Movies -v /path/to/media:/media -v .:/Workspace -v ~/.media-hare.ini:/etc/media-hare.ini media-hare:latest
 ```
 
 ### podman
 
-- Mount media folder to ~/Mounts/dropbox
+You'll need to place `media-hare.ini` into your workspace directory.
+
+- Mount media folder to /path/to/media
 - Mount your source folder to ~/Workspace
 
 ```shell
-$ podman machine init --cpus 10 --disk-size 30 -m 16384 -v ~/Movies:/Movies -v ~/Workspace:/Workspace -v ~/Mounts/dropbox:/home/Dropbox
+$ podman machine init --cpus 10 --disk-size 30 -m 16384 -v ~/Movies:/Movies -v ~/Workspace:/Workspace -v /path/to/media:/media
 
 $ podman build -t media-hare:latest .
 
-$ podman run -it --rm --entrypoint /bin/zsh -v /Movies:/Movies -v /home/Dropbox:/home/Dropbox -v .:/Workspace media-hare:latest
+$ podman run -it --rm --entrypoint /bin/zsh -v /Movies:/Movies -v /path/to/media:/media -v .:/Workspace /Workspace/media-hare.ini:/etc/media-hare.ini media-hare:latest
 ```
 
 ## Configuration
@@ -68,7 +79,7 @@ paths specified above to override.
 
 ## dvr_post_process.py
 
-Transcodes videos to target codecs and other settings. See [docs/dvr_post_process.md].
+Transcode videos to target codecs and other settings. See [docs/dvr_post_process.md].
 
 ## transcode-apply.py
 
@@ -100,7 +111,8 @@ TODO
 
 ## ffmpeg recipes
 
-Trim (this can have dead space at the beginning if not on an I-FRM boundary):
+Trim (this can have dead space at the beginning if not on an I-FRM boundary). Try to use `comcut.py`, it will align
+to I-FRM and uses the concat filter for efficient multiple cuts.
 
 ```shell
 $ ffmpeg -ss 00:00:18 -i x.mkv -to 01:05:20 -c copy y.mkv

@@ -83,32 +83,23 @@ def get_media_base():
     return MEDIA_BASE
 
 
+def find_media_base():
+    paths = get_global_config_option('media', 'paths').split(',')
+    if len(paths) > 0:
+        for p in psutil.disk_partitions(all=True):
+            if os.path.isdir(os.path.join(p.mountpoint, paths[0])):
+                return p.mountpoint
+    for root in get_global_config_option('media', 'root').split(','):
+        root = root.replace('$HOME', os.environ['HOME'])
+        if os.path.isdir(root):
+            return root
+    raise FileNotFoundError('No media.root in config')
+
+
 def get_media_paths():
     base = get_media_base()
-    # TODO: move this to config
-    return [f"{base}/Movies",
-            f"{base}/DVRShows",
-            f"{base}/TVShows",
-            f"{base}/ToReview/Movies",
-            f"{base}/PG/Movies",
-            f"{base}/PG/DVRShows",
-            f"{base}/PG/TVShows",
-            ]
-
-
-def find_media_base():
-    # TODO: move this to config
-    for p in psutil.disk_partitions(all=True):
-        base = os.path.join(p.mountpoint, 'Media')
-        if os.path.isdir(os.path.join(base, 'Movies')):
-            return base
-    host_home = '/var/lib/dropbox/docsdata/Media'
-    if os.path.isdir(host_home):
-        return host_home
-    home = os.path.join(os.environ['HOME'], 'Dropbox', 'Media')
-    if os.path.isdir(home):
-        return home
-    return "/home/Dropbox/Media"
+    paths = get_global_config_option('media', 'paths').split(',')
+    return list(map(lambda e: os.path.join(base, e), paths))
 
 
 def fatal(message):

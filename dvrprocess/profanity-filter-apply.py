@@ -30,8 +30,8 @@ Usage: {sys.argv[0]} [options] [media_paths|--url=.]
     Limit runtime. Set to 0 for no limit.
 --processes=2
 --dry-run
---url=
-    Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for the configured value.
+-u, --url=
+    Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for {common.get_plex_url()}
 """, file=sys.stderr)
 
 
