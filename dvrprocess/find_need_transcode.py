@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import getopt
+import logging
 import os
 import random
 import sys
@@ -11,28 +12,48 @@ import requests
 import common
 
 #
-# List files encoded with mpeg2 from the Plex database. Terminated with null.
-#
-
-#
+# Developer notes:
 # List of libraries: /library/sections, want type="show"
 # Shows for a section: /library/sections/2/all from Directory.key in section
 # All Episodes: /library/metadata/83179/allLeaves from Directory.key in show
 #
 
+# TODO: These time multipliers are very specific to my hardware. They should be based on the number of cores,
+#  configured preset, codec, and will probably be widely inaccurate :p
 TRANSCODE_MULTIPLER_480 = 2.0
 TRANSCODE_MULTIPLER_720 = 0.8
 TRANSCODE_MULTIPLER_1080 = 0.5
 TRANSCODE_MULTIPLER_4K = 0.2
 
-dropbox_home = '/home/Dropbox/Media/'
+logger = logging.getLogger(__name__)
 
 
 def usage():
     video_codecs = common.get_global_config_option('video', 'codecs')
     audio_codecs = common.get_global_config_option('audio', 'codecs')
-    print(f'{sys.argv[0]} -u http://localhost:32400 -t "\\n" -d /home/Dropbox2/ '
-          f'-v {video_codecs} -a {audio_codecs} --maxres=480')
+    print(f"""{sys.argv[0]}
+
+List files needing transcode from the Plex database. There are two output formats:
+
+1. Absolute paths terminated with null (this can be changed) with the intent to be piped into xargs or similar tool.
+   If you intend to use this file list to transcode, see transcode-apply.py instead.
+2. Nagios monitoring output, which is also human readable. This also provides some estimates on time to transcode.
+
+-u, --url=
+    Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400, default is {common.get_plex_url()}
+-t, --terminator="\\n"
+    Set the output terminator, defaults to null (0).
+-d, --dir=
+    Directory containing media. Defaults to {common.get_media_base()}
+-v, --video=
+    Desired video codecs. Defaults to {video_codecs}
+-a, --audio=
+    Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
+--maxres=480
+    Limit to specified height. Use to keep a lower powered machine from processing HD videos.
+--nagios
+    Output for Nagios monitoring. Also human readable with statistics and estimates of transcode time.
+""", file=sys.stderr)
 
 
 def find_need_transcode_cli(argv):
@@ -146,9 +167,9 @@ def need_transcode_generator(
         if library.tag == 'Directory' and library.attrib['type'] == 'movie':
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
-            yield from process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
-                                      section_response,
-                                      max_resolution)
+            yield from _process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
+                                       section_response,
+                                       max_resolution)
         elif library.tag == 'Directory' and library.attrib['type'] == 'show' and 'DVR' not in library.attrib['title']:
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
@@ -159,13 +180,13 @@ def need_transcode_generator(
             for show in shows:
                 show_response = requests.get(
                     f'{plex_url}{show.attrib["key"].replace("/children", "/allLeaves")}')
-                yield from process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
-                                          show_response,
-                                          max_resolution)
+                yield from _process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
+                                           show_response,
+                                           max_resolution)
 
 
-def process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str], file_names, host_home,
-                   show_response, max_resolution):
+def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str], file_names, host_home,
+                    show_response, max_resolution):
     episodes = list(filter(
         lambda el: el.tag == 'Video' and (
                 el.attrib['type'] == 'episode' or el.attrib['type'] == 'movie'),
@@ -192,12 +213,14 @@ def process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[s
 
         if ((desired_video_codecs is not None and video_codec not in desired_video_codecs) or (
                 desired_audio_codecs is not None and audio_codec not in desired_audio_codecs)) and file_name != '?' \
-                and file_name.startswith(dropbox_home) \
                 and (
                 max_resolution is None or (video_resolution is not None and int(video_resolution) <= max_resolution)):
-            file_name = file_name.replace(dropbox_home, '')
+
             # Verify file hasn't changed
-            host_file_path = os.path.join(host_home, file_name)
+            host_file_path, file_name = _plex_host_name_to_local(file_name, host_home)
+            if host_file_path is None:
+                continue
+
             if os.path.isfile(host_file_path):
                 current_file_size = os.path.getsize(host_file_path)
                 if current_file_size == file_size and file_name not in file_names:
@@ -219,6 +242,24 @@ def process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[s
                         yield TranscodeFileInfo(file_name, host_file_path, episode.attrib['key'], video_resolution,
                                                 transcode_this_file,
                                                 duration)
+
+
+def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):
+    """
+    Try to find a file referenced by the Plex host name to the local host name.
+    :param file_name: the file name on the host running Plex
+    :param host_home: the current host media home
+    :return: valid file name or None
+    """
+    paths = common.get_global_config_option('media', 'paths').split(',')
+    for path in paths:
+        i = file_name.find(path)
+        if i >= 0:
+            f = os.path.join(host_home, file_name[i:])
+            logger.debug(f"Checking if %s is a valid path for %s", f, file_name)
+            if os.path.isfile(f):
+                return f, file_name[i:]
+    return None, None
 
 
 if __name__ == '__main__':

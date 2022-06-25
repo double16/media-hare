@@ -1,0 +1,9 @@
+[Unit]
+Description=Configure localtime from TZ
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "[[ -f /usr/share/zoneinfo/${TZ} ]] && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime"
+
+[Install]
+WantedBy=multi-user.target
