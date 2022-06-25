@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import getopt
+import logging
 import os
 import random
 import sys
@@ -23,6 +24,8 @@ TRANSCODE_MULTIPLER_480 = 2.0
 TRANSCODE_MULTIPLER_720 = 0.8
 TRANSCODE_MULTIPLER_1080 = 0.5
 TRANSCODE_MULTIPLER_4K = 0.2
+
+logger = logging.getLogger(__name__)
 
 
 def usage():
@@ -253,7 +256,7 @@ def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):
         i = file_name.find(path)
         if i >= 0:
             f = os.path.join(host_home, file_name[i:])
-            print(f"Checking if {f} is a valid path for {file_name}")
+            logger.debug(f"Checking if %s is a valid path for %s", f, file_name)
             if os.path.isfile(f):
                 return f, file_name[i:]
     return None, None
