@@ -23,13 +23,17 @@ Searches for content on which to apply the profanity filter.
 
 Usage: {sys.argv[0]} [options] [media_paths|--url=.]
 
+This program will run only if configuration profanity_filter.enable is set to true, or --force is used.
+ 
+--dry-run
+--force
+    Override configuration profanity_filter.enable
 --work-dir={common.get_work_dir()}
 --bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
 --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --processes=2
---dry-run
 -u, --url=
     Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for {common.get_plex_url()}
 """, file=sys.stderr)
@@ -167,14 +171,15 @@ def profanity_filter_apply_cli(argv):
     time_limit = common.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
     plex_url = None
+    force = False
 
     processes = common.get_global_config_int('background_limits', 'processes',
                                              fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
         opts, args = getopt.getopt(list(argv),
-                                   "nb:t:p:u:",
-                                   ["dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=", "url="])
+                                   "fnb:t:p:u:",
+                                   ["force", "dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=", "url="])
     except getopt.GetoptError:
         usage()
         return 255
@@ -184,6 +189,8 @@ def profanity_filter_apply_cli(argv):
             return 255
         elif opt in ["-n", "--dry-run"]:
             dry_run = True
+        elif opt in ["-f", "--force"]:
+            force = True
         elif opt == "--work-dir":
             workdir = arg
         elif opt in ["-b", "--bytes-limit"]:
@@ -198,6 +205,10 @@ def profanity_filter_apply_cli(argv):
                 plex_url = common.get_plex_url()
             else:
                 plex_url = arg
+
+    if not common.get_global_config_boolean('profanity_filter', 'enable', False) and not force:
+        logger.info("profanity filter not enabled, set profanity_filter.enable to true or use --force")
+        return 0
 
     if args:
         media_paths = args

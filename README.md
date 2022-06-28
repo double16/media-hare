@@ -9,14 +9,16 @@
 Sundry tools for maintaining a personal media library. Rabbits (hares) like to be clean and are frequently grooming.
 The tools here are intended to groom your media files for various purposes such as:
 
-1. transcode to storage optimized codecs
-2. cut commercials from DVR recordings
-3. profanity filtering
-4. be nice to low powered (compute, iops) machines
+1. Transcode to storage optimized codecs
+2. Cut commercials from DVR recordings
+3. Profanity filtering
+4. Be nice to low powered (compute, iops) machines
+5. Tested with ATSC 1.0, DVD region 1 and Blu-Ray region 1. Should work with anything ffmpeg supports, but might need
+   changes. Create an issue if you have problems with the output of `ffprobe` on the file.
 
 ## Work in Progress
 
-This repository is a work in progress! I wrote it for my personal needs and thought others may benefit. Over time I
+This repository is a work in progress! I wrote it for my personal needs and thought others may benefit. Over time, I
 want to make it configurable to apply to a wider audience. Pull requests are welcome! If you want to change something
 like a codec or directory path, please make it configurable.
 
@@ -32,18 +34,40 @@ and configured. On some architectures it's difficult or may conflict with other 
 If people want to support running outside of Docker, I'll take PRs for that, but I can't do much with support since I
 won't be using it this way.
 
-The following will run the tools periodically and limit runs by size of content changed and run time.
+## TL;DR
 
-```shell
-$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media ghcr.io/double16/media-hare:main
-```
-
-## Development Recommendation
+I just want to run it ...
 
 ### media-hare.ini
 
 Create a config file specific to your setup in your home directory as `.media-hare.ini` (notice the leading period
-because POSIX people like that). You could also place in `/etc/media-hare.ini` if you'd like.
+because POSIX people like that). You could also place in `/etc/media-hare.ini` if you'd like. You only need to add
+options that are different from [media-hare.defaults.ini](dvrprocess/media-hare.defaults.ini). 
+
+### Plex running on Docker
+
+If you're running Plex on Docker, running is easier.
+
+Consider running the (plex-hare)[https://github.com/double16/plex-hare] container. There are examples for using
+Docker Compose. It integrates with `media-hare` and does process priority tuning.
+
+Otherwise, run something similar to the following, replacing time zone and paths as necessary.
+
+```shell
+$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
+```
+
+### Plex running in anyway outside of Docker
+
+Install Docker for Desktop from https://www.docker.com/products/docker-desktop/. Most of the defaults should be fine except that you likely want to increase the number of CPUs to 1 or 2 less than the maximum available. Transcoding is a compute heavy operation.
+
+Open a shell like Terminal or Powershell and run the following, replacing time zone and paths as necessary.
+
+```shell
+$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
+```
+
+## Development Recommendation
 
 ### docker / Docker Desktop
 
@@ -79,7 +103,7 @@ paths specified above to override.
 
 ## dvr_post_process.py
 
-Transcode videos to target codecs and other settings. See [docs/dvr_post_process.md].
+Transcode videos to target codecs and other settings. See [docs/dvr_post_process.md](docs/dvr_post_process.md).
 
 ## transcode-apply.py
 
