@@ -2,7 +2,6 @@
 import getopt
 import logging
 import os
-import random
 import sys
 import time
 from multiprocessing import Pool
@@ -11,7 +10,7 @@ from subprocess import CalledProcessError
 import requests
 
 import common
-from find_need_transcode import need_transcode_generator, TranscodeFileInfo
+from find_need_transcode import need_transcode_generator
 from profanity_filter import profanity_filter
 
 logger = logging.getLogger(__name__)
@@ -39,24 +38,6 @@ This program will run only if configuration profanity_filter.enable is set to tr
 """, file=sys.stderr)
 
 
-def os_walk_generator(media_paths):
-    random.shuffle(media_paths)
-    for media_path in media_paths:
-        for root, dirs, files in os.walk(media_path, topdown=True):
-            if '.pf_skip' in files:
-                dirs.clear()
-                continue
-            random.shuffle(dirs)
-            random.shuffle(files)
-
-            for file in common.filter_for_mkv(files):
-                filepath = os.path.join(root, file)
-                input_info = common.find_input_info(filepath)
-                if not input_info:
-                    continue
-                yield TranscodeFileInfo(file, filepath, None, None, None, None)
-
-
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
                            size_limit=common.get_global_config_bytes('background_limits', 'size_limit'),
                            time_limit=common.get_global_config_time_seconds('background_limits', 'time_limit'),
@@ -70,10 +51,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
     bytes_processed = 0
     time_start = None
 
-    if media_paths:
-        generator = os_walk_generator(media_paths)
-    else:
-        generator = need_transcode_generator(plex_url=plex_url, desired_video_codecs=['all'])
+    generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths, desired_video_codecs=['all'])
 
     pool = Pool(processes=processes)
     try:
@@ -217,7 +195,7 @@ def profanity_filter_apply_cli(argv):
     else:
         media_paths = common.get_media_paths()
 
-    if not plex_url:
+    if not plex_url and not media_paths:
         logger.error("No plex URL, configure in media-hare.ini, section plex, option url")
         return 255
 

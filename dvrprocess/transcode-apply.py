@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def usage():
     video_codecs = common.get_global_config_option('video', 'codecs')
     audio_codecs = common.get_global_config_option('audio', 'codecs')
-    print(f"""{sys.argv[0]}
+    print(f"""{sys.argv[0]} [options] [media_paths]
 
 Transcode content not matching desired video or audio codecs. This program is sensitive to current compute usage and
 will not start running on a system under load and also will stop if the system becomes too loaded.
@@ -37,9 +37,11 @@ will not start running on a system under load and also will stop if the system b
 """, file=sys.stderr)
 
 
-def transcode_apply(plex_url, dry_run=False, desired_video_codecs=None, desired_audio_codecs=None, max_resolution=None,
+def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_codecs=None, desired_audio_codecs=None,
+                    max_resolution=None,
                     verbose=False):
-    for file_info in need_transcode_generator(plex_url=plex_url, desired_video_codecs=desired_video_codecs,
+    for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
+                                              desired_video_codecs=desired_video_codecs,
                                               desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution):
 
         try:
@@ -50,7 +52,7 @@ def transcode_apply(plex_url, dry_run=False, desired_video_codecs=None, desired_
         except FileExistsError:
             # conflict with multiple processors
             post_process_code = 255
-        if post_process_code == 0:
+        if post_process_code == 0 and plex_url and file_info.item_key:
             logger.info(f'HTTP PUT: {plex_url}{file_info.item_key}/analyze')
             if not dry_run:
                 requests.put(f'{plex_url}{file_info.item_key}/analyze')
@@ -66,6 +68,7 @@ def should_transcode_run():
 
 def transcode_apply_cli(argv):
     plex_url = common.get_plex_url()
+    media_paths = None
     desired_video_codecs = None
     desired_audio_codecs = None
     max_resolution = None
@@ -102,9 +105,11 @@ def transcode_apply_cli(argv):
         elif opt == '--ignore-compute':
             check_compute = False
 
-    if not plex_url:
-        logger.error("No plex URL, configure in media-hare.ini, section plex, option url")
-        return 255
+    if args:
+        media_paths = args
+        plex_url = None
+    elif not plex_url:
+        media_paths = common.get_media_paths()
 
     if common.check_already_running():
         return 0
@@ -113,7 +118,7 @@ def transcode_apply_cli(argv):
         logger.warning(f"not enough compute available for transcoding")
         return 255
 
-    transcode_apply(plex_url, dry_run=dry_run, desired_video_codecs=desired_video_codecs,
+    transcode_apply(plex_url, media_paths=media_paths, dry_run=dry_run, desired_video_codecs=desired_video_codecs,
                     desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution, verbose=verbose)
     return 0
 

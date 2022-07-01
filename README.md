@@ -103,35 +103,41 @@ paths specified above to override.
 
 ## dvr_post_process.py
 
-Transcode videos to target codecs and other settings. See [docs/dvr_post_process.md](docs/dvr_post_process.md).
+Transcode videos to target codecs and other settings. Targets a specific language and keeps only one audio stream (it does preserve additional audio added by the profanity filter). Do not use if you want multiple language tracks.
+
+See [docs/dvr_post_process.md](docs/dvr_post_process.md).
 
 ## transcode-apply.py
 
-TODO
+Searches for media that needs to be transcoded and calls dvr_post_process.py. In a container runs periodically with time and size limits. See [docs/transcode-apply.md](docs/transcode-apply.md).
 
 ## profanity_filter.py
 
-TODO
+Filters profanity using subtitles. See [docs/profanity_filter.md](docs/profanity_filter.md).
 
 ## profanity-apply-filter.py
 
-TODO
+Searches for media that needs the profanity filter applied. In a container runs periodically with time and size limits. See [docs/profanity-apply-filter.md](docs/profanity-apply-filter.md).
 
 ## comchap.py
 
-TODO
+Searches for commercials in media. Add chapters in media and EDL files for processing by other tools. See [docs/comchap.md](docs/comchap.md).
 
 ## comcut.py
 
-TODO
+Cuts commercials from media. See [docs/comcut.md](docs/comcut.md).
 
 ## comtune.py
 
-TODO
+Performs extra commercial skip tuning. For TV shows performs extensive tuning per season. See [docs/comtune.md](docs/comtune.md).
 
 ## smart-comcut.py
 
-TODO
+Intended to cut commercials for TV shows only when cuts look consistent and ignores outliers. See [docs/smart-comcut.md](docs/smart-comcut.md).
+
+## scene-extract.py
+
+Extracts scenes from media into separate files using an EDL file. See [docs/scene-extract.md](docs/scene-extract.md).
 
 ## ffmpeg recipes
 

@@ -1,0 +1,3 @@
+# scene-extract.py
+
+TODO

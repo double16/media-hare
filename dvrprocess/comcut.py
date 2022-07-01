@@ -202,7 +202,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                                   f"Chapter {i + 1}", min_chapter_seconds):
                             i += 1
 
-                    partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', infile))
+                    partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                     partsfd.write(f"inpoint {start}\n")
                     partsfd.write(f"outpoint {end}\n")
 
@@ -229,7 +229,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                               f"Chapter {i + 1}",
                                               min_chapter_seconds):
                         i += 1
-                partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', infile))
+                partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                 partsfd.write(f"inpoint {start}\n")
 
     if hascommercials or len(video_filters) > 0 or len(audio_filters) > 0:
@@ -263,8 +263,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             # Preserve original audio codec??
             for idx, stream in enumerate(
                     filter(lambda s: s['codec_type'] == common.CODEC_AUDIO, input_info['streams'])):
-                ffmpeg_command.extend([f"-c:1:a:{idx}", common.ffmpeg_codec("opus")])
-                common.extend_opus_arguments(ffmpeg_command, stream, f"1:a:{idx}", audio_filters)
+                ffmpeg_command.extend([f"-c:{stream['index']}", common.ffmpeg_codec("opus")])
+                common.extend_opus_arguments(ffmpeg_command, stream, f"{stream['index']}", audio_filters)
 
         # the concat demuxer sets all streams to default
         for stream in input_info['streams']:

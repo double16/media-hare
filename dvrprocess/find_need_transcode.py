@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def usage():
     video_codecs = common.get_global_config_option('video', 'codecs')
     audio_codecs = common.get_global_config_option('audio', 'codecs')
-    print(f"""{sys.argv[0]}
+    print(f"""{sys.argv[0]} [options] [media_paths]
 
 List files needing transcode from the Plex database. There are two output formats:
 
@@ -58,6 +58,7 @@ List files needing transcode from the Plex database. There are two output format
 
 def find_need_transcode_cli(argv):
     plex_url = common.get_plex_url()
+    media_paths = None
     host_home = common.get_media_base()
     terminator = '\0'
     desired_video_codecs = None
@@ -95,13 +96,19 @@ def find_need_transcode_cli(argv):
             else:
                 terminator = arg
 
+    if args:
+        media_paths = args
+        plex_url = None
+    elif not plex_url:
+        media_paths = common.get_media_paths()
+
     if nagios_output:
         file_names = set()
         runtime_minutes = 0
         transcode_minutes = 0
         transcode_details = []
-        for file_info in need_transcode_generator(plex_url, host_home, desired_video_codecs, desired_audio_codecs,
-                                                  max_resolution):
+        for file_info in need_transcode_generator(plex_url, media_paths, host_home, desired_video_codecs,
+                                                  desired_audio_codecs, max_resolution):
             file_names.update([file_info.file_name])
             runtime_minutes += file_info.runtime
             transcode_minutes += file_info.transcode_time
@@ -126,8 +133,8 @@ def find_need_transcode_cli(argv):
             print(e)
         return code
     else:
-        for file_info in need_transcode_generator(plex_url, host_home, desired_video_codecs, desired_audio_codecs,
-                                                  max_resolution):
+        for file_info in need_transcode_generator(plex_url, media_paths, host_home, desired_video_codecs,
+                                                  desired_audio_codecs, max_resolution):
             sys.stdout.write(file_info.file_name)
             sys.stdout.write(terminator)
         return 0
@@ -135,28 +142,81 @@ def find_need_transcode_cli(argv):
 
 class TranscodeFileInfo(object):
 
-    def __init__(self, file_name, host_file_path, item_key, video_resolution, transcode_time, runtime):
+    def __init__(self, file_name: str, host_file_path: str, item_key: [str, None], video_resolution: int, runtime: int):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.item_key = item_key
         self.video_resolution = video_resolution
-        self.transcode_time = transcode_time
         self.runtime = runtime
+        self.transcode_time = runtime
+
+        if video_resolution is not None and runtime is not None:
+            if video_resolution <= 480:
+                multiplier = TRANSCODE_MULTIPLER_480
+            elif video_resolution <= 720:
+                multiplier = TRANSCODE_MULTIPLER_720
+            elif video_resolution <= 1080:
+                multiplier = TRANSCODE_MULTIPLER_1080
+            else:
+                multiplier = TRANSCODE_MULTIPLER_4K
+            # TODO: base upon available compute and codec
+            self.transcode_time = int(runtime / multiplier)
+
+
+def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desired_video_codecs: list[str],
+                             max_resolution):
+    random.shuffle(media_paths)
+    for media_path in media_paths:
+        for root, dirs, files in os.walk(media_path, topdown=True):
+            random.shuffle(dirs)
+            random.shuffle(files)
+
+            for file in common.filter_for_mkv(files):
+                filepath = os.path.join(root, file)
+                input_info = common.find_input_info(filepath)
+                if not input_info:
+                    continue
+
+                video_streams = list(
+                    filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_VIDEO, input_info['streams']))
+                min_height = min(map(lambda e: int(e['height']), video_streams))
+                if max_resolution is not None and min_height > max_resolution:
+                    continue
+                if desired_video_codecs is not None:
+                    video_codecs = set(map(lambda e: e[common.K_CODEC_NAME], video_streams))
+                    if video_codecs.issubset(set(desired_video_codecs)):
+                        continue
+
+                if desired_audio_codecs is not None:
+                    audio_streams = list(
+                        filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_AUDIO, input_info['streams']))
+                    audio_codecs = set(map(lambda e: e[common.K_CODEC_NAME], audio_streams))
+                    if audio_codecs.issubset(set(desired_audio_codecs)):
+                        continue
+
+                yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
+                                        runtime=int(float(input_info[common.K_FORMAT]['duration'])), item_key=None)
 
 
 def need_transcode_generator(
         plex_url=common.get_plex_url(),
+        media_paths=None,
         host_home=None,
         desired_video_codecs: list[str] = None,
         desired_audio_codecs: list[str] = None,
         max_resolution=None
 ):
-    if not plex_url:
-        raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
     if desired_video_codecs is None and desired_audio_codecs is None:
-        desired_video_codecs = common.get_global_config_option('video', 'codecs')
+        desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
     if host_home is None:
         host_home = common.get_media_base()
+
+    if media_paths:
+        yield from _os_walk_media_generator(media_paths, desired_video_codecs=desired_video_codecs,
+                                            desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution)
+        return
+    if not plex_url:
+        raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
 
     file_names = set()
 
@@ -227,21 +287,12 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                     file_names.update([file_name])
                     if video_resolution is not None:
                         if video_resolution.endswith("k"):
-                            video_resolution = float(video_resolution[0:-1]) * 1000
+                            video_resolution = int(float(video_resolution[0:-1]) * 1000)
                         else:
                             video_resolution = int(video_resolution)
-                        if video_resolution <= 480:
-                            multiplier = TRANSCODE_MULTIPLER_480
-                        elif video_resolution <= 720:
-                            multiplier = TRANSCODE_MULTIPLER_720
-                        elif video_resolution <= 1080:
-                            multiplier = TRANSCODE_MULTIPLER_1080
-                        else:
-                            multiplier = TRANSCODE_MULTIPLER_4K
-                        transcode_this_file = int(duration / multiplier)
-                        yield TranscodeFileInfo(file_name, host_file_path, episode.attrib['key'], video_resolution,
-                                                transcode_this_file,
-                                                duration)
+                        yield TranscodeFileInfo(file_name=file_name, host_file_path=host_file_path,
+                                                item_key=episode.attrib['key'], video_resolution=video_resolution,
+                                                runtime=duration)
 
 
 def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):
