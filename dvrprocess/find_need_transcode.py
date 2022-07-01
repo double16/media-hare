@@ -159,7 +159,7 @@ class TranscodeFileInfo(object):
                 multiplier = TRANSCODE_MULTIPLER_1080
             else:
                 multiplier = TRANSCODE_MULTIPLER_4K
-            # TODO: base upon available compute and codec
+            # TODO: base upon available compute, codec and preset
             self.transcode_time = int(runtime / multiplier)
 
 
