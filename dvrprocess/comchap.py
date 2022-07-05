@@ -481,15 +481,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             if tempoutfile is not None:
                 os.replace(tempoutfile, outfile)
         if infile != outfile:
-            infile_stat = os.stat(infile)
-            try:
-                os.chown(outfile, infile_stat.st_uid, infile_stat.st_gid)
-            except OSError:
-                logger.warning(f"Changing ownership of {outfile} failed, continuing")
-            try:
-                os.chmod(outfile, infile_stat.st_mode)
-            except OSError:
-                logger.warning(f"Changing permissions of {outfile} failed, continuing")
+            common.match_owner_and_perm(target_path=outfile, source_path=infile)
     else:
         # add K_COMSKIP_HASH marker
         if infile.endswith(".mkv") and infile == outfile and mkvpropedit:

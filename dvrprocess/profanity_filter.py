@@ -478,16 +478,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     #
     logger.info(f"Finished filtering of {filename} to {common.TEMPFILENAME}")
 
-    filename_stat = os.stat(filename)
-
-    try:
-        os.chown(common.TEMPFILENAME, filename_stat.st_uid, filename_stat.st_gid)
-    except OSError:
-        logger.warning(f"Changing ownership of {common.TEMPFILENAME} failed, continuing")
-    try:
-        os.chmod(common.TEMPFILENAME, filename_stat.st_mode)
-    except OSError:
-        logger.warning(f"Changing permissions of {common.TEMPFILENAME} failed, continuing")
+    common.match_owner_and_perm(target_path=common.TEMPFILENAME, source_path=filename)
 
     # Hide original file in case OUTPUT_TYPE is the same as input
     if not debug:

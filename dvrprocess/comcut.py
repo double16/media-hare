@@ -276,7 +276,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         ffmpeg_command.append('-y')
 
         tempoutfile = None
-        infile_stat = os.stat(infile)
         if infile == outfile:
             tempfd, tempoutfile = tempfile.mkstemp(suffix='.' + outextension, dir=workdir)
             os.close(tempfd)
@@ -303,15 +302,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         if tempoutfile is not None:
             shutil.move(tempoutfile, outfile)
 
-        # copy ownership and permissions of infile
-        try:
-            os.chown(outfile, infile_stat.st_uid, infile_stat.st_gid)
-        except OSError:
-            logger.warning(f"Changing ownership of {outfile} failed, continuing")
-        try:
-            os.chmod(outfile, infile_stat.st_mode)
-        except OSError:
-            logger.warning(f"Changing permissions of {outfile} failed, continuing")
+        common.match_owner_and_perm(target_path=outfile, source_path=infile)
 
         if force_clear_edl or (not delete_edl and infile == outfile):
             # change EDL file to match cut

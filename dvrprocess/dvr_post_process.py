@@ -639,15 +639,7 @@ def do_dvr_post_process(input_file,
                     f", keeping the original")
         return 0
 
-    try:
-        os.chown(common.TEMPFILENAME, filename_stat.st_uid, filename_stat.st_gid)
-    except OSError:
-        logger.warning(f"Changing ownership of {common.TEMPFILENAME} failed, continuing")
-
-    try:
-        os.chmod(common.TEMPFILENAME, filename_stat.st_mode)
-    except OSError:
-        logger.warning(f"Changing permission of {common.TEMPFILENAME} failed, continuing")
+    common.match_owner_and_perm(target_path=common.TEMPFILENAME, source_path=filename)
 
     # Hide original file in case OUTPUT_TYPE is the same as input
     os.replace(filename, common.HIDDEN_FILENAME)

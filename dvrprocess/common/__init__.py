@@ -753,6 +753,7 @@ def parse_edl(filename) -> list[EdlEvent]:
             else:
                 raise Exception(f"Unknown EDL type: {parts[2]}")
             events.append(EdlEvent(start, end, event_type, parts[3].strip() if 3 < len(parts) else None))
+    events.sort(key=lambda e: e.start)
     return events
 
 
@@ -1365,3 +1366,21 @@ def get_global_config() -> configparser.ConfigParser:
 def _load_media_hare_config() -> configparser.ConfigParser:
     defaults = load_config('media-hare.defaults.ini')
     return load_config('media-hare.ini', config=defaults)
+
+
+def match_owner_and_perm(target_path: str, source_path: str) -> bool:
+    result = True
+    source_stat = os.stat(source_path)
+    try:
+        os.chown(target_path, source_stat.st_uid, source_stat.st_gid)
+    except OSError:
+        logger.warning(f"Changing ownership of {target_path} failed, continuing")
+        result = False
+
+    try:
+        os.chmod(target_path, source_stat.st_mode)
+    except OSError:
+        logger.warning(f"Changing permission of {target_path} failed, continuing")
+        result = False
+
+    return result

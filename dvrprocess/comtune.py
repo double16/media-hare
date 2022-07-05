@@ -212,6 +212,7 @@ def write_ini(path, max_avg_brightness, max_volume, non_uniformity):
 
     with open(path, "w") as f:
         config.write(f, space_around_delimiters=False)
+    common.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
 
 
 def write_ini_from_solution(path, genes: list[ComskipGene], solution):
@@ -233,6 +234,7 @@ def write_ini_from_solution(path, genes: list[ComskipGene], solution):
 
     with open(path, "w") as f:
         config.write(f, space_around_delimiters=False)
+    common.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
 
 
 def is_tuned(path):
