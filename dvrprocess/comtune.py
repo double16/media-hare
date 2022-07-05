@@ -264,11 +264,10 @@ def is_tuned(path):
         (INI_GROUP_MAIN_SETTINGS, 'test_brightness'),
         (INI_GROUP_MAIN_SETTINGS, 'max_brightness'),
         (INI_GROUP_MAIN_SETTINGS, 'max_volume'),
-        (INI_GROUP_MAIN_SETTINGS, 'non_uniformity'),
     ]
 
     for section, item in tuned_settings:
-        if not config.has_option(section, item) or config.getint(section, item) <= 0:
+        if not config.has_option(section, item):
             logger.debug("%s.%s.%s not found", ini_path, section, item)
             return False
 
@@ -471,7 +470,7 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
 def paths(infile, workdir):
     infile_base = common.remove_extension(os.path.basename(infile))
     csv_path = os.path.join(workdir, f"{infile_base}.csv")
-    video_ini = os.path.join(workdir, f"{infile_base}.comskip.ini")
+    video_ini = os.path.join(os.path.dirname(os.path.abspath(infile)), f"{infile_base}.comskip.ini")
     return infile_base, csv_path, video_ini
 
 
