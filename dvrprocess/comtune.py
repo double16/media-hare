@@ -237,10 +237,10 @@ def write_ini_from_solution(path, genes: list[ComskipGene], solution):
     common.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
 
 
-def is_tuned(path):
+def is_tuned(path, workdir):
     ini_path = None
     if os.path.isfile(path):
-        infile_base, csv_path, ini_path = paths(path, os.path.dirname(os.path.abspath(path)))
+        infile_base, csv_path, ini_path = paths(path, workdir)
     if os.path.isdir(path):
         ini_path = os.path.join(os.path.abspath(path), 'comskip.ini')
     logger.debug("is_tuned(%s) looking for config %s", path, ini_path)
@@ -648,7 +648,7 @@ def comtune_cli(argv):
     pool = Pool(processes=processes)
 
     def single_file_tune(f):
-        if is_tuned(f) and force == 0:
+        if is_tuned(f, workdir) and force == 0:
             logger.info("%s already tuned, use --force to force tuning", f)
         elif common.has_chapters_from_source_media(common.find_input_info(f))[0]:
             logger.info(f"Skipping {f} because we found existing chapters from another source")
@@ -696,7 +696,7 @@ def comtune_cli(argv):
                     if is_show:
                         season_dir = os.path.dirname(video_files[0])
                         try:
-                            if is_tuned(season_dir) and force == 0:
+                            if is_tuned(season_dir, workdir) and force == 0:
                                 logger.info("%s already tuned, use --force to force tuning", season_dir)
                             else:
                                 tune_show(season_dir=season_dir, pool=pool, files=video_files, workdir=workdir,
@@ -704,13 +704,11 @@ def comtune_cli(argv):
                         except BaseException as e:
                             logger.error(f"Skipping show {season_dir}, uncaught exception", exc_info=e)
                     else:
-                        for file in files:
+                        for filepath in video_files:
                             if should_stop():
                                 pool.close()
                                 return return_code.code()
-                            filepath = os.path.join(root, file)
-                            if common.is_video_file(filepath):
-                                single_file_tune(filepath)
+                            single_file_tune(filepath)
             if should_stop():
                 pool.close()
                 return return_code.code()
