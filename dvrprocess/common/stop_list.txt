@@ -88,6 +88,11 @@ panty
 panties
 take off .* clothes
 take .* clothes off
+look up .* dress
+look down .* dress
+look down .* shirt
+get in .* pants
+keep it in .* pants
 undress
 have sex
 having sex

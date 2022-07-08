@@ -141,6 +141,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'")
                     continue
                 elif edl_event.event_type == common.EdlType.MUTE:
+                    # TODO: filter text subtitles
                     audio_filters.append(f"volume=enable='between(t,"
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'"
                                          f":volume=0")
