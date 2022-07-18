@@ -23,7 +23,7 @@ COPY requirements.txt /tmp/
 
 # mono-* deps line must match Subtitle-Edit version
 RUN apt-get -q update && \
-    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate \
+    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq \
     mono-runtime libmono-system-windows-forms4.0-cil libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat58 libsdl1.2-compat &&\
     pip -q --no-input install -r /tmp/requirements.txt && \
@@ -83,6 +83,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
     systemctl enable localtime &&\
-    echo "DISPLAY=:0" >> /etc/environment
+    echo "DISPLAY=:0" >> /etc/environment &&\
+    cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 
 CMD [ "/usr/bin/systemctl", "default" ]

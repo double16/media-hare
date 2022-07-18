@@ -119,6 +119,10 @@ Filters profanity using subtitles. See [docs/profanity_filter.md](docs/profanity
 
 Searches for media that needs the profanity filter applied. In a container runs periodically with time and size limits. See [docs/profanity-apply-filter.md](docs/profanity-apply-filter.md).
 
+## profanity-filter-report.py
+
+Reports the changes made by the profanity filter in one or more mkv files. Use this to evaluate how your phrase lists are performing. See [docs/profanity-filter-report.md](docs/profanity-filter-report.md).
+
 ## comchap.py
 
 Searches for commercials in media. Add chapters in media and EDL files for processing by other tools. See [docs/comchap.md](docs/comchap.md).

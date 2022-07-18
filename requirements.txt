@@ -1,9 +1,9 @@
 ass-parser==1.0
-hunspell==0.5.5
-numpy==1.22.1
-plexapi==4.9.1
-psutil==5.9.0
 pysrt==1.1.2
-requests==2.27.1
-pygad==2.16.3
-dropbox==11.28.0
+hunspell==0.5.5
+numpy==1.23.1
+plexapi==4.11.2
+psutil==5.9.1
+requests==2.28.1
+pygad==2.17.0
+dropbox==11.33.0

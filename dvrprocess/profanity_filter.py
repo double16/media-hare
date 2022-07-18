@@ -49,6 +49,7 @@ Filter audio and subtitles for profanity.
 - The 'censor_list.txt' file contains phrases that are muted and the phrase is marked out in the subtitle.
 - The 'stop_list.txt' file contains phrases that are muted and the entire subtitle is marked.
 - Set the tag 'PFILTER_SKIP' in the video to 'y' or 't' to skip filtering.
+  ex: mkvpropedit filename.mkv --tags global:{os.path.join(os.path.join(os.path.dirname(os.path.dirname(common.__file__))), 'mkv-filter-skip.xml')}
 
 --dry-run
     Output command that would be used but do nothing
