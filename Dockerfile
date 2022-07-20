@@ -76,6 +76,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/comtune.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/scene-extract.py /usr/local/bin/ &&\
+    ln -s /usr/local/share/dvrprocess/edl-normalize.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/find_need_transcode.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/transcode-apply.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/smart-comcut.py /usr/local/bin/ &&\

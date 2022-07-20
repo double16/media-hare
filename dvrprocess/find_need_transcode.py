@@ -177,6 +177,8 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                 if not input_info:
                     continue
 
+                need_transcode = False
+
                 video_streams = list(
                     filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_VIDEO, input_info['streams']))
                 min_height = min(map(lambda e: int(e['height']), video_streams))
@@ -184,18 +186,19 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                     continue
                 if desired_video_codecs is not None:
                     video_codecs = set(map(lambda e: e[common.K_CODEC_NAME], video_streams))
-                    if video_codecs.issubset(set(desired_video_codecs)):
-                        continue
+                    if not video_codecs.issubset(set(desired_video_codecs)):
+                        need_transcode = True
 
                 if desired_audio_codecs is not None:
                     audio_streams = list(
                         filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_AUDIO, input_info['streams']))
                     audio_codecs = set(map(lambda e: e[common.K_CODEC_NAME], audio_streams))
-                    if audio_codecs.issubset(set(desired_audio_codecs)):
-                        continue
+                    if not audio_codecs.issubset(set(desired_audio_codecs)):
+                        need_transcode = True
 
-                yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
-                                        runtime=int(float(input_info[common.K_FORMAT]['duration'])), item_key=None)
+                if need_transcode:
+                    yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
+                                            runtime=int(float(input_info[common.K_FORMAT]['duration'])), item_key=None)
 
 
 def need_transcode_generator(
@@ -208,6 +211,7 @@ def need_transcode_generator(
 ):
     if desired_video_codecs is None and desired_audio_codecs is None:
         desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
+        desired_audio_codecs = common.get_global_config_option('audio', 'codecs').split(',')
     if host_home is None:
         host_home = common.get_media_base()
 
