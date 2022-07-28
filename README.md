@@ -14,7 +14,7 @@ The tools here are intended to groom your media files for various purposes such 
 3. Profanity filtering
 4. Be nice to low powered (compute, iops) machines
 5. Tested with ATSC 1.0, DVD region 1 and Blu-Ray region 1. Should work with anything ffmpeg supports, but might need
-   changes. Create an issue if you have problems with the output of `ffprobe` on the file.
+   changes. Create an issue if you have problems. Include the output of `ffprobe` on the file.
 
 ## Work in Progress
 
@@ -142,24 +142,3 @@ Intended to cut commercials for TV shows only when cuts look consistent and igno
 ## scene-extract.py
 
 Extracts scenes from media into separate files using an EDL file. See [docs/scene-extract.md](docs/scene-extract.md).
-
-## ffmpeg recipes
-
-Trim (this can have dead space at the beginning if not on an I-FRM boundary). Try to use `comcut.py`, it will align
-to I-FRM and uses the concat filter for efficient multiple cuts.
-
-```shell
-$ ffmpeg -ss 00:00:18 -i x.mkv -to 01:05:20 -c copy y.mkv
-```
-
-Shift subtitle:
-
-```shell
-$ ffmpeg -itsoffset 1.5 -i x.srt -c copy y.srt
-```
-
-Add subtitle
-
-```shell
-$ ffmpeg -i x.mkv -i x.srt -map 0 -map 1 -c copy -metadata:s:a language=eng -metadata:s:s language=eng y.mkv
-```
