@@ -492,8 +492,25 @@ def has_stream_with_language(input_info, codec_type, codec_names=None, language=
                     input_info['streams']))) > 0
 
 
-def find_video_stream(input_info):
-    streams = list(filter(lambda stream: stream[K_CODEC_TYPE] == CODEC_VIDEO, input_info['streams']))
+def find_video_streams(input_info) -> list[dict]:
+    """
+    Find all video streams that do not have other purposes, such as attached pictures.
+    :param input_info:
+    :return: list of stream info maps
+    """
+    streams = list(filter(lambda stream: stream[K_CODEC_TYPE] == CODEC_VIDEO and (
+            not stream.get('disposition') or stream.get('disposition').get('attached_pic') != 1),
+                          input_info['streams']))
+    return streams
+
+
+def find_video_stream(input_info) -> dict:
+    """
+    Find the primary video stream.
+    :param input_info:
+    :return: stream map or None
+    """
+    streams = find_video_streams(input_info)
     english = find_english_streams(streams)
     if len(english) > 0:
         streams = english
@@ -536,6 +553,11 @@ def find_audio_streams(input_info):
         return default_streams[0:1]
 
     return streams
+
+
+def find_attached_pic_stream(input_info):
+    return list(filter(lambda stream: stream.get('disposition') and stream.get('disposition').get('attached_pic') > 0,
+                       input_info['streams']))
 
 
 def resolve_video_codec(desired_codec, target_height=None, video_info=None):

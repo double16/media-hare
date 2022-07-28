@@ -63,6 +63,7 @@ COPY comtune-apply.sh /etc/cron.daily/comtune-apply
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
+COPY healthcheck.sh /usr/bin/
 COPY anacron.cron /etc/cron.d/anacron
 COPY tesseract-wrapper.sh /usr/bin/tesseract
 ADD *.service /etc/systemd/system/
@@ -88,3 +89,5 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 
 CMD [ "/usr/bin/systemctl", "default" ]
+
+HEALTHCHECK CMD /usr/bin/healthcheck.sh

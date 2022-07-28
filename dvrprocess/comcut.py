@@ -247,18 +247,23 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                "-avoid_negative_ts", "1",
                                "-map_metadata", "0", "-map", "1", "-codec", "copy"])
 
+        # FIXME: need to map each stream individually, the complex filter forces output re-ordering
+
         if len(video_filters) > 0:
-            video_info = common.find_video_stream(input_info)
-            if not video_info:
+            raise Exception("fix output stream ordering!")
+            videos_info = common.find_video_streams(input_info)
+            if not videos_info:
                 logger.error("Could not find desirable video stream")
                 return 255
-            height = common.get_video_height(video_info)
-            input_video_codec = common.resolve_video_codec(video_info['codec_name'])
-            crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
-            ffmpeg_command.extend(["-c:v", common.ffmpeg_codec(input_video_codec),
-                                   "-filter_complex", ",".join(video_filters),
-                                   '-crf:v', str(crf),
-                                   '-preset', preset])
+            for video_info in videos_info:
+                video_stream_idx = str(video_info[common.K_STREAM_INDEX])
+                height = common.get_video_height(video_info)
+                input_video_codec = common.resolve_video_codec(video_info['codec_name'])
+                crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
+                ffmpeg_command.extend([f"-c:{video_stream_idx}", common.ffmpeg_codec(input_video_codec),
+                                       f"-filter_complex:{video_stream_idx}", ",".join(video_filters),
+                                       f"-crf:{video_stream_idx}", str(crf),
+                                       f"-preset:{video_stream_idx}", preset])
 
         if len(audio_filters) > 0:
             # Preserve original audio codec??
