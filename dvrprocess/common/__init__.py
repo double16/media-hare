@@ -48,6 +48,8 @@ K_TAGS = 'tags'
 K_CHAPTERS = 'chapters'
 K_BIT_RATE = 'bit_rate'
 K_CHANNELS = 'channels'
+K_DISPOSITION = 'disposition'
+K_STREAMS = 'streams'
 K_FILTER_VERSION = 'PFILTER_VERSION'
 K_FILTER_HASH = 'PFILTER_HASH'
 K_FILTER_SKIP = 'PFILTER_SKIP'
@@ -492,15 +494,22 @@ def has_stream_with_language(input_info, codec_type, codec_names=None, language=
                     input_info['streams']))) > 0
 
 
+def is_video_stream(stream_info: dict) -> bool:
+    return stream_info[K_CODEC_TYPE] == CODEC_VIDEO and (
+            not stream_info.get(K_DISPOSITION) or stream_info.get(K_DISPOSITION).get('attached_pic') != 1)
+
+
+def is_audio_stream(stream_info: dict) -> bool:
+    return stream_info[K_CODEC_TYPE] == CODEC_AUDIO
+
+
 def find_video_streams(input_info) -> list[dict]:
     """
     Find all video streams that do not have other purposes, such as attached pictures.
     :param input_info:
     :return: list of stream info maps
     """
-    streams = list(filter(lambda stream: stream[K_CODEC_TYPE] == CODEC_VIDEO and (
-            not stream.get('disposition') or stream.get('disposition').get('attached_pic') != 1),
-                          input_info['streams']))
+    streams = list(filter(lambda stream: is_video_stream(stream), input_info[K_STREAMS]))
     return streams
 
 
@@ -518,7 +527,7 @@ def find_video_stream(input_info) -> dict:
 
 
 def find_audio_streams(input_info):
-    streams = list(filter(lambda stream: stream['codec_type'] == CODEC_AUDIO, input_info['streams']))
+    streams = list(filter(lambda stream: is_audio_stream(stream), input_info[K_STREAMS]))
 
     # Check for profanity filter streams
     filter_streams = list(
@@ -548,7 +557,7 @@ def find_audio_streams(input_info):
             return streams2[0:1]
     # Pick default disposition
     default_streams = list(
-        filter(lambda stream: stream.get('disposition') and stream.get('disposition').get('default') > 0, streams))
+        filter(lambda stream: stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('default') > 0, streams))
     if len(default_streams) > 0:
         return default_streams[0:1]
 
@@ -556,8 +565,31 @@ def find_audio_streams(input_info):
 
 
 def find_attached_pic_stream(input_info):
-    return list(filter(lambda stream: stream.get('disposition') and stream.get('disposition').get('attached_pic') > 0,
-                       input_info['streams']))
+    return list(filter(lambda stream: stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('attached_pic') > 0,
+                       input_info[K_STREAMS]))
+
+
+def sort_streams(streams: list[dict]) -> list[dict]:
+    """
+    Sort streams in order of video, audio, other. In case of using complex filter graphs, the outputs will be ordered
+    first regardless of stream mapping.
+    :param streams:
+    :return: sorted streams, the input is not modified
+    """
+    result = streams.copy()
+
+    def stream_sort_key(stream: dict):
+        codec_type = stream[K_CODEC_TYPE]
+        if codec_type == CODEC_VIDEO:
+            if stream.get(K_DISPOSITION, {}).get('attached_pic', 0) == 1:
+                return 3
+            return 0
+        elif codec_type == CODEC_AUDIO:
+            return 1
+        else:
+            return 2
+    result.sort(key=stream_sort_key)
+    return result
 
 
 def resolve_video_codec(desired_codec, target_height=None, video_info=None):
@@ -725,7 +757,7 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
 
 
 def array_as_command(a):
-    return ' '.join(map(lambda e: f"'{e}'", a))
+    return ' '.join(map(lambda e: f"\"{e}\"", a))
 
 
 class EdlType(Enum):
