@@ -214,6 +214,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             end = float(input_info[common.K_FORMAT]['duration'])
             duration = end - start
             if duration > 1:
+                hascommercials = True
                 logger.debug("Including last %f seconds, start = %f, end = %f", duration, start, end)
                 if copychapters:
                     while len(chapters) > 0:
@@ -245,42 +246,48 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                '-async', '1',
                                '-max_interleave_delta', '0',
                                "-avoid_negative_ts", "1",
-                               "-map_metadata", "0", "-map", "1", "-codec", "copy"])
+                               "-map_metadata", "0"])
 
-        if len(video_filters) > 0:
-            video_info = common.find_video_stream(input_info)
-            if not video_info:
-                logger.error("Could not find desirable video stream")
-                return 255
-            height = common.get_video_height(video_info)
-            input_video_codec = common.resolve_video_codec(video_info['codec_name'])
-            crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
-            ffmpeg_command.extend(["-c:v", common.ffmpeg_codec(input_video_codec),
-                                   "-filter_complex", ",".join(video_filters),
-                                   '-crf:v', str(crf),
-                                   '-preset', preset])
+        # filters will re-order output streams so we need to map each individually
+        output_file = 1
+        output_stream_idx = 0
 
-        if len(audio_filters) > 0:
-            # Preserve original audio codec??
-            for idx, stream in enumerate(
-                    filter(lambda s: s['codec_type'] == common.CODEC_AUDIO, input_info['streams'])):
-                ffmpeg_command.extend([f"-c:{stream['index']}", common.ffmpeg_codec("opus")])
-                common.extend_opus_arguments(ffmpeg_command, stream, f"{stream['index']}", audio_filters)
-
-        # the concat demuxer sets all streams to default
-        for stream in input_info['streams']:
-            if stream.get('disposition', {}).get('default', 0) == 1:
-                ffmpeg_command.extend([f"-disposition:{stream[common.K_STREAM_INDEX]}", "default"])
+        for stream in common.sort_streams(input_info[common.K_STREAMS]):
+            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
+            if common.is_video_stream(stream) and len(video_filters) > 0:
+                height = common.get_video_height(stream)
+                input_video_codec = common.resolve_video_codec(stream['codec_name'])
+                crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
+                ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec(input_video_codec),
+                                       f"-filter_complex:{output_stream_idx}", ",".join(video_filters),
+                                       f"-crf:{output_stream_idx}", str(crf),
+                                       f"-preset:{output_stream_idx}", preset])
+            elif common.is_audio_stream(stream) and len(audio_filters) > 0:
+                # Preserve original audio codec??
+                ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec("opus")])
+                common.extend_opus_arguments(ffmpeg_command, stream, str(output_stream_idx), audio_filters)
             else:
-                ffmpeg_command.extend([f"-disposition:{stream[common.K_STREAM_INDEX]}", "0"])
+                ffmpeg_command.extend([f"-c:{output_stream_idx}", "copy"])
+
+            # the concat demuxer sets all streams to default
+            dispositions = []
+            if stream.get(common.K_DISPOSITION, {}).get('default', 0) == 1:
+                dispositions.append("default")
+            if stream.get(common.K_DISPOSITION, {}).get('forced', 0) == 1:
+                dispositions.append("forced")
+            if len(dispositions) == 0:
+                dispositions.append("0")
+            ffmpeg_command.extend([f"-disposition:{output_stream_idx}", ",".join(dispositions)])
+
+            output_stream_idx += 1
 
         ffmpeg_command.append('-y')
 
-        tempoutfile = None
+        temp_outfile = None
         if infile == outfile:
-            tempfd, tempoutfile = tempfile.mkstemp(suffix='.' + outextension, dir=workdir)
-            os.close(tempfd)
-            ffmpeg_command.append(tempoutfile)
+            temp_fd, temp_outfile = tempfile.mkstemp(suffix='.' + outextension, dir=workdir)
+            os.close(temp_fd)
+            ffmpeg_command.append(temp_outfile)
         else:
             ffmpeg_command.append(outfile)
         logger.debug(common.array_as_command(ffmpeg_command))
@@ -294,14 +301,14 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
         # verify video is valid
         try:
-            common.find_input_info(tempoutfile or outfile)
+            common.find_input_info(temp_outfile or outfile)
         except:
             logger.error(f"Cut file is not readable by ffmpeg, skipping")
-            os.remove(tempoutfile or outfile)
+            os.remove(temp_outfile or outfile)
             return 255
 
-        if tempoutfile is not None:
-            shutil.move(tempoutfile, outfile)
+        if temp_outfile is not None:
+            shutil.move(temp_outfile, outfile)
 
         common.match_owner_and_perm(target_path=outfile, source_path=infile)
 
@@ -323,6 +330,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
         return 0
     else:
+        logger.debug("Nothing found to change")
         if infile == outfile:
             return 0
         else:

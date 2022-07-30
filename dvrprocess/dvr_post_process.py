@@ -498,6 +498,7 @@ def do_dvr_post_process(input_file,
     video_input_stream = f"{streams_file}:{video_info['index']}"
     if copy_video:
         arguments.extend(["-map", video_input_stream, f"-c:{current_output_stream}", "copy"])
+        current_output_stream += 1
     elif hwaccel_inited and hwaccel_requested == "full" and has_hw_codec(ffmpeg, vainfo,
                                                                          target_video_codec) and not scale_height and not crop_frame_filter:
         transcoding = True
@@ -509,6 +510,7 @@ def do_dvr_post_process(input_file,
              f"{target_video_codec}_vaapi", "-vf",
              f"fps={target_framerate},deinterlace_vaapi,scale_vaapi=format=nv12", "-qp", str(qp)])
         # -b:{video_input_stream} {bitrate}k
+        current_output_stream += 1
     else:
         transcoding = True
         filter_complex = f"[{video_input_stream}]yadif[0];[0]format=pix_fmts=nv12"
@@ -545,7 +547,13 @@ def do_dvr_post_process(input_file,
         if target_video_codec == 'h264' and output_type != 'ts':
             arguments.extend(['-a53cc', '0'])
 
-    current_output_stream += 1
+        current_output_stream += 1
+
+    # Attached pictures
+    for attached_pic in common.find_attached_pic_stream(input_info):
+        arguments.extend(
+            ["-map", f"{streams_file}:{attached_pic[common.K_STREAM_INDEX]}", f"-c:{current_output_stream}", "copy"])
+        current_output_stream += 1
 
     # Subtitle stream
     # .ts doesn't support subtitle streams
