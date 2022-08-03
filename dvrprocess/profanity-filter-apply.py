@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import getopt
+import json
 import logging
 import os
+import subprocess
 import sys
 import time
+from enum import Enum
 from multiprocessing import Pool
 from subprocess import CalledProcessError
 
@@ -11,7 +14,7 @@ import requests
 
 import common
 from find_need_transcode import need_transcode_generator
-from profanity_filter import profanity_filter
+from profanity_filter import profanity_filter, FILTER_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -24,34 +27,79 @@ Usage: {sys.argv[0]} [options] [media_paths|--url=.]
 
 This program will run only if configuration profanity_filter.enable is set to true, or --force is used.
  
---dry-run
---force
+-n, --dry-run
+-f, --force
     Override configuration profanity_filter.enable
 --work-dir={common.get_work_dir()}
---bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
+-b, --bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
---time-limit={common.get_global_config_option('background_limits', 'time_limit')}
+-t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
---processes=2
+-p, --processes=2
+-s, --selector={','.join(ProfanityFilterSelector.__members__.keys())}
+    Limit which media files will be updated.
+        unfiltered: only media that has never been filtered
+        new_version: only media that has an older filter version, not common
+        config_change: config or wordlist change, version change or unfiltered, basically any change at all
 -u, --url=
     Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for {common.get_plex_url()}
 """, file=sys.stderr)
+
+
+class ProfanityFilterSelector(Enum):
+    """ include media that was processed with a different config/wordlist """
+    config_change = 0
+    """ include media that hasn't been touched by the filter """
+    unfiltered = 1
+    """ include media that differs in version """
+    new_version = 2
+
+
+def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelector] = None):
+    """
+    Filters media items based on profanity filter properties.
+    :param generator: need_transcode_generator instance
+    :param selectors:
+    :return: generator with same types as input, filtered by arguments
+    """
+    if selectors is None:
+        selectors = set(ProfanityFilterSelector)
+
+    for item in generator:
+        if ProfanityFilterSelector.config_change in selectors:
+            yield item
+
+        tags = json.loads(subprocess.check_output(
+            [common.find_ffprobe(), '-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
+            'format', {}).get(
+            'tags', {})
+
+        if ProfanityFilterSelector.unfiltered in selectors and common.K_FILTER_HASH not in tags:
+            yield item
+        if ProfanityFilterSelector.new_version in selectors and int(
+                tags.get(common.K_FILTER_VERSION, "0")) < FILTER_VERSION:
+            yield item
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
                            size_limit=common.get_global_config_bytes('background_limits', 'size_limit'),
                            time_limit=common.get_global_config_time_seconds('background_limits', 'time_limit'),
                            processes=1,
-                           check_compute=True):
+                           check_compute=True,
+                           selectors: set[ProfanityFilterSelector] = None):
     logger.info(f"Applying profanity filter to media files in {plex_url or ','.join(media_paths)}")
 
     if workdir is None:
         workdir = common.get_work_dir()
 
+    if selectors is None:
+        selectors = set(ProfanityFilterSelector)
+
     bytes_processed = 0
     time_start = None
 
     generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths, desired_video_codecs=['all'])
+    generator = __profanity_filter_selector(generator, selectors)
 
     pool = Pool(processes=processes)
     try:
@@ -150,14 +198,16 @@ def profanity_filter_apply_cli(argv):
     check_compute = True
     plex_url = None
     force = False
+    selectors = None
 
     processes = common.get_global_config_int('background_limits', 'processes',
                                              fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
         opts, args = getopt.getopt(list(argv),
-                                   "fnb:t:p:u:",
-                                   ["force", "dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=", "url="])
+                                   "fnb:t:p:u:s:",
+                                   ["force", "dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=",
+                                    "url=", "selector="])
     except getopt.GetoptError:
         usage()
         return 255
@@ -183,6 +233,10 @@ def profanity_filter_apply_cli(argv):
                 plex_url = common.get_plex_url()
             else:
                 plex_url = arg
+        elif opt in ["-s", "--selector"]:
+            selectors = set()
+            for selector_str in arg.split(','):
+                selectors.add(ProfanityFilterSelector.__members__[selector_str.lower()])
 
     if not common.get_global_config_boolean('profanity_filter', 'enable', False) and not force:
         logger.info("profanity filter not enabled, set profanity_filter.enable to true or use --force")
@@ -199,6 +253,9 @@ def profanity_filter_apply_cli(argv):
         logger.error("No plex URL, configure in media-hare.ini, section plex, option url")
         return 255
 
+    if selectors is None:
+        selectors = set(ProfanityFilterSelector)
+
     if common.check_already_running():
         return 0
 
@@ -208,7 +265,8 @@ def profanity_filter_apply_cli(argv):
 
     return profanity_filter_apply(media_paths, plex_url=plex_url, dry_run=dry_run, workdir=workdir,
                                   size_limit=bytes_limit,
-                                  time_limit=time_limit, processes=processes, check_compute=check_compute)
+                                  time_limit=time_limit, processes=processes, check_compute=check_compute,
+                                  selectors=selectors)
 
 
 if __name__ == '__main__':
