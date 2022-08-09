@@ -2,6 +2,7 @@
 import atexit
 import configparser
 import getopt
+import hashlib
 import logging
 import os.path
 import random
@@ -21,6 +22,8 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING
 
+CSV_SUFFIX_BLACKFRAME = "-blackframe"
+
 logger = logging.getLogger(__name__)
 
 COL_FRAME = 0
@@ -34,6 +37,15 @@ VERSION_GAD_TUNING = "2"
 class ComskipGene(object):
     def __init__(self, config: tuple, use_csv: bool, description: str, exclude_if_default, space, data_type,
                  default_value):
+        """
+        :param config: tuple of (group, item) for the comskip.ini file
+        :param use_csv: True if the config can use the CSV to improve performance
+        :param description: human readable description
+        :param exclude_if_default: True to exclude the config item if the optimal value is the default
+        :param space: The configuration value space
+        :param data_type: The python data type
+        :param default_value: The default value, expected to match the default comskip.ini or comskip executable default
+        """
         self.config = config
         self.use_csv = use_csv
         self.description = description
@@ -62,14 +74,12 @@ GENES: list[ComskipGene] = [
     # 175 - uniform frame, logo, scene change, fuzzy logic, aspect ratio, cut scenes
     # 239 - uniform frame, logo, scene change, fuzzy logic, aspect ratio, silence, cut scenes
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'detect_method'), True, "", False, [43, 47, 111, 239], int, 239),
-    # TODO: for use_csv = False, create hash of name=value with use_csv == False and use in CSV filename to allow
-    #       running the GAD for these properties
-    ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_threshold'), False, "", True, numpy.arange(0.70, 0.95, 0.5), [float, 2],
-                0.70),
+    ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_threshold'), False, "", True, [0.70, 0.75, 0.90], [float, 2],
+                0.75),
     ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_filter'), False, "", True, [0, 2, 4], int, 0),
     # ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'connect_blocks_with_logo'), True, "", True, [0, 1], int, 1),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'), True, "", True, [1, 3, 5], int, 1),
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 20),
+    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 20),
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_volume'), True, "", False, range(250, 1000, 50), int, 500),
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'non_uniformity'), True, "", False, range(250, 1000, 50), int, 500),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'length_strict_modifier'), True, "", True, numpy.arange(2.0, 5.01, 0.5),
@@ -106,6 +116,8 @@ Usage: {sys.argv[0]} file | dir
 -p, --processes=2
 -t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
+-e, --expensive
+    Tune parameters that are expensive to compute, i.e. require processing of video for each value combination.
 --verbose
 -n, --dry-run
 --work-dir={common.get_work_dir()}
@@ -126,7 +138,7 @@ def do_comtune(infile, verbose=False, workdir=None, force=0, dry_run=False):
         workdir = os.path.dirname(os.path.abspath(infile))
     comskip_ini = find_comskip_starter_ini()
     try:
-        ensure_framearray(infile, comskip_ini, workdir=workdir, dry_run=dry_run, force=force > 1)
+        ensure_framearray(infile, None, comskip_ini, workdir=workdir, dry_run=dry_run, force=force > 1)
     except subprocess.CalledProcessError:
         return 255
 
@@ -143,7 +155,8 @@ def compute_black_frame_tunings(infile, workdir):
     Compute the tuning values for determining black frames.
     :return: max_avg_brightness, max_volume, non_uniformity
     """
-    infile_base, csv_path, video_ini = paths(infile, workdir)
+    infile_base, csv_path, video_ini = paths(infile, workdir,
+                                             infile_base=os.path.basename(infile) + CSV_SUFFIX_BLACKFRAME)
     data = numpy.genfromtxt(csv_path, skip_header=2, delimiter=',')
     logger.info(f"{infile}: Loaded data {len(data)} frames")
 
@@ -288,7 +301,7 @@ def edl_tempfile(infile, workdir):
     return os.path.join(tempdir, f'.~{os.path.splitext(os.path.basename(infile))[0]}.edl')
 
 
-def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
+def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_genes=False, check_compute=True,
               comskip_defaults: configparser.ConfigParser = None):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
@@ -297,11 +310,14 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
     :param workdir:
     :param dry_run:
     :param force:
+    :param expensive_genes: True to use genes that require generating the CSV from video for each solution
+    :param check_compute: True to stop processing if compute is too high
     :param comskip_defaults: 
     :return: fitness_func, genes, gene_space, gene_type
     """
 
-    genes = list(filter(lambda g: g.use_csv and g.space_has_elements(), GENES))
+    genes = list(filter(lambda g: g.space_has_elements() and (g.use_csv or expensive_genes), GENES))
+    logger.debug("fitting for genes: %s", list(map(lambda e: e.config, genes)))
     gene_space = list(map(lambda g: g.space, genes))
     gene_type = list(map(lambda g: g.data_type, genes))
 
@@ -314,8 +330,8 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
     # ffprobe info for videos that are uncut from DVR
     dvr_infos = []
     durations = []
-    for filepath in files:
-        video_info = common.find_input_info(filepath)
+    for file_path in files:
+        video_info = common.find_input_info(file_path)
         if not video_info:
             continue
         video_infos.append(video_info)
@@ -325,9 +341,9 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
             if common.is_from_dvr(video_info):
                 dvr_infos.append(video_info)
             else:
-                logger.info("Not considering %s because it's not from DVR", filepath)
+                logger.info("Not considering %s because it's not from DVR", file_path)
         else:
-            logger.info("Not considering %s because it has %d episodes", filepath, episode_count)
+            logger.info("Not considering %s because it has %d episodes", file_path, episode_count)
 
     if len(dvr_infos) == 0:
         raise UserWarning("No files look like they have commercials")
@@ -356,22 +372,36 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
         # generate CSV using starter configuration to determine black frame tuning
         comskip_starter_ini = find_comskip_starter_ini()
         for video_info in dvr_infos:
-            filepath = video_info[common.K_FORMAT]['filename']
+            file_path = video_info[common.K_FORMAT]['filename']
             try:
                 framearray_results.append(
-                    pool.apply_async(ensure_framearray, (filepath, comskip_starter_ini, workdir, dry_run, True)))
-            except subprocess.CalledProcessError:
-                return 255
+                    pool.apply_async(ensure_framearray, (
+                        file_path, os.path.basename(file_path) + CSV_SUFFIX_BLACKFRAME, comskip_starter_ini, workdir,
+                        dry_run,
+                        True)))
+            except [subprocess.CalledProcessError, KeyboardInterrupt] as e:
+                pool.terminate()
+                raise e
         for result in framearray_results:
-            result.wait()
+            if check_compute and common.should_stop_processing():
+                pool.terminate()
+                raise StopIteration('over loaded')
+            try:
+                result.wait()
+                result.get()
+            except subprocess.CalledProcessError as e:
+                return e.returncode
+            except KeyboardInterrupt as e:
+                pool.terminate()
+                raise e
         framearray_results.clear()
 
         max_avg_brightness_list = []
         max_volume_list = []
         non_uniformity_list = []
         for video_info in dvr_infos:
-            filepath = video_info[common.K_FORMAT]['filename']
-            max_avg_brightness, max_volume, non_uniformity = compute_black_frame_tunings(filepath, workdir)
+            file_path = video_info[common.K_FORMAT]['filename']
+            max_avg_brightness, max_volume, non_uniformity = compute_black_frame_tunings(file_path, workdir)
             if max_avg_brightness:
                 max_avg_brightness_list.append(max_avg_brightness)
             if max_volume:
@@ -385,47 +415,74 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
                   max_volume=None
                   )
 
-    # regenerate CSV with black frame settings
-    for video_info in dvr_infos:
-        filepath = video_info[common.K_FORMAT]['filename']
-        try:
-            framearray_results.append(pool.apply_async(ensure_framearray, (
-                filepath, comskip_ini_path, workdir, dry_run, force > 1 or not black_frame_tuning_done)))
-        except subprocess.CalledProcessError:
-            return 255
-    for result in framearray_results:
-        result.wait()
-    framearray_results.clear()
-
     # create fitness function
-    comskip_fitness_ini_path = os.path.join(workdir, 'comskip-fitness.ini')
+    comskip_fitness_ini_path = os.path.join(workdir, 'comskip-fitness-'
+                                            + hashlib.sha512(
+        ",".join(filter(lambda e: os.path.basename(e), files)).encode("utf-8")).hexdigest()
+                                            + '.ini')
     shutil.copyfile(comskip_ini_path, comskip_fitness_ini_path)
 
     def f(solution, solution_idx):
         write_ini_from_solution(comskip_fitness_ini_path, genes, solution)
         logger.debug(f"Calculating fitness for {solution_repl(genes, solution)}")
 
+        csv_configs = []
+        csv_values = []
+        for idx, val in enumerate(solution):
+            if not genes[idx].use_csv:
+                csv_values.append(val)
+                csv_configs.append(genes[idx].config)
+        if len(csv_values) > 0:
+            csv_values_str = ",".join(map(lambda e: str(e), csv_values))
+            csv_hash = hashlib.sha512(csv_values_str.encode("utf-8")).hexdigest()
+            logger.debug("gene values for generating csv: %s = %s, hash = %s", csv_configs, csv_values_str, csv_hash)
+            csv_suffix = "-" + csv_hash
+        else:
+            csv_suffix = "-fitness"
+
         results = []
         for video_info in dvr_infos:
-            filepath = video_info[common.K_FORMAT]['filename']
-            results.append(pool.apply_async(comchap, (filepath, filepath),
-                                            {'leaf_comskip_ini': comskip_fitness_ini_path,
-                                             'workdir': workdir,
-                                             'input_info': video_info,
-                                             'edlfile': edl_tempfile(filepath, workdir),
-                                             'delete_edl': False,
-                                             'modify_video': False,
-                                             'use_csv': True,
-                                             'force': True}, error_callback=common.error_callback_dump))
+            file_path = video_info[common.K_FORMAT]['filename']
+            csvfile = common.replace_extension(
+                os.path.join(workdir, common.remove_extension(os.path.basename(file_path)) + csv_suffix),
+                'csv')
+            results.append(pool.apply_async(csv_and_comchap_generate, (),
+                                            {
+                                                'file_path': file_path,
+                                                'comskip_ini_path': comskip_ini_path,
+                                                'comskip_fitness_ini_path': comskip_fitness_ini_path,
+                                                'csvfile': csvfile,
+                                                'workdir': workdir,
+                                                'video_info': video_info,
+                                                'edlfile': edl_tempfile(file_path, workdir),
+                                                'dry_run': dry_run,
+                                                'force_csv_regen': (force > 1 or not black_frame_tuning_done)
+                                            },
+                                            error_callback=common.error_callback_dump))
+
         for result in results:
-            result.wait()
+            if check_compute and common.should_stop_processing():
+                pool.terminate()
+                raise StopIteration('over loaded')
+            try:
+                result.wait()
+                result.get()
+            except subprocess.CalledProcessError as e:
+                os.remove(comskip_fitness_ini_path)
+                return e.returncode
+            except KeyboardInterrupt as e:
+                pool.terminate()
+                os.remove(comskip_fitness_ini_path)
+                raise e
+
+        os.remove(comskip_fitness_ini_path)
 
         adjusted_durations = []
         for video_info in video_infos:
-            filepath = video_info[common.K_FORMAT]['filename']
+            file_path = video_info[common.K_FORMAT]['filename']
             episode_count, episode_duration, video_duration = common.episode_info(video_info)
             adjusted_duration = video_duration
-            edl_path = edl_tempfile(filepath, workdir)
+            edl_path = edl_tempfile(file_path, workdir)
             if os.access(edl_path, os.R_OK):
                 for event in common.parse_edl_cuts(edl_path):
                     this_duration = (event.end - event.start)
@@ -453,6 +510,29 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0,
     return f, genes, gene_space, gene_type
 
 
+def csv_and_comchap_generate(file_path, comskip_ini_path, comskip_fitness_ini_path, csvfile, workdir, video_info,
+                             edlfile, dry_run, force_csv_regen):
+    if force_csv_regen:
+        if os.path.exists(csvfile) and os.stat(csvfile).st_mtime < os.stat(comskip_ini_path).st_mtime:
+            logger.debug("Removing old csv file %s", csvfile)
+            os.remove(csvfile)
+    ensure_framearray(file_path, common.remove_extension(os.path.basename(csvfile)), comskip_fitness_ini_path, workdir,
+                      dry_run)
+    if not os.path.exists(csvfile):
+        raise Exception(f"{csvfile} was not generated")
+
+    comchap(file_path, file_path,
+            leaf_comskip_ini=comskip_fitness_ini_path,
+            workdir=workdir,
+            input_info=video_info,
+            edlfile=edlfile,
+            delete_edl=False,
+            modify_video=False,
+            use_csv=True,
+            csvfile=csvfile,
+            force=True)
+
+
 def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of_non_defaults: float,
                   episode_common_duration: int = 60):
     # sigma good values 0 - 120
@@ -469,8 +549,9 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
            1.0 / (count_of_non_defaults + 1000.0)
 
 
-def paths(infile, workdir):
-    infile_base = common.remove_extension(os.path.basename(infile))
+def paths(infile, workdir, infile_base=None):
+    if infile_base is None:
+        infile_base = common.remove_extension(os.path.basename(infile))
     csv_path = os.path.join(workdir, f"{infile_base}.csv")
     video_ini = os.path.join(os.path.dirname(os.path.abspath(infile)), f"{infile_base}.comskip.ini")
     return infile_base, csv_path, video_ini
@@ -488,13 +569,14 @@ def histogram(data, idx, min_value_excl, min_count_excl):
     return h2
 
 
-def ensure_framearray(infile, comskip_ini, workdir, dry_run=False, force=False):
-    infile_base, csv_path, _ = paths(infile, workdir)
+def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, force=False):
+    infile_base, csv_path, _ = paths(infile, workdir, infile_base=infile_base)
     if not force and os.path.isfile(csv_path):
         return
     comskip = common.find_comskip()
-    command = [comskip, "--hwassist", "--quiet", "--csvout", f"--ini={comskip_ini}", f"--output={workdir}",
-               f"--output-filename={infile_base}", infile]
+    command = [comskip, "-v", "9", "--hwassist", "--cuvid", "--vdpau", "--dxva2", "--quiet", "--csvout",
+               f"--ini={comskip_ini}",
+               f"--output={workdir}", f"--output-filename={infile_base}", infile]
     logger.info(common.array_as_command(command))
     if not dry_run:
         subprocess.run(command, check=True, capture_output=True)
@@ -515,8 +597,7 @@ def find_comskip_starter_ini():
     raise OSError(f"Cannot find comskip-starter.ini in any of {','.join(get_comskip_starter_ini_sources())}")
 
 
-# FIXME: check for stopping processing so we don't overload the machine
-def tune_show(season_dir, pool, files, workdir, dry_run, force):
+def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True):
     if len(files) < 5:
         logger.warning("too few video files %d to tune %s, need 5", len(files), season_dir)
         return
@@ -534,7 +615,10 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force):
     os.remove(comskip_defaults_file)
 
     try:
-        fitness_func, genes, gene_space, gene_type = setup_gad(pool, files, workdir, dry_run, force, comskip_defaults)
+        fitness_func, genes, gene_space, gene_type = setup_gad(pool, files, workdir=workdir, dry_run=dry_run,
+                                                               force=force, comskip_defaults=comskip_defaults,
+                                                               expensive_genes=expensive_genes,
+                                                               check_compute=check_compute)
     except UserWarning as e:
         logger.warning(e.args[0])
         return
@@ -589,7 +673,6 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force):
     logger.info(
         "Parameters of the adjusted solution : {solution}".format(solution=solution_repl(genes, solution)))
 
-    os.remove(os.path.join(workdir, 'comskip-fitness.ini'))
     write_ini_from_solution(os.path.join(season_dir, 'comskip.ini'), genes, solution)
     for filepath in files:
         comchap(filepath, filepath, force=True, delete_edl=False, workdir=workdir)
@@ -600,6 +683,7 @@ def comtune_cli(argv):
     workdir = common.get_work_dir()
     force = 0
     dry_run = False
+    expensive_genes = False
     check_compute = True
     time_limit = int(common.get_global_config_time_seconds('background_limits', 'time_limit'))
 
@@ -607,8 +691,9 @@ def comtune_cli(argv):
                                              fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
-        opts, args = getopt.getopt(list(argv), "hfnp:t:",
-                                   ["help", "verbose", "work-dir=", "force", "dry-run", "processes=", "time-limit="])
+        opts, args = getopt.getopt(list(argv), "hfnep:t:",
+                                   ["help", "verbose", "work-dir=", "force", "dry-run", "processes=", "time-limit=",
+                                    "expensive"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -631,6 +716,8 @@ def comtune_cli(argv):
             if len(arg) > 0:
                 processes = int(arg)
             check_compute = False
+        elif opt in ["-e", "--expensive"]:
+            expensive_genes = True
 
     if check_compute and not common.should_start_processing():
         logger.warning(f"not enough compute available")
@@ -665,7 +752,7 @@ def comtune_cli(argv):
             duration = time.time() - time_start
             if 0 < time_limit < duration:
                 logger.info(
-                    f"Exiting normally after processing {int(duration)}s, limit of {time_limit}s reached")
+                    f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
                 return True
 
         if check_compute and common.should_stop_processing():
@@ -700,7 +787,8 @@ def comtune_cli(argv):
                                 logger.info("%s already tuned, use --force to force tuning", season_dir)
                             else:
                                 tune_show(season_dir=season_dir, pool=pool, files=video_files, workdir=workdir,
-                                          dry_run=dry_run, force=force)
+                                          dry_run=dry_run, force=force, expensive_genes=expensive_genes,
+                                          check_compute=check_compute)
                         except BaseException as e:
                             logger.error(f"Skipping show {season_dir}, uncaught exception", exc_info=e)
                     else:

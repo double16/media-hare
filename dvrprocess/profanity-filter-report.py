@@ -3,14 +3,17 @@
 import json
 import os
 import subprocess
+import logging
 import sys
 import tempfile
 from pathlib import Path
 
 import pysrt
-from ass_parser import read_ass
+from ass_parser import read_ass, errors
 
 import common
+
+logger = logging.getLogger(__name__)
 
 
 def profanity_filter_report_cli(argv):
@@ -72,16 +75,23 @@ def extract_pf_data(mkv, ffmpeg):
 
     parsed_original = None
     parsed_filtered = None
-    if subtitle_codec == common.CODEC_SUBTITLE_ASS:
-        parsed_original = list(map(lambda e: e.text, read_ass(Path(file_original)).events))
-        parsed_filtered = list(map(lambda e: e.text, read_ass(Path(file_filtered)).events))
-    elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
-        parsed_original = list(map(lambda e: e.text, pysrt.open(file_original)))
-        parsed_filtered = list(map(lambda e: e.text, pysrt.open(file_filtered)))
-    else:
-        common.fatal(f"INFO: Unknown subtitle codec {subtitle_codec}")
-    os.remove(file_original)
-    os.remove(file_filtered)
+    try:
+        if subtitle_codec == common.CODEC_SUBTITLE_ASS:
+            parsed_original = list(map(lambda e: e.text, read_ass(Path(file_original)).events))
+            parsed_filtered = list(map(lambda e: e.text, read_ass(Path(file_filtered)).events))
+        elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
+            parsed_original = list(map(lambda e: e.text, pysrt.open(file_original)))
+            parsed_filtered = list(map(lambda e: e.text, pysrt.open(file_filtered)))
+        else:
+            common.fatal(f"INFO: Unknown subtitle codec {subtitle_codec}")
+    except errors.CorruptAssError as e:
+        logger.error("%s: %s", mkv, str(e))
+        return None
+    finally:
+        if os.path.exists(file_original):
+            os.remove(file_original)
+        if os.path.exists(file_filtered):
+            os.remove(file_filtered)
 
     print(f"INFO: {mkv} {len(parsed_filtered)} subtitle events", file=sys.stderr)
     for i, val in enumerate(parsed_filtered):

@@ -14,7 +14,7 @@ from shutil import which
 
 import hunspell
 import pysrt
-from ass_parser import read_ass, write_ass, AssEventList
+from ass_parser import read_ass, write_ass, AssEventList, CorruptAssLineError
 from numpy import loadtxt
 from pysrt import SubRipItem
 
@@ -68,6 +68,9 @@ Filter audio and subtitles for profanity.
 def profanity_filter(*args, **kwargs) -> int:
     try:
         return do_profanity_filter(*args, **kwargs)
+    except CorruptAssLineError:
+        logger.error("Corrupt ASS subtitle in %s", args[0])
+        return CMD_RESULT_ERROR
     finally:
         common.finish()
 
@@ -126,12 +129,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         logger.info(f"{input_info}")
 
     if filter_skip is None:
-        filter_skip = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_SKIP) in ['true',
-                                                                                                               'True',
-                                                                                                               't',
-                                                                                                               'yes',
-                                                                                                               'Yes',
-                                                                                                               'y', '1']
+        filter_skip = common.is_truthy(
+            input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_SKIP))
 
     streams_file = 0
 

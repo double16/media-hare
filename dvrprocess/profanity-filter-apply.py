@@ -68,17 +68,22 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
     for item in generator:
         if ProfanityFilterSelector.config_change in selectors:
             yield item
+            continue
 
         tags = json.loads(subprocess.check_output(
             [common.find_ffprobe(), '-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
-            'format', {}).get(
-            'tags', {})
+            'format', {}).get('tags', {})
+
+        if common.is_truthy(tags.get(common.K_FILTER_SKIP, None)):
+            continue
 
         if ProfanityFilterSelector.unfiltered in selectors and common.K_FILTER_HASH not in tags:
             yield item
-        if ProfanityFilterSelector.new_version in selectors and int(
-                tags.get(common.K_FILTER_VERSION, "0")) < FILTER_VERSION:
+            continue
+        if ProfanityFilterSelector.new_version in selectors and common.K_FILTER_VERSION in tags and int(
+                tags.get(common.K_FILTER_VERSION)) < FILTER_VERSION:
             yield item
+            continue
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
@@ -98,7 +103,11 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
     bytes_processed = 0
     time_start = None
 
-    generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths, desired_video_codecs=['all'])
+    generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
+                                         # get everything
+                                         desired_video_codecs=['all'],
+                                         # ensures there is a subtitle stream
+                                         desired_subtitle_codecs=['all'])
     generator = __profanity_filter_selector(generator, selectors)
 
     pool = Pool(processes=processes)
@@ -136,6 +145,9 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 return_code = 255
             except CalledProcessError as e:
                 return_code = e.returncode
+            except:
+                pool.terminate()
+                return 255
             if return_code == 0:
                 # filtered
                 bytes_processed += os.stat(filepath).st_size
@@ -145,7 +157,10 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 if tfi.item_key and plex_url:
                     logger.info(f'HTTP PUT: {plex_url}{tfi.item_key}/analyze')
                     if not dry_run:
-                        requests.put(f'{plex_url}{tfi.item_key}/analyze')
+                        try:
+                            requests.put(f'{plex_url}{tfi.item_key}/analyze')
+                        except requests.exceptions.ConnectTimeout:
+                            pass
             elif return_code == 1:
                 # marked but content unchanged
                 pass
@@ -158,14 +173,14 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
             if 0 < size_limit < bytes_processed:
                 logger.info(
-                    f"Exiting normally after processing {bytes_processed} bytes, size limit of {size_limit} reached")
+                    f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes, size limit of {common.bytes_to_human_str(size_limit)} reached")
                 return 0
 
             if time_start is not None:
                 duration = time.time() - time_start
                 if 0 < time_limit < duration:
                     logger.info(
-                        f"Exiting normally after processing {int(duration)}s, limit of {time_limit}s reached")
+                        f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
                     return 0
 
             if check_compute and common.should_stop_processing():
@@ -186,7 +201,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
         logger.info("Waiting for pool workers to finish")
         pool.join()
 
-    logger.info(f"Exiting normally after processing {bytes_processed} bytes")
+    logger.info(f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes")
     return 0
 
 
