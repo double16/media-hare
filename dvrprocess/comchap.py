@@ -249,7 +249,7 @@ def comchap(*args, **kwargs):
 def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True, delete_log=True, delete_logo=True,
                delete_txt=True,
                delete_ini=True, verbose=False, workdir=None, comskipini=None, leaf_comskip_ini=None, modify_video=True,
-               force=False, debug=False, backup_edl=False, use_csv=True, input_info=None):
+               force=False, debug=False, backup_edl=False, use_csv=True, csvfile=None, input_info=None):
     ffmpeg = common.find_ffmpeg()
     mkvpropedit = common.find_mkvpropedit()
     if input_info is None:
@@ -293,7 +293,8 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     logfile = os.path.join(workdir, f"{outfile_base}.log")
     logofile = os.path.join(workdir, f"{outfile_base}.logo.txt")
     txtfile = os.path.join(workdir, f"{outfile_base}.txt")
-    csvfile = os.path.join(workdir, f"{outfile_base}.csv")
+    if csvfile is None or not os.path.exists(csvfile):
+        csvfile = os.path.join(workdir, f"{outfile_base}.csv")
     if delete_edl:
         common.TEMPFILENAMES.append(edlfile)
         common.TEMPFILENAMES.append(hidden_edlfile)
@@ -345,12 +346,16 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         else:
             comskip_command.append(common.find_comskip())
             comskip_command.append("--hwassist")
+            comskip_command.append("--cuvid")
+            comskip_command.append("--vdpau")
+            comskip_command.append("--dxva2")
 
         # check for csv and logo file which makes the process much faster
-        csvfile = common.replace_extension(infile, 'csv')
+        if not os.path.exists(csvfile):
+            csvfile = common.replace_extension(infile, 'csv')
         if not os.path.isfile(csvfile):
             csvfile = common.replace_extension(os.path.join(workdir, os.path.basename(infile)), 'csv')
-        logofile = common.replace_extension(infile, 'logo.txt')
+        logofile = common.replace_extension(csvfile, 'logo.txt')
         if not os.path.isfile(logofile):
             logofile = common.replace_extension(os.path.join(workdir, os.path.basename(infile)), 'logo.txt')
 

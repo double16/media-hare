@@ -588,6 +588,7 @@ def sort_streams(streams: list[dict]) -> list[dict]:
             return 1
         else:
             return 2
+
     result.sort(key=stream_sort_key)
     return result
 
@@ -757,7 +758,13 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
 
 
 def array_as_command(a):
-    return ' '.join(map(lambda e: f"\"{e}\"", a))
+    command = []
+    for e in a:
+        if '\'' in e:
+            command.append('"' + e + '"')
+        else:
+            command.append("'" + e + "'")
+    return ' '.join(command)
 
 
 class EdlType(Enum):
@@ -1103,7 +1110,12 @@ class ReturnCodeReducer:
 
 
 def error_callback_dump(e):
-    logger.error('', exc_info=e)
+    if type(e) == KeyboardInterrupt:
+        logger.error("User interrupt")
+    elif type(e) == StopIteration:
+        logger.error("Stopped: %s", str(e))
+    else:
+        logger.error(str(e), exc_info=e)
 
 
 def seconds_to_timespec(seconds):
@@ -1438,3 +1450,9 @@ def match_owner_and_perm(target_path: str, source_path: str) -> bool:
         result = False
 
     return result
+
+
+def is_truthy(value) -> bool:
+    if value is None:
+        return False
+    return str(value).lower() in ['true', 't', 'yes', 'y', '1']

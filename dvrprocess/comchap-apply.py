@@ -120,6 +120,10 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                             return_code = result[1].get()
                         except CalledProcessError as e:
                             return_code = e.returncode
+                        except:
+                            pool.terminate()
+                            return 255
+
                         if return_code == 0:
                             # processed
                             bytes_processed += os.stat(filepath).st_size
@@ -140,21 +144,21 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
 
                 if 0 < size_limit < bytes_processed:
                     logger.info(
-                        f"Exiting normally after processing {bytes_processed} bytes, size limit of {size_limit} reached")
+                        f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes, size limit of {common.bytes_to_human_str(size_limit)} reached")
                     return 0
 
                 if time_start is not None:
                     duration = time.time() - time_start
                     if 0 < time_limit < duration:
                         logger.info(
-                            f"Exiting normally after processing {int(duration)}s, limit of {time_limit}s reached")
+                            f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
                         return 0
 
                 if check_compute and common.should_stop_processing():
                     logger.info(f"INFO: not enough compute available")
                     return 0
 
-    logger.info(f"Exiting normally after processing {bytes_processed} bytes")
+    logger.info(f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes")
     return 0
 
 

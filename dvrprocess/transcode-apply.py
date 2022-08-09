@@ -55,8 +55,10 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
         if post_process_code == 0 and plex_url and file_info.item_key:
             logger.info(f'HTTP PUT: {plex_url}{file_info.item_key}/analyze')
             if not dry_run:
-                requests.put(f'{plex_url}{file_info.item_key}/analyze')
-
+                try:
+                    requests.put(f'{plex_url}{file_info.item_key}/analyze')
+                except requests.exceptions.ConnectTimeout:
+                    pass
     return 0
 
 

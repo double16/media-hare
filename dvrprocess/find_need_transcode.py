@@ -107,8 +107,10 @@ def find_need_transcode_cli(argv):
         runtime_minutes = 0
         transcode_minutes = 0
         transcode_details = []
-        for file_info in need_transcode_generator(plex_url, media_paths, host_home, desired_video_codecs,
-                                                  desired_audio_codecs, max_resolution):
+        for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, host_home=host_home,
+                                                  desired_video_codecs=desired_video_codecs,
+                                                  desired_audio_codecs=desired_audio_codecs,
+                                                  max_resolution=max_resolution):
             file_names.update([file_info.file_name])
             runtime_minutes += file_info.runtime
             transcode_minutes += file_info.transcode_time
@@ -133,8 +135,10 @@ def find_need_transcode_cli(argv):
             print(e)
         return code
     else:
-        for file_info in need_transcode_generator(plex_url, media_paths, host_home, desired_video_codecs,
-                                                  desired_audio_codecs, max_resolution):
+        for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, host_home=host_home,
+                                                  desired_video_codecs=desired_video_codecs,
+                                                  desired_audio_codecs=desired_audio_codecs,
+                                                  max_resolution=max_resolution):
             sys.stdout.write(file_info.file_name)
             sys.stdout.write(terminator)
         return 0
@@ -164,6 +168,7 @@ class TranscodeFileInfo(object):
 
 
 def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desired_video_codecs: list[str],
+                             desired_subtitle_codecs: list[str],
                              max_resolution):
     random.shuffle(media_paths)
     for media_path in media_paths:
@@ -196,6 +201,16 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                     if not audio_codecs.issubset(set(desired_audio_codecs)):
                         need_transcode = True
 
+                if desired_subtitle_codecs is not None:
+                    subtitle_streams = list(
+                        filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_SUBTITLE,
+                               input_info['streams']))
+                    subtitle_codecs = set(map(lambda e: e[common.K_CODEC_NAME], subtitle_streams))
+                    if len(subtitle_codecs) == 0:
+                        need_transcode = False
+                    elif not subtitle_codecs.intersection(set(desired_subtitle_codecs)):
+                        need_transcode = True
+
                 if need_transcode:
                     yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
                                             runtime=int(float(input_info[common.K_FORMAT]['duration'])), item_key=None)
@@ -207,7 +222,8 @@ def need_transcode_generator(
         host_home=None,
         desired_video_codecs: list[str] = None,
         desired_audio_codecs: list[str] = None,
-        max_resolution=None
+        desired_subtitle_codecs: list[str] = None,
+        max_resolution=None,
 ):
     if desired_video_codecs is None and desired_audio_codecs is None:
         desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
@@ -217,7 +233,9 @@ def need_transcode_generator(
 
     if media_paths:
         yield from _os_walk_media_generator(media_paths, desired_video_codecs=desired_video_codecs,
-                                            desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution)
+                                            desired_audio_codecs=desired_audio_codecs,
+                                            desired_subtitle_codecs=desired_subtitle_codecs,
+                                            max_resolution=max_resolution)
         return
     if not plex_url:
         raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
@@ -231,7 +249,8 @@ def need_transcode_generator(
         if library.tag == 'Directory' and library.attrib['type'] == 'movie':
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
-            yield from _process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
+            yield from _process_videos(desired_audio_codecs, desired_video_codecs, desired_subtitle_codecs, file_names,
+                                       host_home,
                                        section_response,
                                        max_resolution)
         elif library.tag == 'Directory' and library.attrib['type'] == 'show' and 'DVR' not in library.attrib['title']:
@@ -244,12 +263,14 @@ def need_transcode_generator(
             for show in shows:
                 show_response = requests.get(
                     f'{plex_url}{show.attrib["key"].replace("/children", "/allLeaves")}')
-                yield from _process_videos(desired_audio_codecs, desired_video_codecs, file_names, host_home,
+                yield from _process_videos(desired_audio_codecs, desired_video_codecs, desired_subtitle_codecs,
+                                           file_names, host_home,
                                            show_response,
                                            max_resolution)
 
 
-def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str], file_names, host_home,
+def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str],
+                    desired_subtitle_codecs: list[str], file_names, host_home,
                     show_response, max_resolution):
     episodes = list(filter(
         lambda el: el.tag == 'Video' and (
@@ -260,6 +281,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
         video_codec = "?"
         video_resolution = None
         audio_codec = "?"
+        subtitle_codec = None
         file_name = "?"
         file_size = 0
         duration = episode.attrib.get("duration")
@@ -274,9 +296,31 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
             for part in list(filter(lambda el: el.tag == 'Part', media)):
                 file_name = part.attrib.get("file", "?")
                 file_size = int(part.attrib.get("size", "0"))
+                # TODO: stream info isn't coming back with this call, move to python-plexapi
+                # <Stream id="347880" streamType="3" default="1" codec="ass" index="2" bitrate="0" language="English" languageTag="en" languageCode="eng" title="Filtered" displayTitle="English (ASS)" extendedDisplayTitle="Filtered (English ASS)">
+                streams = list(filter(lambda el: el.tag == 'Stream', part))
+                if len(streams) == 0:
+                    subtitle_codec = "?"
+                for subtitle_stream in list(
+                        filter(lambda el: el.tag == 'Stream' and el.attrib.get('streamType', "") == "3", part)):
+                    if desired_subtitle_codecs is not None and subtitle_stream.attrib.get(
+                            'codec') in desired_subtitle_codecs:
+                        subtitle_codec = subtitle_stream.attrib.get('codec')
+                    elif subtitle_codec is None:
+                        subtitle_codec = subtitle_stream.attrib.get('codec')
+
+        # if we want subtitles but there is no subtitle stream of any kind, there is no way to transcode, so skip it
+        if desired_subtitle_codecs is not None and subtitle_codec is None:
+            logger.info(f"{file_name}; Skipping because there are no subtitle streams")
+            continue
+
+        # if we want specific audio codecs but there is no audio stream, there is no way to transcode, so skip it
+        if desired_audio_codecs is not None and audio_codec == "?":
+            continue
 
         if ((desired_video_codecs is not None and video_codec not in desired_video_codecs) or (
-                desired_audio_codecs is not None and audio_codec not in desired_audio_codecs)) and file_name != '?' \
+                desired_audio_codecs is not None and audio_codec not in desired_audio_codecs) or (
+                    desired_subtitle_codecs is not None and subtitle_codec not in desired_subtitle_codecs)) and file_name != '?' \
                 and (
                 max_resolution is None or (video_resolution is not None and int(video_resolution) <= max_resolution)):
 
