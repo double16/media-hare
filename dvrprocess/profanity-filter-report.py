@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import json
+import logging
 import os
 import subprocess
-import logging
 import sys
 import tempfile
 from pathlib import Path
@@ -19,17 +19,10 @@ logger = logging.getLogger(__name__)
 def profanity_filter_report_cli(argv):
     ffmpeg = common.find_ffmpeg()
     data = []
-    for arg in argv:
-        if os.path.isfile(arg):
-            pf_data = extract_pf_data(arg, ffmpeg)
-            if pf_data:
-                data.append(pf_data)
-        else:
-            for root, dirs, files in os.walk(arg, topdown=True):
-                for mkv in filter(lambda fn: fn.endswith(".mkv"), files):
-                    pf_data = extract_pf_data(os.path.join(root, mkv), ffmpeg)
-                    if pf_data:
-                        data.append(pf_data)
+    for file, _ in common.generate_video_files(argv):
+        pf_data = extract_pf_data(file, ffmpeg)
+        if pf_data:
+            data.append(pf_data)
     print(json.dumps(data))
 
 

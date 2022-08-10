@@ -8,13 +8,20 @@
 ^je[.][.]sus$
 ^je[.][.][.]sus$
 oh god
+oh gods
 oh god almighty
 oh my god
+oh my gods
 swear to god
+swear to gods
 ^my god[!,.-]+
+^my gods[!,.-]+
 ^by god[!,.-]+
+^by gods[!,.-]+
 ^dear god[!,.-]+
+^dear gods[!,.-]+
 ^holy god[!,.-]+
+^holy gods[!,.-]+
 oh lord
 oh my lord
 good god
@@ -80,6 +87,7 @@ god[ -]damned
 goddamn it
 god[ -]damn it
 oh damn
+oh damn it
 hotdamn
 hot damn
 hot-damn
@@ -88,6 +96,8 @@ damn you
 darn
 darn it
 darn you
+oh darn
+oh darn it
 bitch
 bitchs
 bitches
@@ -127,6 +137,9 @@ go fuck yourself
 go fuck your self
 fucker
 fucking
+what the$
+what the[!-]+
+what the [!-]+
 what the f[.]*
 what the fu[.]*
 what the fuc[.]*
@@ -137,8 +150,8 @@ mother fucker
 motherfucking
 mother-fucking
 mother fucking
-that mother[.]+
-you mother[.]+
+that mother[!.-]+
+you mother[!.-]+
 freakin
 freaking
 friggin
@@ -169,6 +182,7 @@ sure as heck
 the heck's
 the heck’s
 ass
+arse
 ass's
 ass’s
 asses
@@ -188,6 +202,7 @@ ass[ -]kicked
 ass[ -]kick
 kick .* ass
 up .* ass
+up .* arse
 up .* butt
 jackass
 jackasses
@@ -198,8 +213,10 @@ jack-asses
 dumbass
 dumbasses
 dumb ass
+dumb arse
 dumb asses
 dumb-ass
+dumb-arse
 dumb-asses
 asshole
 ass hole
@@ -213,34 +230,54 @@ ass[ -]eyes
 half[ -]ass
 half[ -]assed
 kiss my ass
+kiss my arse
 kiss my butt
 lick my ass
+lick my arse
 lick my butt
 ass[ -]sniffer
 butt[ -]sniffer
 piss
 piss[ -]off
 pissing
-suck it[!,]
+sucks
+you suck
+that sucks
+that .* sucks
+suck[!]
+suck it[!,.-]+
+that blows$
+that blows[!,.-]+
+that .* blows$
+that .* blows[!,.-]+
 pee drinking
 pee-drinking
 fag
 fags
 faggot
 faggots
+cojones
 ballsy
 has balls
+has cojones
 has some balls
+has some cojones
 have balls
+have cojones
 have some balls
+have some cojones
 got balls
+got cojones
 got some balls
+got some cojones
 has a pair[.!]
 grow a pair
 grow some balls
+grow some cojones
 balls to bones
 prick
 little prick
 jack[ -]off
 jag[ -]off
 hot legs
+phlegm[- ]wad

@@ -6,7 +6,7 @@ The filter output produces several streams. The original audio and subtitle stre
 
 The filter also adds tags to the media so that changes to the phrase list can be applied. Re-running the filter will only change the media if changes to filtering are found. If the phrase list has been changed such that no filtering is done, the filtered streams will be removed from the media.
 
-The phrase list is divided into a censor list and stop list. The censor list only masks the phrases in the list and keeps other text. The stop list masks the entire frame of text. The intent of the stop list is to identify undesirable subject matter such that only masking a word would still present offensive content. 
+The phrase list is divided into a censor list and stop list. The censor list only masks the phrases in the list and keeps other text. The stop list masks the entire frame of text. The intent of the stop list is to identify undesirable subject matter such that only masking a word would still present offensive content.  There is an allow list for special cases for acceptable phrases that match something in the censor list.
 
 The determination of "offensive" is highly subjective. There is an issue to allow the censor and stop list to be stored externally so that each install can tailor the lists to personal preference. Possibly allowing multiple lists will various levels (such as aligning with the U.S. designations of G, PG, PG-13, R, etc.)
 

@@ -48,6 +48,7 @@ Filter audio and subtitles for profanity.
 - Filtered streams will be removed if changes occur such that filtering is no longer needed.
 - The 'censor_list.txt' file contains phrases that are muted and the phrase is marked out in the subtitle.
 - The 'stop_list.txt' file contains phrases that are muted and the entire subtitle is marked.
+- The 'allow_list.txt' file contains phrases that match `censor_list.txt` but should be allowed.
 - Set the tag 'PFILTER_SKIP' in the video to 'y' or 't' to skip filtering.
   ex: mkvpropedit filename.mkv --tags global:{os.path.join(os.path.join(os.path.dirname(os.path.dirname(common.__file__))), 'mkv-filter-skip.xml')}
 
@@ -152,9 +153,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     # Load word lists
     censor_list = load_censor_list()
     stop_list = load_stop_list()
+    allow_list = load_allow_list()
 
     # Compute filter hash
-    hash_input = str(FILTER_VERSION) + ','.join(censor_list) + ','.join(stop_list)
+    hash_input = str(FILTER_VERSION) + ','.join(censor_list) + ','.join(stop_list) + ','.join(allow_list)
     filter_hash = hashlib.sha512(hash_input.encode("utf-8")).hexdigest()
     logger.info(f"expected filter hash = {filter_hash}, expected filter version = {FILTER_VERSION}")
 
@@ -289,7 +291,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data_forced.events = AssEventList()
             for event in list(ass_data.events):
                 original_text = event.text
-                filtered_text, stopped = filter_text(censor_list, stop_list, original_text)
+                filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
                 if filtered_text != original_text:
                     event.text = filtered_text
                     ass_data_forced.events.append(copy.copy(event))
@@ -304,7 +306,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             srt_data_forced.data = []
             for event in list(srt_data):
                 original_text = event.text
-                filtered_text, stopped = filter_text(censor_list, stop_list, original_text)
+                filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
                 if filtered_text != original_text:
                     event.text = filtered_text
                     srt_data_forced.data.append(event)
@@ -501,8 +503,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
 def load_censor_list():
     # TODO: allow multiple lists based on 'levels' (R, PG, G ?) and allow selection at runtime
-    result = list(
-        loadtxt(os.path.join(os.path.dirname(common.__file__), 'censor_list.txt'), dtype='str', delimiter='\xFF'))
+    result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'censor_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
     result.sort(key=lambda e: len(re.sub('[^A-Za-z]+', '', e)), reverse=True)
     return result
@@ -511,6 +512,12 @@ def load_censor_list():
 def load_stop_list():
     # TODO: allow multiple lists based on 'levels' (R, PG, G ?) and allow selection at runtime
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'stop_list.txt'), dtype='str', delimiter='\xFF')
+    result = list(filter(phrase_list_accept_condition, result))
+    return result
+
+
+def load_allow_list():
+    result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'allow_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
     return result
 
@@ -653,33 +660,52 @@ def span_list_to_str(span_list: list) -> str:
 
 
 STOP_CLEAN_PATTERN = "^((?:[{].*?[}])*)"
+# Identifies a word break in both SRT and ASS. ASS is more complex than SRT and has it's own markup.
 WORD_BREAKS = r'((?:\\s|[,!]|[{].+?[}]|[\\\\]x[0-9a-fA-F]+|[\\\\][Nh])+|\\b)'
+# When the censor list uses the regex "^" for the beginning of text, this is substituted to make it work
 NO_PREVIOUS_WORD = r'(?<!\\w\\s)'
-PRE_FILTERED = r'[!@#$%^&*+-]\s?(?:[@#$%^&*+-]\s?){2,}'
+# Matches subtitles that have text already filtered using various symbols
+PRE_FILTERED = r'[!@#$%^&*+]\s?(?:[@#$%^&*+]\s?){2,}'
+# The string to use for masking
+MASK_STR = '***'
 
 
-def contains_pattern_repl(matchobj):
-    result = ''
-    # logger.debug(f"{matchobj.groups()}")
+def contains_pattern_repl(matchobj, allow_ranges: list[tuple]):
+    original = matchobj.group(0)
+    for allow_range in allow_ranges:
+        if allow_range[0] <= matchobj.start(0) < allow_range[1] \
+                or allow_range[0] <= matchobj.end(0) < allow_range[1]:
+            return original
+
+    masked = ''
+    logger.debug("%s", str(matchobj.groups()))
     for group_idx in range(1, len(matchobj.groups()) + 1):
         if group_idx % 2 == 0:
-            result = result + '***'
+            masked = masked + MASK_STR
         elif matchobj.group(group_idx) is not None:
-            result = result + matchobj.group(group_idx)
+            masked = masked + matchobj.group(group_idx)
         pass
-    return result
+    return masked
 
 
-def filter_text(censor_list, stop_list, text) -> (str, bool):
+def filter_text(censor_list, stop_list, allow_list, text) -> (str, bool):
     """
     Filter text using the lists.
     :param censor_list: phrases in the censor list are removed from the text, such as adjectives or exclamations
     :param stop_list: phrases in the stop list indicate suspicious subject and all text is removed
+    :param allow_list: phrases to allow that match censor_list
     :param text:
     :return: filtered text, True if phrase in stop list was found
     """
+
+    allow_ranges: list[tuple] = []
+    for allow_phrase in allow_list:
+        allow_pattern = phrase_to_pattern(allow_phrase)
+        for m in re.finditer(allow_pattern, text, flags=re.IGNORECASE):
+            allow_ranges.append(m.span(0))
+
     if re.search(PRE_FILTERED, text, flags=re.IGNORECASE):
-        text2 = re.sub(PRE_FILTERED, '***', text)
+        text2 = re.sub(PRE_FILTERED, MASK_STR, text)
         if text2 == text:
             # We need the text to change to mute the audio
             text = text2 + ' _'
@@ -689,7 +715,7 @@ def filter_text(censor_list, stop_list, text) -> (str, bool):
         stop_pattern = phrase_to_pattern(stop_phrase)
         if re.search(stop_pattern, text, flags=re.IGNORECASE):
             try:
-                text = re.search(STOP_CLEAN_PATTERN, text).expand(r"\1***")
+                text = re.search(STOP_CLEAN_PATTERN, text).expand(fr"\1{MASK_STR}")
                 return text, True
             except re.error as e:
                 print(f"ERROR in stop list: {stop_phrase} => {stop_pattern}")
@@ -698,14 +724,14 @@ def filter_text(censor_list, stop_list, text) -> (str, bool):
         contains_pattern = phrase_to_pattern(contains_phrase)
         # logger.debug(f"{contains_phrase} => {contains_pattern}")
         try:
-            text = re.sub(contains_pattern, contains_pattern_repl, text, flags=re.IGNORECASE)
+            text = re.sub(contains_pattern, lambda m: contains_pattern_repl(m, allow_ranges), text, flags=re.IGNORECASE)
         except re.error as e:
             print(f"ERROR in censor list: {contains_phrase} => {contains_pattern}")
             raise e
     # clean up trailing punctuation
-    text = re.sub(r'\*\*\*([,!.?\'’]+)', '***', text)
+    text = re.sub(r'\*\*\*([,!.?\'’]+)', MASK_STR, text)
     # clean up redundant replacements
-    text = re.sub(r'(\*\*\*[\s,]*)+\*\*\*', '***', text)
+    text = re.sub(r'(\*\*\*[\s,]*)+\*\*\*', MASK_STR, text)
     return text, False
 
 
