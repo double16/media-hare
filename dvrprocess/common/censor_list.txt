@@ -8,8 +8,10 @@
 ^je[.][.]sus$
 ^je[.][.][.]sus$
 oh god
+oh jesus
 oh gods
 oh god almighty
+oh god in heaven
 oh my god
 oh my gods
 swear to god
@@ -64,8 +66,11 @@ shitface
 shit face
 shit-face
 bullshit
+bullshitters
 bull[ -]shit
+bull[ -]shitters
 piece[ -]of[ -]shit
+piece[ -]of[ -]shits
 crap
 oh crap
 craps
@@ -86,8 +91,13 @@ goddamned
 god[ -]damned
 goddamn it
 god[ -]damn it
+oh god[ -]damn it
+goddamn you
+god[ -]damn you
+oh god[ -]damn you
 oh damn
 oh damn it
+oh damn you
 hotdamn
 hot damn
 hot-damn
@@ -158,6 +168,12 @@ friggin
 frigging
 bastard
 bastards
+little bastard
+little bastards
+dirty little bastard
+dirty little bastards
+dirty bastard
+dirty bastards
 whore
 whores
 hell
@@ -197,10 +213,22 @@ big-ass
 kick[ -]ass
 kicks[ -]ass
 kicking[ -]ass
+kicked[ -]ass
+my[ -]ass
+my[ -]arse
+your[ -]ass
+your[ -]arse
+smart[ -]ass
+smart[ -]asses
 ass[ -]kicking
 ass[ -]kicked
 ass[ -]kick
 kick .* ass
+kicks .* ass
+kicked .* ass
+kick .* arse
+kicks .* arse
+kicked .* arse
 up .* ass
 up .* arse
 up .* butt
@@ -236,6 +264,7 @@ lick my ass
 lick my arse
 lick my butt
 ass[ -]sniffer
+ass[ -]wipe
 butt[ -]sniffer
 piss
 piss[ -]off
@@ -250,8 +279,8 @@ that blows$
 that blows[!,.-]+
 that .* blows$
 that .* blows[!,.-]+
-pee drinking
-pee-drinking
+egg[ -]sucker
+pee[ -]drinking
 fag
 fags
 faggot
