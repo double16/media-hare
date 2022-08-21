@@ -22,6 +22,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 COPY requirements.txt /tmp/
 
 # mono-* deps line must match Subtitle-Edit version
+# vosk models: https://alphacephei.com/vosk/models
 RUN apt-get -q update && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq \
     mono-runtime libmono-system-windows-forms4.0-cil libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
@@ -32,6 +33,11 @@ RUN apt-get -q update && \
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
+    mkdir /root/.cache/vosk &&\
+    curl -o /tmp/vosk-model-small-en-us-0.15.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip &&\
+    unzip -d /root/.cache/vosk /tmp/vosk-model-small-en-us-0.15.zip &&\
+    curl -o /tmp/vosk-model-small-es-0.22.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-small-es-0.22.zip &&\
+    unzip -d /root/.cache/vosk /tmp/vosk-model-small-es-0.22.zip &&\
     rm -rf /tmp/*
 
 # It appears Ubuntu does not include tesseract models for all OCR engines
@@ -40,7 +46,7 @@ RUN apt-get -q update && \
 # This is version 4.1.0, but it doesn't make things better
 # ADD https://github.com/tesseract-ocr/tessdata/raw/4767ea922bcc460e70b87b1d303ebdfed0897da8/eng.traineddata /usr/share/tesseract-ocr/4.00/tessdata/
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.6/SE366.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.7/SE367.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
     curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/v${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
@@ -72,6 +78,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/dvr_post_process.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/profanity_filter.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/profanity-filter-apply.py /usr/local/bin/ &&\
+    ln -s /usr/local/share/dvrprocess/profanity-filter-report.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/comchap-apply.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/comchap.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/comtune.py /usr/local/bin/ &&\

@@ -23,7 +23,7 @@ def profanity_filter_report_cli(argv):
         pf_data = extract_pf_data(file, ffmpeg)
         if pf_data:
             data.append(pf_data)
-    print(json.dumps(data))
+    print(json.dumps(data, indent=2))
 
 
 def extract_pf_data(mkv, ffmpeg):

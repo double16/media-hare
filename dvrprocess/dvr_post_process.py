@@ -34,34 +34,40 @@ The file closest to the input file will be taken. Comments start with '#'.
 
 {sys.argv[0]} [options] file
 
---dry-run
+-n, --dry-run
     Output command that would be used but do nothing.
---keep
+-k, --keep
     Keep original file in a backup prefixed by ".~".
---vcodec=h264[,hvec,...]
+-v, --vcodec=h264[,hvec,...]
     The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
---acodec=opus[,aac,...]
+-a, --acodec=opus[,aac,...]
     The audio codec: {common.get_global_config_option('audio', 'codecs')} (default), aac, ac3, ...
---height=480
+-h, --height=480
     Scale down to this height, maintaining aspect ratio.
---output-type=mkv
+-o, --output-type=mkv
     Output type: mkv (default), ts, mp4, ...
---prevent-larger=true,false
+-l, --prevent-larger=true,false
     Prevent conversion to a larger file (default is {common.get_global_config_boolean('post_process', 'prevent_larger')}).
---hwaccel=false,auto,full
+-w, --hwaccel=false,auto,full
     Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel')}).
---stereo
+-s, --stereo
     Scale down audio to stereo.
---preset=copy,medium,fast,veryfast
+-p, --preset=copy,medium,fast,veryfast
     Set ffmpeg preset, with a special "copy" for only copying streams.
---tune=[animation,...]
+-t, --tune=[animation,...]
     Set ffmpeg tune value.
---rerun
+--no-rerun
+    Prevent re-encoding based on excessive bitrate, extraneous closed captions, etc.
+-r, --rerun
     Re-encode streams already in the desired codec.
 --profanity-filter
     Include profanity filter in output.
 --crop-frame
     Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
+-f, --framerate={','.join(FRAME_RATE_NAMES.keys())},24,30000/1001,...
+    Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
+-c, --ignore-errors
+    Ignore errors in the stream, as much as can be done. This may still produce an undesired stream, such as out of sync audio. 
 """, file=sys.stderr)
 
 
