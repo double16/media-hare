@@ -780,7 +780,7 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
         arguments.extend([f"-b:{current_output_stream}", str(target_bitrate)])
 
 
-def array_as_command(a):
+def array_as_command(a) -> str:
     command = []
     for e in a:
         if '\'' in e:
@@ -1479,12 +1479,3 @@ def is_truthy(value) -> bool:
     if value is None:
         return False
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
-
-
-def language_2char(language: str) -> str:
-    # FIXME: replace with vosx specific language mapping
-    if language == 'spa':
-        return 'es'
-    if language in ['eng', 'en']:
-        return 'en-us'
-    return language[0:2]
