@@ -266,14 +266,20 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
         audio_output_idx = 1
 
-        # Original subtitle stream
         if subtitle_original_idx is not None:
+            # Original subtitle stream
             arguments.extend(["-map", f"{streams_file}:{subtitle_original_idx}",
                               "-metadata:s:s:0", f'title={common.TITLE_ORIGINAL}',
                               "-disposition:s:0", "default"])
             subtitle_output_idx = 1
+        elif subtitle_srt_generated:
+            # Keep generated stream
+            arguments.extend(["-i", subtitle_srt_generated,
+                              "-map", f"{streams_file+1}:0",
+                              "-metadata:s:s:0", f'title={common.TITLE_ORIGINAL}',
+                              "-disposition:s:0", "default"])
+            subtitle_output_idx = 1
         else:
-            # TODO: include generated?
             subtitle_output_idx = 0
     else:
         subtitle_filtered_stream = 1
@@ -665,7 +671,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, temp_base, language=Non
         logger.error("SRT not generated from audio-to-text (via %s)", vosk)
         return None
 
-    # TODO: post process cleanup: 'the' by itself, ' the' at the end
+    audio_to_text_cleanup(subtitle_srt_filename)
 
     word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language)
     if word_found_pct < WORD_FOUND_PCT_THRESHOLD:
@@ -674,6 +680,35 @@ def audio_to_srt(input_info: dict, audio_original: dict, temp_base, language=Non
         return None
 
     return subtitle_srt_filename
+
+
+def audio_to_text_cleanup(subtitle_srt_filename: str) -> None:
+    """
+    Post process audio to text subtitles. This cleanup is tuned closely to the vosk models and may need to be changed
+    when updated models are used.
+      - 'the' by itself
+      - ' the' at the end
+    :param subtitle_srt_filename: the filename of the SRT subtitles, content will be modified.
+    """
+    srt_cleaned = False
+    srt_data = pysrt.open(subtitle_srt_filename)
+    for i in range(len(srt_data) - 1, -1, -1):
+        event = srt_data[i]
+        cleaned_text = event.text
+        while cleaned_text.lower().endswith(' the'):
+            cleaned_text = cleaned_text[0:-4]
+        if cleaned_text.lower() == 'the':
+            cleaned_text = ''
+        if len(cleaned_text) == 0:
+            logger.info("Removed empty SRT event: %s", str(event.start))
+            del srt_data[i]
+            srt_cleaned = True
+        elif cleaned_text != event.text:
+            logger.info("Cleaned SRT event: %s, %s -> %s", str(event.start), event.text, cleaned_text)
+            event.text = cleaned_text
+            srt_cleaned = True
+    if srt_cleaned:
+        srt_data.save(Path(subtitle_srt_filename), 'utf-8')
 
 
 def words_in_dictionary_pct(subtitle_srt_filename, language):

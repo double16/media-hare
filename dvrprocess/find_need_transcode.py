@@ -19,7 +19,7 @@ import common
 #
 
 # TODO: These time multipliers are very specific to my hardware. They should be based on the number of cores,
-#  configured preset, codec, and will probably be widely inaccurate :p
+#  configured preset, codec, and will probably be wildly inaccurate :p
 TRANSCODE_MULTIPLER_480 = 2.0
 TRANSCODE_MULTIPLER_720 = 0.8
 TRANSCODE_MULTIPLER_1080 = 0.5

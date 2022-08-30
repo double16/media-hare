@@ -138,7 +138,8 @@ def do_comtune(infile, verbose=False, workdir=None, force=0, dry_run=False):
         workdir = os.path.dirname(os.path.abspath(infile))
     comskip_ini = find_comskip_starter_ini()
     try:
-        ensure_framearray(infile, None, comskip_ini, workdir=workdir, dry_run=dry_run, force=force > 1)
+        ensure_framearray(infile, os.path.basename(infile) + CSV_SUFFIX_BLACKFRAME, comskip_ini, workdir=workdir,
+                          dry_run=dry_run, force=force > 1)
     except subprocess.CalledProcessError:
         return 255
 
@@ -574,9 +575,12 @@ def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, 
     if not force and os.path.isfile(csv_path):
         return
     comskip = common.find_comskip()
-    command = [comskip, "-v", "9", "--hwassist", "--cuvid", "--vdpau", "--dxva2", "--quiet", "--csvout",
-               f"--ini={comskip_ini}",
-               f"--output={workdir}", f"--output-filename={infile_base}", infile]
+    command = [comskip, "-v", "9"]
+    if common.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
+        command.extend(["--hwassist", "--cuvid", "--vdpau", "--dxva2"])
+    command.extend(["--quiet", "--csvout",
+                    f"--ini={comskip_ini}",
+                    f"--output={workdir}", f"--output-filename={infile_base}", infile])
     logger.info(common.array_as_command(command))
     if not dry_run:
         subprocess.run(command, check=True, capture_output=True)

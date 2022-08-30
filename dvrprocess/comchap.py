@@ -345,10 +345,8 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             comskip_command.append("-w")
         else:
             comskip_command.append(common.find_comskip())
-            comskip_command.append("--hwassist")
-            comskip_command.append("--cuvid")
-            comskip_command.append("--vdpau")
-            comskip_command.append("--dxva2")
+            if common.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
+                comskip_command.extend(["--hwassist", "--cuvid", "--vdpau", "--dxva2"])
 
         # check for csv and logo file which makes the process much faster
         if not os.path.exists(csvfile):
