@@ -54,7 +54,7 @@ Docker Compose. It integrates with `media-hare` and does process priority tuning
 Otherwise, run something similar to the following, replacing time zone and paths as necessary.
 
 ```shell
-$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
+$ docker run -d -e "TZ=America/Chicago" --devices /dev/dri -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
 ```
 
 ### Plex running in anyway outside of Docker
@@ -64,7 +64,7 @@ Install Docker for Desktop from https://www.docker.com/products/docker-desktop/.
 Open a shell like Terminal or Powershell and run the following, replacing time zone and paths as necessary.
 
 ```shell
-$ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
+$ docker run -d -e "TZ=America/Chicago" --devices /dev/dri -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
 ```
 
 ## Development Recommendation
@@ -74,7 +74,7 @@ $ docker run -d -e "TZ=America/Chicago" -v /path/to/media:/media -v /path/to/med
 ```shell
 $ docker build -t media-hare:latest .
 
-$ docker run -it --rm --entrypoint /bin/zsh -v ~/Movies:/Movies -v /path/to/media:/media -v .:/Workspace -v ~/.media-hare.ini:/etc/media-hare.ini media-hare:latest
+$ docker run -it --rm --entrypoint /bin/zsh --devices /dev/dri -v ~/Movies:/Movies -v /path/to/media:/media -v .:/Workspace -v ~/.media-hare.ini:/etc/media-hare.ini media-hare:latest
 ```
 
 ### podman

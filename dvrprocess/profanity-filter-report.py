@@ -23,7 +23,7 @@ def profanity_filter_report_cli(argv):
         pf_data = extract_pf_data(file, ffmpeg)
         if pf_data:
             data.append(pf_data)
-    print(json.dumps(data))
+    print(json.dumps(data, indent=2))
 
 
 def extract_pf_data(mkv, ffmpeg):
@@ -44,6 +44,8 @@ def extract_pf_data(mkv, ffmpeg):
         common.K_FILTER_VERSION: input_info[common.K_FORMAT][common.K_TAGS][common.K_FILTER_VERSION],
         common.K_FILTER_HASH: input_info[common.K_FORMAT][common.K_TAGS][common.K_FILTER_HASH],
         common.K_FILTER_STOPPED: input_info[common.K_FORMAT][common.K_TAGS].get(common.K_FILTER_STOPPED, None),
+        common.K_AUDIO_TO_TEXT_VERSION: input_info[common.K_FORMAT][common.K_TAGS].get(common.K_AUDIO_TO_TEXT_VERSION,
+                                                                                       None),
         'changes': []
     }
     subtitle_codec = subtitle_original['codec_name']

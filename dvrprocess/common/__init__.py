@@ -55,6 +55,7 @@ K_FILTER_HASH = 'PFILTER_HASH'
 K_FILTER_SKIP = 'PFILTER_SKIP'
 K_FILTER_STOPPED = 'PFILTER_STOPPED'
 K_COMSKIP_HASH = 'COMSKIP_HASH'
+K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
 
 CODEC_SUBTITLE_ASS = 'ass'
 CODEC_SUBTITLE_SRT = 'srt'
@@ -284,6 +285,28 @@ def _find_mkvpropedit():
     if not os.access(mkvpropedit, os.X_OK):
         fatal(f"{mkvpropedit} is not an executable")
     return mkvpropedit
+
+
+vosk_path = None
+
+
+def find_vosk():
+    global vosk_path
+    if vosk_path is None:
+        _once_lock.acquire()
+        try:
+            if vosk_path is None:
+                vosk_path = _find_vosk()
+        finally:
+            _once_lock.release()
+    return vosk_path
+
+
+def _find_vosk():
+    vosk = which("vosk-transcriber")
+    if not os.access(vosk, os.X_OK):
+        fatal(f"{vosk} is not an executable")
+    return vosk
 
 
 def get_plex_url():
@@ -757,7 +780,7 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
         arguments.extend([f"-b:{current_output_stream}", str(target_bitrate)])
 
 
-def array_as_command(a):
+def array_as_command(a) -> str:
     command = []
     for e in a:
         if '\'' in e:

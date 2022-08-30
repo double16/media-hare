@@ -1,6 +1,6 @@
 # profanity_filter.py
 
-The profanity filter uses text based subtitles to mute audio and mask subtitles for offensive words and phrases. Media must have either an SRT or ASS subtitle. If one of those isn't available but a DVD vobsub or Blu-Ray hdmv_pgs subtitle is present (these are the standard formats), an attempt will be made to convert to text using the (Subtitle-Edit)[https://github.com/SubtitleEdit/subtitleedit] program. If at least 93% of words are found in the dictionary (using the hunspell library), the text subtitle is used for filtering.
+The profanity filter uses text based subtitles to mute audio and mask subtitles for offensive words and phrases. Media must have either an SRT or ASS subtitle. If one of those isn't available but a DVD vobsub or Blu-Ray hdmv_pgs subtitle is present (these are the standard formats), an attempt will be made to convert to text using the (Subtitle-Edit)[https://github.com/SubtitleEdit/subtitleedit] program. If no image based subtitle is available, audio to text is attempted using (Vosk)[https://alphacephei.com/vosk]. If at least 93% of words are found in the dictionary (using the hunspell library), the text subtitle is used for filtering.
 
 The filter output produces several streams. The original audio and subtitle streams are kept. A filtered audio stream is added. Two filtered subtitle streams are added. One is all subtitles with filtering. The second only contains filtered frames and is marked as 'forced'. Using this stream with the filtered audio will only show subtitles when filtering is applied.
 
