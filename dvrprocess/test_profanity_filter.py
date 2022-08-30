@@ -458,7 +458,6 @@ class ProfanityFilterTest(unittest.TestCase):
         profanity_filter.audio_to_text_cleanup(path)
         with open(path, "r") as file:
             cleaned = ''.join(file.readlines())
-        print(cleaned)
         self.assertEqual("""1
 00:00:00,500 --> 00:00:04,027
 Hey there
