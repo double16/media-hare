@@ -9,6 +9,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from shutil import which
 
@@ -22,7 +23,7 @@ import common
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 11
-AUDIO_TO_TEXT_VERSION = 1
+AUDIO_TO_TEXT_VERSION = 2
 
 # exit code for content had filtering applied, file has been significantly changed
 CMD_RESULT_FILTERED = 0
@@ -194,7 +195,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info("%s: removing filter due to %s property", filename, common.K_FILTER_SKIP)
     else:
         if not force and current_filter_hash == filter_hash and current_filter_version == str(
-                FILTER_VERSION) and current_audio2text_version in [None, str(AUDIO_TO_TEXT_VERSION)]:
+                FILTER_VERSION) and current_audio2text_version in [None, '', str(AUDIO_TO_TEXT_VERSION)]:
             logger.info("Stream is already filtered")
             return CMD_RESULT_UNCHANGED
 
@@ -202,12 +203,13 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         return CMD_RESULT_UNCHANGED
 
     subtitle_srt_generated = None
-    audio_to_text_version = None
+    audio_to_text_version = current_audio2text_version
 
-    if not subtitle_original or subtitle_original['tags'].get('DURATION', '').startswith('00:00:00'):
+    if not subtitle_original or subtitle_original['tags'].get('DURATION', '').startswith(
+            '00:00:00') or current_audio2text_version not in [None, '', str(AUDIO_TO_TEXT_VERSION)]:
         subtitle_srt_generated = ocr_subtitle_bitmap_to_srt(input_info, temp_base, language, verbose=verbose)
         if not subtitle_srt_generated and audio_original:
-            subtitle_srt_generated = audio_to_srt(input_info, audio_original, temp_base, language, verbose=verbose)
+            subtitle_srt_generated = audio_to_srt(input_info, audio_original, workdir, language, verbose=verbose)
             if subtitle_srt_generated:
                 audio_to_text_version = AUDIO_TO_TEXT_VERSION
         if not subtitle_srt_generated:
@@ -254,7 +256,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info(f"Removing filtered streams")
         arguments.extend(["-metadata", f"{common.K_FILTER_HASH}="])
         arguments.extend(["-metadata", f"{common.K_FILTER_VERSION}="])
-        arguments.extend(["-metadata", f"{common.K_AUDIO_TO_TEXT_VERSION}="])
+        arguments.extend(
+            ["-metadata", f"{common.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}="])
         arguments.extend(["-c:s", "copy"])
 
@@ -299,7 +302,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if subtitle_filtered_idx is not None:
             subtitle_extract_command.extend(['-map', f"{streams_file}:{subtitle_filtered_idx}",
                                              '-c', 'copy', subtitle_filtered_previous_filename])
-        if subtitle_srt_generated is None and (subtitle_original_idx is not None or subtitle_filtered_idx is not None):
+        if '-map' in subtitle_extract_command:
             if verbose:
                 logger.info(common.array_as_command(subtitle_extract_command))
             subprocess.run(subtitle_extract_command, check=True)
@@ -621,7 +624,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
     return subtitle_srt_filename
 
 
-def audio_to_srt(input_info: dict, audio_original: dict, temp_base, language=None, verbose=False):
+def audio_to_srt(input_info: dict, audio_original: dict, workdir, language=None, verbose=False):
     """
     Attempts to create a text subtitle from the original audio stream.
     :return: file name as string or None
@@ -633,23 +636,18 @@ def audio_to_srt(input_info: dict, audio_original: dict, temp_base, language=Non
     if not vosk:
         return None
 
-    subtitle_srt_filename = f"{temp_base}.srt"
+    temp_fd, subtitle_srt_filename = tempfile.mkstemp(dir=workdir, suffix='.srt')
+    os.close(temp_fd)
     if not debug:
         common.TEMPFILENAMES.append(subtitle_srt_filename)
-    if os.access(subtitle_srt_filename, os.R_OK):
-        if debug:
-            return subtitle_srt_filename
-        else:
-            os.remove(subtitle_srt_filename)
 
-    audio_filename = f"{temp_base}.{audio_original[common.K_CODEC_NAME]}"
+    temp_fd, audio_filename = tempfile.mkstemp(dir=workdir, suffix='.ac3')
+    os.close(temp_fd)
     if not debug:
         common.TEMPFILENAMES.append(audio_filename)
-    extract_command = [ffmpeg, "-loglevel", "error", '-hide_banner', '-y', '-analyzeduration',
-                       common.ANALYZE_DURATION,
-                       '-probesize', common.PROBE_SIZE,
+    extract_command = [ffmpeg, "-loglevel", "error", '-hide_banner', '-y',
                        '-i', input_info['format']['filename'],
-                       '-map', f'0:{audio_original[common.K_STREAM_INDEX]}', '-c:s', 'copy',
+                       '-map', f'0:{audio_original[common.K_STREAM_INDEX]}', '-c:a', 'ac3', '-ac', '2',
                        audio_filename
                        ]
     if verbose:

@@ -957,9 +957,9 @@ def check_already_running():
 
 def core_count():
     try:
-        return len(os.sched_getaffinity(0))
+        return max(1, len(os.sched_getaffinity(0)))
     except AttributeError:
-        return os.cpu_count()
+        return max(1, os.cpu_count())
 
 
 def should_stop_processing():

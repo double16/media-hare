@@ -64,19 +64,21 @@ def extract_pf_data(mkv, ffmpeg):
                        ]
     subprocess.run(extract_command, check=True, capture_output=True)
 
-    print(
-        f"INFO: {mkv}, {subtitle_codec}, original {os.stat(file_original).st_size} bytes, filtered {os.stat(file_filtered).st_size} bytes",
-        file=sys.stderr)
+    print("INFO: %s, %s, original %s bytes, filtered %s bytes",
+          mkv, subtitle_codec, os.stat(file_original).st_size, os.stat(file_filtered).st_size,
+          file=sys.stderr)
 
     parsed_original = None
     parsed_filtered = None
     try:
         if subtitle_codec == common.CODEC_SUBTITLE_ASS:
-            parsed_original = list(map(lambda e: e.text, read_ass(Path(file_original)).events))
-            parsed_filtered = list(map(lambda e: e.text, read_ass(Path(file_filtered)).events))
+            parsed_original = list(
+                map(lambda e: {'when': e.start, 'text': e.text}, read_ass(Path(file_original)).events))
+            parsed_filtered = list(
+                map(lambda e: {'when': e.start, 'text': e.text}, read_ass(Path(file_filtered)).events))
         elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
-            parsed_original = list(map(lambda e: e.text, pysrt.open(file_original)))
-            parsed_filtered = list(map(lambda e: e.text, pysrt.open(file_filtered)))
+            parsed_original = list(map(lambda e: {'when': e.start.ordinal, 'text': e.text}, pysrt.open(file_original)))
+            parsed_filtered = list(map(lambda e: {'when': e.start.ordinal, 'text': e.text}, pysrt.open(file_filtered)))
         else:
             common.fatal(f"INFO: Unknown subtitle codec {subtitle_codec}")
     except errors.CorruptAssError as e:
@@ -90,8 +92,11 @@ def extract_pf_data(mkv, ffmpeg):
 
     print(f"INFO: {mkv} {len(parsed_filtered)} subtitle events", file=sys.stderr)
     for i, val in enumerate(parsed_filtered):
-        if '***' in val:
-            data['changes'].append([parsed_original[i], val])
+        if '***' in val['text']:
+            data['changes'].append({
+                'when': common.s_to_ts(parsed_original[i]['when'] / 1000.0),
+                'original': parsed_original[i]['text'],
+                'filtered': val['text']})
 
     return data
 
