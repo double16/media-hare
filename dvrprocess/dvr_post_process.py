@@ -11,6 +11,7 @@ import sys
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import mkstemp
+from ass_parser import CorruptAssLineError
 
 import common
 from profanity_filter import do_profanity_filter
@@ -382,6 +383,10 @@ def do_dvr_post_process(input_file,
                             video_bitrate -= int(s[common.K_BIT_RATE])
                         elif 'tags' in s and 'BPS-eng' in s['tags']:
                             video_bitrate -= int(s['tags']['BPS-eng'])
+                        elif s[common.K_CODEC_NAME] == 'opus':
+                            # opus is VBR and therefore doesn't advertise a bitrate, make assumptions
+                            video_bitrate -= (s[common.K_CHANNELS] * 48000)
+
                 # adjust video bitrate by 60 fps increments for comparison purposes
                 video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 60.0))
 
@@ -675,7 +680,10 @@ def do_dvr_post_process(input_file,
     # TODO: It'd be best to run this on the temp file, but we're using a shared common.TEMPFILENAME so it doesn't work
     if profanity_filter:
         if output_type == "mkv":
-            do_profanity_filter(output_filename, dry_run=dry_run, verbose=verbose)
+            try:
+                do_profanity_filter(output_filename, dry_run=dry_run, verbose=verbose)
+            except CorruptAssLineError:
+                logger.error("Corrupt ASS subtitle in %s", input_file)
         else:
             logger.warning("profanity filter requested but requires mkv, skipping")
 
