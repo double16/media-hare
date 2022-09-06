@@ -98,8 +98,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         logger.debug("Loaded %s keyframes", len(keyframes))
 
     # sanity check edl to ensure it hasn't already been applied, i.e. check if last cut is past duration
+    input_duration = float(input_info[common.K_FORMAT]['duration'])
     if len(edl_events) > 0:
-        if edl_events[-1].end > float(input_info[common.K_FORMAT]['duration']):
+        if edl_events[-1].end > input_duration + 1:
             logger.fatal(f"edl cuts past end of file")
             return 255
 
@@ -158,7 +159,15 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     logger.debug("Moved cut start from %f to keyframe %f", edl_event.start, end)
 
                 start_next = edl_event.end
-                start_next = common.find_desired_keyframe(keyframes, start_next, common.KeyframeSearchPreference.AFTER)
+                if start_next < input_duration:
+                    # handle special case of cutting the end
+                    if len(keyframes) > 0 and abs(start_next - keyframes[-1]) < 0.05:
+                        start_next = input_duration
+                    else:
+                        start_next = common.find_desired_keyframe(keyframes, start_next, common.KeyframeSearchPreference.AFTER)
+                else:
+                    # limit to duration
+                    start_next = input_duration
                 if start_next != edl_event.end:
                     logger.debug("Moved cut end from %f to keyframe %f", edl_event.end, start_next)
 
@@ -211,7 +220,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                 start = start_next
 
             # add the final part from last commercial to end of file
-            end = float(input_info[common.K_FORMAT]['duration'])
+            end = input_duration
             duration = end - start
             if duration > 1:
                 hascommercials = True
