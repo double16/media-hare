@@ -30,6 +30,8 @@ will not start running on a system under load and also will stop if the system b
     Desired video codecs. Defaults to {video_codecs}
 -a, --audio=
     Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
+-f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
+    Desired frame rate. If the current frame rate is within 25%, the file isn't considered.
 --maxres=480
     Limit to specified height. Use to keep a lower powered machine from processing HD videos.
 --ignore-compute
@@ -38,11 +40,12 @@ will not start running on a system under load and also will stop if the system b
 
 
 def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_codecs=None, desired_audio_codecs=None,
-                    max_resolution=None,
+                    desired_frame_rate=None, max_resolution=None,
                     verbose=False):
     for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
                                               desired_video_codecs=desired_video_codecs,
-                                              desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution):
+                                              desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution,
+                                              desired_frame_rate=desired_frame_rate):
 
         try:
             post_process_code = dvr_post_process(file_info.host_file_path, dry_run=dry_run, verbose=verbose,
@@ -73,6 +76,7 @@ def transcode_apply_cli(argv):
     media_paths = None
     desired_video_codecs = None
     desired_audio_codecs = None
+    desired_frame_rate = None
     max_resolution = None
     dry_run = False
     check_compute = True
@@ -83,8 +87,9 @@ def transcode_apply_cli(argv):
 
     try:
         opts, args = getopt.getopt(list(argv),
-                                   "hnu:v:a:",
-                                   ["dry-run", "ignore-compute", "url=", "video=", "audio=", "maxres=", "verbose"])
+                                   "hnu:v:a:f:",
+                                   ["dry-run", "ignore-compute", "url=", "video=", "audio=", "maxres=", "framerate=",
+                                    "verbose"])
     except getopt.GetoptError:
         usage()
         return 2
@@ -100,6 +105,8 @@ def transcode_apply_cli(argv):
             desired_video_codecs = arg.split(',')
         elif opt in ("-a", "--audio"):
             desired_audio_codecs = arg.split(',')
+        elif opt in ("-f", "--framerate"):
+            desired_frame_rate = arg
         elif opt == '--maxres':
             max_resolution = int(arg)
         elif opt == '--verbose':
@@ -121,7 +128,8 @@ def transcode_apply_cli(argv):
         return 255
 
     transcode_apply(plex_url, media_paths=media_paths, dry_run=dry_run, desired_video_codecs=desired_video_codecs,
-                    desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution, verbose=verbose)
+                    desired_audio_codecs=desired_audio_codecs, desired_frame_rate=desired_frame_rate,
+                    max_resolution=max_resolution, verbose=verbose)
     return 0
 
 

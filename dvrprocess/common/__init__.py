@@ -67,6 +67,8 @@ CODEC_SUBTITLE = 'subtitle'
 CODEC_AUDIO = 'audio'
 CODEC_VIDEO = 'video'
 
+FRAME_RATE_NAMES = {'ntsc': '30000/1001', 'pal': '25.0', 'film': '24.0', 'ntsc_film': '24000/1001'}
+
 TITLE_ORIGINAL = 'Original'
 TITLE_FILTERED = 'Filtered'
 TITLE_FILTERED_FORCED = 'Filtered Only'
@@ -1371,7 +1373,7 @@ config_obj: [configparser.ConfigParser, None] = None
 _UNSET = object()
 
 
-def get_global_config_option(section: str, option: str, fallback: str = _UNSET):
+def get_global_config_option(section: str, option: str, fallback: [None, str] = _UNSET):
     """
     Get an option from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
     :param section:
@@ -1436,6 +1438,24 @@ def get_global_config_bytes(section: str, option: str, fallback: int = None):
     return parse_bytes(get_global_config().get(section, option))
 
 
+def get_global_config_frame_rate(section: str, option: str, fallback: [None, str] = _UNSET) -> [None, str]:
+    """
+    Get the frame rate from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
+    :param section:
+    :param option:
+    :param fallback:
+    :return: numeric frame rate, named frame rates are converted to numeric
+    """
+
+    if fallback == _UNSET:
+        value = get_global_config().get(section, option)
+    else:
+        value = get_global_config().get(section, option, fallback=fallback)
+    if value is None:
+        return None
+    return FRAME_RATE_NAMES.get(value.lower(), value)
+
+
 def get_work_dir() -> str:
     return get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
 
@@ -1479,3 +1499,21 @@ def is_truthy(value) -> bool:
     if value is None:
         return False
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
+
+
+def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_frame_rate: [None, str, float]) -> bool:
+    if current_frame_rate in [None, ''] or desired_frame_rate in [None, '']:
+        return False
+
+    if type(current_frame_rate) == str:
+        current_frame_rate_f = eval(FRAME_RATE_NAMES.get(current_frame_rate.lower(), current_frame_rate))
+    else:
+        current_frame_rate_f = current_frame_rate
+
+    if type(desired_frame_rate) == str:
+        desired_frame_rate_f = eval(FRAME_RATE_NAMES.get(desired_frame_rate.lower(), desired_frame_rate))
+    else:
+        desired_frame_rate_f = desired_frame_rate
+
+    frame_rate_pct = abs(current_frame_rate_f - desired_frame_rate_f) / max(current_frame_rate_f, desired_frame_rate_f)
+    return frame_rate_pct >= 0.25

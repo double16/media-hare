@@ -96,7 +96,8 @@ class ProfanityFilterTest(unittest.TestCase):
     def test_exclamation_quoted2(self):
         text = r'{\an7}{\pos(38,28)} "God, we’ve never worked\N{\an7}{\pos(38,44)} in place like this before.'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
-        self.assertEqual(r'{\an7}{\pos(38,28)} "*** we’ve never worked\N{\an7}{\pos(38,44)} in place like this before.', filtered)
+        self.assertEqual(r'{\an7}{\pos(38,28)} "*** we’ve never worked\N{\an7}{\pos(38,44)} in place like this before.',
+                         filtered)
 
     def test_exclamation_phrase(self):
         text = r'{\an7}{\pos(115,243)} Oh, my God.'
@@ -471,6 +472,7 @@ The lazy brown fox
 The lazy brown fox
 
 """, cleaned)
+        os.remove(path)
 
 
 if __name__ == '__main__':

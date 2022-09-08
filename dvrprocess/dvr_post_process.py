@@ -17,7 +17,6 @@ import common
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
-FRAME_RATE_NAMES = {'ntsc': '30000/1001', 'pal': '25.0', 'film': '24.0', 'ntsc_film': '24000/1001'}
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +64,7 @@ The file closest to the input file will be taken. Comments start with '#'.
     Include profanity filter in output.
 --crop-frame
     Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
--f, --framerate={','.join(FRAME_RATE_NAMES.keys())},24,30000/1001,...
+-f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
 -c, --ignore-errors
     Ignore errors in the stream, as much as can be done. This may still produce an undesired stream, such as out of sync audio. 
@@ -158,7 +157,7 @@ def parse_args(argv) -> (list[str], dict):
         elif opt in ("-p", "--preset"):
             preset = arg
         elif opt in ("-f", "--framerate"):
-            desired_frame_rate = FRAME_RATE_NAMES.get(arg, arg)
+            desired_frame_rate = common.FRAME_RATE_NAMES.get(arg, arg)
         elif opt in ("-c", "--ignore-errors"):
             ignore_errors = True
         elif opt == "--profanity-filter":
@@ -236,6 +235,9 @@ def do_dvr_post_process(input_file,
     if desired_audio_codecs is None:
         desired_audio_codecs = common.get_global_config_option('audio', 'codecs').split(',')
 
+    if desired_frame_rate is None:
+        desired_frame_rate = common.get_global_config_frame_rate('post_process', 'frame_rate', None)
+
     if not os.path.isfile(input_file):
         logger.error(f"{input_file} does not exist")
         return 255
@@ -302,12 +304,15 @@ def do_dvr_post_process(input_file,
         return 255
     frame_rate = video_info['avg_frame_rate']
     input_video_codec = common.resolve_video_codec(video_info['codec_name'])
+
     scale_height = desired_height and desired_height < height
     if scale_height:
         target_height = desired_height
     else:
         target_height = height
-    adjust_frame_rate = desired_frame_rate and round(eval(frame_rate), 0) != round(eval(desired_frame_rate), 0)
+
+    adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate, desired_frame_rate=desired_frame_rate)
+
     target_video_codec = common.resolve_video_codec(desired_video_codecs, target_height, video_info)
 
     # Find crop frame dimensions

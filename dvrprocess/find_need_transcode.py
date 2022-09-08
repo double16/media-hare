@@ -4,6 +4,7 @@ import getopt
 import logging
 import os
 import random
+import re
 import sys
 import xml.etree.ElementTree as ET
 
@@ -49,6 +50,8 @@ List files needing transcode from the Plex database. There are two output format
     Desired video codecs. Defaults to {video_codecs}
 -a, --audio=
     Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
+-f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
+    Desired frame rate. If the current frame rate is within 25%, the file isn't considered.
 --maxres=480
     Limit to specified height. Use to keep a lower powered machine from processing HD videos.
 --nagios
@@ -65,10 +68,12 @@ def find_need_transcode_cli(argv):
     desired_audio_codecs = None
     nagios_output = False
     max_resolution = None
+    desired_frame_rate = None
 
     try:
-        opts, args = getopt.getopt(argv, "hu:t:d:v:a:",
-                                   ["url=", "terminator=", "dir=", "video=", "audio=", "nagios", "maxres="])
+        opts, args = getopt.getopt(argv, "hu:t:d:v:a:f:",
+                                   ["url=", "terminator=", "dir=", "video=", "audio=", "nagios", "maxres=",
+                                    "framerate="])
     except getopt.GetoptError:
         usage()
         return 2
@@ -86,6 +91,8 @@ def find_need_transcode_cli(argv):
             desired_audio_codecs = arg.split(',')
         elif opt == '--nagios':
             nagios_output = True
+        elif opt in ("-f", "--framerate"):
+            desired_frame_rate = arg
         elif opt == '--maxres':
             max_resolution = int(arg)
         elif opt in ("-t", "--terminator"):
@@ -110,12 +117,14 @@ def find_need_transcode_cli(argv):
         for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, host_home=host_home,
                                                   desired_video_codecs=desired_video_codecs,
                                                   desired_audio_codecs=desired_audio_codecs,
-                                                  max_resolution=max_resolution):
+                                                  max_resolution=max_resolution,
+                                                  desired_frame_rate=desired_frame_rate):
             file_names.update([file_info.file_name])
             runtime_minutes += file_info.runtime
             transcode_minutes += file_info.transcode_time
             transcode_details.extend(
-                [f"{file_info.file_name};{file_info.video_resolution};{file_info.transcode_time};{file_info.runtime}"])
+                [
+                    f"{file_info.file_name};{file_info.video_resolution};{file_info.framerate};{file_info.transcode_time};{file_info.runtime}"])
 
         # one week
         if transcode_minutes > 10080:
@@ -138,7 +147,8 @@ def find_need_transcode_cli(argv):
         for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, host_home=host_home,
                                                   desired_video_codecs=desired_video_codecs,
                                                   desired_audio_codecs=desired_audio_codecs,
-                                                  max_resolution=max_resolution):
+                                                  max_resolution=max_resolution,
+                                                  desired_frame_rate=desired_frame_rate):
             sys.stdout.write(file_info.file_name)
             sys.stdout.write(terminator)
         return 0
@@ -146,13 +156,15 @@ def find_need_transcode_cli(argv):
 
 class TranscodeFileInfo(object):
 
-    def __init__(self, file_name: str, host_file_path: str, item_key: [str, None], video_resolution: int, runtime: int):
+    def __init__(self, file_name: str, host_file_path: str, item_key: [str, None], video_resolution: int, runtime: int,
+                 framerate: [None, float] = None):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.item_key = item_key
         self.video_resolution = video_resolution
         self.runtime = runtime
         self.transcode_time = runtime
+        self.framerate = framerate
 
         if video_resolution is not None and runtime is not None:
             if video_resolution <= 480:
@@ -169,7 +181,7 @@ class TranscodeFileInfo(object):
 
 def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desired_video_codecs: list[str],
                              desired_subtitle_codecs: list[str],
-                             max_resolution):
+                             max_resolution: [None, int], desired_frame_rate: [None, float]):
     random.shuffle(media_paths)
     for media_path in media_paths:
         for root, dirs, files in os.walk(media_path, topdown=True):
@@ -186,9 +198,16 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 
                 video_streams = list(
                     filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_VIDEO, input_info['streams']))
+
                 min_height = min(map(lambda e: int(e['height']), video_streams))
                 if max_resolution is not None and min_height > max_resolution:
                     continue
+
+                min_framerate = min(map(lambda e: float(eval(e['avg_frame_rate'])), video_streams))
+                if common.should_adjust_frame_rate(current_frame_rate=min_framerate,
+                                                   desired_frame_rate=desired_frame_rate):
+                    need_transcode = True
+
                 if desired_video_codecs is not None:
                     video_codecs = set(map(lambda e: e[common.K_CODEC_NAME], video_streams))
                     if not video_codecs.issubset(set(desired_video_codecs)):
@@ -213,7 +232,8 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 
                 if need_transcode:
                     yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
-                                            runtime=int(float(input_info[common.K_FORMAT]['duration'])), item_key=None)
+                                            runtime=int(float(input_info[common.K_FORMAT]['duration'])),
+                                            framerate=min_framerate, item_key=None)
 
 
 def need_transcode_generator(
@@ -223,11 +243,13 @@ def need_transcode_generator(
         desired_video_codecs: list[str] = None,
         desired_audio_codecs: list[str] = None,
         desired_subtitle_codecs: list[str] = None,
-        max_resolution=None,
+        max_resolution: [None, int] = None,
+        desired_frame_rate: [None, float] = None,
 ):
-    if desired_video_codecs is None and desired_audio_codecs is None:
+    if desired_video_codecs is None and desired_audio_codecs is None and desired_frame_rate is None:
         desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
         desired_audio_codecs = common.get_global_config_option('audio', 'codecs').split(',')
+        desired_frame_rate = common.get_global_config_frame_rate('post_process', 'frame_rate', None)
     if host_home is None:
         host_home = common.get_media_base()
 
@@ -235,7 +257,8 @@ def need_transcode_generator(
         yield from _os_walk_media_generator(media_paths, desired_video_codecs=desired_video_codecs,
                                             desired_audio_codecs=desired_audio_codecs,
                                             desired_subtitle_codecs=desired_subtitle_codecs,
-                                            max_resolution=max_resolution)
+                                            max_resolution=max_resolution,
+                                            desired_frame_rate=desired_frame_rate)
         return
     if not plex_url:
         raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
@@ -252,7 +275,8 @@ def need_transcode_generator(
             yield from _process_videos(desired_audio_codecs, desired_video_codecs, desired_subtitle_codecs, file_names,
                                        host_home,
                                        section_response,
-                                       max_resolution)
+                                       max_resolution,
+                                       desired_frame_rate)
         elif library.tag == 'Directory' and library.attrib['type'] == 'show' and 'DVR' not in library.attrib['title']:
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
@@ -266,12 +290,13 @@ def need_transcode_generator(
                 yield from _process_videos(desired_audio_codecs, desired_video_codecs, desired_subtitle_codecs,
                                            file_names, host_home,
                                            show_response,
-                                           max_resolution)
+                                           max_resolution,
+                                           desired_frame_rate)
 
 
 def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str],
                     desired_subtitle_codecs: list[str], file_names, host_home,
-                    show_response, max_resolution):
+                    show_response, max_resolution: [None, int], desired_frame_rate: [None, float]):
     episodes = list(filter(
         lambda el: el.tag == 'Video' and (
                 el.attrib['type'] == 'episode' or el.attrib['type'] == 'movie'),
@@ -280,6 +305,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
     for episode in episodes:
         video_codec = "?"
         video_resolution = None
+        framerate = None
         audio_codec = "?"
         subtitle_codec = None
         file_name = "?"
@@ -291,6 +317,18 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
             video_codec = common.resolve_human_codec(media.attrib.get("videoCodec", "?"))
             audio_codec = common.resolve_human_codec(media.attrib.get("audioCodec", "?"))
             video_resolution = media.attrib.get("videoResolution")
+            framerate = media.attrib.get("videoFrameRate")
+            if framerate:
+                framerate = framerate.lower()
+                if framerate[0].isdigit():
+                    # remove suffix, like 'p'
+                    framerate = re.sub(r'\D', '', framerate)
+                elif framerate in common.FRAME_RATE_NAMES.keys():
+                    framerate = float(eval(common.FRAME_RATE_NAMES[framerate]))
+                else:
+                    logger.warning("Unknown framerate %s", framerate)
+                    framerate = None
+
             if video_resolution == 'sd':
                 video_resolution = '480'
             for part in list(filter(lambda el: el.tag == 'Part', media)):
@@ -320,7 +358,10 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
 
         if ((desired_video_codecs is not None and video_codec not in desired_video_codecs) or (
                 desired_audio_codecs is not None and audio_codec not in desired_audio_codecs) or (
-                    desired_subtitle_codecs is not None and subtitle_codec not in desired_subtitle_codecs)) and file_name != '?' \
+                    desired_subtitle_codecs is not None and subtitle_codec not in desired_subtitle_codecs) or (
+                    common.should_adjust_frame_rate(current_frame_rate=framerate,
+                                                    desired_frame_rate=desired_frame_rate))) \
+                and file_name != '?' \
                 and (
                 max_resolution is None or (video_resolution is not None and int(video_resolution) <= max_resolution)):
 
@@ -340,7 +381,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                             video_resolution = int(video_resolution)
                         yield TranscodeFileInfo(file_name=file_name, host_file_path=host_file_path,
                                                 item_key=episode.attrib['key'], video_resolution=video_resolution,
-                                                runtime=duration)
+                                                framerate=framerate, runtime=duration)
 
 
 def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):

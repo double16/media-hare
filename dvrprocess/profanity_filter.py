@@ -278,7 +278,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         elif subtitle_srt_generated:
             # Keep generated stream
             arguments.extend(["-i", subtitle_srt_generated,
-                              "-map", f"{streams_file+1}:0",
+                              "-map", f"{streams_file + 1}:0",
                               "-metadata:s:s:0", f'title={common.TITLE_ORIGINAL}',
                               "-disposition:s:0", "default"])
             subtitle_output_idx = 1
@@ -621,12 +621,17 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         logger.error(f"OCR text appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None
 
+    # TODO: Add "OCR by SubtitleEdit" at beginning and end
+
     return subtitle_srt_filename
 
 
 def audio_to_srt(input_info: dict, audio_original: dict, workdir, language=None, verbose=False):
     """
     Attempts to create a text subtitle from the original audio stream.
+    1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
+    2. audio stream is being converted to AC3 stereo with default ffmpeg bitrate (192kbps) for most compatibility
+    3. --tasks is being set but so far it doesn't seem to yield more cores used
     :return: file name as string or None
     """
     global debug
@@ -645,9 +650,13 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, language=None,
     os.close(temp_fd)
     if not debug:
         common.TEMPFILENAMES.append(audio_filename)
+    # Converting to ac3 isn't necessary as vosk is using ffmpeg to convert the audio as follows. However, vosk seems to
+    # have trouble with spaces in file names so we'd need to still extract to a temp name or symlink.
+    # ffmpeg -nostdin -loglevel quiet -i /tmp/tmp09gxo8oz.ac3 -ar 16000.0 -ac 1 -f s16le -
     extract_command = [ffmpeg, "-loglevel", "error", '-hide_banner', '-y',
                        '-i', input_info['format']['filename'],
-                       '-map', f'0:{audio_original[common.K_STREAM_INDEX]}', '-c:a', 'ac3', '-ac', '2',
+                       '-map', f'0:{audio_original[common.K_STREAM_INDEX]}',
+                       '-c:a', 'ac3', '-ar', '16000.0', '-ac', '1',
                        audio_filename
                        ]
     if verbose:
@@ -676,6 +685,8 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, language=None,
         logger.error(
             f"audio-to-text text appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None
+
+    # TODO: Add "transcribed by Vosk" at beginning and end
 
     return subtitle_srt_filename
 
