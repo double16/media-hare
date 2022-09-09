@@ -656,7 +656,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, language=None,
     extract_command = [ffmpeg, "-loglevel", "error", '-hide_banner', '-y',
                        '-i', input_info['format']['filename'],
                        '-map', f'0:{audio_original[common.K_STREAM_INDEX]}',
-                       '-c:a', 'ac3', '-ar', '16000.0', '-ac', '1',
+                       '-c:a', 'ac3', '-ac', '1',
                        audio_filename
                        ]
     if verbose:
