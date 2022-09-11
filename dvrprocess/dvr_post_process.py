@@ -311,8 +311,6 @@ def do_dvr_post_process(input_file,
     else:
         target_height = height
 
-    adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate, desired_frame_rate=desired_frame_rate)
-
     target_video_codec = common.resolve_video_codec(desired_video_codecs, target_height, video_info)
 
     # Find crop frame dimensions
@@ -363,8 +361,15 @@ def do_dvr_post_process(input_file,
         logger.info("crop frame filter is %s", crop_frame_filter)
 
     logger.debug("input video codec = %s, target video codec = %s", input_video_codec, target_video_codec)
-    copy_video = not scale_height and not adjust_frame_rate and crop_frame_filter is None and (
+    copy_video = not scale_height and crop_frame_filter is None and (
             preset == "copy" or (input_video_codec == target_video_codec and not rerun))
+
+    # If we're re-encoding, we'll be more aggressive in adjusting the frame rate
+    if copy_video:
+        adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate, desired_frame_rate=desired_frame_rate)
+        copy_video = copy_video and not adjust_frame_rate
+    else:
+        adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate, desired_frame_rate=desired_frame_rate, tolerance=0.05)
 
     crf, bitrate, qp = common.recommended_video_quality(target_height, target_video_codec)
 

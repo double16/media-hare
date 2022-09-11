@@ -1501,7 +1501,8 @@ def is_truthy(value) -> bool:
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
 
 
-def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_frame_rate: [None, str, float]) -> bool:
+def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_frame_rate: [None, str, float],
+                             tolerance: float = 0.25) -> bool:
     if current_frame_rate in [None, ''] or desired_frame_rate in [None, '']:
         return False
 
@@ -1516,4 +1517,4 @@ def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_fra
         desired_frame_rate_f = desired_frame_rate
 
     frame_rate_pct = abs(current_frame_rate_f - desired_frame_rate_f) / max(current_frame_rate_f, desired_frame_rate_f)
-    return frame_rate_pct >= 0.25
+    return frame_rate_pct >= tolerance
