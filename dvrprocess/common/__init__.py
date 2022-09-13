@@ -25,6 +25,7 @@ GIGABYTES_MULT = 1024 * 1024 * 1024
 
 _allocate_lock = _thread.allocate_lock
 _once_lock = _allocate_lock()
+_config_lock = _allocate_lock()
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ K_STREAM_INDEX = 'index'
 K_CODEC_NAME = 'codec_name'
 K_CODEC_TYPE = 'codec_type'
 K_FORMAT = 'format'
+K_DURATION = 'duration'
 K_TAGS = 'tags'
 K_CHAPTERS = 'chapters'
 K_BIT_RATE = 'bit_rate'
@@ -101,8 +103,9 @@ def find_media_base():
     raise FileNotFoundError('No media.root in config')
 
 
-def get_media_paths():
-    base = get_media_base()
+def get_media_paths(base=None):
+    if base is None:
+        base = get_media_base()
     paths = get_global_config_option('media', 'paths').split(',')
     return list(map(lambda e: os.path.join(base, e), paths))
 
@@ -814,6 +817,9 @@ class EdlEvent(object):
         else:
             return f"{self.start} - {self.end}"
 
+    def length(self):
+        return max(0, self.end - self.start)
+
 
 def parse_edl(filename) -> list[EdlEvent]:
     events = []
@@ -1463,12 +1469,12 @@ def get_work_dir() -> str:
 def get_global_config() -> configparser.ConfigParser:
     global config_obj
     if config_obj is None:
-        _once_lock.acquire()
+        _config_lock.acquire()
         try:
             if config_obj is None:
                 config_obj = _load_media_hare_config()
         finally:
-            _once_lock.release()
+            _config_lock.release()
     return config_obj
 
 

@@ -107,6 +107,10 @@ Transcode videos to target codecs and other settings. Targets a specific languag
 
 See [docs/dvr_post_process.md](docs/dvr_post_process.md).
 
+## find_need_transcode.py
+
+Searches for media that needs to be transcoded. Supports several query parameters such as video and audio codec. Defaults to values in `media-hare.ini`.
+
 ## transcode-apply.py
 
 Searches for media that needs to be transcoded and calls dvr_post_process.py. In a container runs periodically with time and size limits. See [docs/transcode-apply.md](docs/transcode-apply.md).
@@ -142,3 +146,7 @@ Intended to cut commercials for TV shows only when cuts look consistent and igno
 ## scene-extract.py
 
 Extracts scenes from media into separate files using an EDL file. See [docs/scene-extract.md](docs/scene-extract.md).
+
+## find_need_comcut.py
+
+Searches for media that needs commercials to be cut. Limited to paths with `Movies` in the name. TV shows could be a lot of results.
