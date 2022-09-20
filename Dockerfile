@@ -26,6 +26,7 @@ COPY requirements.txt /tmp/
 RUN apt-get -q update && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq \
     mono-runtime libmono-system-windows-forms4.0-cil libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
+    nvidia-headless-no-dkms-515 nvidia-utils-515 libnvidia-decode-515 libnvidia-encode-515 \
     libargtable2-0 libavformat58 libsdl1.2-compat &&\
     pip -q --no-input install -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip &&\

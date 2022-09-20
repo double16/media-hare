@@ -14,6 +14,7 @@ from tempfile import mkstemp
 from ass_parser import CorruptAssLineError
 
 import common
+from common import hwaccel
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
@@ -68,6 +69,8 @@ The file closest to the input file will be taken. Comments start with '#'.
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
 -c, --ignore-errors
     Ignore errors in the stream, as much as can be done. This may still produce an undesired stream, such as out of sync audio. 
+--verbose
+    Verbose information about the process
 """, file=sys.stderr)
 
 
@@ -82,21 +85,6 @@ def find_mount_point(path):
             break
         path = dir
     return path
-
-
-def has_hw_codec(ffmpeg, vainfo, codec):
-    if not os.access(vainfo, os.X_OK):
-        return False
-
-    if f"{codec}_vaapi" not in subprocess.check_output([ffmpeg, "-codecs"], stderr=subprocess.STDOUT, text=True):
-        return False
-
-    if codec == 'mpeg2' or codec == 'mpeg2video':
-        vaprofile = 'VAProfileMPEG2Main'
-    else:
-        vaprofile = f"VAProfileH{codec.upper()}High"
-
-    return vaprofile in subprocess.check_output([vainfo, "-a"], stderr=subprocess.STDOUT, text=True)
 
 
 def parse_args(argv) -> (list[str], dict):
@@ -116,6 +104,7 @@ def parse_args(argv) -> (list[str], dict):
     ignore_errors = None
     profanity_filter = common.get_global_config_boolean('post_process', 'profanity_filter')
     crop_frame = False
+    verbose = None
 
     try:
         opts, args = getopt.getopt(common.get_arguments_from_config(argv, '.dvrconfig') + list(argv),
@@ -123,7 +112,7 @@ def parse_args(argv) -> (list[str], dict):
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
                                     "prevent-larger=", "stereo", "rerun", "no-rerun", "ignore-errors",
-                                    "profanity-filter", "crop-frame"])
+                                    "profanity-filter", "crop-frame", "verbose"])
     except getopt.GetoptError:
         return None
     for opt, arg in opts:
@@ -164,6 +153,9 @@ def parse_args(argv) -> (list[str], dict):
             profanity_filter = True
         elif opt == "--crop-frame":
             crop_frame = True
+        elif opt == "--verbose":
+            verbose = True
+            logging.getLogger().setLevel(logging.DEBUG)
 
     if len(args) == 0:
         return None
@@ -186,6 +178,8 @@ def parse_args(argv) -> (list[str], dict):
         'crop_frame': crop_frame,
         'ignore_errors': ignore_errors,
     }
+    if verbose is not None:
+        options['verbose'] = verbose
 
     return args, options
 
@@ -263,9 +257,7 @@ def do_dvr_post_process(input_file,
     # Find transcoder
     #
 
-    # A limited set of codecs appear to be in the Plex Transcoder 1.19.5
     ffmpeg = common.find_ffmpeg()
-    vainfo = "/usr/bin/vainfo"
 
     input_info = common.find_input_info(filename)
     duration = float(input_info['format']['duration'])
@@ -366,10 +358,12 @@ def do_dvr_post_process(input_file,
 
     # If we're re-encoding, we'll be more aggressive in adjusting the frame rate
     if copy_video:
-        adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate, desired_frame_rate=desired_frame_rate)
+        adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate,
+                                                            desired_frame_rate=desired_frame_rate)
         copy_video = copy_video and not adjust_frame_rate
     else:
-        adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate, desired_frame_rate=desired_frame_rate, tolerance=0.05)
+        adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate,
+                                                            desired_frame_rate=desired_frame_rate, tolerance=0.05)
 
     crf, bitrate, qp = common.recommended_video_quality(target_height, target_video_codec)
 
@@ -416,6 +410,7 @@ def do_dvr_post_process(input_file,
 
     # Global arguments
     arguments = [ffmpeg]
+    arguments.extend(hwaccel.hwaccel_threads())
     if not verbose:
         arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
@@ -462,15 +457,12 @@ def do_dvr_post_process(input_file,
     # Configure hwaccel
     # Warning: hwaccel defaults to false because software is more forgiving with corrupted streams
     gpu_present = hwaccel_requested and os.path.isfile('/proc/cpuinfo') and os.path.isdir('/dev/dri')
-    hwaccel_inited = False
     if hwaccel_requested == "auto":
         # let ffmpeg figure it out
         arguments.extend(['-hwaccel', 'auto'])
     elif gpu_present and not copy_video and hwaccel_requested == "full":
-        if has_hw_codec(ffmpeg, vainfo, input_video_codec):
-            arguments.extend(["-hwaccel:v", "vaapi", "-init_hw_device", "vaapi=vaapi:", "-hwaccel_device", "vaapi",
-                              "-filter_hw_device", "vaapi"])
-            hwaccel_inited = True
+        if hwaccel.has_hw_codec(input_video_codec):
+            arguments.extend(hwaccel.hwaccel_decoding(codec=input_video_codec))
 
     arguments.extend(["-i", filename])
 
@@ -520,20 +512,17 @@ def do_dvr_post_process(input_file,
     if copy_video:
         arguments.extend(["-map", video_input_stream, f"-c:{current_output_stream}", "copy"])
         current_output_stream += 1
-    elif hwaccel_inited and hwaccel_requested == "full" and has_hw_codec(ffmpeg, vainfo,
-                                                                         target_video_codec) and not scale_height and not crop_frame_filter:
-        transcoding = True
-        # FIXME: Handle scale_height
-        # FIXME: Handle crop_frame_filter
-        target_framerate = desired_frame_rate if desired_frame_rate else "30"
-        arguments.extend(
-            ["-map", video_input_stream, f"-c:{current_output_stream}", "-hwaccel_output_format", "vaapi",
-             f"{target_video_codec}_vaapi", "-vf",
-             f"fps={target_framerate},deinterlace_vaapi,scale_vaapi=format=nv12", "-qp", str(qp)])
-        # -b:{video_input_stream} {bitrate}k
-        current_output_stream += 1
     else:
         transcoding = True
+
+        if gpu_present and hwaccel_requested == "full" and hwaccel.has_hw_codec(target_video_codec):
+            hwaccel_encoding_options = hwaccel.hwaccel_encoding(output_stream=str(current_output_stream),
+                                                                codec=target_video_codec, output_type=output_type,
+                                                                tune=tune, preset=preset, crf=crf, qp=qp,
+                                                                target_bitrate=bitrate)
+        else:
+            hwaccel_encoding_options = []
+
         filter_complex = f"[{video_input_stream}]yadif[0];[0]format=pix_fmts=nv12"
         filter_stage = 1
         if crop_frame_filter is not None:
@@ -546,14 +535,25 @@ def do_dvr_post_process(input_file,
             # "mi_mode=mci" produces better quality but is single-threaded
             filter_complex += f"[{filter_stage}];[{filter_stage}]minterpolate=fps={desired_frame_rate}:mi_mode=blend"
             filter_stage += 1
+        if hwaccel_encoding_options:
+            # must be last
+            filter_complex += f"[{filter_stage}];[{filter_stage}]hwupload"
+            filter_stage += 1
         filter_complex += f"[v{current_output_stream}]"
 
-        arguments.extend(
-            ["-filter_complex",
-             filter_complex,
-             "-map", f"[v{current_output_stream}]",
-             f"-c:{current_output_stream}", common.ffmpeg_codec(target_video_codec),
-             f"-crf:{current_output_stream}", str(crf)])
+        arguments.extend(["-filter_complex", filter_complex, "-map", f"[v{current_output_stream}]"])
+        if hwaccel_encoding_options:
+            arguments.extend(hwaccel_encoding_options)
+        else:
+            arguments.extend([f"-c:{current_output_stream}", common.ffmpeg_codec(target_video_codec),
+                              f"-crf:{current_output_stream}", str(crf)])
+            if preset != "copy":
+                arguments.extend([f"-preset:{current_output_stream}", preset])
+            if tune is not None:
+                arguments.extend([f"-tune:{current_output_stream}", tune])
+            # Do not copy Closed Captions, they will be extracted into a subtitle stream
+            if target_video_codec == 'h264' and output_type != 'ts':
+                arguments.extend(['-a53cc', '0'])
 
         if aspect_ratio:
             if crop_frame_filter:
@@ -563,10 +563,6 @@ def do_dvr_post_process(input_file,
                 aspect_ratio_adjusted_h = aspect_ratio_parts[1] * crop_parts[1] / height
                 aspect_ratio = f"{math.ceil(aspect_ratio_adjusted_w)}:{math.ceil(aspect_ratio_adjusted_h)}"
             arguments.extend([f"-aspect:{current_output_stream}", aspect_ratio])
-
-        # Do not copy Closed Captions, they will be extracted into a subtitle stream
-        if target_video_codec == 'h264' and output_type != 'ts':
-            arguments.extend(['-a53cc', '0'])
 
         current_output_stream += 1
 
@@ -617,12 +613,6 @@ def do_dvr_post_process(input_file,
          "-c:t", "copy", "-map", f"{streams_file}:t?"])
     if output_type == 'mov':
         arguments.extend(["-c:d", "copy", "-map", f"{streams_file}:d?"])
-
-    if preset != "copy":
-        arguments.extend(["-preset", preset])
-
-    if tune is not None:
-        arguments.extend(["-tune", tune])
 
     arguments.append(common.TEMPFILENAME)
 
