@@ -4,7 +4,6 @@ import getopt
 import logging
 import os
 import random
-import re
 import sys
 import xml.etree.ElementTree as ET
 
@@ -317,17 +316,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
             video_codec = common.resolve_human_codec(media.attrib.get("videoCodec", "?"))
             audio_codec = common.resolve_human_codec(media.attrib.get("audioCodec", "?"))
             video_resolution = media.attrib.get("videoResolution")
-            framerate = media.attrib.get("videoFrameRate")
-            if framerate:
-                framerate = framerate.lower()
-                if framerate[0].isdigit():
-                    # remove suffix, like 'p'
-                    framerate = re.sub(r'\D', '', framerate)
-                elif framerate in common.FRAME_RATE_NAMES.keys():
-                    framerate = float(eval(common.FRAME_RATE_NAMES[framerate]))
-                else:
-                    logger.warning("Unknown framerate %s", framerate)
-                    framerate = None
+            framerate = common.frame_rate_from_s(media.attrib.get("videoFrameRate"))
 
             if video_resolution == 'sd':
                 video_resolution = '480'

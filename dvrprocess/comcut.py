@@ -8,9 +8,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
+
+import pysrt
+from ass_parser import read_ass, write_ass
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
+from profanity_filter import MASK_STR
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +55,7 @@ Usage: {sys.argv[0]} infile [outfile]
 @common.finisher
 def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=True, verbose=False, debug=False,
            comskipini=None,
-           workdir=None, preset=None):
+           workdir=None, preset=None, hwaccel=None):
     ffmpeg = common.find_ffmpeg()
 
     input_info = common.find_input_info(infile)
@@ -75,6 +80,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             logger.fatal(f"finding {comskipini}", exc_info=e)
             return 255
 
+    if hwaccel is None:
+        hwaccel = common.get_global_config_option('ffmpeg', 'hwaccel', 'false')
+
     outextension = outfile.split('.')[-1]
     infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
 
@@ -91,18 +99,40 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     edl_events = common.parse_edl(edlfile)
 
-    keyframes = []
-    if len(list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
-        # If we are recoding, we aren't restricted to key frames
-        keyframes = common.load_keyframes_by_seconds(infile)
-        logger.debug("Loaded %s keyframes", len(keyframes))
-
     # sanity check edl to ensure it hasn't already been applied, i.e. check if last cut is past duration
     input_duration = float(input_info[common.K_FORMAT]['duration'])
     if len(edl_events) > 0:
         if edl_events[-1].end > input_duration + 1:
             logger.fatal(f"edl cuts past end of file")
             return 255
+
+    keyframes = []
+    if len(list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
+        # If we are recoding, we aren't restricted to key frames
+        keyframes = common.load_keyframes_by_seconds(infile)
+        logger.debug("Loaded %s keyframes", len(keyframes))
+
+    # key is input stream index, value is filename
+    subtitle_streams: dict[int, str] = {}
+    subtitle_data = {}
+    if len(list(filter(lambda e: e.event_type in [common.EdlType.MUTE], edl_events))) > 0:
+        # Extract all of the text based subtitles for masking
+        extract_subtitle_command = [common.find_ffmpeg(), '-y', '-i', infile]
+        for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
+            temp_fd, subtitle_filename = tempfile.mkstemp(dir=workdir, suffix='.' + stream.get(common.K_CODEC_NAME))
+            os.close(temp_fd)
+            if not debug:
+                common.TEMPFILENAMES.append(subtitle_filename)
+            subtitle_streams[stream[common.K_STREAM_INDEX]] = subtitle_filename
+            extract_subtitle_command.extend(
+                ['-c', 'copy', '-map', f"0:{stream[common.K_STREAM_INDEX]}", subtitle_filename])
+        if len(subtitle_streams) > 0:
+            logger.debug(common.array_as_command(extract_subtitle_command))
+            subprocess.run(extract_subtitle_command, check=True, capture_output=not verbose)
+            for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
+                subtitle_filename = subtitle_streams[stream[common.K_STREAM_INDEX]]
+                subtitle_data[stream[common.K_STREAM_INDEX]] = read_subtitle_data(stream.get(common.K_CODEC_NAME),
+                                                                                  subtitle_filename)
 
     if delete_meta:
         common.TEMPFILENAMES.append(partsfile)
@@ -114,8 +144,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     i = 0
     min_chapter_seconds = 10
     hascommercials = False
-    video_filters = []
-    audio_filters = []
+    video_filters: list[str] = []
+    audio_filters: list[str] = []
+    subtitle_filters: list[(float, float)] = []
     totalcutduration = 0.0
     comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir)
 
@@ -142,11 +173,11 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'")
                     continue
                 elif edl_event.event_type == common.EdlType.MUTE:
-                    logger.warning("Mute requested, subtitles are not yet masked")
-                    # TODO: filter text subtitles
                     audio_filters.append(f"volume=enable='between(t,"
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'"
                                          f":volume=0")
+                    # subtitle events are in milliseconds
+                    subtitle_filters.append((edl_event.start * 1000.0, edl_event.end * 1000.0))
                     continue
                 elif edl_event.event_type == common.EdlType.SCENE:
                     continue
@@ -165,7 +196,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     if len(keyframes) > 0 and abs(start_next - keyframes[-1]) < 0.05:
                         start_next = input_duration
                     else:
-                        start_next = common.find_desired_keyframe(keyframes, start_next, common.KeyframeSearchPreference.AFTER)
+                        start_next = common.find_desired_keyframe(keyframes, start_next,
+                                                                  common.KeyframeSearchPreference.AFTER)
                 else:
                     # limit to duration
                     start_next = input_duration
@@ -216,6 +248,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                     partsfd.write(f"inpoint {start}\n")
                     partsfd.write(f"outpoint {end}\n")
+                    # TODO: cut subtitles
 
                 totalcutduration = totalcutduration + start_next - end
                 start = start_next
@@ -243,102 +276,11 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                         i += 1
                 partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                 partsfd.write(f"inpoint {start}\n")
+                # TODO: cut subtitles
 
-    if hascommercials or len(video_filters) > 0 or len(audio_filters) > 0:
-        ffmpeg_command = [ffmpeg]
-
-        if not verbose:
-            ffmpeg_command.extend(["-loglevel", "error"])
-
-        ffmpeg_command.extend(["-hide_banner", "-nostdin", "-i", metafile,
-                               "-f", "concat", "-safe", "0", "-i", partsfile,
-                               '-max_muxing_queue_size', '1024',
-                               '-async', '1',
-                               '-max_interleave_delta', '0',
-                               "-avoid_negative_ts", "1",
-                               "-map_metadata", "0"])
-
-        # filters will re-order output streams so we need to map each individually
-        output_file = 1
-        output_stream_idx = 0
-
-        for stream in common.sort_streams(input_info[common.K_STREAMS]):
-            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
-            if common.is_video_stream(stream) and len(video_filters) > 0:
-                height = common.get_video_height(stream)
-                input_video_codec = common.resolve_video_codec(stream['codec_name'])
-                crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
-                ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec(input_video_codec),
-                                       f"-filter_complex:{output_stream_idx}", ",".join(video_filters),
-                                       f"-crf:{output_stream_idx}", str(crf),
-                                       f"-preset:{output_stream_idx}", preset])
-            elif common.is_audio_stream(stream) and len(audio_filters) > 0:
-                # Preserve original audio codec??
-                ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec("opus")])
-                common.extend_opus_arguments(ffmpeg_command, stream, str(output_stream_idx), audio_filters)
-            else:
-                ffmpeg_command.extend([f"-c:{output_stream_idx}", "copy"])
-
-            # the concat demuxer sets all streams to default
-            dispositions = []
-            if stream.get(common.K_DISPOSITION, {}).get('default', 0) == 1:
-                dispositions.append("default")
-            if stream.get(common.K_DISPOSITION, {}).get('forced', 0) == 1:
-                dispositions.append("forced")
-            if len(dispositions) == 0:
-                dispositions.append("0")
-            ffmpeg_command.extend([f"-disposition:{output_stream_idx}", ",".join(dispositions)])
-
-            output_stream_idx += 1
-
-        ffmpeg_command.append('-y')
-
-        temp_outfile = None
-        if infile == outfile:
-            temp_fd, temp_outfile = tempfile.mkstemp(suffix='.' + outextension, dir=workdir)
-            os.close(temp_fd)
-            ffmpeg_command.append(temp_outfile)
-        else:
-            ffmpeg_command.append(outfile)
-        logger.debug(common.array_as_command(ffmpeg_command))
-
-        try:
-            subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
-        except subprocess.CalledProcessError as e:
-            with open(partsfile, "r") as f:
-                print(f.read())
-            raise e
-
-        # verify video is valid
-        try:
-            common.find_input_info(temp_outfile or outfile)
-        except:
-            logger.error(f"Cut file is not readable by ffmpeg, skipping")
-            os.remove(temp_outfile or outfile)
-            return 255
-
-        if temp_outfile is not None:
-            shutil.move(temp_outfile, outfile)
-
-        common.match_owner_and_perm(target_path=outfile, source_path=infile)
-
-        if force_clear_edl or (not delete_edl and infile == outfile):
-            # change EDL file to match cut
-            edlfiles = [edlfile]
-            if '.bak.edl' not in edlfile:
-                edlfiles.append(common.replace_extension(edlfile, 'bak.edl'))
-            for fn in edlfiles:
-                if os.path.isfile(fn):
-                    with open(fn, "w") as f:
-                        f.write("## cut complete v2\n")
-
-        # remove files that are invalidated because of cutting
-        for ext in ['csv', 'txt', 'log']:
-            extfile = common.replace_extension(infile, ext)
-            if os.path.exists(extfile):
-                os.remove(extfile)
-
-        return 0
+    if hascommercials or len(video_filters) > 0 or len(audio_filters) > 0 or len(subtitle_filters) > 0:
+        # doing it this way to keep the ident level one less
+        pass
     else:
         logger.debug("Nothing found to change")
         if infile == outfile:
@@ -346,6 +288,170 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         else:
             # we are not creating a new outfile, so don't return success
             return 1
+
+    ffmpeg_command = [ffmpeg]
+
+    if not verbose:
+        ffmpeg_command.extend(["-loglevel", "error"])
+    if not debug:
+        ffmpeg_command.append("-hide_banner")
+
+    ffmpeg_command.extend(["-nostdin", "-i", metafile,
+                           "-f", "concat", "-safe", "0", "-i", partsfile])
+
+    input_stream_idx = 2
+    subtitle_stream_idx_to_input_idx: dict[int, int] = {}
+    if len(subtitle_filters) > 0:
+        # Mask the subtitles for the muted ranges
+        logger.debug("subtitle_filters = %s", subtitle_filters)
+        for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
+            data = subtitle_data[stream[common.K_STREAM_INDEX]]
+            if stream[common.K_CODEC_NAME] == common.CODEC_SUBTITLE_ASS:
+                for subtitle_filter in subtitle_filters:
+                    for event in data.events:
+                        if subtitle_filter[0] <= event.end and subtitle_filter[1] >= event.start:
+                            logger.debug("Masking subtitle event %s", event)
+                            event.text = MASK_STR
+            else:
+                for subtitle_filter in subtitle_filters:
+                    for event in data:
+                        if subtitle_filter[0] <= event.end.ordinal and subtitle_filter[1] >= event.start.ordinal:
+                            logger.debug("Masking subtitle event %s", event)
+                            event.text = MASK_STR
+            subtitle_filename = subtitle_streams[stream[common.K_STREAM_INDEX]]
+            write_subtitle_data(stream[common.K_CODEC_NAME], subtitle_filename, data)
+            ffmpeg_command.extend(["-i", subtitle_filename])
+            subtitle_stream_idx_to_input_idx[stream[common.K_STREAM_INDEX]] = input_stream_idx
+            input_stream_idx += 1
+
+    ffmpeg_command.extend(['-max_muxing_queue_size', '1024',
+                           '-async', '1',
+                           '-max_interleave_delta', '0',
+                           "-avoid_negative_ts", "1",
+                           "-map_metadata", "0"])
+
+    # filters will re-order output streams so we need to map each individually
+    output_file = 1
+    output_stream_idx = 0
+
+    for stream in common.sort_streams(input_info[common.K_STREAMS]):
+        if common.is_video_stream(stream) and len(video_filters) > 0:
+            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
+            height = common.get_video_height(stream)
+            input_video_codec = common.resolve_video_codec(stream['codec_name'])
+            crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
+
+            # adjust frame rate
+            desired_frame_rate = common.get_global_config_frame_rate('post_process', 'frame_rate', None)
+            if desired_frame_rate is not None:
+                desired_frame_rate = common.FRAME_RATE_NAMES.get(desired_frame_rate.lower(), desired_frame_rate)
+                if common.should_adjust_frame_rate(current_frame_rate=stream['avg_frame_rate'],
+                                                   desired_frame_rate=desired_frame_rate,
+                                                   tolerance=0.05):
+                    video_filters.append(common.fps_video_filter(desired_frame_rate))
+
+            # TODO: hwaccel
+            ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec(input_video_codec),
+                                   f"-filter_complex:{output_stream_idx}", ",".join(video_filters),
+                                   f"-crf:{output_stream_idx}", str(crf),
+                                   f"-preset:{output_stream_idx}", preset])
+        elif common.is_audio_stream(stream) and len(audio_filters) > 0:
+            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
+            # Preserve original audio codec??
+            ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec("opus")])
+            common.extend_opus_arguments(ffmpeg_command, stream, str(output_stream_idx), audio_filters)
+        elif common.is_subtitle_text_stream(stream) and len(subtitle_filters) > 0:
+            ffmpeg_command.extend([
+                "-map", f"{subtitle_stream_idx_to_input_idx[stream[common.K_STREAM_INDEX]]}:0",
+                f"-c:{output_stream_idx}", "copy"])
+            if common.K_STREAM_TITLE in stream[common.K_TAGS]:
+                ffmpeg_command.extend(
+                    [f"-metadata:s:{output_stream_idx}", f'title={stream[common.K_TAGS][common.K_STREAM_TITLE]}'])
+            if common.K_STREAM_LANGUAGE in stream[common.K_TAGS]:
+                ffmpeg_command.extend(
+                    [f"-metadata:s:{output_stream_idx}", f'language={stream[common.K_TAGS][common.K_STREAM_LANGUAGE]}'])
+        else:
+            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
+            ffmpeg_command.extend([f"-c:{output_stream_idx}", "copy"])
+
+        # the concat demuxer sets all streams to default
+        dispositions = []
+        if stream.get(common.K_DISPOSITION, {}).get('default', 0) == 1:
+            dispositions.append("default")
+        if stream.get(common.K_DISPOSITION, {}).get('forced', 0) == 1:
+            dispositions.append("forced")
+        if len(dispositions) == 0:
+            dispositions.append("0")
+        ffmpeg_command.extend([f"-disposition:{output_stream_idx}", ",".join(dispositions)])
+
+        output_stream_idx += 1
+
+    ffmpeg_command.append('-y')
+
+    temp_outfile = None
+    if infile == outfile:
+        temp_fd, temp_outfile = tempfile.mkstemp(suffix='.' + outextension, dir=workdir)
+        os.close(temp_fd)
+        ffmpeg_command.append(temp_outfile)
+    else:
+        ffmpeg_command.append(outfile)
+    logger.debug(common.array_as_command(ffmpeg_command))
+
+    try:
+        subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
+    except subprocess.CalledProcessError as e:
+        with open(partsfile, "r") as f:
+            print(f.read())
+        raise e
+
+    # verify video is valid
+    try:
+        common.find_input_info(temp_outfile or outfile)
+    except:
+        logger.error(f"Cut file is not readable by ffmpeg, skipping")
+        os.remove(temp_outfile or outfile)
+        return 255
+
+    if temp_outfile is not None:
+        shutil.move(temp_outfile, outfile)
+
+    common.match_owner_and_perm(target_path=outfile, source_path=infile)
+
+    if force_clear_edl or (not delete_edl and infile == outfile):
+        # change EDL file to match cut
+        edlfiles = [edlfile]
+        if '.bak.edl' not in edlfile:
+            edlfiles.append(common.replace_extension(edlfile, 'bak.edl'))
+        for fn in edlfiles:
+            if os.path.isfile(fn):
+                with open(fn, "w") as f:
+                    f.write("## cut complete v2\n")
+
+    # remove files that are invalidated because of cutting
+    for ext in ['csv', 'txt', 'log']:
+        extfile = common.replace_extension(infile, ext)
+        if os.path.exists(extfile):
+            os.remove(extfile)
+
+    return 0
+
+
+def read_subtitle_data(subtitle_codec, f):
+    if subtitle_codec == common.CODEC_SUBTITLE_ASS:
+        return read_ass(Path(f))
+    elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
+        return pysrt.open(f)
+    else:
+        raise f"INFO: Unknown subtitle codec {subtitle_codec}"
+
+
+def write_subtitle_data(subtitle_codec, f, data):
+    if subtitle_codec == common.CODEC_SUBTITLE_ASS:
+        write_ass(data, Path(f))
+    elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
+        data.save(Path(f), 'utf-8')
+    else:
+        raise f"INFO: Unknown subtitle codec {subtitle_codec}"
 
 
 def comcut_cli(argv):

@@ -2,7 +2,6 @@
 import getopt
 import logging
 import os
-import random
 import sys
 import common
 from collections.abc import Iterable
@@ -99,11 +98,8 @@ class ComcutPendingFileInfo(object):
 
 
 def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[ComcutPendingFileInfo]:
-    random.shuffle(media_paths)
     for media_path in media_paths:
         for root, dirs, files in os.walk(media_path, topdown=True):
-            random.shuffle(dirs)
-            random.shuffle(files)
             files_set = set(files)
             for file in common.filter_for_mkv(files):
                 filepath = os.path.join(root, file)

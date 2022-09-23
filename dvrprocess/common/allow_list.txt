@@ -1,9 +1,12 @@
-freaking .* out
+freaking out
+freaking \w+ out
 feel a prick
 suck .* thumb
 cock-a-doodle
 cocks gun
 gun cocks
+cocks rifle
+rifle cocks
 prick .* fingers
 place is hell
 place called hell
@@ -11,7 +14,7 @@ are .* in hell
 private hell
 the good lord
 the dear good lord
-god[ -]fearing
+god[\s-]fearing
 please god
 # crap table
 # crap tables

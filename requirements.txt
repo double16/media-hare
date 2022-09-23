@@ -9,3 +9,4 @@ pygad==2.17.0
 dropbox==11.33.0
 vosk==0.3.43
 websockets==10.3
+IMDbPY==2022.7.9

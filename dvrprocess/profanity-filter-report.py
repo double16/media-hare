@@ -64,9 +64,9 @@ def extract_pf_data(mkv, ffmpeg):
                        ]
     subprocess.run(extract_command, check=True, capture_output=True)
 
-    print("INFO: %s, %s, original %s bytes, filtered %s bytes",
-          mkv, subtitle_codec, os.stat(file_original).st_size, os.stat(file_filtered).st_size,
-          file=sys.stderr)
+    print("INFO: %s, %s, original %s bytes, filtered %s bytes".format(
+        mkv, subtitle_codec, os.stat(file_original).st_size, os.stat(file_filtered).st_size,
+        file=sys.stderr))
 
     parsed_original = None
     parsed_filtered = None

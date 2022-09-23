@@ -65,6 +65,7 @@ ADD xorg-dummy.conf /etc/
 COPY dvrprocess/comskip*.ini /etc/
 COPY dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini /etc/
 COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
+COPY tvshow-summary.sh /etc/cron.daily/tvshow-summary
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
@@ -90,6 +91,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/find_need_comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/transcode-apply.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/smart-comcut.py /usr/local/bin/ &&\
+    ln -s /usr/local/share/dvrprocess/tvshow-summary.py /usr/local/bin/ &&\
     chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/tesseract && \
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\

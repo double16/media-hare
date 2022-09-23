@@ -67,10 +67,10 @@ shit face
 shit-face
 bullshit
 bullshitters
-bull[ -]shit
-bull[ -]shitters
-piece[ -]of[ -]shit
-piece[ -]of[ -]shits
+bull[\s-]shit
+bull[\s-]shitters
+piece[\s-]of[\s-]shit
+piece[\s-]of[\s-]shits
 crap
 oh crap
 craps
@@ -79,23 +79,23 @@ holy crap
 crapface
 crap face
 crap-face
-piece[ -]of[ -]crap
+piece[\s-]of[\s-]crap
 bullcrap
-bull[ -]crap
+bull[\s-]crap
 crappier
 damn
 damn it
 damn straight
 goddamn
-god[ -]damn
+god[\s-]damn
 goddamned
-god[ -]damned
+god[\s-]damned
 goddamn it
-god[ -]damn it
-oh god[ -]damn it
+god[\s-]damn it
+oh god[\s-]damn it
 goddamn you
-god[ -]damn you
-oh god[ -]damn you
+god[\s-]damn you
+oh god[\s-]damn you
 oh damn
 oh damn it
 oh damn you
@@ -109,6 +109,11 @@ darn it
 darn you
 oh darn
 oh darn it
+dang
+dang it
+dang you
+oh dang
+oh dang it
 bitch
 bitchs
 bitches
@@ -126,7 +131,7 @@ screw them
 screw him
 screw her
 screw it
-screw[ -]up
+screw[\s-]up
 screw yourself
 screw your self
 go screw yourself
@@ -140,7 +145,7 @@ oh fuck
 fucks
 fuck you
 fuck it
-fuck[ -]up
+fuck[\s-]up
 the fuck
 fuck yourself
 fuck your self
@@ -175,15 +180,22 @@ dirty little bastard
 dirty little bastards
 dirty bastard
 dirty bastards
+dirty old bastard
+dirty old bastards
+old bastard
+old bastards
 whore
 whores
 hell
 oh hell
 bloody hell
 the hell
+#what the hell
 sure as hell
 the hell's
+#what the hell's
 the hell’s
+#what the hell’s
 hell's
 hell’s
 hellhole
@@ -211,19 +223,19 @@ bad-ass
 bad-asses
 big ass
 big-ass
-kick[ -]ass
-kicks[ -]ass
-kicking[ -]ass
-kicked[ -]ass
-my[ -]ass
-my[ -]arse
-your[ -]ass
-your[ -]arse
-smart[ -]ass
-smart[ -]asses
-ass[ -]kicking
-ass[ -]kicked
-ass[ -]kick
+kick[\s-]ass
+kicks[\s-]ass
+kicking[\s-]ass
+kicked[\s-]ass
+my[\s-]ass
+my[\s-]arse
+your[\s-]ass
+your[\s-]arse
+smart[\s-]ass
+smart[\s-]asses
+ass[\s-]kicking
+ass[\s-]kicked
+ass[\s-]kick
 kick .* ass
 kicks .* ass
 kicked .* ass
@@ -255,20 +267,20 @@ ass holes
 ass-holes
 a-hole
 a-holes
-ass[ -]eyes
-half[ -]ass
-half[ -]assed
+ass[\s-]eyes
+half[\s-]ass
+half[\s-]assed
 kiss my ass
 kiss my arse
 kiss my butt
 lick my ass
 lick my arse
 lick my butt
-ass[ -]sniffer
-ass[ -]wipe
-butt[ -]sniffer
+ass[\s-]sniffer
+ass[\s-]wipe
+butt[\s-]sniffer
 piss
-piss[ -]off
+piss[\s-]off
 pissing
 sucks
 you suck
@@ -280,8 +292,8 @@ that blows$
 that blows[!,.-]+
 that .* blows$
 that .* blows[!,.-]+
-egg[ -]sucker
-pee[ -]drinking
+egg[\s-]sucker
+pee[\s-]drinking
 fag
 fags
 faggot
@@ -310,7 +322,7 @@ grow some cojones
 balls to bones
 prick
 little prick
-jack[ -]off
-jag[ -]off
+jack[\s-]off
+jag[\s-]off
 hot legs
-phlegm[- ]wad
+phlegm[\s-]wad

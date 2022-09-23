@@ -41,6 +41,7 @@ ANALYZE_DURATION = '20000000'
 PROBE_SIZE = '20000000'
 
 K_STREAM_TITLE = 'title'
+K_STREAM_LANGUAGE = 'language'
 K_STREAM_INDEX = 'index'
 K_CODEC_NAME = 'codec_name'
 K_CODEC_TYPE = 'codec_type'
@@ -62,6 +63,7 @@ K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
 CODEC_SUBTITLE_ASS = 'ass'
 CODEC_SUBTITLE_SRT = 'srt'
 CODEC_SUBTITLE_SUBRIP = 'subrip'
+CODEC_SUBTITLE_TEXT_BASED = [CODEC_SUBTITLE_ASS, CODEC_SUBTITLE_SRT, CODEC_SUBTITLE_SUBRIP]
 CODEC_SUBTITLE_DVDSUB = 'dvd_subtitle'
 CODEC_SUBTITLE_BLURAY = 'hdmv_pgs_subtitle'
 LANGUAGE_ENGLISH = 'eng'
@@ -531,6 +533,13 @@ def is_audio_stream(stream_info: dict) -> bool:
     return stream_info[K_CODEC_TYPE] == CODEC_AUDIO
 
 
+def is_subtitle_text_stream(stream_info: dict) -> bool:
+    if stream_info is None:
+        return False
+    return stream_info.get(K_CODEC_TYPE, '') == CODEC_SUBTITLE and stream_info.get(K_CODEC_NAME,
+                                                                                   '') in CODEC_SUBTITLE_TEXT_BASED
+
+
 def find_video_streams(input_info) -> list[dict]:
     """
     Find all video streams that do not have other purposes, such as attached pictures.
@@ -749,6 +758,12 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
         bitrate = 6500
 
     return crf, bitrate, qp
+
+
+def fps_video_filter(desired_frame_rate: [None, str, float]):
+    if desired_frame_rate is None:
+        return None
+    return f"minterpolate=fps={desired_frame_rate}:mi_mode=blend"
 
 
 def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_filters=None, force_stereo=False):
@@ -1510,6 +1525,20 @@ def is_truthy(value) -> bool:
     if value is None:
         return False
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
+
+
+def frame_rate_from_s(frame_rate_s: str) -> [float, None]:
+    framerate: [float, None] = None
+    if frame_rate_s:
+        frame_rate_s = frame_rate_s.lower()
+    if frame_rate_s[0].isdigit():
+        # remove suffix, like 'p'
+        framerate = float(re.sub(r'\D', '', frame_rate_s))
+    elif frame_rate_s in FRAME_RATE_NAMES.keys():
+        framerate = float(eval(FRAME_RATE_NAMES[frame_rate_s]))
+    else:
+        logger.warning("Unknown framerate %s", frame_rate_s)
+    return framerate
 
 
 def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_frame_rate: [None, str, float],

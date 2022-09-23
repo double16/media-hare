@@ -50,7 +50,7 @@ The file closest to the input file will be taken. Comments start with '#'.
 -l, --prevent-larger=true,false
     Prevent conversion to a larger file (default is {common.get_global_config_boolean('post_process', 'prevent_larger')}).
 -w, --hwaccel=false,auto,full
-    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel')}).
+    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel', 'false')}).
 -s, --stereo
     Scale down audio to stereo.
 -p, --preset=copy,medium,fast,veryfast
@@ -534,7 +534,7 @@ def do_dvr_post_process(input_file,
             filter_stage += 1
         if adjust_frame_rate:
             # "mi_mode=mci" produces better quality but is single-threaded
-            filter_complex += f"[{filter_stage}];[{filter_stage}]minterpolate=fps={desired_frame_rate}:mi_mode=blend"
+            filter_complex += f"[{filter_stage}];[{filter_stage}]{common.fps_video_filter(desired_frame_rate)}"
             filter_stage += 1
         filter_complex += f"[{filter_stage}];[{filter_stage}]format=nv12"
         filter_stage += 1

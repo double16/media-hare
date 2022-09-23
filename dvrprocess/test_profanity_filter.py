@@ -141,7 +141,7 @@ class ProfanityFilterTest(unittest.TestCase):
 
     def test_exclamation_phrase7(self):
         text = r'son of a ...'
-        expected = r'*** '
+        expected = r'***'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
         text = r'son of a bitch'
@@ -345,10 +345,16 @@ class ProfanityFilterTest(unittest.TestCase):
         expected = r"He's freaking out."
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
-
         self.assertFalse(stopped)
+
         text = r"He's freaking me out."
         expected = r"He's freaking me out."
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertFalse(stopped)
+
+        text = r"He's freaking the hell out."
+        expected = r"He's *** out."
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
         self.assertFalse(stopped)

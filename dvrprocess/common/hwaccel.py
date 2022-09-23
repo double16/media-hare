@@ -5,7 +5,7 @@ import subprocess
 import re
 from enum import Enum
 from shutil import which
-from . import find_ffmpeg, core_count
+from . import find_ffmpeg
 
 _once_lock = _thread.allocate_lock()
 logger = logging.getLogger(__name__)
@@ -71,9 +71,9 @@ def _find_vaapi_method() -> HWAccelMethod:
     vaapi_profiles = []
     try:
         for line in subprocess.check_output([vainfo, "-a"], stderr=subprocess.STDOUT, text=True).splitlines():
-            m = re.search(r'\bVAProfile\w+(Main|High)\b', line)
+            m = re.search(r'(?:\b|^)(VAProfile\w+(?:Main|High))(?:\b|/)', line)
             if m:
-                vaapi_profiles.append(m.group(0))
+                vaapi_profiles.append(m.group(1))
     except subprocess.CalledProcessError:
         return HWAccelMethod.NONE
 
