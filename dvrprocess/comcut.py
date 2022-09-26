@@ -193,7 +193,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                 start_next = edl_event.end
                 if start_next < input_duration:
                     # handle special case of cutting the end
-                    if len(keyframes) > 0 and abs(start_next - keyframes[-1]) < 0.05:
+                    if len(keyframes) > 0 and abs(start_next - (keyframes[-1] - keyframes[0])) < 0.05:
                         start_next = input_duration
                     else:
                         start_next = common.find_desired_keyframe(keyframes, start_next,
