@@ -461,8 +461,9 @@ def do_dvr_post_process(input_file,
         # let ffmpeg figure it out
         arguments.extend(['-hwaccel', 'auto'])
     elif gpu_present and not copy_video and hwaccel_requested == "full":
-        if hwaccel.has_hw_codec(input_video_codec):
-            arguments.extend(hwaccel.hwaccel_decoding(codec=input_video_codec))
+        # any hwaccel, decode or encode, requires hwaccel setup
+        # if hwaccel.has_hw_codec(input_video_codec):
+        arguments.extend(hwaccel.hwaccel_decoding(codec=input_video_codec))
 
     arguments.extend(["-i", filename])
 

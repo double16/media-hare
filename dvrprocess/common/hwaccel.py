@@ -174,7 +174,16 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
         elif preset in ['veryfast', 'fastest']:
             options.extend([preset_opt, 'p1'])
 
-        options.extend([f'-rc:{output_stream}', 'constqp', '-cq', str(crf)])
+        # options.extend([f'-rc:{output_stream}', 'constqp', '-qp', str(qp)])
+        # ... OR ...
+        # nvenc equivalent of -crf (?), https://github.com/HandBrake/HandBrake/issues/2231
+        options.extend([
+            f'-rc:{output_stream}', 'vbr',
+            f'-cq:{output_stream}', str(qp),
+            f'-qmin:{output_stream}', str(qp),
+            f'-qmax:{output_stream}', str(qp),
+            f'-b:{output_stream}', '0'])
+
         options.extend([f'-multipass:{output_stream}', 'fullres'])
         if output_type != 'ts':
             options.extend([f'-a53cc:{output_stream}', 'false'])
@@ -191,8 +200,15 @@ def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str,
                     target_bitrate: int):
     options = [f"-c:{output_stream}"]
     if codec in ['h265']:
-        options.extend([f"hevc_vaapi"])
+        options.extend(["hevc_vaapi"])
     else:
         options.extend([f"{codec}_vaapi"])
-    # VBR: -b:{current_output_stream} {bitrate}k
-    return [f"-qp:{output_stream}", str(qp)]
+
+    if codec in ['h264', 'h265', 'hevc']:
+        options.extend(["-rc_mode", "VBR", f"-qp:{output_stream}", str(qp)])
+
+    if codec in ['h264']:
+        options.extend(["-profile", "high"])
+        options.extend(["-quality", "0"])
+
+    return options
