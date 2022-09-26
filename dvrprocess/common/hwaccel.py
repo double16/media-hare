@@ -83,7 +83,7 @@ def _find_vaapi_method() -> HWAccelMethod:
         encoder_short = re.sub(r'_vaapi$', '', encoder)
         encoder_short = re.sub(r'video$', '', encoder_short).upper()
         if f"VAProfile{encoder_short}Main" not in vaapi_profiles and f"VAProfile{encoder_short}High" not in vaapi_profiles:
-            vaapi_profiles.remove(encoder)
+            vaapi_encoders.remove(encoder)
 
     return HWAccelMethod.VAAPI if len(vaapi_encoders) > 0 else HWAccelMethod.NONE
 
@@ -205,10 +205,14 @@ def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str,
         options.extend([f"{codec}_vaapi"])
 
     if codec in ['h264', 'h265', 'hevc']:
-        options.extend(["-rc_mode", "VBR", f"-qp:{output_stream}", str(qp)])
+        options.extend([f"-rc_mode:{output_stream}", "VBR",
+            f"-qp:{output_stream}", str(qp),
+            f'-qmin:{output_stream}', str(qp),
+            f'-qmax:{output_stream}', str(qp),
+            f'-b:{output_stream}', f'{target_bitrate}k'])
 
     if codec in ['h264']:
-        options.extend(["-profile", "high"])
-        options.extend(["-quality", "0"])
+        options.extend([f"-profile:{output_stream}", "high"])
+        options.extend([f"-quality:{output_stream}", "0"])
 
     return options

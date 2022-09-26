@@ -524,8 +524,8 @@ def do_dvr_post_process(input_file,
         else:
             hwaccel_encoding_options = []
 
-        filter_complex = f"[{video_input_stream}]yadif[0];[0]format=pix_fmts=nv12"
-        filter_stage = 1
+        filter_complex = f"[{video_input_stream}]yadif"
+        filter_stage = 0
         if crop_frame_filter is not None:
             filter_complex += f"[{filter_stage}];[{filter_stage}]{crop_frame_filter}"
             filter_stage += 1
@@ -536,6 +536,8 @@ def do_dvr_post_process(input_file,
             # "mi_mode=mci" produces better quality but is single-threaded
             filter_complex += f"[{filter_stage}];[{filter_stage}]minterpolate=fps={desired_frame_rate}:mi_mode=blend"
             filter_stage += 1
+        filter_complex += f"[{filter_stage}];[{filter_stage}]format=nv12"
+        filter_stage += 1
         if hwaccel_encoding_options:
             # must be last
             filter_complex += f"[{filter_stage}];[{filter_stage}]hwupload"
