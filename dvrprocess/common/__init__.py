@@ -713,7 +713,7 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
     :return: crf, bitrate, qp
     """
     # q=28 observed with libx264, crf=23
-    qp = 26
+    qp = 28
     if target_height <= 480:
         if target_video_codec == 'h264':
             crf = 23
