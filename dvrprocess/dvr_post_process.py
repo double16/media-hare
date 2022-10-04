@@ -135,7 +135,9 @@ def parse_args(argv) -> (list[str], dict):
         elif opt in ("-l", "--prevent-larger"):
             prevent_larger_file = arg != "false"
         elif opt in ("-w", "--hwaccel"):
-            if arg != "false":
+            if arg == "false":
+                hwaccel_requested = None
+            else:
                 hwaccel_requested = arg
         elif opt in ("-s", "--stereo"):
             stereo = True
@@ -455,12 +457,13 @@ def do_dvr_post_process(input_file,
         streams_file = 0
 
     # Configure hwaccel
-    # Warning: hwaccel defaults to false because software is more forgiving with corrupted streams
-    gpu_present = hwaccel_requested and os.path.isfile('/proc/cpuinfo') and os.path.isdir('/dev/dri')
+    if hwaccel_requested == "auto" and hwaccel.require_hw_codec(target_video_codec):
+        logger.info("Switching hwaccel to full for video codec %s", target_video_codec)
+        hwaccel_requested = "full"
     if hwaccel_requested == "auto":
         # let ffmpeg figure it out
         arguments.extend(['-hwaccel', 'auto'])
-    elif gpu_present and not copy_video and hwaccel_requested == "full":
+    elif not copy_video and hwaccel_requested == "full":
         # any hwaccel, decode or encode, requires hwaccel setup
         # if hwaccel.has_hw_codec(input_video_codec):
         arguments.extend(hwaccel.hwaccel_decoding(codec=input_video_codec))
@@ -516,7 +519,7 @@ def do_dvr_post_process(input_file,
     else:
         transcoding = True
 
-        if gpu_present and hwaccel_requested == "full" and hwaccel.has_hw_codec(target_video_codec):
+        if hwaccel_requested == "full" and hwaccel.has_hw_codec(target_video_codec):
             hwaccel_encoding_options = hwaccel.hwaccel_encoding(output_stream=str(current_output_stream),
                                                                 codec=target_video_codec, output_type=output_type,
                                                                 tune=tune, preset=preset, crf=crf, qp=qp,

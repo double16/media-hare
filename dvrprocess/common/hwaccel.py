@@ -120,6 +120,15 @@ def has_hw_codec(codec: str) -> bool:
         return f"{codec}_vaapi" in vaapi_encoders
 
 
+def require_hw_codec(codec: str) -> bool:
+    """
+    Check if the codec requires use of hardware encoding.
+    :param codec:
+    :return:
+    """
+    return codec in ['h265', 'hevc']
+
+
 def hwaccel_threads():
     """
     Some hardware acceleration has a thread limit.

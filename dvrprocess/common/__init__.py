@@ -649,7 +649,7 @@ def is_codec_available(codec: str) -> bool:
     """
     Check if a codec is available for use, in any sense. Some may required hardware encoding.
     """
-    if codec in ['h265', 'hevc']:
+    if hwaccel.require_hw_codec(codec):
         return hwaccel.has_hw_codec(codec)
     return True
 
@@ -1481,10 +1481,11 @@ def is_truthy(value) -> bool:
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
 
 
-def frame_rate_from_s(frame_rate_s: str) -> [float, None]:
+def frame_rate_from_s(frame_rate_s: [str, None]) -> [float, None]:
+    if frame_rate_s is None:
+        return None
     framerate: [float, None] = None
-    if frame_rate_s:
-        frame_rate_s = frame_rate_s.lower()
+    frame_rate_s = frame_rate_s.lower()
     if frame_rate_s[0].isdigit():
         # remove suffix, like 'p'
         framerate = float(re.sub(r'\D', '', frame_rate_s))
