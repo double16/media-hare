@@ -26,11 +26,11 @@ orgasms
 orgi
 orgis
 orgies
-oral[ -]sex
-anal[ -]sex
-butt[ -]sex
-ass[ -]sex
-gay[ -]sex
+oral[\s-]sex
+anal[\s-]sex
+butt[\s-]sex
+ass[\s-]sex
+gay[\s-]sex
 cock
 cocks
 cock's
@@ -39,8 +39,8 @@ cocksucker
 cocksuckers
 cocksucker's
 cocksucker’s
-cock[ -]sucker
-cock[ -]suckers
+cock[\s-]sucker
+cock[\s-]suckers
 a dick
 real dick
 stupid dick
@@ -52,10 +52,10 @@ hairy dick
 tiny dick
 pencil dick
 dicks
-dick[ -]head
-dick[ -]heads
-dick[ -]head's
-dick[ -]head’s
+dick[\s-]head
+dick[\s-]heads
+dick[\s-]head's
+dick[\s-]head’s
 suck my
 tit
 tits
@@ -74,17 +74,17 @@ boobies
 breasts
 kinky
 horny
-butt[ -]fuck
-butt[ -]fucker
-ass[ -]fuck
-ass[ -]fucker
+butt[\s-]fuck
+butt[\s-]fucker
+ass[\s-]fuck
+ass[\s-]fucker
 masturbate
 masturbates
 masturbated
 masturbating
 masturbation
-jacking[ -]off
-jacked[ -]off
+jacking[\s-]off
+jacked[\s-]off
 bra
 bras
 lingerie

@@ -11,6 +11,7 @@ import sys
 import tempfile
 
 import common
+from common import hwaccel
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +240,20 @@ def write_chapter_atom(mkvchapterfd, start_seconds, end_seconds, title, min_seco
     return False
 
 
+def get_comskip_hwassist_options() -> list[str]:
+    """
+    Get options for hardware acceleration for comskip if it's enabled in the configuration. It's safe to extend the
+    command with the results of this method without checks.
+    :return: hardware assist options, or empty list
+    """
+    options = []
+    if common.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
+        options.append("--hwassist")
+        if hwaccel.find_hwaccel_method() == hwaccel.HWAccelMethod.NVENC:
+            options.append("--cuvid")
+    return options
+
+
 def comchap(*args, **kwargs):
     try:
         return do_comchap(*args, **kwargs)
@@ -345,8 +360,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             comskip_command.append("-w")
         else:
             comskip_command.append(common.find_comskip())
-            if common.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
-                comskip_command.extend(["--hwassist", "--cuvid", "--vdpau", "--dxva2"])
+            comskip_command.extend(get_comskip_hwassist_options())
 
         # check for csv and logo file which makes the process much faster
         if not os.path.exists(csvfile):
