@@ -5,7 +5,7 @@ import subprocess
 import re
 from enum import Enum
 from shutil import which
-from . import find_ffmpeg
+from . import tools
 
 _once_lock = _thread.allocate_lock()
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def find_hwaccel_method() -> HWAccelMethod:
 
 def _find_hwaccel_method() -> HWAccelMethod:
     global vaapi_encoders, nvenc_encoders
-    for line in subprocess.check_output([find_ffmpeg(), "-hide_banner", "-encoders"], stderr=subprocess.STDOUT,
+    for line in subprocess.check_output([tools.find_ffmpeg(), "-hide_banner", "-encoders"], stderr=subprocess.STDOUT,
                                         text=True).splitlines():
         m = re.search(r'\b\w+_vaapi\b', line)
         if m:
@@ -107,7 +107,10 @@ def _find_nvenc_method() -> HWAccelMethod:
         return HWAccelMethod.NONE
 
 
-def has_hw_codec(codec: str):
+def has_hw_codec(codec: str) -> bool:
+    """
+    Check if the current hardware acceleration setting has an accelerated version of the codec.
+    """
     if codec == 'h265':
         codec = 'hevc'
     method = find_hwaccel_method()
@@ -181,7 +184,7 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
             f'-rc:{output_stream}', 'vbr',
             f'-cq:{output_stream}', str(qp),
             f'-qmin:{output_stream}', str(qp),
-            f'-qmax:{output_stream}', str(qp),
+            f'-qmax:{output_stream}', str(qp + 2),
             f'-b:{output_stream}', '0'])
 
         options.extend([f'-multipass:{output_stream}', 'fullres'])
@@ -206,10 +209,10 @@ def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str,
 
     if codec in ['h264', 'h265', 'hevc']:
         options.extend([f"-rc_mode:{output_stream}", "VBR",
-            f"-qp:{output_stream}", str(qp),
-            f'-qmin:{output_stream}', str(qp),
-            f'-qmax:{output_stream}', str(qp),
-            f'-b:{output_stream}', f'{target_bitrate}k'])
+                        f"-qp:{output_stream}", str(qp),
+                        f'-qmin:{output_stream}', str(qp),
+                        f'-qmax:{output_stream}', str(qp + 2),
+                        f'-b:{output_stream}', f'{target_bitrate}k'])
 
     if codec in ['h264']:
         options.extend([f"-profile:{output_stream}", "high"])

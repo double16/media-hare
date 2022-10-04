@@ -8,14 +8,11 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
-
-import pysrt
-from ass_parser import read_ass, write_ass
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
 from profanity_filter import MASK_STR
+from common import subtitle
 
 logger = logging.getLogger(__name__)
 
@@ -131,8 +128,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             subprocess.run(extract_subtitle_command, check=True, capture_output=not verbose)
             for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
                 subtitle_filename = subtitle_streams[stream[common.K_STREAM_INDEX]]
-                subtitle_data[stream[common.K_STREAM_INDEX]] = read_subtitle_data(stream.get(common.K_CODEC_NAME),
-                                                                                  subtitle_filename)
+                subtitle_data[stream[common.K_STREAM_INDEX]] = subtitle.read_subtitle_data(
+                    stream.get(common.K_CODEC_NAME),
+                    subtitle_filename)
 
     if delete_meta:
         common.TEMPFILENAMES.append(partsfile)
@@ -248,7 +246,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                     partsfd.write(f"inpoint {start}\n")
                     partsfd.write(f"outpoint {end}\n")
-                    # TODO: cut subtitles
+                    for data in subtitle_data.values():
+                        subtitle.subtitle_cut(data, end - totalcutduration, start_next - totalcutduration)
 
                 totalcutduration = totalcutduration + start_next - end
                 start = start_next
@@ -276,7 +275,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                         i += 1
                 partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                 partsfd.write(f"inpoint {start}\n")
-                # TODO: cut subtitles
 
     if hascommercials or len(video_filters) > 0 or len(audio_filters) > 0 or len(subtitle_filters) > 0:
         # doing it this way to keep the ident level one less
@@ -290,6 +288,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             return 1
 
     ffmpeg_command = [ffmpeg]
+    ffmpeg_command.extend(hwaccel.hwaccel_threads())
 
     if not verbose:
         ffmpeg_command.extend(["-loglevel", "error"])
@@ -319,7 +318,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                             logger.debug("Masking subtitle event %s", event)
                             event.text = MASK_STR
             subtitle_filename = subtitle_streams[stream[common.K_STREAM_INDEX]]
-            write_subtitle_data(stream[common.K_CODEC_NAME], subtitle_filename, data)
+            subtitle.write_subtitle_data(stream[common.K_CODEC_NAME], subtitle_filename, data)
             ffmpeg_command.extend(["-i", subtitle_filename])
             subtitle_stream_idx_to_input_idx[stream[common.K_STREAM_INDEX]] = input_stream_idx
             input_stream_idx += 1
@@ -434,24 +433,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             os.remove(extfile)
 
     return 0
-
-
-def read_subtitle_data(subtitle_codec, f):
-    if subtitle_codec == common.CODEC_SUBTITLE_ASS:
-        return read_ass(Path(f))
-    elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
-        return pysrt.open(f)
-    else:
-        raise f"INFO: Unknown subtitle codec {subtitle_codec}"
-
-
-def write_subtitle_data(subtitle_codec, f, data):
-    if subtitle_codec == common.CODEC_SUBTITLE_ASS:
-        write_ass(data, Path(f))
-    elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
-        data.save(Path(f), 'utf-8')
-    else:
-        raise f"INFO: Unknown subtitle codec {subtitle_codec}"
 
 
 def comcut_cli(argv):

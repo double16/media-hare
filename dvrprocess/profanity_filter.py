@@ -13,13 +13,13 @@ import tempfile
 from pathlib import Path
 from shutil import which
 
-import hunspell
 import pysrt
 from ass_parser import read_ass, write_ass, AssEventList, CorruptAssLineError
 from numpy import loadtxt
 from pysrt import SubRipItem
 
 import common
+from common import subtitle
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 11
@@ -356,8 +356,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         filtered_changed = False
         if subtitle_filtered_idx is not None:
             # We are re-running the filter. Check the previous and current filtered subtitles.
-            filtered_changed = not cmp_subtitle_text(subtitle_codec, subtitle_filtered_filename,
-                                                     subtitle_filtered_previous_filename)
+            filtered_changed = not subtitle.cmp_subtitle_text(subtitle_codec, subtitle_filtered_filename,
+                                                              subtitle_filtered_previous_filename)
         else:
             # Not yet filtered, see if we need to filter it
             filtered_changed = len(filtered_spans) > 0
@@ -719,25 +719,31 @@ def audio_to_text_cleanup(subtitle_srt_filename: str) -> None:
 
 
 def words_in_dictionary_pct(subtitle_srt_filename, language):
-    # verify with spell checker (hunspell) that text looks like English
-    if language == common.LANGUAGE_ENGLISH:
-        hobj = hunspell.HunSpell('/usr/share/hunspell/en_US.dic', '/usr/share/hunspell/en_US.aff')
-    else:
-        hobj = hunspell.HunSpell(f'/usr/share/hunspell/{language[0:2]}.dic', f'/usr/share/hunspell/{language[0:2]}.aff')
-    word_count = 0
-    word_found_count = 0
-    srt_data = pysrt.open(subtitle_srt_filename)
-    for event in list(srt_data):
-        for word in re.sub('[^A-Za-z\' ]+', ' ', event.text).split():
-            word_count += 1
-            if hobj.spell(word):
-                word_found_count += 1
-    word_found_pct = 100.0 * float(word_found_count) / float(word_count)
-    logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
-    if word_count < 100:
-        logger.warning("word count less than 100, returning 0%")
-        return 0.0
-    return word_found_pct
+    try:
+        import hunspell
+
+        # verify with spell checker (hunspell) that text looks like English
+        if language == common.LANGUAGE_ENGLISH:
+            hobj = hunspell.HunSpell('/usr/share/hunspell/en_US.dic', '/usr/share/hunspell/en_US.aff')
+        else:
+            hobj = hunspell.HunSpell(f'/usr/share/hunspell/{language[0:2]}.dic',
+                                     f'/usr/share/hunspell/{language[0:2]}.aff')
+        word_count = 0
+        word_found_count = 0
+        srt_data = pysrt.open(subtitle_srt_filename)
+        for event in list(srt_data):
+            for word in re.sub('[^A-Za-z\' ]+', ' ', event.text).split():
+                word_count += 1
+                if hobj.spell(word):
+                    word_found_count += 1
+        word_found_pct = 100.0 * float(word_found_count) / float(word_count)
+        logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
+        if word_count < 100:
+            logger.warning("word count less than 100, returning 0%")
+            return 0.0
+        return word_found_pct
+    except ImportError as e:
+        raise e
 
 
 def find_subtitle_dvdsub(input_info, language=None):
@@ -872,25 +878,6 @@ def phrase_to_pattern(phrase):
     phrase_beginning_marker = re.sub(r'[\^]', NO_PREVIOUS_WORD, phrase_fancy_word_breaks)
     phrase_starting_word_break = re.sub(r'.', WORD_BREAKS, '.') + phrase_beginning_marker
     return phrase_starting_word_break
-
-
-def cmp_subtitle_text(subtitle_codec, f1, f2):
-    return read_subtitle_text(subtitle_codec, f1) == read_subtitle_text(subtitle_codec, f2)
-
-
-def read_subtitle_text(subtitle_codec, f):
-    lines = []
-    if subtitle_codec == common.CODEC_SUBTITLE_ASS:
-        ass_data = read_ass(Path(f))
-        for event in list(ass_data.events):
-            lines.append(event.text)
-    elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
-        srt_data = pysrt.open(f)
-        for event in list(srt_data):
-            lines.append(event.text)
-    else:
-        common.fatal(f"INFO: Unknown subtitle codec {subtitle_codec}")
-    return "\n".join(lines)
 
 
 def phrase_list_accept_condition(e):

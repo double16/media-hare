@@ -20,7 +20,8 @@ import pygad
 import common
 from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_adjusted_duration, \
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
-    INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING
+    INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
+    get_comskip_hwassist_options
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
 
@@ -576,8 +577,7 @@ def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, 
         return
     comskip = common.find_comskip()
     command = [comskip, "-v", "9"]
-    if common.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
-        command.extend(["--hwassist", "--cuvid", "--vdpau", "--dxva2"])
+    command.extend(get_comskip_hwassist_options())
     command.extend(["--quiet", "--csvout",
                     f"--ini={comskip_ini}",
                     f"--output={workdir}", f"--output-filename={infile_base}", infile])

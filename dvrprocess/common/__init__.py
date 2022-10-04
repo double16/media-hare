@@ -19,6 +19,9 @@ from shutil import which
 import psutil
 from psutil import AccessDenied
 
+from . import tools
+from . import hwaccel
+
 KILOBYTES_MULT = 1024
 MEGABYTES_MULT = 1024 * 1024
 GIGABYTES_MULT = 1024 * 1024 * 1024
@@ -161,72 +164,12 @@ def finisher(func):
     return inner1
 
 
-ffmpeg_path = None
-ffmpeg_version: float = 0.0
-
-
 def find_ffmpeg():
-    global ffmpeg_path, ffmpeg_version
-    if ffmpeg_path is None:
-        _once_lock.acquire()
-        try:
-            if ffmpeg_path is None:
-                _maybe_path = _find_ffmpeg()
-                _maybe_version = float(
-                    re.search(r"version (\d+[.]\d+)", subprocess.check_output([_maybe_path, '-version'], text=True))[1])
-                if int(_maybe_version) not in [4, 5]:
-                    raise FileNotFoundError('ffmpeg version [4,5] not found')
-                ffmpeg_path = _maybe_path
-                ffmpeg_version = _maybe_version
-        finally:
-            _once_lock.release()
-    return ffmpeg_path
-
-
-def _find_ffmpeg():
-    # Never use Plex's version. We have no guarantees on version or patches applied. Keep the code so people know we tried.
-    ffmpeg = "x /usr/lib/plexmediaserver/Plex\\ Transcoder"
-
-    if os.access(ffmpeg, os.X_OK):
-        ld_library_path = "/usr/lib/plexmediaserver:/usr/lib/plexmediaserver/lib"
-    else:
-        ffmpeg = which("ffmpeg")
-    if len(ffmpeg) == 0:
-        fatal("'ffmpeg' not found")
-    if not os.access(ffmpeg, os.X_OK):
-        fatal(f"{ffmpeg} is not an executable")
-
-    return ffmpeg
-
-
-ffprobe_path = None
-ffprobe_version: float = 0.0
+    return tools.find_ffmpeg()
 
 
 def find_ffprobe():
-    global ffprobe_path, ffprobe_version
-    if ffprobe_path is None:
-        _once_lock.acquire()
-        try:
-            if ffprobe_path is None:
-                _maybe_path = _find_ffprobe()
-                _maybe_version = float(
-                    re.search(r"version (\d+[.]\d+)", subprocess.check_output([_maybe_path, '-version'], text=True))[1])
-                if int(_maybe_version) not in [4, 5]:
-                    raise FileNotFoundError('ffprobe version [4,5] not found')
-                ffprobe_path = _maybe_path
-                ffprobe_version = _maybe_version
-        finally:
-            _once_lock.release()
-    return ffprobe_path
-
-
-def _find_ffprobe():
-    ffprobe = which("ffprobe")
-    if not os.access(ffprobe, os.X_OK):
-        fatal(f"{ffprobe} is not an executable")
-    return ffprobe
-
+    return tools.find_ffprobe()
 
 comskip_path = None
 
@@ -323,7 +266,7 @@ def get_plex_url():
 def load_keyframes_by_seconds(filepath) -> list[float]:
     ffprobe_keyframes = [find_ffprobe(), "-loglevel", "error", "-skip_frame", "nointra", "-select_streams", "v:0",
                          "-show_entries",
-                         "frame=pkt_pts_time" if int(ffprobe_version) == 4 else "frame=pts_time",
+                         "frame=pkt_pts_time" if int(tools.ffprobe_version) == 4 else "frame=pts_time",
                          "-of", "csv=print_section=0", filepath]
     keyframes = list(map(lambda s: float(re.search(r'[\d.]+', s)[0]),
                          filter(lambda s: len(s) > 0,
@@ -630,7 +573,8 @@ def sort_streams(streams: list[dict]) -> list[dict]:
     return result
 
 
-def resolve_video_codec(desired_codec, target_height=None, video_info=None):
+def resolve_video_codec(desired_codec: [list, str], target_height: [None, int] = None,
+                        video_info: [None, dict] = None) -> [None, str]:
     """
     Resolve to a real video codec as seen by the user (NOT the ffmpeg version). This may be adjusted based on the
     video info.
@@ -644,14 +588,14 @@ def resolve_video_codec(desired_codec, target_height=None, video_info=None):
     # Choose based on video attributes
     if result is None:
         result = "h264"
-        # my testing shows bitrate for h264 is lower than h265 and ~10x faster
-        # if target_height and target_height > 1080:
-        #    result = "h265"
+        # my testing shows bitrate for h264 is lower than h265 and ~10x faster using software encoding
+        if target_height and target_height >= 1080 and hwaccel.has_hw_codec('h265'):
+            result = "h265"
 
     return result
 
 
-def resolve_audio_codec(desired_codec, audio_info=None):
+def resolve_audio_codec(desired_codec: [list, str], audio_info: [None, dict] = None) -> [None, str]:
     """
     Resolve to a real audio codec as seen by the user (NOT the ffmpeg version). This may be adjusted based on the
     audio info.
@@ -659,10 +603,13 @@ def resolve_audio_codec(desired_codec, audio_info=None):
     :param audio_info:
     :return:
     """
-    return __resolve_codec(desired_codec, audio_info)
+    result = __resolve_codec(desired_codec, audio_info)
+    if result is None:
+        result = "opus"
+    return result
 
 
-def __resolve_codec(desired_codec, stream_info=None):
+def __resolve_codec(desired_codec: [list, str], stream_info: [None, dict] = None) -> [None, str]:
     result = None
 
     if isinstance(desired_codec, list):
@@ -674,17 +621,15 @@ def __resolve_codec(desired_codec, stream_info=None):
                 result = codec
                 break
         # prefer first codec
-        if result is None:
-            for idx, codec in enumerate(desired_codec):
-                result = codec
-                break
+        if result is None and len(desired_codec) > 0:
+            result = list(filter(lambda c: is_codec_available(c), desired_codec))[0]
     else:
         result = desired_codec
 
     return resolve_human_codec(result)
 
 
-def resolve_human_codec(codec):
+def resolve_human_codec(codec: [None, str]) -> [None, str]:
     """
     Resolve human presented names of codecs
     :param codec: codec name or None
@@ -698,6 +643,15 @@ def resolve_human_codec(codec):
     elif result == 'vvc':
         result = 'h266'
     return result
+
+
+def is_codec_available(codec: str) -> bool:
+    """
+    Check if a codec is available for use, in any sense. Some may required hardware encoding.
+    """
+    if codec in ['h265', 'hevc']:
+        return hwaccel.has_hw_codec(codec)
+    return True
 
 
 def ffmpeg_codec(desired_codec):
@@ -850,8 +804,8 @@ def parse_edl(filename) -> list[EdlEvent]:
             parts = edl_line.split(maxsplit=3)
             if len(parts) < 3:
                 continue
-            start = __parse_edl_ts(parts[0])
-            end = __parse_edl_ts(parts[1])
+            start = parse_edl_ts(parts[0])
+            end = parse_edl_ts(parts[1])
             if parts[2] == '0':
                 event_type = EdlType.CUT
             elif parts[2] == '1':
@@ -873,7 +827,7 @@ def parse_edl_cuts(filename) -> list[EdlEvent]:
     return list(filter(lambda e: e.event_type in [EdlType.CUT, EdlType.COMMERCIAL], parse_edl(filename)))
 
 
-def __parse_edl_ts(s: str) -> float:
+def parse_edl_ts(s: str) -> float:
     if ":" in s:
         parts = list(s.split(":"))
         while len(parts) < 3:
