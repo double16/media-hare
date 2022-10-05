@@ -13,6 +13,7 @@ import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
 from profanity_filter import MASK_STR
 from common import subtitle
+from common import hwaccel
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ Usage: {sys.argv[0]} infile [outfile]
 @common.finisher
 def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=True, verbose=False, debug=False,
            comskipini=None,
-           workdir=None, preset=None, hwaccel=None):
+           workdir=None, preset=None, hwaccel_requested=None):
     ffmpeg = common.find_ffmpeg()
 
     input_info = common.find_input_info(infile)
@@ -77,8 +78,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             logger.fatal(f"finding {comskipini}", exc_info=e)
             return 255
 
-    if hwaccel is None:
-        hwaccel = common.get_global_config_option('ffmpeg', 'hwaccel', 'false')
+    if hwaccel_requested is None:
+        hwaccel_requested = common.get_global_config_option('ffmpeg', 'hwaccel', 'false')
 
     outextension = outfile.split('.')[-1]
     infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
