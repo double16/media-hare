@@ -412,7 +412,6 @@ def do_dvr_post_process(input_file,
 
     # Global arguments
     arguments = [ffmpeg]
-    arguments.extend(hwaccel.hwaccel_threads())
     if not verbose:
         arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
@@ -456,18 +455,10 @@ def do_dvr_post_process(input_file,
         closed_caption_file = -1
         streams_file = 0
 
-    # Configure hwaccel
-    if hwaccel_requested == "auto" and hwaccel.require_hw_codec(target_video_codec):
-        logger.info("Switching hwaccel to full for video codec %s", target_video_codec)
-        hwaccel_requested = "full"
-    if hwaccel_requested == "auto":
-        # let ffmpeg figure it out
-        arguments.extend(['-hwaccel', 'auto'])
-    elif not copy_video and hwaccel_requested == "full":
-        # any hwaccel, decode or encode, requires hwaccel setup
-        # if hwaccel.has_hw_codec(input_video_codec):
-        arguments.extend(hwaccel.hwaccel_decoding(codec=input_video_codec))
-
+    hwaccel.hwaccel_configure(hwaccel_requested)
+    arguments.extend(hwaccel.hwaccel_threads())
+    arguments.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
+    arguments.extend(hwaccel.hwaccel_decoding(input_video_codec))
     arguments.extend(["-i", filename])
 
     # Fixes: Too many packets buffered for output stream (can be due to late start subtitle)
@@ -495,7 +486,7 @@ def do_dvr_post_process(input_file,
             arguments.extend([f"-c:{current_output_stream}", "copy"])
         else:
             transcoding = True
-            arguments.extend([f"-c:{current_output_stream}", common.ffmpeg_codec(target_audio_codec)])
+            arguments.extend([f"-c:{current_output_stream}", hwaccel.ffmpeg_sw_codec(target_audio_codec)])
             audio_bitrate = int(audio_info[common.K_BIT_RATE]) if common.K_BIT_RATE in audio_info else None
             if target_audio_codec == 'opus':
                 common.extend_opus_arguments(arguments, audio_info, current_output_stream, [], stereo)
@@ -519,13 +510,10 @@ def do_dvr_post_process(input_file,
     else:
         transcoding = True
 
-        if hwaccel_requested == "full" and hwaccel.has_hw_codec(target_video_codec):
-            hwaccel_encoding_options = hwaccel.hwaccel_encoding(output_stream=str(current_output_stream),
-                                                                codec=target_video_codec, output_type=output_type,
-                                                                tune=tune, preset=preset, crf=crf, qp=qp,
-                                                                target_bitrate=bitrate)
-        else:
-            hwaccel_encoding_options = []
+        encoding_options, encoding_method = hwaccel.hwaccel_encoding(output_stream=str(current_output_stream),
+                                                                     codec=target_video_codec, output_type=output_type,
+                                                                     tune=tune, preset=preset, crf=crf, qp=qp,
+                                                                     target_bitrate=bitrate)
 
         filter_complex = f"[{video_input_stream}]yadif"
         filter_stage = 0
@@ -541,25 +529,14 @@ def do_dvr_post_process(input_file,
             filter_stage += 1
         filter_complex += f"[{filter_stage}];[{filter_stage}]format=nv12"
         filter_stage += 1
-        if hwaccel_encoding_options:
+        if encoding_method != hwaccel.HWAccelMethod.NONE:
             # must be last
             filter_complex += f"[{filter_stage}];[{filter_stage}]hwupload"
             filter_stage += 1
         filter_complex += f"[v{current_output_stream}]"
 
         arguments.extend(["-filter_complex", filter_complex, "-map", f"[v{current_output_stream}]"])
-        if hwaccel_encoding_options:
-            arguments.extend(hwaccel_encoding_options)
-        else:
-            arguments.extend([f"-c:{current_output_stream}", common.ffmpeg_codec(target_video_codec),
-                              f"-crf:{current_output_stream}", str(crf)])
-            if preset != "copy":
-                arguments.extend([f"-preset:{current_output_stream}", preset])
-            if tune is not None:
-                arguments.extend([f"-tune:{current_output_stream}", tune])
-            # Do not copy Closed Captions, they will be extracted into a subtitle stream
-            if target_video_codec == 'h264' and output_type != 'ts':
-                arguments.extend(['-a53cc', '0'])
+        arguments.extend(encoding_options)
 
         if aspect_ratio:
             if crop_frame_filter:

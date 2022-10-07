@@ -1,3 +1,16 @@
+"""
+Hardware acceleration support.
+Use as follows:
+
+hwaccel_configure("none"|"full")
+cmd = [find_ffmpeg()]
+cmd.extend(hwaccel_threads())
+cmd.extend(hwaccel_prologue('mpeg2video', 'h264'))
+cmd.extend(hwaccel_decoding('mpeg2video'))
+cmd.extend(hwaccel_encoding(output_stream='1', codec='h264', output_type='mkv', tune=None, preset='veryslow', crf=23, qp=28,
+                     target_bitrate=1200))
+
+"""
 import _thread
 import os
 import logging
@@ -17,9 +30,47 @@ class HWAccelMethod(Enum):
     NVENC = 2
 
 
+class HWAccelRequest(Enum):
+    """
+    The user requested hardware acceleration mode.
+    """
+    NONE = 0  # Disable hardware acceleration
+    AUTO = 1  # Automatically choose, but tend towards low use of hardware
+    FULL = 2  # Use full decode and encode acceleration
+    VAAPI = 3  # Use VAAPI decode and encode acceleration, if available, otherwise software
+    NVENC = 4  # Use nvidia decode and encode acceleration, if available, otherwise software
+
+
 hwaccel_method = None
+hwaccel_requested = HWAccelRequest.AUTO
 vaapi_encoders = []
 nvenc_encoders = []
+
+
+def hwaccel_configure(user_option: [None, str]) -> HWAccelRequest:
+    """
+    Convert the hwaccel option as a string to an enum. Defaults to AUTO. Sets the use of acceleration in the
+    other methods.
+    """
+    global hwaccel_requested
+    hwaccel_requested = _hwaccel_configure(user_option)
+    logger.info("hwaccel configured as %s", hwaccel_requested)
+    return hwaccel_requested
+
+
+def _hwaccel_configure(user_option: [None, str]) -> HWAccelRequest:
+    """
+    Convert the hwaccel option as a string to an enum. Defaults to AUTO.
+    """
+    if user_option is None:
+        return HWAccelRequest.AUTO
+    user_option = user_option.upper()
+    if user_option in ['NONE', 'FALSE', 'OFF']:
+        return HWAccelRequest.NONE
+    for option in HWAccelRequest:
+        if user_option == option.name:
+            return option
+    return HWAccelRequest.AUTO
 
 
 def find_hwaccel_method() -> HWAccelMethod:
@@ -29,7 +80,7 @@ def find_hwaccel_method() -> HWAccelMethod:
         try:
             if hwaccel_method is None:
                 hwaccel_method = _find_hwaccel_method()
-                logger.debug("hwaccel method = %s", hwaccel_method)
+                logger.info("hwaccel method = %s", hwaccel_method)
         finally:
             _once_lock.release()
     return hwaccel_method
@@ -129,7 +180,18 @@ def require_hw_codec(codec: str) -> bool:
     return codec in ['h265', 'hevc']
 
 
-def hwaccel_threads():
+def ffmpeg_sw_codec(desired_codec: str) -> str:
+    """
+    Get the ffmpeg software codec.
+    """
+    if re.search("h[0-9][0-9][0-9]", desired_codec):
+        return f"libx{desired_codec[1:]}"
+    if desired_codec == "opus":
+        return "libopus"
+    return desired_codec
+
+
+def hwaccel_threads() -> list[str]:
     """
     Some hardware acceleration has a thread limit.
     :return:
@@ -140,25 +202,74 @@ def hwaccel_threads():
     return []
 
 
-def hwaccel_decoding(codec: str):
+def hwaccel_prologue(input_video_codec: str, target_video_codec: [None, str]) -> list[str]:
+    """
+    Return ffmpeg options for initializing hwaccel.
+    :param input_video_codec:
+    :param target_video_codec: target codec OR None OR "copy" if encoding isn't necessary
+    :return:
+    """
+    global hwaccel_requested
+
+    if hwaccel_requested == HWAccelRequest.NONE:
+        return []
+
     method = find_hwaccel_method()
-    if method == HWAccelMethod.NVENC:
-        return ["-hwaccel:v", "nvdec", "-hwaccel_device", "0"]
-    elif method == HWAccelMethod.VAAPI:
-        return ["-hwaccel:v", "vaapi", "-init_hw_device", "vaapi=vaapi:", "-hwaccel_device", "vaapi"]
+    result = []
+
+    if hwaccel_requested == HWAccelRequest.AUTO and target_video_codec is not None and target_video_codec != 'copy' and require_hw_codec(
+            target_video_codec):
+        logger.info("Switching hwaccel to full for video codec %s", target_video_codec)
+        hwaccel_requested = HWAccelRequest.FULL
+
+    if hwaccel_requested == HWAccelRequest.AUTO:
+        # let ffmpeg figure it out
+        result.extend(['-hwaccel', 'auto'])
+    elif hwaccel_requested in [HWAccelRequest.FULL, HWAccelRequest.NVENC] and method == HWAccelMethod.NVENC:
+        result.extend(["-hwaccel:v", "nvdec", "-hwaccel_device", "0"])
+    elif hwaccel_requested in [HWAccelRequest.FULL, HWAccelRequest.VAAPI] and method == HWAccelMethod.VAAPI:
+        result.extend(["-hwaccel:v", "vaapi", "-init_hw_device", "vaapi=vaapi:", "-hwaccel_device", "vaapi"])
+
+    return result
+
+
+def hwaccel_decoding(codec: str) -> list[str]:
+    """
+    Return ffmpeg options for using hwaccel for decoding.
+    """
+    # Nothing specific at this time, ffmpeg seems to choose a hardware decoder automatically
     return []
 
 
-def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
-                     target_bitrate: int):
+def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [None, str], preset: str, crf: int,
+                     qp: int,
+                     target_bitrate: int) -> (list[str], HWAccelMethod):
+    """
+    Return ffmpeg options for using hwaccel for encoding.
+    :param output_stream: ffmpeg output stream spec, '1', ...
+    :param codec: 'h264', 'h265', ...
+    :param output_type: 'mkv', 'mp4', ...
+    :param tune: ffmpeg tune value: None, 'animation', etc.
+    :param preset: 'veryslow', 'slow', etc.
+    :param crf: 23, 31, ...
+    :param qp: 28, 34, ...
+    :param target_bitrate: in kbps, such as 1200, 3500, ...
+    """
+    if preset == "copy":
+        return [f"-c:{output_stream}", "copy"], HWAccelMethod.NONE
+
     method = find_hwaccel_method()
-    if method == HWAccelMethod.NVENC:
-        return _nvenc_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
-                               preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate)
-    elif method == HWAccelMethod.VAAPI:
-        return _vaapi_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
-                               preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate)
-    return []
+    if hwaccel_requested in [HWAccelRequest.FULL,
+                             HWAccelRequest.NVENC] and method == HWAccelMethod.NVENC and has_hw_codec(codec):
+        return (_nvenc_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
+                                preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.NVENC)
+    elif hwaccel_requested in [HWAccelRequest.FULL,
+                               HWAccelRequest.VAAPI] and method == HWAccelMethod.VAAPI and has_hw_codec(codec):
+        return (_vaapi_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
+                                preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.VAAPI)
+    else:
+        return (_sw_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
+                             preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.NONE)
 
 
 def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
@@ -227,4 +338,17 @@ def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str,
         options.extend([f"-profile:{output_stream}", "high"])
         options.extend([f"-quality:{output_stream}", "0"])
 
+    return options
+
+
+def _sw_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
+                 target_bitrate: int):
+    options = [f"-c:{output_stream}", ffmpeg_sw_codec(codec),
+               f"-crf:{output_stream}", str(crf),
+               f"-preset:{output_stream}", preset]
+    if tune is not None:
+        options.extend([f"-tune:{output_stream}", tune])
+    # Do not copy Closed Captions, they will be extracted into a subtitle stream
+    if codec == 'h264' and output_type != 'ts':
+        options.extend(['-a53cc', '0'])
     return options

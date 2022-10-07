@@ -288,6 +288,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             # we are not creating a new outfile, so don't return success
             return 1
 
+    hwaccel.hwaccel_configure(common.get_global_config_option('ffmpeg', 'hwaccel', fallback=None))
+
     ffmpeg_command = [ffmpeg]
     ffmpeg_command.extend(hwaccel.hwaccel_threads())
 
@@ -336,9 +338,11 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     for stream in common.sort_streams(input_info[common.K_STREAMS]):
         if common.is_video_stream(stream) and len(video_filters) > 0:
+            input_video_codec = common.resolve_video_codec(stream[common.K_CODEC_NAME])
+            ffmpeg_command.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec))
+            ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
             ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
             height = common.get_video_height(stream)
-            input_video_codec = common.resolve_video_codec(stream['codec_name'])
             crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
 
             # adjust frame rate
@@ -350,15 +354,18 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                                    tolerance=0.05):
                     video_filters.append(common.fps_video_filter(desired_frame_rate))
 
-            # TODO: hwaccel
-            ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec(input_video_codec),
-                                   f"-filter_complex:{output_stream_idx}", ",".join(video_filters),
-                                   f"-crf:{output_stream_idx}", str(crf),
-                                   f"-preset:{output_stream_idx}", preset])
+            ffmpeg_command.extend([f"-filter_complex:{output_stream_idx}", ",".join(video_filters)])
+
+            encoding_options, encoding_method = hwaccel.hwaccel_encoding(output_stream=str(output_stream_idx),
+                                                                         codec=input_video_codec, output_type="mkv",
+                                                                         tune=None, preset=preset, crf=crf, qp=qp,
+                                                                         target_bitrate=bitrate)
+
+            ffmpeg_command.extend(encoding_options)
         elif common.is_audio_stream(stream) and len(audio_filters) > 0:
             ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
             # Preserve original audio codec??
-            ffmpeg_command.extend([f"-c:{output_stream_idx}", common.ffmpeg_codec("opus")])
+            ffmpeg_command.extend([f"-c:{output_stream_idx}", hwaccel.ffmpeg_sw_codec("opus")])
             common.extend_opus_arguments(ffmpeg_command, stream, str(output_stream_idx), audio_filters)
         elif common.is_subtitle_text_stream(stream) and len(subtitle_filters) > 0:
             ffmpeg_command.extend([
