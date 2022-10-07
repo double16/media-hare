@@ -412,7 +412,6 @@ def do_dvr_post_process(input_file,
 
     # Global arguments
     arguments = [ffmpeg]
-    arguments.extend(hwaccel.hwaccel_threads())
     if not verbose:
         arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
@@ -457,7 +456,9 @@ def do_dvr_post_process(input_file,
         streams_file = 0
 
     hwaccel.hwaccel_configure(hwaccel_requested)
-    hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec)
+    arguments.extend(hwaccel.hwaccel_threads())
+    arguments.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
+    arguments.extend(hwaccel.hwaccel_decoding(input_video_codec))
     arguments.extend(["-i", filename])
 
     # Fixes: Too many packets buffered for output stream (can be due to late start subtitle)

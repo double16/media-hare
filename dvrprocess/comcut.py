@@ -298,7 +298,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     if not debug:
         ffmpeg_command.append("-hide_banner")
 
-    ffmpeg_command.extend(hwaccel.hwaccel_threads())
     ffmpeg_command.extend(["-nostdin", "-i", metafile,
                            "-f", "concat", "-safe", "0", "-i", partsfile])
 
@@ -340,7 +339,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     for stream in common.sort_streams(input_info[common.K_STREAMS]):
         if common.is_video_stream(stream) and len(video_filters) > 0:
             input_video_codec = common.resolve_video_codec(stream[common.K_CODEC_NAME])
-            hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec)
+            ffmpeg_command.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec))
+            ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
             ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
             height = common.get_video_height(stream)
             crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
