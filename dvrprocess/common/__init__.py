@@ -622,7 +622,10 @@ def __resolve_codec(desired_codec: [list, str], stream_info: [None, dict] = None
                 break
         # prefer first codec
         if result is None and len(desired_codec) > 0:
-            result = list(filter(lambda c: is_codec_available(c), desired_codec))[0]
+            available = list(filter(lambda c: is_codec_available(c), desired_codec))
+            if len(available) == 0:
+                raise RuntimeError(f"No codecs available from desired list of {desired_codec}")
+            result = available[0]
     else:
         result = desired_codec
 
@@ -652,14 +655,6 @@ def is_codec_available(codec: str) -> bool:
     if hwaccel.require_hw_codec(codec):
         return hwaccel.has_hw_codec(codec)
     return True
-
-
-def ffmpeg_codec(desired_codec):
-    if re.search("h[0-9][0-9][0-9]", desired_codec):
-        return f"libx{desired_codec[1:]}"
-    if desired_codec == "opus":
-        return "libopus"
-    return desired_codec
 
 
 def recommended_video_quality(target_height: int, target_video_codec: str) -> (int, int, int):

@@ -27,7 +27,7 @@ def edl_normalize(filename):
         with open(filename, 'w') as edl_fd:
             edl_fd.write(new_content)
 
-    return 255
+    return 0
 
 
 def edl_normalize_cli(args):
