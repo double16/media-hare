@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import mkstemp
@@ -433,17 +434,20 @@ def do_dvr_post_process(input_file,
         if not mount_point or mount_point == '/' or not os.path.isdir(mount_point) or not os.access(mount_point,
                                                                                                     os.W_OK):
             mount_point = dir_filename
-        (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=mount_point, prefix=".~tmplnk.",
-                                                                       suffix='.' + output_type)
+        for tempdir in mount_point, tempfile.tempdir:
+            try:
+                (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=tempdir, prefix=".~tmplnk.",
+                                                                               suffix='.' + output_type)
+                os.close(filename_clean_link_fd)
+                os.remove(common.FILENAME_CLEAN_LINK)
+                os.symlink(os.path.realpath(filename), common.FILENAME_CLEAN_LINK)
+            except OSError:
+                # Some filesystems don't like the temp names? zfs?
+                pass
+
         if not os.path.isfile(common.FILENAME_CLEAN_LINK):
-            (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=dir_filename, prefix=".~tmplnk.",
-                                                                           suffix='.' + output_type)
-            if not os.path.isfile(common.FILENAME_CLEAN_LINK):
-                logger.error(f"Could not create temp file link in {mount_point} or {dir_filename}")
-                return 255
-        os.close(filename_clean_link_fd)
-        os.remove(common.FILENAME_CLEAN_LINK)
-        os.symlink(os.path.realpath(filename), common.FILENAME_CLEAN_LINK)
+            logger.error(f"Could not create temp file link in {mount_point} or {dir_filename}")
+            return 255
 
         # The lavfi filter extracts closed caption subtitles
         arguments.extend(['-f', 'lavfi', '-i', f"movie={common.FILENAME_CLEAN_LINK}[out+subcc]"])
@@ -457,7 +461,8 @@ def do_dvr_post_process(input_file,
 
     hwaccel.hwaccel_configure(hwaccel_requested)
     arguments.extend(hwaccel.hwaccel_threads())
-    arguments.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
+    arguments.extend(
+        hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
     arguments.extend(hwaccel.hwaccel_decoding(input_video_codec))
     arguments.extend(["-i", filename])
 
