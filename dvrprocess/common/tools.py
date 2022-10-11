@@ -82,3 +82,31 @@ def _find_ffprobe():
     if not os.access(ffprobe, os.X_OK):
         _fatal(f"{ffprobe} is not an executable")
     return ffprobe
+
+
+ccextractor_path = None
+ccextractor_version: float = 0.0
+
+
+def find_ccextractor():
+    global ccextractor_path, ccextractor_version
+    if ccextractor_path is None:
+        _once_lock.acquire()
+        try:
+            if ccextractor_path is None:
+                _maybe_path = _find_ccextractor()
+                _maybe_version = float(
+                    re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([_maybe_path, '--version'], text=True))[
+                        1])
+                ccextractor_path = _maybe_path
+                ccextractor_version = _maybe_version
+        finally:
+            _once_lock.release()
+    return ccextractor_path
+
+
+def _find_ccextractor():
+    ccextractor = which("ccextractor")
+    if not os.access(ccextractor, os.X_OK):
+        _fatal(f"{ccextractor} is not an executable")
+    return ccextractor

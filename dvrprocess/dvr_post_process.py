@@ -16,6 +16,7 @@ from ass_parser import CorruptAssLineError
 
 import common
 from common import hwaccel
+from common import tools
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
@@ -420,7 +421,6 @@ def do_dvr_post_process(input_file,
     if ignore_errors:
         arguments.extend(['-err_detect', 'ignore_err'])
 
-    # extract_closed_captions = input_info['format']['format_name'] == 'mpegts'
     has_text_subtitle_stream = common.has_stream_with_language(input_info,
                                                                common.CODEC_SUBTITLE,
                                                                [common.CODEC_SUBTITLE_ASS, common.CODEC_SUBTITLE_SRT],
@@ -429,28 +429,49 @@ def do_dvr_post_process(input_file,
     extract_closed_captions = has_closed_captions and not has_text_subtitle_stream
 
     if extract_closed_captions:
-        # We need this because shell escaping is hard
-        mount_point = find_mount_point(filename)
-        if not mount_point or mount_point == '/' or not os.path.isdir(mount_point) or not os.access(mount_point,
-                                                                                                    os.W_OK):
-            mount_point = dir_filename
-        for tempdir in mount_point, tempfile.tempdir:
-            try:
-                (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=tempdir, prefix=".~tmplnk.",
-                                                                               suffix='.' + output_type)
-                os.close(filename_clean_link_fd)
-                os.remove(common.FILENAME_CLEAN_LINK)
-                os.symlink(os.path.realpath(filename), common.FILENAME_CLEAN_LINK)
-            except OSError:
-                # Some filesystems don't like the temp names? zfs?
-                pass
+        # use ccextractor, sometimes lavfi corrupts the subtitles, and ccextractor cleans up the text better
+        ccextractor = tools.find_ccextractor()
+        cc_filename = os.path.join(dir_filename, f".~{base_filename}.cc.ass")
+        common.TEMPFILENAMES.append(cc_filename)
+        cc_command = [ccextractor, "-out=ass", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
+        # cc_command.append("--sentencecap")  # this will re-capitalize mixed case
+        # cc_command.append("--videoedited")
+        if not verbose:
+            cc_command.append("-quiet")
+        cc_command.extend([os.path.realpath(filename), "-o", cc_filename])
+        logger.info(f"Extracting closed captions transcode of {filename} to {cc_filename}")
+        logger.info(common.array_as_command(cc_command))
+        if not dry_run:
+            subprocess.run(cc_command, check=True)
 
-        if not os.path.isfile(common.FILENAME_CLEAN_LINK):
-            logger.error(f"Could not create temp file link in {mount_point} or {dir_filename}")
-            return 255
+        if dry_run or os.stat(cc_filename).st_size > 0:
+            arguments.extend(['-i', cc_filename])
+        else:
+            logger.warning(f"Output at {cc_filename} is zero length, using ffmpeg lavfi to extract")
 
-        # The lavfi filter extracts closed caption subtitles
-        arguments.extend(['-f', 'lavfi', '-i', f"movie={common.FILENAME_CLEAN_LINK}[out+subcc]"])
+            # We need this because shell escaping is hard
+            mount_point = find_mount_point(filename)
+            if not mount_point or mount_point == '/' or not os.path.isdir(mount_point) or not os.access(mount_point,
+                                                                                                        os.W_OK):
+                mount_point = dir_filename
+            for tempdir in mount_point, tempfile.tempdir:
+                try:
+                    (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=tempdir, prefix=".~tmplnk.",
+                                                                                   suffix='.' + output_type)
+                    os.close(filename_clean_link_fd)
+                    os.remove(common.FILENAME_CLEAN_LINK)
+                    os.symlink(os.path.realpath(filename), common.FILENAME_CLEAN_LINK)
+                except OSError:
+                    # Some filesystems don't like the temp names? zfs?
+                    pass
+
+            if not os.path.isfile(common.FILENAME_CLEAN_LINK):
+                logger.error(f"Could not create temp file link in {mount_point} or {dir_filename}")
+                return 255
+
+            # The lavfi filter extracts closed caption subtitles
+            arguments.extend(['-f', 'lavfi', '-i', f"movie={common.FILENAME_CLEAN_LINK}[out+subcc]"])
+
         # The file reference holding the closed captions
         closed_caption_file = 0
         # The file reference holding the input sources aside from closed captions
