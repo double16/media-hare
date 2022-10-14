@@ -274,6 +274,8 @@ def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [No
 
 def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
                     target_bitrate: int):
+    # https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/
+
     options = [f"-c:{output_stream}"]
     if codec in ['h265']:
         options.extend([f"hevc_nvenc"])
@@ -281,6 +283,8 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
         options.extend([f"{codec}_nvenc"])
 
     if codec in ['h264', 'h265', 'hevc']:
+        options.extend(['-tune', 'hq'])
+
         preset_opt = f"-preset:{output_stream}"
         if preset in ['veryslow', 'slowest']:
             options.extend([preset_opt, 'p7'])
@@ -304,16 +308,26 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
             f'-rc:{output_stream}', 'vbr',
             f'-cq:{output_stream}', str(qp),
             f'-qmin:{output_stream}', str(qp),
-            f'-qmax:{output_stream}', str(qp + 2),
+            f'-qmax:{output_stream}', str(qp + 6),
             f'-b:{output_stream}', '0'])
 
         options.extend([f'-multipass:{output_stream}', 'fullres'])
+        # https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#look-ahead
+        options.extend([f'-rc-lookahead:{output_stream}', '32'])
+        # https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#b-frames-as-reference
+        options.extend([f'-b_ref_mode:{output_stream}', '2'])
+        # https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#adaptive-quantization-aq
+        options.extend([f'-spatial-aq:{output_stream}', '1'])
+        options.extend([f'-temporal-aq:{output_stream}', '1'])
+        options.extend([f'-aq-strength:{output_stream}', '15'])
+
         if output_type != 'ts':
             options.extend([f'-a53cc:{output_stream}', 'false'])
 
     if codec in ['h264']:
         options.extend((f"-profile:{output_stream}", "high"))
     elif codec in ['h265', 'hevc']:
+        # TODO: if 10-bit depth, use 'main-10'
         options.extend((f"-profile:{output_stream}", "main"))
 
     return options
