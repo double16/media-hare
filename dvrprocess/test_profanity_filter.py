@@ -182,6 +182,14 @@ class ProfanityFilterTest(unittest.TestCase):
         expected = r'***'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
+        text = r'oh, crap'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'oh, darn'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
 
     def test_exclamation_phrase_wildcards1(self):
         text = r'What the f'
@@ -305,6 +313,14 @@ class ProfanityFilterTest(unittest.TestCase):
         self.assertEqual(expected, filtered)
         text = r'rr --- Ooomp!'
         expected = r'rr --- Ooomp!'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r' GO MY LIMIT -- $1,300.'
+        expected = r' GO MY LIMIT -- $1,300.'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'Yes!-- ipsum'
+        expected = r'Yes!-- ipsum'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
 
@@ -457,6 +473,18 @@ class ProfanityFilterTest(unittest.TestCase):
         expected = r'Don\'t suck your thumb'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
+
+    def test_space_or_hypen(self):
+        text = r'cock a doodle doo'
+        expected = r'cock a doodle doo'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertFalse(stopped)
+        text = r'cock-a-doodle-doo'
+        expected = r'cock-a-doodle-doo'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertFalse(stopped)
 
     def test_audio_to_text_cleanup(self):
         fd, path = tempfile.mkstemp(suffix='.srt')

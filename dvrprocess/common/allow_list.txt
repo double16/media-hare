@@ -1,6 +1,7 @@
 freaking out
 freaking \w+ out
 feel a prick
+prick yourself
 suck .* thumb
 cock-a-doodle
 cocks gun
@@ -16,6 +17,8 @@ the good lord
 the dear good lord
 god[\s-]fearing
 please god
+cock[\s-]a[\s-]doodle[\s-]doo
+cock[\s-]and[\s-]bull
 # crap table
 # crap tables
 # crap game

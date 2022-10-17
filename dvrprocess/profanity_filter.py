@@ -799,7 +799,7 @@ PRE_FILTERED = r'[!@#$%^&*+]\s?(?:[@#$%^&*+]\s?){2,}'
 MASK_STR = '***'
 
 
-def contains_pattern_repl(matchobj, allow_ranges: list[tuple]):
+def contains_pattern_repl(matchobj, allow_ranges: list[tuple]) -> str:
     original = matchobj.group(0)
     for allow_range in allow_ranges:
         if allow_range[0] <= matchobj.start(0) < allow_range[1] \
@@ -815,6 +815,19 @@ def contains_pattern_repl(matchobj, allow_ranges: list[tuple]):
             masked = masked + matchobj.group(group_idx)
         pass
     return masked
+
+
+def matches_stop_pattern(stop_pattern, text, allow_ranges: list[tuple]) -> bool:
+    for m in re.finditer(stop_pattern, text, flags=re.IGNORECASE):
+        allowed = False
+        for allow_range in allow_ranges:
+            if allow_range[0] <= m.start(0) < allow_range[1] \
+                    or allow_range[0] <= m.end(0) < allow_range[1]:
+                allowed = True
+                break
+        if not allowed:
+            return True
+    return False
 
 
 def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (str, bool):
@@ -849,7 +862,7 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (
         stop_pattern = phrase_to_pattern(stop_phrase)
         logger.debug("stop: %s => %s", stop_phrase, stop_pattern)
         try:
-            if re.search(stop_pattern, text, flags=re.IGNORECASE):
+            if matches_stop_pattern(stop_pattern, text, allow_ranges):
                 text = re.search(STOP_CLEAN_PATTERN, text).expand(fr"\1{MASK_STR}")
                 return text, True
         except re.error as e:

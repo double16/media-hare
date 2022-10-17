@@ -107,6 +107,8 @@ damn you
 darn
 darn it
 darn you
+darn tootin
+darn tooting
 oh darn
 oh darn it
 dang
@@ -216,11 +218,9 @@ ass's
 ass’s
 asses
 badass
+bad[\s-]ass
 badasses
-bad ass
-bad asses
-bad-ass
-bad-asses
+bad[\s-]asses
 big ass
 big-ass
 kick[\s-]ass
@@ -245,6 +245,7 @@ kicked .* arse
 up .* ass
 up .* arse
 up .* butt
+up .* booty
 jackass
 jackasses
 jack ass
@@ -273,12 +274,19 @@ half[\s-]assed
 kiss my ass
 kiss my arse
 kiss my butt
+kiss my booty
 lick my ass
 lick my arse
 lick my butt
+lick my booty
 ass[\s-]sniffer
+kiss[\s-]ass
+hard[\s-]ass
+stupid[\s-]ass
 ass[\s-]wipe
 butt[\s-]sniffer
+booty[\s-]sniffer
+booty
 piss
 piss[\s-]off
 pissing
