@@ -26,7 +26,6 @@ COPY requirements.txt /tmp/
 RUN apt-get -q update && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq ccextractor \
     mono-runtime libmono-system-windows-forms4.0-cil libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
-    nvidia-headless-no-dkms-515 nvidia-utils-515 libnvidia-decode-515 libnvidia-encode-515 \
     libargtable2-0 libavformat58 libsdl1.2-compat &&\
     pip -q --no-input install -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip &&\
@@ -72,6 +71,7 @@ COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/
+COPY hwaccel-drivers.sh /usr/bin/hwaccel-drivers
 COPY anacron.cron /etc/cron.d/anacron
 COPY tesseract-wrapper.sh /usr/bin/tesseract
 ADD *.service /etc/systemd/system/
@@ -92,10 +92,12 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/transcode-apply.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/smart-comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/tvshow-summary.py /usr/local/bin/ &&\
-    chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/tesseract && \
+    chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/tesseract /usr/bin/hwaccel-drivers && \
+    ln -s /usr/bin/hwaccel-drivers /etc/cron.daily/1hwaccel-drivers &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
     systemctl enable localtime &&\
+    systemctl enable hwaccel-drivers &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 

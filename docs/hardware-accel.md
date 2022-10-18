@@ -27,3 +27,21 @@ nvidia and vaapi are supported for h265 and hevc/h265. hwaccel options are:
 - full: use full decode and encode acceleration
 - vaapi: use VAAPI decode and encode acceleration, if available, otherwise software
 - nvenc: use nvidia decode and encode acceleration, if available, otherwise software
+
+## nvidia
+
+The nvidia libraries in the container must match the driver installed on the host. The `/usr/bin/hwaccel-drivers` script
+will maintain this. It is run on container start and daily to keep the versions matched.
+
+Get the container version by executing:
+```shell
+$ docker exec media-hare apt list --installed | grep libnvidia-encode
+```
+
+For a more stable setup, hold/pin/freeze the nvidia driver on the host.
+
+On Debian based systems, install and hold the package on the host (get the major version using `apt list` in the container):
+```shell
+$ apt install nvidia-driver-MAJOR_VERSION=version
+$ apt-mark hold nvidia-driver-MAJOR_VERSION
+```

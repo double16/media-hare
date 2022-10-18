@@ -1,0 +1,9 @@
+[Unit]
+Description=Install Hardware Acceleration Drivers
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hwaccel-drivers
+
+[Install]
+WantedBy=multi-user.target
