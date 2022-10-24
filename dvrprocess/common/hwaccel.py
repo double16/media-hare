@@ -365,4 +365,6 @@ def _sw_encoding(output_stream: str, codec: str, output_type: str, tune: str, pr
     # Do not copy Closed Captions, they will be extracted into a subtitle stream
     if codec == 'h264' and output_type != 'ts':
         options.extend([f"-a53cc:{output_stream}", '0'])
+    if codec == 'h265':
+        options.extend(['-x265-params', 'aq-strength=3.0:multi-pass-opt-analysis:hevc-aq'])
     return options

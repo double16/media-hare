@@ -38,6 +38,31 @@ Cuts commercials only when a season fits closely within the average of length po
 """, file=sys.stderr)
 
 
+class CommercialRange(object):
+    def __init__(self, values: list[float], error_range: list[float]):
+        average = mean(values)
+        self.values = values
+        self.begin = average - error_range[0]
+        self.end = average + error_range[1]
+        self.average = average
+        self.deviation = stdev(values)
+        self.min_value = min(values)
+        self.max_value = max(values)
+
+    def __str__(self):
+        return f"({common.s_to_ts(self.begin)}, {common.s_to_ts(self.end)}) σ{self.deviation} min/max({common.s_to_ts(self.min_value)} {common.s_to_ts(self.max_value)})"
+
+
+class CommercialBreakStats(object):
+    def __init__(self, start: CommercialRange, end: CommercialRange, duration: CommercialRange):
+        self.start = start
+        self.end = end
+        self.duration = duration
+
+    def __str__(self):
+        return f"({self.start}, {self.end}) duration {self.duration}"
+
+
 def smart_comcut(argv):
     dry_run = False
     commercial_details = False
@@ -176,6 +201,9 @@ def smart_comcut(argv):
                         f"average adjusted = {common.seconds_to_timespec(average_adjusted_duration)} "
                         f"σ{common.seconds_to_timespec(stdev_adjusted_duration)}")
 
+            # TODO: organize breaks into "slots" with similar start times. If there is a break starting at 0, use the
+            # length to adjust start time
+
             # Compute the expected number of commercial breaks
             commercial_break_histo = {}
             commercial_break_histo_data_count = 0
@@ -213,17 +241,10 @@ def smart_comcut(argv):
                         start_array.append(break_i.start)
                         end_array.append(break_i.end)
                         duration_array.append(break_i.end - break_i.start)
-                    start_avg = mean(start_array)
-                    end_avg = mean(end_array)
-                    duration_avg = mean(duration_array)
-                    start_range = [start_avg - error_range[0], start_avg + error_range[1], start_avg,
-                                   stdev(start_array),
-                                   min(start_array), max(start_array)]
-                    end_range = [end_avg - error_range[0], end_avg + error_range[1], end_avg, stdev(end_array),
-                                 min(end_array), max(end_array)]
-                    duration_range = [duration_avg - 20, duration_avg + 20, duration_avg, stdev(duration_array),
-                                      min(duration_array), max(duration_array)]
-                    required_commercial_breaks.append([start_range, end_range, duration_range])
+                    start_range = CommercialRange(start_array, error_range)
+                    end_range = CommercialRange(end_array, error_range)
+                    duration_range = CommercialRange(duration_array, [20.0, 20.0])
+                    required_commercial_breaks.append(CommercialBreakStats(start_range, end_range, duration_range))
 
                 required_commercial_breaks_str = ""
                 for c in required_commercial_breaks:
@@ -252,20 +273,22 @@ def smart_comcut(argv):
                 this_commercial_break_count = video['commercial_break_count']
                 duration_ok = accepted_range[0] < adjusted_duration < accepted_range[1]
                 if commercial_details:
+                    # TODO: account for optional break at beginning or ending, depends on when recording started
+                    # TODO: adjust start time based on break starting at 0
                     if this_commercial_break_count == required_commercial_break_count:
                         commercials_ok = True
                         commercial_breaks = video['commercial_breaks']
                         for i, val in enumerate(commercial_breaks):
                             expected = required_commercial_breaks[i]
-                            if not expected[0][0] < val.start < expected[0][1]:
-                                logger.debug(f"{filepath}: break {i} start {val.start} out of range {expected[0]}")
+                            if not expected.start.begin < val.start < expected.start.end:
+                                logger.debug(f"{filepath}: break {i} start {val.start} out of range {expected.start}")
                                 commercials_ok = False
-                            if not expected[1][0] < val.end < expected[1][1]:
-                                logger.debug(f"{filepath}: break {i} end {val.end} out of range {expected[1]}")
+                            if not expected.end.begin < val.end < expected.end.end:
+                                logger.debug(f"{filepath}: break {i} end {val.end} out of range {expected.end}")
                                 commercials_ok = False
-                            if not expected[2][0] < (val.end - val.start) < expected[2][1]:
+                            if not expected.duration.begin < (val.end - val.start) < expected.duration.end:
                                 logger.debug(
-                                    f"{filepath}: break {i} duration {val.end - val.start} out of range {expected[2]}")
+                                    f"{filepath}: break {i} duration {val.end - val.start} out of range {expected.duration}")
                                 commercials_ok = False
                     else:
                         commercials_ok = False

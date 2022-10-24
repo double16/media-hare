@@ -11,8 +11,9 @@ if [ -s '/sys/module/nvidia/version' ]; then
   NV_MAJOR_VER="${NV_VERSION/.*/}"
   NV_PKG_INSTALL=()
   for NV_PKG in nvidia-headless-no-dkms nvidia-utils libnvidia-decode libnvidia-encode; do
-    if ! apt list "${NV_PKG}-${NV_MAJOR_VER}" 2>/dev/null | grep -q "${NV_VERSION}"; then
-      NV_PKG_INSTALL+=("${NV_PKG}-${NV_MAJOR_VER}=${NV_VERSION}-*")
+    if ! apt list --installed "${NV_PKG}-${NV_MAJOR_VER}" 2>/dev/null | grep -q "${NV_VERSION}"; then
+      NV_PKG_VERSION="$(apt list -a "${NV_PKG}-${NV_MAJOR_VER}" 2>/dev/null | grep -F "${NV_VERSION}" | head -n 1 | tr -s '[:space:]' | cut -d ' ' -f 2)"
+      NV_PKG_INSTALL+=("${NV_PKG}-${NV_MAJOR_VER}=${NV_PKG_VERSION}")
     fi
   done
   if [ -n "${NV_PKG_INSTALL}" ]; then
