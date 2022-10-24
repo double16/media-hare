@@ -219,6 +219,20 @@ class ProfanityFilterTest(unittest.TestCase):
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
 
+    def test_exclamation_phrase_wildcards3(self):
+        text = r'that kicks ass'
+        expected = r'that ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'that kicks freakin ass'
+        expected = r'that ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'thumbs up their asses'
+        expected = r'thumbs ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
     def test_exclamation_allowed_phrase1(self):
         text = r'God bless you.'
         expected = r'God bless you.'

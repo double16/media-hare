@@ -141,6 +141,7 @@ go screw your self
 screw the pooch
 screwed the pooch
 are screwed
+screwed
 fuck
 f-u-c-k
 oh fuck
@@ -236,16 +237,21 @@ smart[\s-]asses
 ass[\s-]kicking
 ass[\s-]kicked
 ass[\s-]kick
-kick .* ass
-kicks .* ass
-kicked .* ass
-kick .* arse
-kicks .* arse
-kicked .* arse
-up .* ass
-up .* arse
-up .* butt
-up .* booty
+kick [\w\s]* ass
+kicks [\w\s]* ass
+kicked [\w\s]* ass
+kick [\w\s]* arse
+kicks [\w\s]* arse
+kicked [\w\s]* arse
+up [\w\s]* ass
+up [\w\s]* asses
+up [\w\s]* arse
+up [\w\s]* arses
+up [\w\s]* butt
+up [\w\s]* butts
+up [\w\s]* booty
+up [\w\s]* bootys
+up [\w\s]* booties
 jackass
 jackasses
 jack ass
@@ -334,3 +340,6 @@ jack[\s-]off
 jag[\s-]off
 hot legs
 phlegm[\s-]wad
+flipped off
+flipped [\w\s]* off
+g[ia]ve [\w\s]* the finger

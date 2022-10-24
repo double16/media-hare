@@ -176,7 +176,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'"
                                          f":volume=0")
                     # subtitle events are in milliseconds
-                    subtitle_filters.append((edl_event.start * 1000.0, edl_event.end * 1000.0))
+                    subtitle_filters.append(((edl_event.start - totalcutduration) * 1000.0, (edl_event.end- totalcutduration) * 1000.0))
                     continue
                 elif edl_event.event_type == common.EdlType.SCENE:
                     continue
