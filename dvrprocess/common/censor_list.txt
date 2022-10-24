@@ -145,6 +145,7 @@ screwed the pooch
 are screwed
 screwed
 fuck
+\w+-?fuck
 f-u-c-k
 oh fuck
 fucks
