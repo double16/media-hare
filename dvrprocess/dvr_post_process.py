@@ -578,7 +578,8 @@ def do_dvr_post_process(input_file,
     # Attached pictures
     for attached_pic in common.find_attached_pic_stream(input_info):
         arguments.extend(
-            ["-map", f"{streams_file}:{attached_pic[common.K_STREAM_INDEX]}", f"-c:{current_output_stream}", "copy"])
+            ["-map", f"{streams_file}:{attached_pic[common.K_STREAM_INDEX]}", f"-c:{current_output_stream}", "copy",
+             f"-disposition:{current_output_stream}", "attached_pic"])
         current_output_stream += 1
 
     # Subtitle stream

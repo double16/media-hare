@@ -545,7 +545,8 @@ def find_audio_streams(input_info):
 
 
 def find_attached_pic_stream(input_info):
-    return list(filter(lambda stream: stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('attached_pic') > 0,
+    return list(filter(lambda stream: (stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('attached_pic') > 0)
+                                      or (stream.get(K_TAGS) and stream.get(K_TAGS).get('MIMETYPE', '').startswith('image/')),
                        input_info[K_STREAMS]))
 
 
