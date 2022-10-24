@@ -44,8 +44,10 @@ for god sakes
 for god's sakes
 for god’s sakes
 shit
+\w+-?shit
 s-h-i-t
 oh shit
+give a \w*-?shit
 shits
 shit's
 shit’s

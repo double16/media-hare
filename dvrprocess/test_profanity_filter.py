@@ -53,6 +53,21 @@ class ProfanityFilterTest(unittest.TestCase):
         text = 'the shitstorm will be terrible'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual('the *** will be terrible', filtered)
+        text = 'chickenshit coward'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual('*** coward', filtered)
+        text = 'chicken-shit coward'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual('*** coward', filtered)
+        text = 'give a shit'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual('***', filtered)
+        text = 'give a chicken-shit'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual('***', filtered)
+        text = 'give a chickenshit'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual('***', filtered)
 
     def test_filter_text_with_markup2(self):
         """
