@@ -36,16 +36,24 @@ will not start running on a system under load and also will stop if the system b
     Limit to specified height. Use to keep a lower powered machine from processing HD videos.
 --ignore-compute
     Ignore current compute availability.
+--limit=10
+    Limit the number of files transcoded.
 """, file=sys.stderr)
 
 
 def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_codecs=None, desired_audio_codecs=None,
                     desired_frame_rate=None, max_resolution=None,
-                    verbose=False):
+                    verbose=False, limit: [None, int] = None):
+    # collect libraries to scan in case filename changes, i.e. .ts to .mkv.
+    libraries_to_scan = set()
     for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
                                               desired_video_codecs=desired_video_codecs,
                                               desired_audio_codecs=desired_audio_codecs, max_resolution=max_resolution,
                                               desired_frame_rate=desired_frame_rate):
+        if limit is not None:
+            limit -= 1
+            if limit < 0:
+                break
 
         try:
             post_process_code = dvr_post_process(file_info.host_file_path, dry_run=dry_run, verbose=verbose,
@@ -56,12 +64,30 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
             # conflict with multiple processors
             post_process_code = 255
         if post_process_code == 0 and plex_url and file_info.item_key:
-            logger.info(f'HTTP PUT: {plex_url}{file_info.item_key}/analyze')
+            input_type = file_info.host_file_path.split(".")[-1]
+            if file_info.library and input_type != 'mkv':
+                # We changed output types, i.e. filenames, Plex requires a library scan to find it
+                libraries_to_scan.add(file_info.library)
+            else:
+                # Updating a file without changing the name, we can analyze the item
+                analyze_url = f'{plex_url}{file_info.item_key}/analyze'
+                logger.info('HTTP PUT: %s', analyze_url)
+                if not dry_run:
+                    try:
+                        requests.put(analyze_url)
+                    except requests.exceptions.ConnectTimeout:
+                        pass
+
+    if plex_url and len(libraries_to_scan) > 0:
+        for library_key in libraries_to_scan:
+            refresh_url = f'{plex_url}/library/sections/{library_key}/refresh'
+            logger.info('HTTP GET: %s', refresh_url)
             if not dry_run:
                 try:
-                    requests.put(f'{plex_url}{file_info.item_key}/analyze')
+                    requests.get(refresh_url)
                 except requests.exceptions.ConnectTimeout:
                     pass
+
     return 0
 
 
@@ -81,6 +107,7 @@ def transcode_apply_cli(argv):
     dry_run = False
     check_compute = True
     verbose = False
+    limit = None
 
     if common.core_count() < 9:
         max_resolution = 480
@@ -89,7 +116,7 @@ def transcode_apply_cli(argv):
         opts, args = getopt.getopt(list(argv),
                                    "hnu:v:a:f:",
                                    ["dry-run", "ignore-compute", "url=", "video=", "audio=", "maxres=", "framerate=",
-                                    "verbose"])
+                                    "verbose", "limit="])
     except getopt.GetoptError:
         usage()
         return 2
@@ -113,6 +140,8 @@ def transcode_apply_cli(argv):
             verbose = True
         elif opt == '--ignore-compute':
             check_compute = False
+        elif opt == '--limit':
+            limit = int(arg)
 
     if args:
         media_paths = args
@@ -129,7 +158,7 @@ def transcode_apply_cli(argv):
 
     transcode_apply(plex_url, media_paths=media_paths, dry_run=dry_run, desired_video_codecs=desired_video_codecs,
                     desired_audio_codecs=desired_audio_codecs, desired_frame_rate=desired_frame_rate,
-                    max_resolution=max_resolution, verbose=verbose)
+                    max_resolution=max_resolution, verbose=verbose, limit=limit)
     return 0
 
 

@@ -156,7 +156,7 @@ def find_need_transcode_cli(argv):
 class TranscodeFileInfo(object):
 
     def __init__(self, file_name: str, host_file_path: str, item_key: [str, None], video_resolution: int, runtime: int,
-                 framerate: [None, float] = None):
+                 framerate: [None, float] = None, library: [None, str] = None):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.item_key = item_key
@@ -164,6 +164,7 @@ class TranscodeFileInfo(object):
         self.runtime = runtime
         self.transcode_time = runtime
         self.framerate = framerate
+        self.library = library
 
         if video_resolution is not None and runtime is not None:
             if video_resolution <= 480:
@@ -268,6 +269,7 @@ def need_transcode_generator(
     sections = list(ET.fromstring(sections_response.text))
     random.shuffle(sections)
     for library in sections:
+        library_key = library.attrib['key']
         if library.tag == 'Directory' and library.attrib['type'] == 'movie':
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
@@ -275,7 +277,8 @@ def need_transcode_generator(
                                        host_home,
                                        section_response,
                                        max_resolution,
-                                       desired_frame_rate)
+                                       desired_frame_rate,
+                                       library_key)
         elif library.tag == 'Directory' and library.attrib['type'] == 'show' and 'DVR' not in library.attrib['title']:
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
@@ -290,12 +293,14 @@ def need_transcode_generator(
                                            file_names, host_home,
                                            show_response,
                                            max_resolution,
-                                           desired_frame_rate)
+                                           desired_frame_rate,
+                                           library_key)
 
 
 def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str],
                     desired_subtitle_codecs: list[str], file_names, host_home,
-                    show_response, max_resolution: [None, int], desired_frame_rate: [None, float]):
+                    show_response, max_resolution: [None, int], desired_frame_rate: [None, float],
+                    library: [None, str] = None):
     episodes = list(filter(
         lambda el: el.tag == 'Video' and (
                 el.attrib['type'] == 'episode' or el.attrib['type'] == 'movie'),
@@ -370,7 +375,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                             video_resolution = int(video_resolution)
                         yield TranscodeFileInfo(file_name=file_name, host_file_path=host_file_path,
                                                 item_key=episode.attrib['key'], video_resolution=video_resolution,
-                                                framerate=framerate, runtime=duration)
+                                                framerate=framerate, runtime=duration, library=library)
 
 
 def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):
