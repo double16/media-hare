@@ -39,13 +39,13 @@ def extract_pf_data(mkv, ffmpeg):
         print(f"INFO: {mkv} has no filtered subtitles", file=sys.stderr)
         return None
 
+    tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {})
     data = {
         'filename': mkv,
-        common.K_FILTER_VERSION: input_info[common.K_FORMAT][common.K_TAGS][common.K_FILTER_VERSION],
-        common.K_FILTER_HASH: input_info[common.K_FORMAT][common.K_TAGS][common.K_FILTER_HASH],
-        common.K_FILTER_STOPPED: input_info[common.K_FORMAT][common.K_TAGS].get(common.K_FILTER_STOPPED, None),
-        common.K_AUDIO_TO_TEXT_VERSION: input_info[common.K_FORMAT][common.K_TAGS].get(common.K_AUDIO_TO_TEXT_VERSION,
-                                                                                       None),
+        common.K_FILTER_VERSION: tags.get(common.K_FILTER_VERSION, None),
+        common.K_FILTER_HASH: tags.get(common.K_FILTER_HASH, None),
+        common.K_FILTER_STOPPED: tags.get(common.K_FILTER_STOPPED, None),
+        common.K_AUDIO_TO_TEXT_VERSION: tags.get(common.K_AUDIO_TO_TEXT_VERSION, None),
         'changes': []
     }
     subtitle_codec = subtitle_original['codec_name']

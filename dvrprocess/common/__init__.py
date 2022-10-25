@@ -62,6 +62,7 @@ K_FILTER_SKIP = 'PFILTER_SKIP'
 K_FILTER_STOPPED = 'PFILTER_STOPPED'
 K_COMSKIP_HASH = 'COMSKIP_HASH'
 K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
+K_MEDIA_TITLE = 'title'
 
 CODEC_SUBTITLE_ASS = 'ass'
 CODEC_SUBTITLE_SRT = 'srt'
@@ -572,6 +573,22 @@ def sort_streams(streams: list[dict]) -> list[dict]:
 
     result.sort(key=stream_sort_key)
     return result
+
+
+def get_media_title_from_tags(input_info: dict) -> [None, str]:
+    if input_info is None:
+        return None
+    return input_info.get(K_FORMAT, {}).get(K_TAGS, {}).get(K_MEDIA_TITLE)
+
+
+def get_media_title_from_filename(input_info: dict) -> [None, str]:
+    if input_info is None:
+        return None
+    filename = input_info.get(K_FORMAT, {}).get("filename")
+    if not filename:
+        return None
+    base_filename = os.path.basename(filename)
+    return ".".join(base_filename.split('.')[0:-1])
 
 
 def resolve_video_codec(desired_codec: [list, str], target_height: [None, int] = None,

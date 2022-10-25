@@ -621,6 +621,8 @@ def do_dvr_post_process(input_file,
     arguments.extend(
         ["-map_chapters", str(streams_file), "-map_metadata", str(streams_file),
          "-c:t", "copy", "-map", f"{streams_file}:t?"])
+    if not common.get_media_title_from_tags(input_info):
+        arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
     if output_type == 'mov':
         arguments.extend(["-c:d", "copy", "-map", f"{streams_file}:d?"])
 

@@ -249,6 +249,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     logger.info(
         f"subtitle filtered = {subtitle_filtered_idx}, subtitle filtered forced = {subtitle_filtered_forced_idx}, audio filtered = {audio_filtered_idx}")
 
+    if not common.get_media_title_from_tags(input_info):
+        arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+
     if filter_skip:
         if verbose:
             logger.info(f"Removing filtered streams")
@@ -736,11 +739,11 @@ def words_in_dictionary_pct(subtitle_srt_filename, language):
                 word_count += 1
                 if hobj.spell(word):
                     word_found_count += 1
-        word_found_pct = 100.0 * float(word_found_count) / float(word_count)
-        logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
         if word_count < 100:
             logger.warning("word count less than 100, returning 0%")
             return 0.0
+        word_found_pct = 100.0 * float(word_found_count) / float(word_count)
+        logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
         return word_found_pct
     except ImportError as e:
         raise e
