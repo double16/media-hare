@@ -144,8 +144,10 @@ screw the pooch
 screwed the pooch
 are screwed
 screwed
+screwed up
 fuck
 \w+-?fuck
+\w+-?fucker
 f-u-c-k
 oh fuck
 fucks
@@ -178,6 +180,7 @@ freakin
 freaking
 friggin
 frigging
+shut the freak up
 bastard
 bastards
 little bastard
