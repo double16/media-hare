@@ -79,7 +79,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             return 255
 
     if hwaccel_requested is None:
-        hwaccel_requested = common.get_global_config_option('ffmpeg', 'hwaccel', 'false')
+        hwaccel_requested = common.get_global_config_option('ffmpeg', 'hwaccel', fallback=None)
 
     outextension = outfile.split('.')[-1]
     infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
@@ -148,6 +148,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     subtitle_filters: list[(float, float)] = []
     totalcutduration = 0.0
     comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir)
+    video_encoder_options_tag_value = []
 
     with open(metafile, "w") as metafd:
         with open(partsfile, "w") as partsfd:
@@ -288,7 +289,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             # we are not creating a new outfile, so don't return success
             return 1
 
-    hwaccel.hwaccel_configure(common.get_global_config_option('ffmpeg', 'hwaccel', fallback=None))
+    hwaccel.hwaccel_configure(hwaccel_requested)
 
     ffmpeg_command = [ffmpeg]
     ffmpeg_command.extend(hwaccel.hwaccel_threads())
@@ -362,6 +363,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                                                          target_bitrate=bitrate)
 
             ffmpeg_command.extend(encoding_options)
+            video_encoder_options_tag_value.extend(encoding_options)
         elif common.is_audio_stream(stream) and len(audio_filters) > 0:
             ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
             # Preserve original audio codec??
@@ -392,6 +394,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         ffmpeg_command.extend([f"-disposition:{output_stream_idx}", ",".join(dispositions)])
 
         output_stream_idx += 1
+
+    if len(video_encoder_options_tag_value) > 0:
+        ffmpeg_command.extend(['-metadata', f"{common.K_ENCODER_OPTIONS}={' '.join(video_encoder_options_tag_value)}"])
 
     ffmpeg_command.append('-y')
 

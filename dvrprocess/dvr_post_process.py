@@ -52,7 +52,7 @@ The file closest to the input file will be taken. Comments start with '#'.
 -l, --prevent-larger=true,false
     Prevent conversion to a larger file (default is {common.get_global_config_boolean('post_process', 'prevent_larger')}).
 -w, --hwaccel=false,auto,full
-    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel', 'false')}).
+    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel', 'auto')}).
 -s, --stereo
     Scale down audio to stereo.
 -p, --preset=copy,medium,fast,veryfast
@@ -529,6 +529,7 @@ def do_dvr_post_process(input_file,
         arguments.extend(["-max_interleave_delta", "0"])
 
     # Video encoding
+    video_encoder_options_tag_value = []
     video_input_stream = f"{streams_file}:{video_info['index']}"
     if copy_video:
         arguments.extend(["-map", video_input_stream, f"-c:{current_output_stream}", "copy"])
@@ -540,6 +541,7 @@ def do_dvr_post_process(input_file,
                                                                      codec=target_video_codec, output_type=output_type,
                                                                      tune=tune, preset=preset, crf=crf, qp=qp,
                                                                      target_bitrate=bitrate)
+        video_encoder_options_tag_value.extend(encoding_options)
 
         filter_complex = f"[{video_input_stream}]yadif"
         filter_stage = 0
@@ -623,6 +625,8 @@ def do_dvr_post_process(input_file,
          "-c:t", "copy", "-map", f"{streams_file}:t?"])
     if not common.get_media_title_from_tags(input_info):
         arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+    if len(video_encoder_options_tag_value) > 0:
+        arguments.extend(['-metadata', f"{common.K_ENCODER_OPTIONS}={' '.join(video_encoder_options_tag_value)}"])
     if output_type == 'mov':
         arguments.extend(["-c:d", "copy", "-map", f"{streams_file}:d?"])
 

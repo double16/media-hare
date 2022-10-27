@@ -63,6 +63,7 @@ K_FILTER_STOPPED = 'PFILTER_STOPPED'
 K_COMSKIP_HASH = 'COMSKIP_HASH'
 K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
 K_MEDIA_TITLE = 'title'
+K_ENCODER_OPTIONS = 'encoder_options'
 
 CODEC_SUBTITLE_ASS = 'ass'
 CODEC_SUBTITLE_SRT = 'srt'
@@ -689,41 +690,40 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
     :return: crf, bitrate, qp
     """
     # q=28 observed with libx264, crf=23
-    # TODO: adjust bitrates from recordings
     # TODO: adjust h265 crf to match desired qp
     qp = 28
     if target_height <= 480:
         if target_video_codec == 'h264':
             crf = 23
-            bitrate = 1200
+            bitrate = 800
         else:
             crf = 28
-            bitrate = 840
+            bitrate = 800
     elif target_height <= 720:
         if target_video_codec == 'h264':
             crf = 23
-            bitrate = 2500
+            bitrate = 1400
         else:
             crf = 28
-            bitrate = 1750
+            bitrate = 1000
     elif target_height <= 1080:
         # q=36 observed with libx264, crf=31
         qp = 34
         if target_video_codec == 'h264':
             crf = 31
-            bitrate = 3500
+            bitrate = 1400
         else:
             crf = 28
-            bitrate = 2450
+            bitrate = 1300
     else:
         # q=36 observed with libx264, crf=31
         qp = 34
         if target_video_codec == 'h264':
             crf = 31
-            bitrate = 6500
+            bitrate = 2800
         else:
             crf = 28
-            bitrate = 4550
+            bitrate = 1700
 
     return crf, bitrate, qp
 

@@ -122,7 +122,7 @@ def print_episode_csv(shows, fileno=sys.stdout):
         for episode in show:
             fileno.write(
                 f'"{episode[1]}","{episode[0]}","{episode[2]}","{episode[3]}","{episode[4]}","{episode[5]}"'
-                f',"{episode[6]}","{episode[7]}","{episode[8]}","{episode[10]},"{episode[9]},"{episode[11]}"\n')
+                f',"{episode[6]}","{episode[7]}","{episode[8]}","{episode[10]}","{episode[9]}","{episode[11]}"\n')
 
 
 def format_season(season):
