@@ -54,8 +54,7 @@ Filter audio and subtitles for profanity.
 - The 'censor_list.txt' file contains phrases that are muted and the phrase is marked out in the subtitle.
 - The 'stop_list.txt' file contains phrases that are muted and the entire subtitle is marked.
 - The 'allow_list.txt' file contains phrases that match `censor_list.txt` but should be allowed.
-- Set the tag 'PFILTER_SKIP' in the video to 'y' or 't' to skip filtering.
-  ex: mkvpropedit filename.mkv --tags global:{os.path.join(os.path.join(os.path.dirname(os.path.dirname(common.__file__))), 'mkv-filter-skip.xml')}
+- Use --mark-skip to skip filtering, or set the tag 'PFILTER_SKIP' in the video to 'y' or 't'.
 
 --dry-run
     Output command that would be used but do nothing
@@ -66,6 +65,8 @@ Filter audio and subtitles for profanity.
 --work-dir={common.get_work_dir()}
 --remove
     Remove filtering
+--mark-skip
+    Mark file(s) for the filter to skip. If a file has been filtered, filtering will be removed. 
 --force
     Force re-filtering
 """, file=sys.stderr)
@@ -81,8 +82,12 @@ def profanity_filter(*args, **kwargs) -> int:
         common.finish()
 
 
-def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None,
-                        language=common.LANGUAGE_ENGLISH, workdir=None, verbose=False) -> int:
+def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,
+                        unmark_skip=None, language=common.LANGUAGE_ENGLISH, workdir=None, verbose=False) -> int:
+    if mark_skip and unmark_skip:
+        logger.fatal("mark-skip and unmark-skip both set")
+        return CMD_RESULT_ERROR
+
     mkvpropedit = common.find_mkvpropedit()
     if len(mkvpropedit) == 0:
         logger.fatal("'mkvpropedit' not found, install mkvtoolnix")
@@ -134,7 +139,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     if dry_run:
         logger.info(f"{input_info}")
 
-    if filter_skip is None:
+    if mark_skip:
+        filter_skip = True
+    if filter_skip is None and not unmark_skip:
         filter_skip = common.is_truthy(
             input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_SKIP))
 
@@ -184,10 +191,15 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                                                                                   common.CODEC_AUDIO,
                                                                                   None,
                                                                                   language)
+    tags_filename = f"{temp_base}.tags.xml"
+    if not debug:
+        common.TEMPFILENAMES.append(tags_filename)
 
     if filter_skip:
         if audio_filtered is None and subtitle_filtered is None:
             logger.info("%s: filter skipped due to %s property", filename, common.K_FILTER_SKIP)
+            if mark_skip:
+                return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug, verbose=verbose)
             return CMD_RESULT_UNCHANGED
         else:
             logger.info("%s: removing filter due to %s property", filename, common.K_FILTER_SKIP)
@@ -198,6 +210,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             return CMD_RESULT_UNCHANGED
 
     if not subtitle_original and filter_skip:
+        if mark_skip:
+            return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug, verbose=verbose)
         return CMD_RESULT_UNCHANGED
 
     subtitle_srt_generated = None
@@ -216,12 +230,13 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
     if not audio_original:
         if filter_skip:
+            if mark_skip:
+                return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug, verbose=verbose)
             return CMD_RESULT_UNCHANGED
         else:
             logger.fatal("Cannot find audio stream for original")
             return CMD_RESULT_ERROR
 
-    tags_filename = f"{temp_base}.tags.xml"
     if subtitle_srt_generated is not None:
         subtitle_codec = common.CODEC_SUBTITLE_SRT
     else:
@@ -233,7 +248,6 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     subtitle_filtered_forced_filename = f"{temp_base}.filtered-forced.{subtitle_codec}"
     subtitle_filtered_previous_filename = f"{temp_base}.filtered.previous.{subtitle_codec}"
     if not debug:
-        common.TEMPFILENAMES.append(tags_filename)
         common.TEMPFILENAMES.append(subtitle_original_filename)
         common.TEMPFILENAMES.append(subtitle_filtered_filename)
         common.TEMPFILENAMES.append(subtitle_filtered_forced_filename)
@@ -260,6 +274,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         arguments.extend(
             ["-metadata", f"{common.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}="])
+        if mark_skip:
+            arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}=true"])
         arguments.extend(["-c:s", "copy"])
 
         # Original audio stream
@@ -354,6 +370,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         tags[common.K_AUDIO_TO_TEXT_VERSION] = audio_to_text_version if audio_to_text_version else ''
         if len(stopped_spans) > 0:
             tags[common.K_FILTER_STOPPED] = span_list_to_str(stopped_spans)
+        if common.K_FILTER_SKIP in tags:
+            del tags[common.K_FILTER_SKIP]
         common.write_mkv_tags(tags, tags_filename)
 
         filtered_changed = False
@@ -382,6 +400,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ["-metadata", f"{common.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         if len(stopped_spans) > 0:
             arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
+        arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}="])
         arguments.extend(["-c:s", "copy"])
 
         # Filtered audio stream
@@ -929,6 +948,32 @@ def vosk_model(language: str) -> [None, str]:
     return None
 
 
+def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run: bool, debug: bool, verbose: bool) -> int:
+    """
+    Mark a file to skip the filter.
+    :param filename:
+    :param tags_filename:
+    :param input_info:
+    :return: CMD_RESULT_UNCHANGED or CMD_RESULT_MARKED
+    """
+    tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).copy()
+    if common.is_truthy(tags.get(common.K_FILTER_SKIP)):
+        # already marked
+        return CMD_RESULT_UNCHANGED
+
+    mkvpropedit = common.find_mkvpropedit()
+    tags[common.K_FILTER_SKIP] = 'true'
+    for key in [common.K_FILTER_HASH, common.K_FILTER_VERSION, common.K_FILTER_STOPPED]:
+        if key in tags:
+            del tags[key]
+    common.write_mkv_tags(tags, tags_filename)
+    if not dry_run and not debug:
+        if verbose:
+            logger.info(mkvpropedit)
+        subprocess.run([mkvpropedit, filename, "--tags", f"global:{tags_filename}"])
+    return CMD_RESULT_MARKED
+
+
 if __name__ == '__main__':
     common.setup_cli()
     argv = sys.argv[1:]
@@ -937,13 +982,15 @@ if __name__ == '__main__':
     keep = False
     force = False
     filter_skip = None
+    mark_skip = None
+    unmark_skip = None
     language = common.LANGUAGE_ENGLISH
     workdir = common.get_work_dir()
 
     try:
         opts, args = getopt.getopt(
             list(argv), "nkdrf",
-            ["dry-run", "keep", "debug", "remove", "force", "work-dir="])
+            ["dry-run", "keep", "debug", "remove", "mark-skip", "unmark-skip", "force", "work-dir="])
     except getopt.GetoptError:
         usage()
         sys.exit(CMD_RESULT_ERROR)
@@ -959,6 +1006,10 @@ if __name__ == '__main__':
             debug = True
         elif opt in ("-r", "--remove"):
             filter_skip = True
+        elif opt == "--mark-skip":
+            mark_skip = True
+        elif opt == "--unmark-skip":
+            unmark_skip = True
         elif opt in ("-f", "--force"):
             force = True
         elif opt == "--work-dir":
@@ -973,5 +1024,5 @@ if __name__ == '__main__':
     atexit.register(common.finish)
 
     sys.exit(
-        profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip, workdir=workdir,
-                         verbose=True))
+        profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
+                         mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True))

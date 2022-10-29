@@ -14,4 +14,4 @@ Filtering can be done after post-processing in the [dvrprocess/dvr_post_process.
 
 The `profanity-filter-apply.py` program is run regularly to find media that needs filtering applied.
 
-Using a tool such as `mkvpropedit`, you can set the `PFILTER_SKIP` tag to `true` to always skip filtering.
+The script has a `--mark-skip` option to mark file(s) for skipping the filter. There is an `--unmark-skip` to reverse that.
