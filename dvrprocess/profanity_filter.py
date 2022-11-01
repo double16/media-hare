@@ -374,11 +374,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             del tags[common.K_FILTER_SKIP]
         common.write_mkv_tags(tags, tags_filename)
 
-        filtered_changed = False
         if subtitle_filtered_idx is not None:
             # We are re-running the filter. Check the previous and current filtered subtitles.
+            # If there is no filtering, mark as changed to remove the filtered streams
             filtered_changed = not subtitle.cmp_subtitle_text(subtitle_codec, subtitle_filtered_filename,
-                                                              subtitle_filtered_previous_filename)
+                                                              subtitle_filtered_previous_filename) or len(filtered_spans) == 0
         else:
             # Not yet filtered, see if we need to filter it
             filtered_changed = len(filtered_spans) > 0
