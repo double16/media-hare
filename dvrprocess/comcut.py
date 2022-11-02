@@ -115,15 +115,18 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     subtitle_data = {}
     if len(list(filter(lambda e: e.event_type in [common.EdlType.MUTE], edl_events))) > 0:
         # Extract all of the text based subtitles for masking
-        extract_subtitle_command = [common.find_ffmpeg(), '-y', '-i', infile]
+        extract_subtitle_command = [common.find_ffmpeg(), '-y', '-i', infile, '-c', 'copy']
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
-            temp_fd, subtitle_filename = tempfile.mkstemp(dir=workdir, suffix='.' + stream.get(common.K_CODEC_NAME))
+            suffix = stream.get(common.K_CODEC_NAME)
+            if suffix == 'subrip':
+                suffix = 'srt'
+            temp_fd, subtitle_filename = tempfile.mkstemp(dir=workdir, suffix='.' + suffix)
             os.close(temp_fd)
             if not debug:
                 common.TEMPFILENAMES.append(subtitle_filename)
             subtitle_streams[stream[common.K_STREAM_INDEX]] = subtitle_filename
             extract_subtitle_command.extend(
-                ['-c', 'copy', '-map', f"0:{stream[common.K_STREAM_INDEX]}", subtitle_filename])
+                ['-map', f"0:{stream[common.K_STREAM_INDEX]}", subtitle_filename])
         if len(subtitle_streams) > 0:
             logger.debug(common.array_as_command(extract_subtitle_command))
             subprocess.run(extract_subtitle_command, check=True, capture_output=not verbose)
