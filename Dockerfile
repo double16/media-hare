@@ -72,6 +72,7 @@ COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/
 COPY hwaccel-drivers.sh /usr/bin/hwaccel-drivers
+COPY hwaccel-drivers-wrapper.sh /usr/bin/hwaccel-drivers-wrapper
 COPY anacron.cron /etc/cron.d/anacron
 COPY tesseract-wrapper.sh /usr/bin/tesseract
 ADD *.service /etc/systemd/system/
@@ -92,8 +93,8 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/transcode-apply.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/smart-comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/tvshow-summary.py /usr/local/bin/ &&\
-    chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/tesseract /usr/bin/hwaccel-drivers && \
-    ln -s /usr/bin/hwaccel-drivers /etc/cron.daily/1hwaccel-drivers &&\
+    chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/tesseract /usr/bin/hwaccel-drivers* && \
+    ln -s /usr/bin/hwaccel-drivers-wrapper /etc/cron.daily/1hwaccel-drivers &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
     systemctl enable localtime &&\

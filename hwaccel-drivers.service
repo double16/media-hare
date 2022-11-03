@@ -1,9 +1,10 @@
 [Unit]
 Description=Install Hardware Acceleration Drivers
+After=network-online.target boot-complete.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/hwaccel-drivers
+ExecStart=/usr/bin/hwaccel-drivers-wrapper
 
 [Install]
 WantedBy=multi-user.target
