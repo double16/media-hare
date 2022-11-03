@@ -25,7 +25,7 @@ COPY requirements.txt /tmp/
 # vosk models: https://alphacephei.com/vosk/models
 RUN apt-get -q update && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq ccextractor \
-    mono-runtime libmono-system-windows-forms4.0-cil libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
+    mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat58 libsdl1.2-compat &&\
     pip -q --no-input install -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip &&\
@@ -46,7 +46,7 @@ RUN apt-get -q update && \
 # This is version 4.1.0, but it doesn't make things better
 # ADD https://github.com/tesseract-ocr/tessdata/raw/4767ea922bcc460e70b87b1d303ebdfed0897da8/eng.traineddata /usr/share/tesseract-ocr/4.00/tessdata/
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.7/SE367.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.8/SE368.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
     curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/v${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
