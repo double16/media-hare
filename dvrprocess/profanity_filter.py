@@ -199,7 +199,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if audio_filtered is None and subtitle_filtered is None:
             logger.info("%s: filter skipped due to %s property", filename, common.K_FILTER_SKIP)
             if mark_skip:
-                return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug, verbose=verbose)
+                return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug,
+                                       verbose=verbose)
             return CMD_RESULT_UNCHANGED
         else:
             logger.info("%s: removing filter due to %s property", filename, common.K_FILTER_SKIP)
@@ -231,7 +232,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     if not audio_original:
         if filter_skip:
             if mark_skip:
-                return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug, verbose=verbose)
+                return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug,
+                                       verbose=verbose)
             return CMD_RESULT_UNCHANGED
         else:
             logger.fatal("Cannot find audio stream for original")
@@ -267,7 +269,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if verbose:
             logger.info(f"Removing filtered streams")
         if not common.get_media_title_from_tags(input_info):
-            arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+            arguments.extend(
+                ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
         arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_HASH}="])
         arguments.extend(["-metadata", f"{common.K_FILTER_VERSION}="])
@@ -372,13 +375,17 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             tags[common.K_FILTER_STOPPED] = span_list_to_str(stopped_spans)
         if common.K_FILTER_SKIP in tags:
             del tags[common.K_FILTER_SKIP]
+        if not common.get_media_title_from_tags(input_info):
+            tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
+        tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
         common.write_mkv_tags(tags, tags_filename)
 
         if subtitle_filtered_idx is not None:
             # We are re-running the filter. Check the previous and current filtered subtitles.
             # If there is no filtering, mark as changed to remove the filtered streams
             filtered_changed = not subtitle.cmp_subtitle_text(subtitle_codec, subtitle_filtered_filename,
-                                                              subtitle_filtered_previous_filename) or len(filtered_spans) == 0
+                                                              subtitle_filtered_previous_filename) or len(
+                filtered_spans) == 0
         else:
             # Not yet filtered, see if we need to filter it
             filtered_changed = len(filtered_spans) > 0
@@ -402,7 +409,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}="])
         if not common.get_media_title_from_tags(input_info):
-            arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+            arguments.extend(
+                ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
         arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
         arguments.extend(["-c:s", "copy"])
 
@@ -951,7 +959,8 @@ def vosk_model(language: str) -> [None, str]:
     return None
 
 
-def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run: bool, debug: bool, verbose: bool) -> int:
+def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run: bool, debug: bool,
+                    verbose: bool) -> int:
     """
     Mark a file to skip the filter.
     :param filename:
@@ -969,6 +978,9 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
     for key in [common.K_FILTER_HASH, common.K_FILTER_VERSION, common.K_FILTER_STOPPED]:
         if key in tags:
             del tags[key]
+    if not common.get_media_title_from_tags(input_info):
+        tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
+    tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
     common.write_mkv_tags(tags, tags_filename)
     if not dry_run and not debug:
         if verbose:
