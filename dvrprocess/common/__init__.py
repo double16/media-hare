@@ -63,6 +63,8 @@ K_FILTER_STOPPED = 'PFILTER_STOPPED'
 K_COMSKIP_HASH = 'COMSKIP_HASH'
 K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
 K_MEDIA_TITLE = 'title'
+K_MEDIA_PROCESSOR = 'processor'
+V_MEDIA_PROCESSOR = 'media-hare, https://github.com/double16/media-hare'
 K_ENCODER_OPTIONS = 'encoder_options'
 
 CODEC_SUBTITLE_ASS = 'ass'

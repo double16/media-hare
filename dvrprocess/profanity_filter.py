@@ -263,12 +263,12 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     logger.info(
         f"subtitle filtered = {subtitle_filtered_idx}, subtitle filtered forced = {subtitle_filtered_forced_idx}, audio filtered = {audio_filtered_idx}")
 
-    if not common.get_media_title_from_tags(input_info):
-        arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
-
     if filter_skip:
         if verbose:
             logger.info(f"Removing filtered streams")
+        if not common.get_media_title_from_tags(input_info):
+            arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+        arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_HASH}="])
         arguments.extend(["-metadata", f"{common.K_FILTER_VERSION}="])
         arguments.extend(
@@ -401,6 +401,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if len(stopped_spans) > 0:
             arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}="])
+        if not common.get_media_title_from_tags(input_info):
+            arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+        arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
         arguments.extend(["-c:s", "copy"])
 
         # Filtered audio stream
