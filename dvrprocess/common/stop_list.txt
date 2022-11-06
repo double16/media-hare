@@ -16,6 +16,8 @@ nut sack
 nut sacks
 nut-sack
 nut-sacks
+ball[\s-]sack
+ball[\s-]sacks
 scheiße
 fondle
 tryst
@@ -101,6 +103,7 @@ get it up
 undress
 have sex
 having sex
+had sex
 ride you
 ride me
 hos
@@ -124,3 +127,14 @@ use a rubber
 condom
 conjugal
 fluffer
+cherry popped
+pop [\w\s]* cherry
+popped [\w\s]* cherry
+popping [\w\s]* cherry
+take [\w]* cherry
+taking [\w]* cherry
+took [\w]* cherry
+rock\w* [\w]* world
+booty call
+skinny[-\s]dip\w*
+sucking the sack

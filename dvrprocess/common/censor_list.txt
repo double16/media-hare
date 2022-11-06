@@ -174,13 +174,24 @@ mother fucker
 motherfucking
 mother-fucking
 mother fucking
+what the eff
+effing
+f-ing
+what the f-\w*
 that mother[!.-]+
 you mother[!.-]+
+holy mother\w*
+holy mother of god
 freakin
 freaking
 friggin
 frigging
+frickin
+fricking
 shut the freak up
+what the freak
+shut the frick up
+what the frick
 bastard
 bastards
 little bastard
@@ -274,15 +285,17 @@ dumb-arse
 dumb-asses
 asshole
 ass hole
-ass-hole
+ass-\w+
+arse-\w+
 assholes
 ass holes
-ass-holes
 a-hole
 a-holes
 ass[\s-]eyes
 half[\s-]ass
 half[\s-]assed
+\w+-ass
+\w+-arse
 kiss my ass
 kiss my arse
 kiss my butt
@@ -323,6 +336,7 @@ niggers
 nigger's
 cojones
 ballsy
+my balls
 has balls
 has cojones
 has some balls
@@ -349,3 +363,4 @@ phlegm[\s-]wad
 flipped off
 flipped [\w\s]* off
 g[ia]ve [\w\s]* the finger
+sexy on
