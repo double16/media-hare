@@ -392,10 +392,12 @@ def do_dvr_post_process(input_file,
             preset == "copy" or (input_video_codec == target_video_codec and not rerun))
 
     # If we're re-encoding, we'll be more aggressive in adjusting the frame rate
-    if copy_video:
+    if preset == "copy":
+        adjust_frame_rate = False
+    elif copy_video:
         adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate,
                                                             desired_frame_rate=desired_frame_rate)
-        copy_video = copy_video and not adjust_frame_rate
+        copy_video = not adjust_frame_rate
     else:
         adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate,
                                                             desired_frame_rate=desired_frame_rate, tolerance=0.05)

@@ -498,9 +498,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     # Remove closed captions because they are unfiltered
     if not filter_skip:
         video_info = common.find_video_stream(input_info)
-        has_closed_captions = video_info.get('closed_captions', 0) > 0
-        input_video_codec = common.resolve_video_codec(video_info['codec_name'])
+        has_closed_captions = video_info and video_info.get('closed_captions', 0) > 0
         if has_closed_captions:
+            input_video_codec = common.resolve_video_codec(video_info['codec_name'])
             if input_video_codec == 'h264':
                 arguments.extend(["-bsf:v", "filter_units=remove_types=6"])
 

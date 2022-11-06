@@ -511,7 +511,7 @@ def find_video_streams(input_info) -> list[dict]:
     return streams
 
 
-def find_video_stream(input_info) -> dict:
+def find_video_stream(input_info) -> [None, dict]:
     """
     Find the primary video stream.
     :param input_info:
@@ -521,6 +521,8 @@ def find_video_stream(input_info) -> dict:
     english = find_english_streams(streams)
     if len(english) > 0:
         streams = english
+    if len(streams) == 0:
+        return None
     return streams[0]
 
 
