@@ -15,6 +15,8 @@ from profanity_filter import MASK_STR
 from common import subtitle
 from common import hwaccel
 
+KEYFRAME_DISTANCE_TOLERANCE = 1.5
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,13 +49,17 @@ Usage: {sys.argv[0]} infile [outfile]
 --work-dir={common.get_work_dir()}
 --preset=veryslow,slow,medium,fast,veryfast
     Set ffmpeg preset, defaults to {common.get_global_config_option('ffmpeg', 'preset')}
+--force-encode
+    Force encoding to be precise, i.e. skip cutting by key frames
+-n, --dry-run
+    Dry run
 """, file=sys.stderr)
 
 
 @common.finisher
 def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=True, verbose=False, debug=False,
            comskipini=None,
-           workdir=None, preset=None, hwaccel_requested=None):
+           workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False):
     ffmpeg = common.find_ffmpeg()
 
     input_info = common.find_input_info(infile)
@@ -105,10 +111,21 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             return 255
 
     keyframes = []
-    if len(list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
+    if not force_encode and len(list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
         # If we are recoding, we aren't restricted to key frames
         keyframes = common.load_keyframes_by_seconds(infile)
         logger.debug("Loaded %s keyframes", len(keyframes))
+        disable_keyframes = False
+        keyframe_distance = 0.0
+        for event in list(filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
+            adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start, common.KeyframeSearchPreference.BEFORE))
+            adjusted2 = abs(event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER))
+            if adjusted1 > KEYFRAME_DISTANCE_TOLERANCE or adjusted2 > KEYFRAME_DISTANCE_TOLERANCE:
+                disable_keyframes = True
+                keyframe_distance = max(adjusted1, adjusted2, keyframe_distance)
+        if disable_keyframes:
+            logger.info("Re-encoding video due to distance from keyframes: %s seconds", keyframe_distance)
+            keyframes = []
 
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
@@ -341,7 +358,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     output_stream_idx = 0
 
     for stream in common.sort_streams(input_info[common.K_STREAMS]):
-        if common.is_video_stream(stream) and len(video_filters) > 0:
+        if common.is_video_stream(stream) and (len(video_filters) > 0 or len(keyframes) == 0):
             input_video_codec = common.resolve_video_codec(stream[common.K_CODEC_NAME])
             ffmpeg_command.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec))
             ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
@@ -358,7 +375,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                                    tolerance=0.05):
                     video_filters.append(common.fps_video_filter(desired_frame_rate))
 
-            ffmpeg_command.extend([f"-filter_complex:{output_stream_idx}", ",".join(video_filters)])
+            if len(video_filters) > 0:
+                ffmpeg_command.extend([f"-filter_complex:{output_stream_idx}", ",".join(video_filters)])
 
             encoding_options, encoding_method = hwaccel.hwaccel_encoding(output_stream=str(output_stream_idx),
                                                                          codec=input_video_codec, output_type="mkv",
@@ -400,6 +418,10 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     if len(video_encoder_options_tag_value) > 0:
         ffmpeg_command.extend(['-metadata', f"{common.K_ENCODER_OPTIONS}={' '.join(video_encoder_options_tag_value)}"])
+    if not common.get_media_title_from_tags(input_info):
+        ffmpeg_command.extend(
+            ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+    ffmpeg_command.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
 
     ffmpeg_command.append('-y')
 
@@ -410,7 +432,12 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         ffmpeg_command.append(temp_outfile)
     else:
         ffmpeg_command.append(outfile)
-    logger.debug(common.array_as_command(ffmpeg_command))
+
+    if dry_run:
+        logger.info(common.array_as_command(ffmpeg_command))
+        return 0
+    else:
+        logger.debug(common.array_as_command(ffmpeg_command))
 
     try:
         subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
@@ -459,11 +486,13 @@ def comcut_cli(argv):
     comskipini = None
     workdir = common.get_work_dir()
     preset = None
+    force_encode = False
+    dry_run = False
 
     try:
-        opts, args = getopt.getopt(list(argv), "p",
+        opts, args = getopt.getopt(list(argv), "pn",
                                    ["keep-edl", "keep-meta", "verbose", "debug", "comskip-ini=", "work-dir=",
-                                    "preset="])
+                                    "preset=", "force-encode", "dry-run"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -484,8 +513,12 @@ def comcut_cli(argv):
             comskipini = arg
         elif opt == "--work-dir":
             workdir = arg
+        elif opt == "--force-encode":
+            force_encode = True
         elif opt in ("-p", "--preset"):
             preset = arg
+        elif opt in ("-n", "--dry-run"):
+            dry_run = True
 
     if not args:
         usage()
@@ -499,7 +532,8 @@ def comcut_cli(argv):
     return_code = 0
     for infile, outfile in common.generate_video_files(args):
         this_file_return_code = comcut(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
-                                       debug=debug, comskipini=comskipini, workdir=workdir, preset=preset)
+                                       debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
+                                       force_encode=force_encode, dry_run=dry_run)
         if this_file_return_code != 0 and return_code == 0:
             return_code = this_file_return_code
 
