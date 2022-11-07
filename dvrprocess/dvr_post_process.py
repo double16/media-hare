@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Iterable
+from enum import Enum
 from pathlib import Path
 from tempfile import mkstemp
 from ass_parser import CorruptAssLineError
@@ -67,6 +68,10 @@ The file closest to the input file will be taken. Comments start with '#'.
     Include profanity filter in output.
 --crop-frame
     Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
+--crop-frame-ntsc
+    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
+--crop-frame-pal
+    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
 -f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
 -c, --ignore-errors
@@ -74,6 +79,21 @@ The file closest to the input file will be taken. Comments start with '#'.
 --verbose
     Verbose information about the process
 """, file=sys.stderr)
+
+
+class CropFrameOperation(Enum):
+    NONE = 0
+    DETECT = 1
+    NTSC = 2
+    PAL = 3
+
+
+# https://en.wikipedia.org/wiki/List_of_common_resolutions
+HD_RESOLUTIONS = [(1280, 720), (1280, 1080), (1440, 1080), (1920, 1080), (3840, 2160), (7680, 4320)]
+CROP_FRAME_RESOLUTIONS = {
+    CropFrameOperation.NTSC: [(640, 480), (704, 480), (720, 480)] + HD_RESOLUTIONS,
+    CropFrameOperation.PAL: [(544, 576), (704, 576), (720, 576)] + HD_RESOLUTIONS
+}
 
 
 def find_mount_point(path):
@@ -105,7 +125,7 @@ def parse_args(argv) -> (list[str], dict):
     rerun = None
     ignore_errors = None
     profanity_filter = common.get_global_config_boolean('post_process', 'profanity_filter')
-    crop_frame = False
+    crop_frame = CropFrameOperation.NONE
     verbose = None
 
     try:
@@ -114,7 +134,7 @@ def parse_args(argv) -> (list[str], dict):
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
                                     "prevent-larger=", "stereo", "rerun", "no-rerun", "ignore-errors",
-                                    "profanity-filter", "crop-frame", "verbose"])
+                                    "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "verbose"])
     except getopt.GetoptError:
         return None
     for opt, arg in opts:
@@ -156,7 +176,11 @@ def parse_args(argv) -> (list[str], dict):
         elif opt == "--profanity-filter":
             profanity_filter = True
         elif opt == "--crop-frame":
-            crop_frame = True
+            crop_frame = CropFrameOperation.DETECT
+        elif opt == "--crop-frame-ntsc":
+            crop_frame = CropFrameOperation.NTSC
+        elif opt == "--crop-frame-pal":
+            crop_frame = CropFrameOperation.PAL
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
@@ -219,7 +243,7 @@ def do_dvr_post_process(input_file,
                         stereo=False,
                         rerun=None,
                         profanity_filter=common.get_global_config_boolean('post_process', 'profanity_filter'),
-                        crop_frame=False,
+                        crop_frame: CropFrameOperation = CropFrameOperation.NONE,
                         ignore_errors=None,
                         verbose=False,
                         require_audio=True,
@@ -313,7 +337,7 @@ def do_dvr_post_process(input_file,
     # cropdetect output (ffmpeg v4, v5) looks like:
     # [Parsed_cropdetect_1 @ 0x7f8ba9010d40] x1:246 x2:1676 y1:9 y2:1079 w:1424 h:1056 x:250 y:18 pts:51298 t:51.298000 crop=1424:1056:250:18
     crop_frame_filter = None
-    if crop_frame:
+    if crop_frame != CropFrameOperation.NONE:
         logger.info("Running crop frame detection")
         crop_frame_rect_histo = {}
         crop_detect_command = [ffmpeg, '-hide_banner', '-skip_frame', 'nointra', '-i', filename,
@@ -354,6 +378,13 @@ def do_dvr_post_process(input_file,
             crop_frame_filter = crop_frame_rect_histo_list[0][0]
             if width - common.get_crop_filter_parts(crop_frame_filter)[0] < 40:
                 crop_frame_filter = None
+        logger.info("crop frame detection found %s", crop_frame_filter)
+        if crop_frame in CROP_FRAME_RESOLUTIONS:
+            rect = common.get_crop_filter_parts(crop_frame_filter)
+            target_res = \
+            sorted(CROP_FRAME_RESOLUTIONS[crop_frame], key=lambda e: abs(rect[0] - e[0]) + abs(rect[1] - e[1]))[0]
+            logger.info("crop frame resolution match is %s", target_res)
+            crop_frame_filter = f"crop={target_res[0]}:{target_res[1]}:{max(0, int(((common.get_video_width(input_info) - target_res[0]) / 2)))}:{max(0, int(((common.get_video_height(input_info) - target_res[1]) / 2)))}"
         logger.info("crop frame filter is %s", crop_frame_filter)
 
     logger.debug("input video codec = %s, target video codec = %s", input_video_codec, target_video_codec)

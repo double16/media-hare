@@ -374,7 +374,7 @@ def find_input_info(filename):
     return input_info
 
 
-def get_video_height(video_info):
+def get_video_height(video_info) -> [None, int]:
     """
     Get the height of the video considering symbolic names like 'sd'.
     :param video_info: can be all of the input_info to use default video stream, or a single video stream
@@ -388,6 +388,20 @@ def get_video_height(video_info):
     if height == 'sd':
         height = 480
     return height
+
+
+def get_video_width(video_info) -> [None, int]:
+    """
+    Get the width of the video considering symbolic names.
+    :param video_info: can be all of the input_info to use default video stream, or a single video stream
+    :return: int of width or None
+    """
+    if 'streams' in video_info:
+        video_info = find_video_stream(video_info)
+    width = video_info['width']
+    if not width:
+        return None
+    return width
 
 
 def find_original_and_filtered_streams(input_info, codec_type, codec_names=None, language=None):
