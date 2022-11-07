@@ -741,8 +741,8 @@ def comtune_cli(argv):
     def single_file_tune(f):
         if is_tuned(f, workdir) and force == 0:
             logger.info("%s already tuned, use --force to force tuning", f)
-        elif common.has_chapters_from_source_media(common.find_input_info(f))[0]:
-            logger.info(f"Skipping {f} because we found existing chapters from another source")
+        elif not common.is_from_dvr(common.find_input_info(f)):
+            logger.info("Skipping %s because it does not look like a DVR", f)
         else:
             pool.apply_async(comtune, (f,),
                              {'verbose': verbose,
