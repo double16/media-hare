@@ -5,12 +5,10 @@ import getopt
 import logging
 import math
 import os
-import re
 import subprocess
 import sys
 import tempfile
 from collections.abc import Iterable
-from enum import Enum
 from pathlib import Path
 from tempfile import mkstemp
 from ass_parser import CorruptAssLineError
@@ -18,6 +16,7 @@ from ass_parser import CorruptAssLineError
 import common
 from common import hwaccel
 from common import tools
+from common import crop_frame
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
@@ -81,21 +80,6 @@ The file closest to the input file will be taken. Comments start with '#'.
 """, file=sys.stderr)
 
 
-class CropFrameOperation(Enum):
-    NONE = 0
-    DETECT = 1
-    NTSC = 2
-    PAL = 3
-
-
-# https://en.wikipedia.org/wiki/List_of_common_resolutions
-HD_RESOLUTIONS = [(1280, 720), (1280, 1080), (1440, 1080), (1920, 1080), (3840, 2160), (7680, 4320)]
-CROP_FRAME_RESOLUTIONS = {
-    CropFrameOperation.NTSC: [(640, 480), (704, 480), (720, 480)] + HD_RESOLUTIONS,
-    CropFrameOperation.PAL: [(544, 576), (704, 576), (720, 576)] + HD_RESOLUTIONS
-}
-
-
 def find_mount_point(path):
     path = os.path.realpath(path)
     orig_dev = os.stat(path).st_dev
@@ -125,7 +109,7 @@ def parse_args(argv) -> (list[str], dict):
     rerun = None
     ignore_errors = None
     profanity_filter = common.get_global_config_boolean('post_process', 'profanity_filter')
-    crop_frame = CropFrameOperation.NONE
+    crop_frame_op = crop_frame.CropFrameOperation.NONE
     verbose = None
 
     try:
@@ -176,11 +160,11 @@ def parse_args(argv) -> (list[str], dict):
         elif opt == "--profanity-filter":
             profanity_filter = True
         elif opt == "--crop-frame":
-            crop_frame = CropFrameOperation.DETECT
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT
         elif opt == "--crop-frame-ntsc":
-            crop_frame = CropFrameOperation.NTSC
+            crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
-            crop_frame = CropFrameOperation.PAL
+            crop_frame_op = crop_frame.CropFrameOperation.PAL
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
@@ -203,7 +187,7 @@ def parse_args(argv) -> (list[str], dict):
         'stereo': stereo,
         'rerun': rerun,
         'profanity_filter': profanity_filter,
-        'crop_frame': crop_frame,
+        'crop_frame_op': crop_frame_op,
         'ignore_errors': ignore_errors,
     }
     if verbose is not None:
@@ -243,7 +227,7 @@ def do_dvr_post_process(input_file,
                         stereo=False,
                         rerun=None,
                         profanity_filter=common.get_global_config_boolean('post_process', 'profanity_filter'),
-                        crop_frame: CropFrameOperation = CropFrameOperation.NONE,
+                        crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
                         ignore_errors=None,
                         verbose=False,
                         require_audio=True,
@@ -318,11 +302,11 @@ def do_dvr_post_process(input_file,
     if not height:
         logger.error(f"Could not get height info from {filename}: {video_info}")
         return 255
-    width = video_info['width']
+    width = common.get_video_width(video_info)
     if not width:
         logger.error(f"Could not get width info from {filename}: {video_info}")
         return 255
-    frame_rate = video_info['avg_frame_rate']
+    frame_rate = common.get_frame_rate(video_info)
     input_video_codec = common.resolve_video_codec(video_info['codec_name'])
 
     scale_height = desired_height and desired_height < height
@@ -333,59 +317,7 @@ def do_dvr_post_process(input_file,
 
     target_video_codec = common.resolve_video_codec(desired_video_codecs, target_height, video_info)
 
-    # Find crop frame dimensions
-    # cropdetect output (ffmpeg v4, v5) looks like:
-    # [Parsed_cropdetect_1 @ 0x7f8ba9010d40] x1:246 x2:1676 y1:9 y2:1079 w:1424 h:1056 x:250 y:18 pts:51298 t:51.298000 crop=1424:1056:250:18
-    crop_frame_filter = None
-    if crop_frame != CropFrameOperation.NONE:
-        logger.info("Running crop frame detection")
-        crop_frame_rect_histo = {}
-        crop_detect_command = [ffmpeg, '-hide_banner', '-skip_frame', 'nointra', '-i', filename,
-                               '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',
-                               '-f', 'null', '/dev/null']
-        logger.info(common.array_as_command(crop_detect_command))
-        crop_detect_process = subprocess.Popen(crop_detect_command, stderr=subprocess.PIPE, universal_newlines=True)
-        crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9.:]+)\b'
-        crop_line_last_t = None
-        crop_line_last_filter = None
-        for line in crop_detect_process.stderr:
-            m = re.search(crop_detect_regex, line)
-            if m:
-                crop_line_this_t = float(m.group(1))
-                crop_line_this_filter = m.group(2)
-                if crop_line_last_t is not None:
-                    if crop_line_this_filter == crop_line_last_filter:
-                        crop_frame_rect_histo[crop_line_this_filter] = crop_frame_rect_histo.get(crop_line_this_filter,
-                                                                                                 0) + (
-                                                                               crop_line_this_t - crop_line_last_t)
-                crop_line_last_t = crop_line_this_t
-                crop_line_last_filter = crop_line_this_filter
-
-                # print(f"crop detect: {int(crop_line_this_t * 100 / duration)}%", end="\033[0G")
-
-        # Filter out undesirable frames
-        # 1. Only crop if the width is cropped a noticeable amount. Widescreen content intentionally has top and bottom black frames.
-        # 2. Crop is over 10% the duration
-        logger.debug("crop raw histo %s", crop_frame_rect_histo)
-        crop_frame_rect_histo = dict(
-            filter(lambda e: (width - common.get_crop_filter_parts(e[0])[0] >= 40) and e[1] > duration / 10,
-                   crop_frame_rect_histo.items()))
-        logger.debug("crop filtered histo %s", crop_frame_rect_histo)
-        if len(crop_frame_rect_histo) > 0:
-            crop_frame_rect_histo_list = list(crop_frame_rect_histo.items())
-            crop_frame_rect_histo_list.sort(key=lambda e: e[1], reverse=True)
-            logger.debug("crop detect histo %s", crop_frame_rect_histo_list)
-            crop_frame_filter = crop_frame_rect_histo_list[0][0]
-            if width - common.get_crop_filter_parts(crop_frame_filter)[0] < 40:
-                crop_frame_filter = None
-        logger.info("crop frame detection found %s", crop_frame_filter)
-        if crop_frame in CROP_FRAME_RESOLUTIONS:
-            rect = common.get_crop_filter_parts(crop_frame_filter)
-            target_res = \
-            sorted(CROP_FRAME_RESOLUTIONS[crop_frame], key=lambda e: abs(rect[0] - e[0]) + abs(rect[1] - e[1]))[0]
-            logger.info("crop frame resolution match is %s", target_res)
-            crop_frame_filter = f"crop={target_res[0]}:{target_res[1]}:{max(0, int(((common.get_video_width(input_info) - target_res[0]) / 2)))}:{max(0, int(((common.get_video_height(input_info) - target_res[1]) / 2)))}"
-        logger.info("crop frame filter is %s", crop_frame_filter)
+    crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, frame_rate)
 
     logger.debug("input video codec = %s, target video codec = %s", input_video_codec, target_video_codec)
     copy_video = not scale_height and crop_frame_filter is None and (
@@ -602,7 +534,7 @@ def do_dvr_post_process(input_file,
         if aspect_ratio:
             if crop_frame_filter:
                 aspect_ratio_parts = [int(i) for i in aspect_ratio.split(':')]
-                crop_parts = common.get_crop_filter_parts(crop_frame_filter)
+                crop_parts = crop_frame.get_crop_filter_parts(crop_frame_filter)
                 aspect_ratio_adjusted_w = aspect_ratio_parts[0] * crop_parts[0] / width
                 aspect_ratio_adjusted_h = aspect_ratio_parts[1] * crop_parts[1] / height
                 aspect_ratio = f"{math.ceil(aspect_ratio_adjusted_w)}:{math.ceil(aspect_ratio_adjusted_h)}"

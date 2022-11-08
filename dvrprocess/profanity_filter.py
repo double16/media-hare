@@ -218,8 +218,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     subtitle_srt_generated = None
     audio_to_text_version = current_audio2text_version
 
-    if not subtitle_original or subtitle_original['tags'].get('DURATION', '').startswith(
-            '00:00:00') or current_audio2text_version not in [None, '', str(AUDIO_TO_TEXT_VERSION)]:
+    if need_original_subtitle_transcribed(subtitle_original=subtitle_original,
+                                          current_audio2text_version=current_audio2text_version,
+                                          media_duration=float(input_info[common.K_FORMAT][common.K_DURATION])):
         subtitle_srt_generated = ocr_subtitle_bitmap_to_srt(input_info, temp_base, language, verbose=verbose)
         if not subtitle_srt_generated and audio_original:
             subtitle_srt_generated = audio_to_srt(input_info, audio_original, workdir, language, verbose=verbose)
@@ -318,10 +319,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             arguments.extend(["-i", subtitle_srt_generated])
         else:
             subtitle_extract_command.extend(['-map', f"{streams_file}:{subtitle_original_idx}",
-                                             '-c', 'copy', subtitle_original_filename])
+                                             subtitle_original_filename])
         if subtitle_filtered_idx is not None:
             subtitle_extract_command.extend(['-map', f"{streams_file}:{subtitle_filtered_idx}",
-                                             '-c', 'copy', subtitle_filtered_previous_filename])
+                                             subtitle_filtered_previous_filename])
         if '-map' in subtitle_extract_command:
             if verbose:
                 logger.info(common.array_as_command(subtitle_extract_command))
@@ -566,6 +567,7 @@ def load_censor_list():
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'censor_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
     result.sort(key=lambda e: len(re.sub('[^A-Za-z]+', '', e)), reverse=True)
+    result = list(map(lambda e: phrase_to_pattern(e), result))
     return result
 
 
@@ -573,13 +575,41 @@ def load_stop_list():
     # TODO: allow multiple lists based on 'levels' (R, PG, G ?) and allow selection at runtime
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'stop_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
+    result = list(map(lambda e: phrase_to_pattern(e), result))
     return result
 
 
 def load_allow_list():
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'allow_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
+    result = list(map(lambda e: phrase_to_pattern(e), result))
     return result
+
+
+def need_original_subtitle_transcribed(subtitle_original: dict, current_audio2text_version: str,
+                                       media_duration: float) -> bool:
+    """
+    Determine if the original subtitle needs transcribed, either from image subtitles or audio.
+    :param subtitle_original:
+    :param current_audio2text_version:
+    :return: True to transcribe
+    """
+    if not subtitle_original:
+        return True
+
+    duration_s = subtitle_original.get('tags', {}).get('DURATION', '')
+    try:
+        if duration_s:
+            duration = common.parse_edl_ts(duration_s)
+            if duration < (media_duration * 0.60):
+                return True
+    except:
+        pass
+
+    if current_audio2text_version not in [None, '', str(AUDIO_TO_TEXT_VERSION)]:
+        return True
+
+    return False
 
 
 def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=False):
@@ -874,14 +904,12 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (
     """
 
     allow_ranges: list[tuple] = []
-    for allow_phrase in allow_list:
-        allow_pattern = phrase_to_pattern(allow_phrase)
-        logger.debug("allow: %s => %s", allow_phrase, allow_pattern)
+    for allow_pattern in allow_list:
         try:
             for m in re.finditer(allow_pattern, text, flags=re.IGNORECASE):
                 allow_ranges.append(m.span(0))
         except re.error as e:
-            print(f"ERROR in allow list: {allow_phrase} => {allow_pattern}")
+            print(f"ERROR in allow list: {allow_pattern}")
             raise e
 
     if re.search(PRE_FILTERED, text, flags=re.IGNORECASE):
@@ -891,23 +919,19 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (
             text = text2 + ' _'
         else:
             text = text2
-    for stop_phrase in stop_list:
-        stop_pattern = phrase_to_pattern(stop_phrase)
-        logger.debug("stop: %s => %s", stop_phrase, stop_pattern)
+    for stop_pattern in stop_list:
         try:
             if matches_stop_pattern(stop_pattern, text, allow_ranges):
                 text = re.search(STOP_CLEAN_PATTERN, text).expand(fr"\1{MASK_STR}")
                 return text, True
         except re.error as e:
-            print(f"ERROR in stop list: {stop_phrase} => {stop_pattern}")
+            print(f"ERROR in stop list: {stop_pattern}")
             raise e
-    for contains_phrase in censor_list:
-        contains_pattern = phrase_to_pattern(contains_phrase)
-        logger.debug("contains: %s => %s, allow %s", contains_phrase, contains_pattern, allow_ranges)
+    for contains_pattern in censor_list:
         try:
             text = re.sub(contains_pattern, lambda m: contains_pattern_repl(m, allow_ranges), text, flags=re.IGNORECASE)
         except re.error as e:
-            print(f"ERROR in censor list: {contains_phrase} => {contains_pattern}")
+            print(f"ERROR in censor list: {contains_pattern}")
             raise e
     # clean up trailing punctuation
     text = re.sub(r'\*\*\*([,!.?\'’]+)', MASK_STR, text)

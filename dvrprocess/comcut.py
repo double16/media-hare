@@ -14,6 +14,7 @@ from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, f
 from profanity_filter import MASK_STR
 from common import subtitle
 from common import hwaccel
+from common import crop_frame
 
 KEYFRAME_DISTANCE_TOLERANCE = 1.5
 
@@ -51,6 +52,12 @@ Usage: {sys.argv[0]} infile [outfile]
     Set ffmpeg preset, defaults to {common.get_global_config_option('ffmpeg', 'preset')}
 --force-encode
     Force encoding to be precise, i.e. skip cutting by key frames
+--crop-frame
+    Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
+--crop-frame-ntsc
+    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
+--crop-frame-pal
+    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
 -n, --dry-run
     Dry run
 """, file=sys.stderr)
@@ -59,7 +66,8 @@ Usage: {sys.argv[0]} infile [outfile]
 @common.finisher
 def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=True, verbose=False, debug=False,
            comskipini=None,
-           workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False):
+           workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False,
+           crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE):
     ffmpeg = common.find_ffmpeg()
 
     input_info = common.find_input_info(infile)
@@ -111,15 +119,19 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             return 255
 
     keyframes = []
-    if not force_encode and len(list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
+    if not force_encode and len(
+            list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
         # If we are recoding, we aren't restricted to key frames
         keyframes = common.load_keyframes_by_seconds(infile)
         logger.debug("Loaded %s keyframes", len(keyframes))
         disable_keyframes = False
         keyframe_distance = 0.0
-        for event in list(filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
-            adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start, common.KeyframeSearchPreference.BEFORE))
-            adjusted2 = abs(event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER))
+        for event in list(
+                filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
+            adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start,
+                                                                       common.KeyframeSearchPreference.BEFORE))
+            adjusted2 = abs(
+                event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER))
             if adjusted1 > KEYFRAME_DISTANCE_TOLERANCE or adjusted2 > KEYFRAME_DISTANCE_TOLERANCE:
                 disable_keyframes = True
                 keyframe_distance = max(adjusted1, adjusted2, keyframe_distance)
@@ -170,6 +182,10 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir)
     video_encoder_options_tag_value = []
 
+    crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, common.get_frame_rate(input_info))
+    if crop_frame_filter:
+        video_filters.append(crop_frame_filter)
+
     with open(metafile, "w") as metafd:
         with open(partsfile, "w") as partsfd:
 
@@ -197,7 +213,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'"
                                          f":volume=0")
                     # subtitle events are in milliseconds
-                    subtitle_filters.append(((edl_event.start - totalcutduration) * 1000.0, (edl_event.end- totalcutduration) * 1000.0))
+                    subtitle_filters.append(
+                        ((edl_event.start - totalcutduration) * 1000.0, (edl_event.end - totalcutduration) * 1000.0))
                     continue
                 elif edl_event.event_type == common.EdlType.SCENE:
                     continue
@@ -319,7 +336,15 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     if not debug:
         ffmpeg_command.append("-hide_banner")
 
-    ffmpeg_command.extend(["-nostdin", "-i", metafile,
+    ffmpeg_command.extend(["-nostdin"])
+
+    if len(video_filters) > 0 or len(keyframes) == 0:
+        input_video_codec = common.resolve_video_codec(common.find_video_stream(input_info)[common.K_CODEC_NAME])
+        ffmpeg_command.extend(
+            hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec))
+        ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
+
+    ffmpeg_command.extend(["-i", metafile,
                            "-f", "concat", "-safe", "0", "-i", partsfile])
 
     input_stream_idx = 2
@@ -360,8 +385,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     for stream in common.sort_streams(input_info[common.K_STREAMS]):
         if common.is_video_stream(stream) and (len(video_filters) > 0 or len(keyframes) == 0):
             input_video_codec = common.resolve_video_codec(stream[common.K_CODEC_NAME])
-            ffmpeg_command.extend(hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec))
-            ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
             ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
             height = common.get_video_height(stream)
             crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
@@ -488,11 +511,15 @@ def comcut_cli(argv):
     preset = None
     force_encode = False
     dry_run = False
+    crop_frame_op = crop_frame.CropFrameOperation.NONE
+
+    dvrconfig = list(filter(lambda e: "crop-frame" in e, common.get_arguments_from_config(argv, '.dvrconfig')))
 
     try:
-        opts, args = getopt.getopt(list(argv), "pn",
+        opts, args = getopt.getopt(dvrconfig + list(argv), "pn",
                                    ["keep-edl", "keep-meta", "verbose", "debug", "comskip-ini=", "work-dir=",
-                                    "preset=", "force-encode", "dry-run"])
+                                    "preset=", "force-encode", "dry-run", "crop-frame", "crop-frame-ntsc",
+                                    "crop-frame-pal"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -519,6 +546,12 @@ def comcut_cli(argv):
             preset = arg
         elif opt in ("-n", "--dry-run"):
             dry_run = True
+        elif opt == "--crop-frame":
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT
+        elif opt == "--crop-frame-ntsc":
+            crop_frame_op = crop_frame.CropFrameOperation.NTSC
+        elif opt == "--crop-frame-pal":
+            crop_frame_op = crop_frame.CropFrameOperation.PAL
 
     if not args:
         usage()
@@ -533,7 +566,7 @@ def comcut_cli(argv):
     for infile, outfile in common.generate_video_files(args):
         this_file_return_code = comcut(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
                                        debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
-                                       force_encode=force_encode, dry_run=dry_run)
+                                       force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op)
         if this_file_return_code != 0 and return_code == 0:
             return_code = this_file_return_code
 

@@ -175,6 +175,7 @@ def find_ffmpeg():
 def find_ffprobe():
     return tools.find_ffprobe()
 
+
 comskip_path = None
 
 
@@ -404,6 +405,20 @@ def get_video_width(video_info) -> [None, int]:
     return width
 
 
+def get_frame_rate(video_info):
+    """
+    Get the frame rate of the video.
+    :param video_info: can be all of the input_info to use default video stream, or a single video stream
+    :return: str, float or None
+    """
+    if 'streams' in video_info:
+        video_info = find_video_stream(video_info)
+    frame_rate = video_info['avg_frame_rate']
+    if not frame_rate:
+        return None
+    return frame_rate
+
+
 def find_original_and_filtered_streams(input_info, codec_type, codec_names=None, language=None):
     original = None
     filtered = None
@@ -566,7 +581,8 @@ def find_audio_streams(input_info):
 
 def find_attached_pic_stream(input_info):
     return list(filter(lambda stream: (stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('attached_pic') > 0)
-                                      or (stream.get(K_TAGS) and stream.get(K_TAGS).get('MIMETYPE', '').startswith('image/')),
+                                      or (stream.get(K_TAGS) and stream.get(K_TAGS).get('MIMETYPE', '').startswith(
+        'image/')),
                        input_info[K_STREAMS]))
 
 
@@ -1215,7 +1231,7 @@ def is_from_dvr(input_info):
     if has_chapters_from_source_media(input_info)[0]:
         return False
 
-    duration = float(input_info[K_FORMAT]['duration'])
+    duration = float(input_info[K_FORMAT][K_DURATION])
     rounded_duration = round_duration(duration)
     already_cut = (100 * abs(rounded_duration - duration) / duration) > 15
     return not already_cut
@@ -1305,17 +1321,6 @@ def get_common_episode_duration(video_infos: list[dict]):
     stats_list = list(stats.items())
     stats_list.sort(key=lambda e: e[1], reverse=True)
     return stats_list[0][0]
-
-
-def get_crop_filter_parts(crop_filter):
-    """
-    Split the parts of the crop filter into integers.
-    :param crop_filter: similar to crop=100:100:20:8
-    :return: ints [width, height, x, y]
-    """
-    if crop_filter is None:
-        return None
-    return [int(i) for i in crop_filter.split('=')[1].split(':')]
 
 
 def _get_config_sources(filename: str):
