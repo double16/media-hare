@@ -226,7 +226,9 @@ def hwaccel_prologue(input_video_codec: str, target_video_codec: [None, str]) ->
         # let ffmpeg figure it out
         result.extend(['-hwaccel', 'auto'])
     elif hwaccel_requested in [HWAccelRequest.FULL, HWAccelRequest.NVENC] and method == HWAccelMethod.NVENC:
-        result.extend(["-hwaccel:v", "nvdec", "-hwaccel_device", "0"])
+        result.extend(
+            ["-hwaccel:v", "nvdec", "-init_hw_device", "cuda=cuda", "-hwaccel_device", "0", "-filter_hw_device",
+             "cuda"])
     elif hwaccel_requested in [HWAccelRequest.FULL, HWAccelRequest.VAAPI] and method == HWAccelMethod.VAAPI:
         result.extend(["-hwaccel:v", "vaapi", "-init_hw_device", "vaapi=vaapi:", "-hwaccel_device", "vaapi"])
 
@@ -283,7 +285,7 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
         options.extend([f"{codec}_nvenc"])
 
     if codec in ['h264', 'h265', 'hevc']:
-        options.extend(['-tune', 'hq'])
+        options.extend([f'-tune:{output_stream}', 'hq'])
 
         preset_opt = f"-preset:{output_stream}"
         if preset in ['veryslow', 'slowest']:

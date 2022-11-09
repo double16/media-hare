@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import Iterable
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
@@ -16,7 +17,7 @@ from common import subtitle
 from common import hwaccel
 from common import crop_frame
 
-KEYFRAME_DISTANCE_TOLERANCE = 1.5
+KEYFRAME_DISTANCE_TOLERANCE = 1.0
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,8 @@ Usage: {sys.argv[0]} infile [outfile]
     Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+-v, --vcodec=h264[,hvec,...]
+    The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 -n, --dry-run
     Dry run
 """, file=sys.stderr)
@@ -67,8 +70,12 @@ Usage: {sys.argv[0]} infile [outfile]
 def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=True, verbose=False, debug=False,
            comskipini=None,
            workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False,
-           crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE):
+           crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
+           desired_video_codecs: Iterable[str] = None):
     ffmpeg = common.find_ffmpeg()
+
+    if desired_video_codecs is None:
+        desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
 
     input_info = common.find_input_info(infile)
     chapters = input_info.get(common.K_CHAPTERS, []).copy()
@@ -118,6 +125,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             logger.fatal(f"edl cuts past end of file")
             return 255
 
+    start_time = float(input_info[common.K_FORMAT].get('start_time', 0.0))
     keyframes = []
     if not force_encode and len(
             list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
@@ -129,9 +137,11 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         for event in list(
                 filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
             adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start,
-                                                                       common.KeyframeSearchPreference.BEFORE))
+                                                                       common.KeyframeSearchPreference.BEFORE,
+                                                                       start_time))
             adjusted2 = abs(
-                event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER))
+                event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER,
+                                                         start_time))
             if adjusted1 > KEYFRAME_DISTANCE_TOLERANCE or adjusted2 > KEYFRAME_DISTANCE_TOLERANCE:
                 disable_keyframes = True
                 keyframe_distance = max(adjusted1, adjusted2, keyframe_distance)
@@ -223,7 +233,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     continue
 
                 end = edl_event.start
-                end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.BEFORE)
+                end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.BEFORE, start_time)
                 if end != edl_event.start:
                     logger.debug("Moved cut start from %f to keyframe %f", edl_event.start, end)
 
@@ -234,7 +244,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                         start_next = input_duration
                     else:
                         start_next = common.find_desired_keyframe(keyframes, start_next,
-                                                                  common.KeyframeSearchPreference.AFTER)
+                                                                  common.KeyframeSearchPreference.AFTER,
+                                                                  start_time)
                 else:
                     # limit to duration
                     start_next = input_duration
@@ -338,10 +349,14 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     ffmpeg_command.extend(["-nostdin"])
 
+    video_info = common.find_video_stream(input_info)
+    height = common.get_video_height(video_info)
+    target_video_codec = common.resolve_video_codec(desired_video_codecs, height, video_info)
+
     if len(video_filters) > 0 or len(keyframes) == 0:
-        input_video_codec = common.resolve_video_codec(common.find_video_stream(input_info)[common.K_CODEC_NAME])
+        input_video_codec = common.resolve_video_codec(video_info[common.K_CODEC_NAME])
         ffmpeg_command.extend(
-            hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=input_video_codec))
+            hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
         ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
 
     ffmpeg_command.extend(["-i", metafile,
@@ -384,10 +399,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     for stream in common.sort_streams(input_info[common.K_STREAMS]):
         if common.is_video_stream(stream) and (len(video_filters) > 0 or len(keyframes) == 0):
-            input_video_codec = common.resolve_video_codec(stream[common.K_CODEC_NAME])
-            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[common.K_STREAM_INDEX])}"])
             height = common.get_video_height(stream)
-            crf, bitrate, qp = common.recommended_video_quality(height, input_video_codec)
+            crf, bitrate, qp = common.recommended_video_quality(height, target_video_codec)
 
             # adjust frame rate
             desired_frame_rate = common.get_global_config_frame_rate('post_process', 'frame_rate', None)
@@ -398,13 +411,25 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                                                    tolerance=0.05):
                     video_filters.append(common.fps_video_filter(desired_frame_rate))
 
-            if len(video_filters) > 0:
-                ffmpeg_command.extend([f"-filter_complex:{output_stream_idx}", ",".join(video_filters)])
-
             encoding_options, encoding_method = hwaccel.hwaccel_encoding(output_stream=str(output_stream_idx),
-                                                                         codec=input_video_codec, output_type="mkv",
+                                                                         codec=target_video_codec, output_type="mkv",
                                                                          tune=None, preset=preset, crf=crf, qp=qp,
                                                                          target_bitrate=bitrate)
+
+            # add common video filters if we are doing filtering
+            video_filters.append('format=nv12')
+            if encoding_method != hwaccel.HWAccelMethod.NONE:
+                video_filters.append('hwupload')
+
+            video_filter_str = f"[{output_file}:{str(stream[common.K_STREAM_INDEX])}]yadif"
+            for idx, value in enumerate(video_filters):
+                video_filter_str += f"[{idx}];[{idx}]"
+                video_filter_str += value
+            output_mapping = f"[v{output_stream_idx}]"
+            video_filter_str += output_mapping
+
+            ffmpeg_command.extend([f"-filter_complex", video_filter_str])
+            ffmpeg_command.extend(["-map", output_mapping])
 
             ffmpeg_command.extend(encoding_options)
             video_encoder_options_tag_value.extend(encoding_options)
@@ -512,14 +537,16 @@ def comcut_cli(argv):
     force_encode = False
     dry_run = False
     crop_frame_op = crop_frame.CropFrameOperation.NONE
+    desired_video_codecs = None
 
-    dvrconfig = list(filter(lambda e: "crop-frame" in e, common.get_arguments_from_config(argv, '.dvrconfig')))
+    dvrconfig = list(
+        filter(lambda e: "crop-frame" in e or "preset" in e, common.get_arguments_from_config(argv, '.dvrconfig')))
 
     try:
-        opts, args = getopt.getopt(dvrconfig + list(argv), "pn",
+        opts, args = getopt.getopt(dvrconfig + list(argv), "pnv:",
                                    ["keep-edl", "keep-meta", "verbose", "debug", "comskip-ini=", "work-dir=",
                                     "preset=", "force-encode", "dry-run", "crop-frame", "crop-frame-ntsc",
-                                    "crop-frame-pal"])
+                                    "crop-frame-pal", "vcodec="])
     except getopt.GetoptError:
         usage()
         return 255
@@ -552,6 +579,8 @@ def comcut_cli(argv):
             crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
             crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt in ("-v", "--vcodec"):
+            desired_video_codecs = arg.split(',')
 
     if not args:
         usage()
@@ -566,7 +595,8 @@ def comcut_cli(argv):
     for infile, outfile in common.generate_video_files(args):
         this_file_return_code = comcut(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
                                        debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
-                                       force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op)
+                                       force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op,
+                                       desired_video_codecs=desired_video_codecs)
         if this_file_return_code != 0 and return_code == 0:
             return_code = this_file_return_code
 

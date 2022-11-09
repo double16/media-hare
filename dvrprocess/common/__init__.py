@@ -290,25 +290,33 @@ class KeyframeSearchPreference(Enum):
 
 
 def find_desired_keyframe(keyframes: list[float], target_time: float,
-                          search_preference: KeyframeSearchPreference = KeyframeSearchPreference.CLOSEST) -> float:
+                          search_preference: KeyframeSearchPreference = KeyframeSearchPreference.CLOSEST,
+                          start_time: [None, float] = None) -> float:
     """
     Find the desired keyframe for the target_time.
     :param keyframes: list of keyframes in the video with times directly from the video
     :param target_time: time we want, zero based, because it's a human-readable time
     :param search_preference:
+    :param start_time:
     :return:
     """
-    if len(keyframes) == 0:
-        return target_time
+    if start_time is None:
+        if len(keyframes) > 0:
+            start_time = keyframes[0]
+        else:
+            start_time = 0.0
 
-    return _find_desired_keyframe(keyframes, target_time, keyframes[0], search_preference)
+    if len(keyframes) == 0:
+        return target_time + start_time
+
+    return _find_desired_keyframe(keyframes, target_time, start_time, search_preference)
 
 
 def _find_desired_keyframe(keyframes: list[float], target_time: float, start_time: float,
                            search_preference: KeyframeSearchPreference = KeyframeSearchPreference.CLOSEST,
                            ) -> float:
     if len(keyframes) == 0:
-        return target_time
+        return target_time + start_time
     elif len(keyframes) == 1:
         return keyframes[0]
     elif len(keyframes) == 2:

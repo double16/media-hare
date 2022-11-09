@@ -8,6 +8,7 @@ import sys
 from statistics import stdev, mean
 
 import common
+from common import crop_frame
 from comchap import comchap, get_expected_adjusted_duration
 from comcut import comcut
 
@@ -35,6 +36,18 @@ Cuts commercials only when a season fits closely within the average of length po
 -a, --all
     Cut all files regardless of fit
 --work-dir={common.get_work_dir()}
+--preset=veryslow,slow,medium,fast,veryfast
+    Set ffmpeg preset, defaults to {common.get_global_config_option('ffmpeg', 'preset')}
+--force-encode
+    Force encoding to be precise, i.e. skip cutting by key frames
+--crop-frame
+    Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
+--crop-frame-ntsc
+    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
+--crop-frame-pal
+    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+-v, --vcodec=h264[,hvec,...]
+    The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 """, file=sys.stderr)
 
 
@@ -71,11 +84,19 @@ def smart_comcut(argv):
     keep = False
     workdir = common.get_work_dir()
     sigma = None
+    preset = None
+    force_encode = False
+    crop_frame_op = crop_frame.CropFrameOperation.NONE
+    desired_video_codecs = None
+
+    dvrconfig = list(
+        filter(lambda e: "crop-frame" in e or "preset" in e, common.get_arguments_from_config(argv, '.dvrconfig')))
 
     try:
-        opts, args = getopt.getopt(list(argv), "nkca",
+        opts, args = getopt.getopt(dvrconfig + list(argv), "nkcav:",
                                    ["help", "dry-run", "keep", "commercial-details", "strict", "all", "work-dir=",
-                                    "verbose", "sigma="])
+                                    "verbose", "sigma=", "preset=", "force-encode", "crop-frame", "crop-frame-ntsc",
+                                    "crop-frame-pal", "vcodec="])
     except getopt.GetoptError:
         usage()
         return 255
@@ -99,6 +120,18 @@ def smart_comcut(argv):
             sigma = float(arg)
         elif opt == "--verbose":
             logging.getLogger().setLevel(logging.DEBUG)
+        elif opt == "--force-encode":
+            force_encode = True
+        elif opt in ("-p", "--preset"):
+            preset = arg
+        elif opt == "--crop-frame":
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT
+        elif opt == "--crop-frame-ntsc":
+            crop_frame_op = crop_frame.CropFrameOperation.NTSC
+        elif opt == "--crop-frame-pal":
+            crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt in ("-v", "--vcodec"):
+            desired_video_codecs = arg.split(',')
 
     if len(args) < 1:
         usage()
@@ -300,7 +333,8 @@ def smart_comcut(argv):
                     if dry_run:
                         logger.info("cut %s", filepath)
                     else:
-                        cut(filepath, keep=keep, workdir=workdir)
+                        cut(filepath, keep=keep, workdir=workdir, preset=preset, force_encode=force_encode,
+                            crop_frame_op=crop_frame_op, desired_video_codecs=desired_video_codecs)
                 else:
                     logger.warning(
                         f"{filepath} comskip FAILURE, {common.seconds_to_timespec(adjusted_duration)}"
@@ -326,14 +360,18 @@ def duration_error_range_seconds(average_duration, strict=False, sigma=None):
         return [120, 120]
 
 
-def cut(filepath, keep=False, workdir=None):
+def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
+        crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
+        desired_video_codecs=None):
     filepath_stat = os.stat(filepath)
     dirname = os.path.dirname(filepath)
     basename = os.path.basename(filepath)
     tempfilename = f"{dirname}/.~{basename.replace('.mkv', '.transcoded.mkv')}"
     if common.assert_not_transcoding(filepath, exit=False) != 0:
         return
-    cut_return_code = comcut(filepath, tempfilename, delete_edl=False, force_clear_edl=True, workdir=workdir)
+    cut_return_code = comcut(filepath, tempfilename, delete_edl=False, force_clear_edl=True, workdir=workdir,
+                             preset=preset, force_encode=force_encode, crop_frome_op=crop_frame_op,
+                             desired_video_codecs=desired_video_codecs)
     if cut_return_code != 0:
         if os.path.exists(tempfilename):
             os.remove(tempfilename)
