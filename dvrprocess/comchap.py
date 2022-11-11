@@ -49,6 +49,8 @@ Usage: {sys.argv[0]} infile [outfile]
 --verbose
 --comskip-ini=
 --work-dir={common.get_work_dir()}
+--mark-skip
+    Mark file(s) to skip commercial scanning. Existing commercial markers, EDL and comskip.ini files will be removed.
 --force
     Force re-running comskip even if an edl file is present
 --debug
@@ -271,11 +273,15 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         input_info = common.find_input_info(infile)
     duration = float(input_info[common.K_FORMAT]['duration'])
 
+    if common.is_truthy(input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_COMSKIP_SKIP)):
+        logger.info("%s: filter skipped due to %s property", infile, common.K_COMSKIP_SKIP)
+        return 1
+
     chapters = input_info.get(common.K_CHAPTERS, []).copy()
     chapters.sort(key=lambda c: float(c['start_time']))
     has_chapters_from_source_media, chapters_commercials = common.has_chapters_from_source_media(input_info)
     if has_chapters_from_source_media:
-        logger.info(f"Skipping {infile} because we found existing chapters from another source")
+        logger.info("%s: skipping because we found existing chapters from another source", infile)
         return 1
 
     if workdir is None:
@@ -509,6 +515,47 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     return 0
 
 
+def comchap_mark_skip(filename: str, workdir: str) -> int:
+    """
+    Mark a file to skip the commercial scanner.
+    :return: 0 for success
+    """
+    # add tag to media file
+    input_info = common.find_input_info(filename)
+    tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).copy()
+    if not common.is_truthy(tags.get(common.K_COMSKIP_SKIP)):
+        # add tag to media file
+        mkvpropedit = common.find_mkvpropedit()
+        tags[common.K_COMSKIP_SKIP] = 'true'
+        for key in [common.K_COMSKIP_HASH]:
+            if key in tags:
+                del tags[key]
+        tags_filename = os.path.join(workdir, f".~{'.'.join(os.path.basename(filename).split('.')[0:-1])}.tags.xml")
+        common.TEMPFILENAMES.append(tags_filename)
+        common.write_mkv_tags(tags, tags_filename)
+        mkvpropedit_args = [mkvpropedit, filename, "--tags", f"global:{tags_filename}"]
+
+        # remove commercial chapter markers
+        if not common.has_chapters_from_source_media(input_info)[0]:
+            # lack of filename means delete chapters
+            mkvpropedit_args.extend(['--chapters', ''])
+
+        logger.debug(common.array_as_command(mkvpropedit_args))
+        subprocess.run(mkvpropedit_args)
+
+    # remove commercial files
+    filename_without_ext = '.'.join(filename.split('.')[0:-1])
+    for ext in ['.comskip.ini', '.bak.edl', '.edl']:
+        filename_to_remove = filename_without_ext + ext
+        try:
+            os.remove(filename_to_remove)
+            logger.debug("Removed %s", filename_to_remove)
+        except FileNotFoundError:
+            pass
+
+    return 0
+
+
 def comchap_cli(argv):
     delete_edl = not common.get_global_config_boolean('general', 'keep_edl')
     backup_edl = False
@@ -523,11 +570,12 @@ def comchap_cli(argv):
     modify_video = True
     force = False
     debug = False
+    mark_skip = False
 
     try:
         opts, args = getopt.getopt(list(argv), "fk",
                                    ["keep-edl", "only-edl", "keep-meta", "keep-log", "keep-ini", "keep-all", "verbose",
-                                    "comskip-ini=", "debug", "work-dir=", "force", "backup-edl"])
+                                    "comskip-ini=", "debug", "work-dir=", "force", "backup-edl", "mark-skip"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -569,6 +617,8 @@ def comchap_cli(argv):
             workdir = arg
         elif opt in ["-f", "--force"]:
             force = True
+        elif opt == "--mark-skip":
+            mark_skip = True
 
     if not args:
         usage()
@@ -578,11 +628,14 @@ def comchap_cli(argv):
 
     return_code = 0
     for infile, outfile in common.generate_video_files(args):
-        this_file_return_code = comchap(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta,
-                                        delete_log=delete_log, delete_logo=delete_logo, delete_txt=delete_txt,
-                                        delete_ini=delete_ini, verbose=verbose, workdir=workdir,
-                                        comskipini=comskipini, modify_video=modify_video, force=force, debug=debug,
-                                        backup_edl=backup_edl)
+        if mark_skip:
+            this_file_return_code = comchap_mark_skip(outfile, workdir)
+        else:
+            this_file_return_code = comchap(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta,
+                                            delete_log=delete_log, delete_logo=delete_logo, delete_txt=delete_txt,
+                                            delete_ini=delete_ini, verbose=verbose, workdir=workdir,
+                                            comskipini=comskipini, modify_video=modify_video, force=force, debug=debug,
+                                            backup_edl=backup_edl)
         if this_file_return_code != 0 and return_code == 0:
             return_code = this_file_return_code
 

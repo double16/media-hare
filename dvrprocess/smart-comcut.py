@@ -370,16 +370,16 @@ def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
     if common.assert_not_transcoding(filepath, exit=False) != 0:
         return
     cut_return_code = comcut(filepath, tempfilename, delete_edl=False, force_clear_edl=True, workdir=workdir,
-                             preset=preset, force_encode=force_encode, crop_frome_op=crop_frame_op,
+                             preset=preset, force_encode=force_encode, crop_frame_op=crop_frame_op,
                              desired_video_codecs=desired_video_codecs)
     if cut_return_code != 0:
         if os.path.exists(tempfilename):
             os.remove(tempfilename)
         return
-    if os.stat(tempfilename).st_size < (filepath_stat.st_size / 2):
-        logger.error(f"Cut file is less than half of original, skipping")
-        os.remove(tempfilename)
-        return
+    # if os.stat(tempfilename).st_size < (filepath_stat.st_size / 2):
+    #     logger.error(f"Cut file is less than half of original, skipping")
+    #     os.remove(tempfilename)
+    #     return
 
     if keep:
         keeppath = f"{dirname}/.~{basename}"

@@ -318,6 +318,8 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
     :return: fitness_func, genes, gene_space, gene_type
     """
 
+    # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
+
     genes = list(filter(lambda g: g.space_has_elements() and (g.use_csv or expensive_genes), GENES))
     logger.debug("fitting for genes: %s", list(map(lambda e: e.config, genes)))
     gene_space = list(map(lambda g: g.space, genes))

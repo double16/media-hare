@@ -61,6 +61,7 @@ K_FILTER_HASH = 'PFILTER_HASH'
 K_FILTER_SKIP = 'PFILTER_SKIP'
 K_FILTER_STOPPED = 'PFILTER_STOPPED'
 K_COMSKIP_HASH = 'COMSKIP_HASH'
+K_COMSKIP_SKIP = 'COMSKIP_SKIP'
 K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
 K_MEDIA_TITLE = 'title'
 K_MEDIA_PROCESSOR = 'processor'
@@ -1236,6 +1237,8 @@ def is_from_dvr(input_info):
     :param input_info:
     :return:
     """
+    if is_truthy(input_info.get(K_FORMAT, {}).get(K_TAGS, {}).get(K_COMSKIP_SKIP)):
+        return False
     if has_chapters_from_source_media(input_info)[0]:
         return False
 
