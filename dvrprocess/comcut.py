@@ -475,7 +475,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     temp_outfile = None
     if infile == outfile:
-        temp_fd, temp_outfile = tempfile.mkstemp(suffix='.' + outextension, dir=workdir)
+        temp_fd, temp_outfile = tempfile.mkstemp(prefix='.~', suffix='.' + outextension, dir=os.path.dirname(infile))
         os.close(temp_fd)
         ffmpeg_command.append(temp_outfile)
     else:
