@@ -31,10 +31,10 @@ def find_precut_revision(dbx, path, has_been_cut: bool):
             sizes.append(size_str)
 
         if rev.size > stop_size_lg:
-            logger.info("%s: found pre-transcoded version, %s bytes", path, size_str)
+            logger.info("%s: found pre-transcoded version, %s bytes at %s", path, size_str, rev.server_modified)
             return None
         if rev.size > target_size:
-            logger.info("%s: found pre-cut version, %s bytes", path, size_str)
+            logger.info("%s: found pre-cut version, %s bytes at %s", path, size_str, rev.server_modified)
             return rev
         if rev.size < stop_size_sm:
             logger.info("%s: found cut version, %s bytes, looks like current version is pre-cut", path, size_str)

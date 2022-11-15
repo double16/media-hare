@@ -109,11 +109,13 @@ def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[Co
                 if edl_file not in files_set:
                     continue
                 edl_filepath = os.path.join(root, edl_file)
-                if os.stat(edl_filepath).st_size < 80:
+                if os.stat(edl_filepath).st_size < 25:
+                    continue
+                edl = common.parse_edl_cuts(edl_filepath)
+                if len(edl) == 0:
                     continue
                 input_info = common.find_input_info(filepath)
                 uncut_length = float(input_info[common.K_FORMAT][common.K_DURATION])
-                edl = common.parse_edl_cuts(edl_filepath)
                 cut_length = uncut_length - sum(map(lambda e: e.length(), edl))
                 file_info = ComcutPendingFileInfo(file_name=filepath.replace(host_home + '/', ''),
                                                   host_file_path=filepath,

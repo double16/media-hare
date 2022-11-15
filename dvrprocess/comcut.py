@@ -466,7 +466,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     if len(video_encoder_options_tag_value) > 0:
         ffmpeg_command.extend(['-metadata', f"{common.K_ENCODER_OPTIONS}={' '.join(video_encoder_options_tag_value)}"])
-    if not common.get_media_title_from_tags(input_info):
+    if common.should_replace_media_title(input_info):
         ffmpeg_command.extend(
             ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
     ffmpeg_command.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])

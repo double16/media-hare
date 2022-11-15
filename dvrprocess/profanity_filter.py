@@ -269,7 +269,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     if filter_skip:
         if verbose:
             logger.info(f"Removing filtered streams")
-        if not common.get_media_title_from_tags(input_info):
+        if common.should_replace_media_title(input_info):
             arguments.extend(
                 ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
         arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
@@ -376,7 +376,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             tags[common.K_FILTER_STOPPED] = span_list_to_str(stopped_spans)
         if common.K_FILTER_SKIP in tags:
             del tags[common.K_FILTER_SKIP]
-        if not common.get_media_title_from_tags(input_info):
+        if common.should_replace_media_title(input_info):
             tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
         tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
         common.write_mkv_tags(tags, tags_filename)
@@ -409,7 +409,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if len(stopped_spans) > 0:
             arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
         arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}="])
-        if not common.get_media_title_from_tags(input_info):
+        if common.should_replace_media_title(input_info):
             arguments.extend(
                 ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
         arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
@@ -682,7 +682,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         logger.error(f"OCR text appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None
 
-    # TODO: Add "OCR by SubtitleEdit" at beginning and end
+    # TODO: Add "OCR by media-hare+SubtitleEdit" at beginning and end
 
     return subtitle_srt_filename
 
@@ -749,7 +749,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, language=None,
 
     # TODO: Add "transcribed by Vosk" at beginning and end
 
-    return subtitle_srt_filename
+    # TODO: Add "transcribed by media-hare+Vosk" at beginning and end
 
 
 def audio_to_text_cleanup(subtitle_srt_filename: str) -> None:
@@ -1002,7 +1002,7 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
     for key in [common.K_FILTER_HASH, common.K_FILTER_VERSION, common.K_FILTER_STOPPED]:
         if key in tags:
             del tags[key]
-    if not common.get_media_title_from_tags(input_info):
+    if common.should_replace_media_title(input_info):
         tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
     tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
     common.write_mkv_tags(tags, tags_filename)
