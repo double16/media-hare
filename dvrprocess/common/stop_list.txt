@@ -54,10 +54,10 @@ hairy dick
 tiny dick
 pencil dick
 dicks
-dick[\s-]head
-dick[\s-]heads
-dick[\s-]head's
-dick[\s-]head’s
+dick[\s-]?head
+dick[\s-]?heads
+dick[\s-]?head's
+dick[\s-]?head’s
 suck my
 tit
 tits
@@ -85,8 +85,12 @@ masturbates
 masturbated
 masturbating
 masturbation
+jack-off
 jacking[\s-]off
 jacked[\s-]off
+jag-off
+jagging[\s-]off
+jagged[\s-]off
 bra
 bras
 lingerie
@@ -117,7 +121,10 @@ making love
 makin love
 makin' love
 makin’ love
-# sleep with, slept with, ...
+sleep with
+sleep together
+slept with
+slept together
 boner
 nude
 hooker
@@ -138,3 +145,10 @@ rock\w* [\w]* world
 booty call
 skinny[-\s]dip\w*
 sucking the sack
+junk in \w+ trunk
+hook[\s-]?up site
+pimp
+pimping
+scrotums?
+canoodling
+canoodle

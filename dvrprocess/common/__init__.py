@@ -876,7 +876,7 @@ def parse_edl(filename) -> list[EdlEvent]:
         for edl_line in edl_fd.readlines():
             if edl_line.startswith('##'):
                 continue
-            parts = edl_line.split(maxsplit=3)
+            parts = edl_line.replace('-->', ' ').split(maxsplit=3)
             if len(parts) < 3:
                 continue
             start = parse_edl_ts(parts[0])
@@ -907,7 +907,7 @@ def parse_edl_ts(s: str) -> float:
         parts = list(s.split(":"))
         while len(parts) < 3:
             parts.insert(0, "0")
-        return round(float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2]), 3)
+        return round(float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2].replace(',', '.')), 3)
     return round(float(s), 3)
 
 

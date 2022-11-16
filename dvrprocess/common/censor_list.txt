@@ -30,6 +30,7 @@ good god
 good lord
 jesus christ[!,.-]+
 christ[!,.-]+
+christ alive[!,.-]+
 oh christ
 for christ sake
 for christ's sake
@@ -43,7 +44,7 @@ for god’s sake
 for god sakes
 for god's sakes
 for god’s sakes
-shit
+\w*shit
 \w+-?shit
 s-h-i-t
 oh shit
@@ -175,7 +176,8 @@ motherfucking
 mother-fucking
 mother fucking
 what the eff
-effing
+effin[g']?
+eff you
 f-ing
 what the f-\w*
 that mother[!.-]+
@@ -321,6 +323,7 @@ that sucks
 that .* sucks
 suck[!]
 suck it[!,.-]+
+suck at
 that blows$
 that blows[!,.-]+
 that .* blows$
@@ -364,3 +367,5 @@ flipped off
 flipped [\w\s]* off
 g[ia]ve [\w\s]* the finger
 sexy on
+skank
+mo[\s-]?fos?

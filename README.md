@@ -23,7 +23,7 @@ want to make it configurable to apply to a wider audience. Pull requests are wel
 like a codec or directory path, please make it configurable.
 
 Assumptions:
-1. Target codecs are H.264 (video) and Opus (audio). Text subtitles are SRT or ASS. Standard DVD and Blu-ray subtitles are kept.
+1. Target codecs are H.265, H.264 (video) and Opus (audio). Text subtitles are SRT or ASS. Standard DVD and Blu-ray subtitles are kept.
 2. Container is MKV. It supports multiple audio and subtitle streams and custom tags. This would be difficult to change. 
 3. Dropbox is my "backup" solution. Code doesn't depend on that but some choices are made because of it. For example, temp files start with ".~" because Dropbox ignores them.
 4. My media is served by Plex. Code generally does not depend on Plex, but supports interacting with it. I'm open to expanding support to other media servers.
