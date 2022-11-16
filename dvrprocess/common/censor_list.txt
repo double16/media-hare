@@ -44,11 +44,10 @@ for god’s sake
 for god sakes
 for god's sakes
 for god’s sakes
-\w*shit
-\w+-?shit
+[\w-]*shit
 s-h-i-t
 oh shit
-give a \w*-?shit
+give a [\w-]*shit
 shits
 shit's
 shit’s
@@ -147,8 +146,8 @@ are screwed
 screwed
 screwed up
 fuck
-\w+-?fuck
-\w+-?fucker
+[\w-]*fuck
+[\w-]*fucker
 f-u-c-k
 oh fuck
 fucks

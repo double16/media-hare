@@ -247,6 +247,18 @@ class ProfanityFilterTest(unittest.TestCase):
         expected = r'thumbs ***'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
+        text = r'mofos'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'mofo'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'mo-fos'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
 
     def test_exclamation_allowed_phrase1(self):
         text = r'God bless you.'
