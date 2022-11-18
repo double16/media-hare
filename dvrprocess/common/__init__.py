@@ -751,7 +751,6 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
     :return: crf, bitrate, qp
     """
     # q=28 observed with libx264, crf=23
-    # TODO: adjust h265 crf to match desired qp
     qp = 28
     if target_height <= 480:
         if target_video_codec == 'h264':
@@ -759,14 +758,14 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
             bitrate = 800
         else:
             crf = 28
-            bitrate = 800
+            bitrate = 640
     elif target_height <= 720:
         if target_video_codec == 'h264':
             crf = 23
             bitrate = 1400
         else:
             crf = 28
-            bitrate = 1000
+            bitrate = 800
     elif target_height <= 1080:
         # q=36 observed with libx264, crf=31
         qp = 34
@@ -775,7 +774,7 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
             bitrate = 1400
         else:
             crf = 28
-            bitrate = 1300
+            bitrate = 1200
     else:
         # q=36 observed with libx264, crf=31
         qp = 34

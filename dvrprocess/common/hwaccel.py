@@ -362,11 +362,13 @@ def _sw_encoding(output_stream: str, codec: str, output_type: str, tune: str, pr
     options = [f"-c:{output_stream}", ffmpeg_sw_codec(codec),
                f"-crf:{output_stream}", str(crf),
                f"-preset:{output_stream}", preset]
-    if tune is not None:
+    if codec == 'h264' and tune is not None:
         options.extend([f"-tune:{output_stream}", tune])
     # Do not copy Closed Captions, they will be extracted into a subtitle stream
     if codec == 'h264' and output_type != 'ts':
         options.extend([f"-a53cc:{output_stream}", '0'])
     if codec == 'h265':
-        options.extend(['-x265-params', 'aq-strength=3.0:multi-pass-opt-analysis:hevc-aq'])
+        # https://trac.ffmpeg.org/wiki/Encode/H.265
+        options.extend([f'-tag:{output_stream}', 'hvc1'])
     return options
+
