@@ -273,7 +273,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         input_info = common.find_input_info(infile)
     duration = float(input_info[common.K_FORMAT]['duration'])
 
-    if common.is_truthy(input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_COMSKIP_SKIP)):
+    if common.is_truthy(input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_COMSKIP_SKIP)) and not force:
         logger.info("%s: filter skipped due to %s property", infile, common.K_COMSKIP_SKIP)
         return 1
 
@@ -410,6 +410,8 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         return 255
 
     tags = input_info[common.K_FORMAT].get(common.K_TAGS, {}).copy()
+    if common.K_COMSKIP_SKIP in tags:
+        del tags[common.K_COMSKIP_SKIP]
     tags[common.K_COMSKIP_HASH] = comskipini_hash
     video_title = input_info[common.K_FORMAT].get(common.K_STREAM_TITLE, None)
     if video_title:
