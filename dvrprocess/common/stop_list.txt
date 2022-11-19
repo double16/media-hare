@@ -152,3 +152,6 @@ pimping
 scrotums?
 canoodling
 canoodle
+stripper pole
+she .* stripper
+he .* stripper
