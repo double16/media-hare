@@ -22,6 +22,7 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
     get_comskip_hwassist_options
+from common import tools
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
 
@@ -577,15 +578,14 @@ def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, 
     infile_base, csv_path, _ = paths(infile, workdir, infile_base=infile_base)
     if not force and os.path.isfile(csv_path):
         return
-    comskip = common.find_comskip()
-    command = [comskip, "-v", "9"]
+    command = ["-v", "9"]
     command.extend(get_comskip_hwassist_options())
     command.extend(["--quiet", "--csvout",
                     f"--ini={comskip_ini}",
                     f"--output={workdir}", f"--output-filename={infile_base}", infile])
-    logger.info(common.array_as_command(command))
+    logger.info(tools.comskip.array_as_command(command))
     if not dry_run:
-        subprocess.run(command, check=True, capture_output=True)
+        tools.comskip.run(command, check=True, capture_output=True)
 
 
 def get_comskip_starter_ini_sources():
@@ -680,6 +680,7 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
         "Parameters of the adjusted solution : {solution}".format(solution=solution_repl(genes, solution)))
 
     write_ini_from_solution(os.path.join(season_dir, 'comskip.ini'), genes, solution)
+    # TODO: run in parallel
     for filepath in files:
         comchap(filepath, filepath, force=True, delete_edl=False, workdir=workdir)
 

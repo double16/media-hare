@@ -5,18 +5,18 @@ import getopt
 import logging
 import math
 import os
-import subprocess
 import sys
 import tempfile
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import mkstemp
+
 from ass_parser import CorruptAssLineError
 
 import common
+from common import crop_frame
 from common import hwaccel
 from common import tools
-from common import crop_frame
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
@@ -265,12 +265,6 @@ def do_dvr_post_process(input_file,
 
     os.nice(12)
 
-    #
-    # Find transcoder
-    #
-
-    ffmpeg = common.find_ffmpeg()
-
     input_info = common.find_input_info(filename)
     duration = float(input_info['format']['duration'])
 
@@ -378,7 +372,7 @@ def do_dvr_post_process(input_file,
     #
 
     # Global arguments
-    arguments = [ffmpeg]
+    arguments = []
     if not verbose:
         arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
@@ -395,19 +389,18 @@ def do_dvr_post_process(input_file,
 
     if extract_closed_captions:
         # use ccextractor, sometimes lavfi corrupts the subtitles, and ccextractor cleans up the text better
-        ccextractor = tools.find_ccextractor()
         cc_filename = os.path.join(dir_filename, f".~{base_filename}.cc.ass")
         common.TEMPFILENAMES.append(cc_filename)
-        cc_command = [ccextractor, "-out=ass", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
+        cc_command = ["-out=ass", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
         # cc_command.append("--sentencecap")  # this will re-capitalize mixed case
         # cc_command.append("--videoedited")
         if not verbose:
             cc_command.append("-quiet")
         cc_command.extend([os.path.realpath(filename), "-o", cc_filename])
         logger.info(f"Extracting closed captions transcode of {filename} to {cc_filename}")
-        logger.info(common.array_as_command(cc_command))
+        logger.info(tools.ccextractor.array_as_command(cc_command))
         if not dry_run:
-            subprocess.run(cc_command, check=True)
+            tools.ccextractor.run(cc_command, check=True)
 
         if dry_run or os.stat(cc_filename).st_size > 0:
             arguments.extend(['-i', cc_filename])
@@ -522,7 +515,7 @@ def do_dvr_post_process(input_file,
             filter_stage += 1
         filter_complex += f"[{filter_stage}];[{filter_stage}]format=nv12"
         filter_stage += 1
-        if encoding_method != hwaccel.HWAccelMethod.NONE:
+        if hwaccel.hwaccel_required_hwupload_filter():
             # must be last
             filter_complex += f"[{filter_stage}];[{filter_stage}]hwupload"
             filter_stage += 1
@@ -603,7 +596,7 @@ def do_dvr_post_process(input_file,
         return 0
 
     if dry_run:
-        logger.info(f"{common.array_as_command(arguments)}")
+        logger.info(f"{tools.ffmpeg.array_as_command(arguments)}")
         return 0
 
     #
@@ -619,8 +612,8 @@ def do_dvr_post_process(input_file,
         return 255
 
     logger.info(f"Starting transcode of {filename} to {common.TEMPFILENAME}")
-    logger.info(f"{common.array_as_command(arguments)}")
-    subprocess.run(arguments, check=True)
+    logger.info(f"{tools.ffmpeg.array_as_command(arguments)}")
+    tools.ffmpeg.run(arguments, check=True)
 
     if os.stat(common.TEMPFILENAME).st_size == 0:
         logger.error(f"Output at {common.TEMPFILENAME} is zero length")

@@ -6,12 +6,11 @@ import hashlib
 import logging
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 
 import common
-from common import hwaccel
+from common import hwaccel, tools
 
 logger = logging.getLogger(__name__)
 
@@ -267,8 +266,6 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                delete_txt=True,
                delete_ini=True, verbose=False, workdir=None, comskipini=None, leaf_comskip_ini=None, modify_video=True,
                force=False, debug=False, backup_edl=False, use_csv=True, csvfile=None, input_info=None):
-    ffmpeg = common.find_ffmpeg()
-    mkvpropedit = common.find_mkvpropedit()
     if input_info is None:
         input_info = common.find_input_info(infile)
     duration = float(input_info[common.K_FORMAT]['duration'])
@@ -339,6 +336,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     logger.debug("comskip.ini hash is %s, current hash is %s", comskipini_hash, current_comskip_hash)
 
     run_comskip = force
+    # TODO: ensure if edl file is changed and bakedl is present, it gets updated
     if not os.path.isfile(edlfile):
         if backup_edl and not force and os.path.isfile(edlbakfile):
             shutil.copyfile(edlbakfile, edlfile)
@@ -361,11 +359,12 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                                          keep=not delete_ini)
 
         comskip_command = []
+
         if debug:
-            comskip_command.append(common.find_comskip_gui())
+            comskip_invoker = tools.comskip_gui
             comskip_command.append("-w")
         else:
-            comskip_command.append(common.find_comskip())
+            comskip_invoker = tools.comskip
             comskip_command.extend(get_comskip_hwassist_options())
 
         # check for csv and logo file which makes the process much faster
@@ -389,7 +388,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             comskip_command.append(infile)
 
         logger.debug(' '.join(comskip_command))
-        ret = subprocess.run(comskip_command, check=False, capture_output=not verbose)
+        ret = comskip_invoker.run(comskip_command, check=False, capture_output=not verbose)
         if not os.path.isfile(hidden_edlfile):
             logger.fatal(f"Error running comskip. EDL File not found: {hidden_edlfile}")
             return ret.returncode
@@ -433,10 +432,10 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         if com_match:
             logger.info(f"{infile} already has correct chapters")
             if infile.endswith(
-                    ".mkv") and current_comskip_hash != comskipini_hash and infile == outfile and mkvpropedit:
-                mkvpropedit_command = [mkvpropedit, infile, "--tags", f"global:{tags_filename}"]
+                    ".mkv") and current_comskip_hash != comskipini_hash and infile == outfile:
+                mkvpropedit_command = [infile, "--tags", f"global:{tags_filename}"]
                 logger.debug(' '.join(mkvpropedit_command))
-                subprocess.run(mkvpropedit_command, check=True, capture_output=not verbose)
+                tools.mkvpropedit.run(mkvpropedit_command, check=True, capture_output=not verbose)
             return 255
 
     start = 0
@@ -478,16 +477,16 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
 
     # need this outside of metafd and mkvchapterfd blocks to ensure it's flushed and closed
     if hascommercials:
-        if infile.endswith(".mkv") and outfile.endswith(".mkv") and mkvpropedit:
+        if infile.endswith(".mkv") and outfile.endswith(".mkv"):
             # use mkvpropedit to apply chapters to mkv files, far more efficient
             if infile != outfile:
                 shutil.copyfile(infile, outfile)
-            mkvpropedit_command = [mkvpropedit, outfile, "--chapters", mkvchapterfile, "--tags",
+            mkvpropedit_command = [outfile, "--chapters", mkvchapterfile, "--tags",
                                    f"global:{tags_filename}"]
             logger.debug(' '.join(mkvpropedit_command))
-            subprocess.run(mkvpropedit_command, check=True, capture_output=not verbose)
+            tools.mkvpropedit.run(mkvpropedit_command, check=True, capture_output=not verbose)
         else:
-            ffmpeg_command = [ffmpeg, "-loglevel", "error", "-hide_banner", "-nostdin", "-i", infile, "-i", metafile,
+            ffmpeg_command = ["-loglevel", "error", "-hide_banner", "-nostdin", "-i", infile, "-i", metafile,
                               "-map_metadata", "0",
                               "-map_chapters", "1",
                               "-map", "0",
@@ -502,17 +501,17 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             else:
                 ffmpeg_command.append(outfile)
             logger.debug(' '.join(ffmpeg_command))
-            subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
+            tools.ffmpeg.run(ffmpeg_command, check=True, capture_output=not verbose)
             if tempoutfile is not None:
                 os.replace(tempoutfile, outfile)
         if infile != outfile:
             common.match_owner_and_perm(target_path=outfile, source_path=infile)
     else:
         # add K_COMSKIP_HASH marker
-        if infile.endswith(".mkv") and infile == outfile and mkvpropedit:
-            mkvpropedit_command = [mkvpropedit, outfile, "--tags", f"global:{tags_filename}"]
+        if infile.endswith(".mkv") and infile == outfile:
+            mkvpropedit_command = [outfile, "--tags", f"global:{tags_filename}"]
             logger.debug(' '.join(mkvpropedit_command))
-            subprocess.run(mkvpropedit_command, check=True, capture_output=not verbose)
+            tools.mkvpropedit.run(mkvpropedit_command, check=True, capture_output=not verbose)
 
     return 0
 
@@ -527,7 +526,6 @@ def comchap_mark_skip(filename: str, workdir: str) -> int:
     tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).copy()
     if not common.is_truthy(tags.get(common.K_COMSKIP_SKIP)):
         # add tag to media file
-        mkvpropedit = common.find_mkvpropedit()
         tags[common.K_COMSKIP_SKIP] = 'true'
         for key in [common.K_COMSKIP_HASH]:
             if key in tags:
@@ -535,15 +533,15 @@ def comchap_mark_skip(filename: str, workdir: str) -> int:
         tags_filename = os.path.join(workdir, f".~{'.'.join(os.path.basename(filename).split('.')[0:-1])}.tags.xml")
         common.TEMPFILENAMES.append(tags_filename)
         common.write_mkv_tags(tags, tags_filename)
-        mkvpropedit_args = [mkvpropedit, filename, "--tags", f"global:{tags_filename}"]
+        mkvpropedit_args = [filename, "--tags", f"global:{tags_filename}"]
 
         # remove commercial chapter markers
         if not common.has_chapters_from_source_media(input_info)[0]:
             # lack of filename means delete chapters
             mkvpropedit_args.extend(['--chapters', ''])
 
-        logger.debug(common.array_as_command(mkvpropedit_args))
-        subprocess.run(mkvpropedit_args)
+        logger.debug(tools.mkvpropedit.array_as_command(mkvpropedit_args))
+        tools.mkvpropedit.run(mkvpropedit_args)
 
     # remove commercial files
     filename_without_ext = '.'.join(filename.split('.')[0:-1])

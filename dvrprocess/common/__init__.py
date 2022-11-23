@@ -14,13 +14,11 @@ import threading
 import time
 import traceback
 from enum import Enum
-from shutil import which
 
 import psutil
 from psutil import AccessDenied
 
-from . import tools
-from . import hwaccel
+from . import hwaccel, tools
 
 KILOBYTES_MULT = 1024
 MEGABYTES_MULT = 1024 * 1024
@@ -63,6 +61,7 @@ K_FILTER_STOPPED = 'PFILTER_STOPPED'
 K_COMSKIP_HASH = 'COMSKIP_HASH'
 K_COMSKIP_SKIP = 'COMSKIP_SKIP'
 K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
+K_AUDIO_TO_TEXT_FILTER = 'AUDIO2TEXT_FILTER'
 K_MEDIA_TITLE = 'title'
 K_MEDIA_PROCESSOR = 'processor'
 V_MEDIA_PROCESSOR = 'media-hare, https://github.com/double16/media-hare'
@@ -84,6 +83,7 @@ FRAME_RATE_NAMES = {'ntsc': '30000/1001', 'pal': '25.0', 'film': '24.0', 'ntsc_f
 TITLE_ORIGINAL = 'Original'
 TITLE_FILTERED = 'Filtered'
 TITLE_FILTERED_FORCED = 'Filtered Only'
+TITLE_WORDS = 'Words'
 
 MEDIA_BASE = None
 
@@ -169,115 +169,19 @@ def finisher(func):
     return inner1
 
 
-def find_ffmpeg():
-    return tools.find_ffmpeg()
-
-
-def find_ffprobe():
-    return tools.find_ffprobe()
-
-
-comskip_path = None
-
-
-def find_comskip():
-    global comskip_path
-    if comskip_path is None:
-        _once_lock.acquire()
-        try:
-            if comskip_path is None:
-                comskip_path = _find_comskip()
-        finally:
-            _once_lock.release()
-    return comskip_path
-
-
-def _find_comskip():
-    comskip = which("comskip")
-    if not os.access(comskip, os.X_OK):
-        fatal(f"{comskip} is not an executable")
-    return comskip
-
-
-comskip_gui_path = None
-
-
-def find_comskip_gui():
-    global comskip_gui_path
-    if comskip_gui_path is None:
-        _once_lock.acquire()
-        try:
-            if comskip_gui_path is None:
-                comskip_gui_path = _find_comskip_gui()
-        finally:
-            _once_lock.release()
-    return comskip_gui_path
-
-
-def _find_comskip_gui():
-    comskip_gui = which("comskip-gui")
-    if not os.access(comskip_gui, os.X_OK):
-        fatal(f"{comskip_gui} is not an executable")
-    return comskip_gui
-
-
-mkvpropedit_path = None
-
-
-def find_mkvpropedit():
-    global mkvpropedit_path
-    if mkvpropedit_path is None:
-        _once_lock.acquire()
-        try:
-            if mkvpropedit_path is None:
-                mkvpropedit_path = _find_mkvpropedit()
-        finally:
-            _once_lock.release()
-    return mkvpropedit_path
-
-
-def _find_mkvpropedit():
-    mkvpropedit = which("mkvpropedit")
-    if not os.access(mkvpropedit, os.X_OK):
-        fatal(f"{mkvpropedit} is not an executable")
-    return mkvpropedit
-
-
-vosk_path = None
-
-
-def find_vosk():
-    global vosk_path
-    if vosk_path is None:
-        _once_lock.acquire()
-        try:
-            if vosk_path is None:
-                vosk_path = _find_vosk()
-        finally:
-            _once_lock.release()
-    return vosk_path
-
-
-def _find_vosk():
-    vosk = which("vosk-transcriber")
-    if not os.access(vosk, os.X_OK):
-        fatal(f"{vosk} is not an executable")
-    return vosk
-
-
 def get_plex_url():
     return get_global_config_option('plex', 'url', fallback=None)
 
 
 def load_keyframes_by_seconds(filepath) -> list[float]:
-    ffprobe_keyframes = [find_ffprobe(), "-loglevel", "error", "-skip_frame", "nointra", "-select_streams", "v:0",
+    ffprobe_keyframes = ["-loglevel", "error", "-skip_frame", "nointra", "-select_streams", "v:0",
                          "-show_entries",
-                         "frame=pkt_pts_time" if int(tools.ffprobe_version) == 4 else "frame=pts_time",
+                         "frame=pkt_pts_time" if int(tools.ffprobe.version) == 4 else "frame=pts_time",
                          "-of", "csv=print_section=0", filepath]
     keyframes = list(map(lambda s: float(re.search(r'[\d.]+', s)[0]),
                          filter(lambda s: len(s) > 0,
-                                subprocess.check_output(ffprobe_keyframes, universal_newlines=True,
-                                                        text=True).splitlines())))
+                                tools.ffprobe.check_output(ffprobe_keyframes, universal_newlines=True,
+                                                           text=True).splitlines())))
     if len(keyframes) == 0:
         raise ChildProcessError("No key frames returned, suspect ffprobe command line is broken")
 
@@ -366,21 +270,20 @@ def _keyframe_compare(keyframe: float, operand: float, start_time: float, tolera
     return 0
 
 
-def fix_closed_caption_report(input_info, ffprobe, filename):
+def fix_closed_caption_report(input_info, filename):
     video_info = find_video_stream(input_info)
-    if video_info and 'Closed Captions' in subprocess.check_output(
-            [ffprobe, '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, filename],
-            stderr=subprocess.STDOUT, text=True):
+    if video_info and 'Closed Captions' in tools.ffprobe.check_output(
+            ['-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, filename],
+            text=True, stderr=subprocess.STDOUT):
         video_info['closed_captions'] = 1
 
 
 def find_input_info(filename):
-    ffprobe = find_ffprobe()
-    input_info = json.loads(subprocess.check_output(
-        [ffprobe, '-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
+    input_info = json.loads(tools.ffprobe.check_output(
+        ['-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
          'json',
          '-show_format', '-show_streams', '-show_chapters', filename]))
-    fix_closed_caption_report(input_info, ffprobe, filename)
+    fix_closed_caption_report(input_info, filename)
     return input_info
 
 
@@ -428,10 +331,19 @@ def get_frame_rate(video_info):
     return frame_rate
 
 
-def find_original_and_filtered_streams(input_info, codec_type, codec_names=None, language=None):
+def find_original_and_filtered_streams(input_info, codec_type, codec_names=None, language=None) -> (str, str, str, str):
+    """
+    Find streams produced by the profanity filter.
+    :param input_info:
+    :param codec_type:
+    :param codec_names:
+    :param language:
+    :return: subtitle_original, subtitle_filtered, subtitle_filtered_forced, subtitle_words
+    """
     original = None
     filtered = None
     filtered_forced = None
+    words = None
 
     streams = find_streams_by_codec_and_language(input_info, codec_type, codec_names, language)
 
@@ -445,6 +357,11 @@ def find_original_and_filtered_streams(input_info, codec_type, codec_names=None,
     if (len(filtered_forced_streams)) > 0:
         filtered_forced = filtered_forced_streams[0]
 
+    words_streams = list(
+        filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) == TITLE_WORDS, streams))
+    if (len(words_streams)) > 0:
+        words = words_streams[0]
+
     original_streams = list(
         filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) == TITLE_ORIGINAL, streams))
     if (len(original_streams)) > 0:
@@ -455,7 +372,7 @@ def find_original_and_filtered_streams(input_info, codec_type, codec_names=None,
         if (len(original_streams)) > 0:
             original = original_streams[0]
 
-    return original, filtered, filtered_forced
+    return original, filtered, filtered_forced, words
 
 
 def find_streams_by_codec_and_language(input_info, codec_type, codec_names=None, language=None):
@@ -833,16 +750,6 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
         arguments.extend([f"-b:{current_output_stream}", str(target_bitrate)])
 
 
-def array_as_command(a) -> str:
-    command = []
-    for e in a:
-        if '\'' in e:
-            command.append('"' + e + '"')
-        else:
-            command.append("'" + e + "'")
-    return ' '.join(command)
-
-
 class EdlType(Enum):
     CUT = 0
     MUTE = 1
@@ -880,15 +787,15 @@ def parse_edl(filename) -> list[EdlEvent]:
                 continue
             start = parse_edl_ts(parts[0])
             end = parse_edl_ts(parts[1])
-            if parts[2] == '0':
+            if parts[2].lower() in ('0', 'cut'):
                 event_type = EdlType.CUT
-            elif parts[2] == '1':
+            elif parts[2].lower() in ('1', 'mute'):
                 event_type = EdlType.MUTE
-            elif parts[2] == '2':
+            elif parts[2].lower() in ('2', 'scene'):
                 event_type = EdlType.SCENE
-            elif parts[2] == '3':
+            elif parts[2].lower() in ('3', 'com', 'commercial'):
                 event_type = EdlType.COMMERCIAL
-            elif parts[2] == '4':
+            elif parts[2].lower() in ('4', 'blur'):
                 event_type = EdlType.BACKGROUND_BLUR
             else:
                 raise Exception(f"Unknown EDL type: {parts[2]}")
@@ -1117,10 +1024,9 @@ def is_video_file(filepath) -> bool:
     if len(list(filter(lambda e: filepath.endswith('.' + e), VIDEO_EXTENSIONS))) > 0:
         return True
 
-    ffprobe = find_ffprobe()
     try:
-        input_info = json.loads(subprocess.check_output(
-            [ffprobe, '-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
+        input_info = json.loads(tools.ffprobe.check_output(
+            ['-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
              'json', '-show_format', '-show_streams', filepath]))
         return len(list(filter(lambda s: s[K_CODEC_TYPE] == CODEC_VIDEO, input_info.get('streams', [])))) > 0 and len(
             list(filter(lambda s: s[K_CODEC_TYPE] == CODEC_AUDIO, input_info.get('streams', [])))) > 0
@@ -1357,7 +1263,8 @@ def _get_config_sources(filename: str):
     # TODO: check Windows places
     return [f"{os.environ['HOME']}/.{filename}",
             f"/etc/{filename}",
-            f"{script_dir}/{filename}"]
+            f"{script_dir}/{filename}",
+            f"./{filename}"]
 
 
 def find_config(filename: str) -> str:

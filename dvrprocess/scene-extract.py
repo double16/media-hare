@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-import logging
-import os
-import sys
 import atexit
 import getopt
-import subprocess
+import logging
+import os
 import re
+import sys
 
 import common
+from common import tools
 
 #
 # Important info on seeking: https://trac.ffmpeg.org/wiki/Seeking
@@ -30,8 +30,6 @@ Usage: {sys.argv[0]} infile [outfile pattern]
 
 @common.finisher
 def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
-    ffmpeg = common.find_ffmpeg()
-
     infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
     edlfile = f"{os.path.dirname(infile) or '.'}/{infile_base}.edl"
 
@@ -75,7 +73,7 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
             partsfd.write(f"inpoint {start}\n")
             partsfd.write(f"outpoint {end}\n")
 
-        ffmpeg_command = [ffmpeg, "-hide_banner", "-loglevel",
+        ffmpeg_command = ["-hide_banner", "-loglevel",
                           "info" if verbose else "error",
                           "-nostdin",
                           "-f", "concat", "-safe", "0", "-i", parts_file,
@@ -93,9 +91,9 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
 
         try:
             if dry_run:
-                logger.info(common.array_as_command(ffmpeg_command))
+                logger.info(tools.ffmpeg.array_as_command(ffmpeg_command))
             else:
-                subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
+                tools.ffmpeg.run(ffmpeg_command, check=True, capture_output=not verbose)
         finally:
             os.remove(parts_file)
 

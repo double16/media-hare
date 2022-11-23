@@ -3,7 +3,6 @@ import getopt
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 from enum import Enum
@@ -13,10 +12,14 @@ from subprocess import CalledProcessError
 import requests
 
 import common
+from common import tools
 from find_need_transcode import need_transcode_generator
 from profanity_filter import profanity_filter, FILTER_VERSION
 
 logger = logging.getLogger(__name__)
+
+
+# TODO: disk usage can be heavy, allow a semaphore to be used in profanity_filter when doing disk heavy operations
 
 
 def usage():
@@ -70,8 +73,8 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
             yield item
             continue
 
-        tags = json.loads(subprocess.check_output(
-            [common.find_ffprobe(), '-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
+        tags = json.loads(tools.ffprobe.check_output(
+            ['-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
             'format', {}).get('tags', {})
 
         if common.is_truthy(tags.get(common.K_FILTER_SKIP, None)):

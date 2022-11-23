@@ -12,10 +12,11 @@ from typing import Iterable
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
-from profanity_filter import MASK_STR
-from common import subtitle
-from common import hwaccel
 from common import crop_frame
+from common import hwaccel
+from common import subtitle
+from common import tools
+from profanity_filter import MASK_STR
 
 # http://ffmpeg.org/ffmpeg-all.html#select_002c-aselect
 FILTER_AV_CONCAT_DEMUX = False
@@ -73,7 +74,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
            workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False,
            crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
            desired_video_codecs: Iterable[str] = None):
-    ffmpeg = common.find_ffmpeg()
 
     if desired_video_codecs is None:
         desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
@@ -135,7 +135,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     subtitle_data = {}
     if len(list(filter(lambda e: e.event_type in [common.EdlType.MUTE], edl_events))) > 0:
         # Extract all of the text based subtitles for masking
-        extract_subtitle_command = [common.find_ffmpeg(), '-y', '-i', infile, '-c', 'copy']
+        extract_subtitle_command = ['-y', '-i', infile, '-c', 'copy']
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
             suffix = stream.get(common.K_CODEC_NAME)
             if suffix == 'subrip':
@@ -148,8 +148,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             extract_subtitle_command.extend(
                 ['-map', f"0:{stream[common.K_STREAM_INDEX]}", subtitle_filename])
         if len(subtitle_streams) > 0:
-            logger.debug(common.array_as_command(extract_subtitle_command))
-            subprocess.run(extract_subtitle_command, check=True, capture_output=not verbose)
+            logger.debug(tools.ffmpeg.array_as_command(extract_subtitle_command))
+            tools.ffmpeg.run(extract_subtitle_command, check=True, capture_output=not verbose)
             for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
                 subtitle_filename = subtitle_streams[stream[common.K_STREAM_INDEX]]
                 subtitle_data[stream[common.K_STREAM_INDEX]] = subtitle.read_subtitle_data(
@@ -328,7 +328,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     hwaccel.hwaccel_configure(hwaccel_requested)
 
-    ffmpeg_command = [ffmpeg]
+    ffmpeg_command = []
     ffmpeg_command.extend(hwaccel.hwaccel_threads())
 
     if not verbose:
@@ -407,7 +407,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
             # add common video filters if we are doing filtering
             video_filters.append('format=nv12')
-            if encoding_method != hwaccel.HWAccelMethod.NONE:
+            if hwaccel.hwaccel_required_hwupload_filter():
                 video_filters.append('hwupload')
 
             video_filter_str = f"[{output_file}:{str(stream[common.K_STREAM_INDEX])}]yadif"
@@ -471,13 +471,13 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         ffmpeg_command.append(outfile)
 
     if dry_run:
-        logger.info(common.array_as_command(ffmpeg_command))
+        logger.info(tools.ffmpeg.array_as_command(ffmpeg_command))
         return 0
     else:
-        logger.debug(common.array_as_command(ffmpeg_command))
+        logger.debug(tools.ffmpeg.array_as_command(ffmpeg_command))
 
     try:
-        subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
+        tools.ffmpeg.run(ffmpeg_command, check=True, capture_output=not verbose)
     except subprocess.CalledProcessError as e:
         with open(partsfile, "r") as f:
             print(f.read(), file=sys.stderr)

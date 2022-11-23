@@ -1,6 +1,7 @@
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
+
 import common
 
 
@@ -87,3 +88,26 @@ class EdlParseTest(unittest.TestCase):
 
     def test_s_to_ts(self):
         self.assertEqual("01:02:03.400", common.s_to_ts(3723.4))
+
+    def test_parse_symbolic(self):
+        """
+        Test that parsing an EDL with symbolic operations works
+        """
+        fd, path = tempfile.mkstemp(suffix='.edl')
+        os.write(fd, b"""## cuts using seconds
+0.00	13.15	cut
+307.17	353.12	mute
+772.57	917.95	scene
+1284.78	1524.89	com
+1689.12	1824.86	commercial
+2473.24	2654.05	blur
+""")
+        os.close(fd)
+        events = common.parse_edl(path)
+        os.remove(path)
+        self.assertEqual(common.EdlType.CUT, events[0].event_type)
+        self.assertEqual(common.EdlType.MUTE, events[1].event_type)
+        self.assertEqual(common.EdlType.SCENE, events[2].event_type)
+        self.assertEqual(common.EdlType.COMMERCIAL, events[3].event_type)
+        self.assertEqual(common.EdlType.COMMERCIAL, events[4].event_type)
+        self.assertEqual(common.EdlType.BACKGROUND_BLUR, events[5].event_type)

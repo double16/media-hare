@@ -1,9 +1,11 @@
-import math
 import logging
-import subprocess
+import math
 import re
+import subprocess
 from enum import Enum
-from . import get_video_width, get_video_height, array_as_command, find_ffmpeg, K_FORMAT
+
+from . import get_video_width, get_video_height, K_FORMAT
+from . import tools
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +40,10 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
         duration = float(input_info['format']['duration'])
         filename = input_info.get(K_FORMAT, {}).get("filename")
         crop_frame_rect_histo = {}
-        crop_detect_command = [find_ffmpeg(), '-hide_banner', '-skip_frame', 'nointra', '-i', filename,
+        crop_detect_command = ['-hide_banner', '-skip_frame', 'nointra', '-i', filename,
                                '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',
                                '-f', 'null', '/dev/null']
-        logger.info(array_as_command(crop_detect_command))
-        crop_detect_process = subprocess.Popen(crop_detect_command, stderr=subprocess.PIPE, universal_newlines=True)
+        crop_detect_process = tools.ffmpeg.Popen(crop_detect_command, stderr=subprocess.PIPE, universal_newlines=True)
         crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9.:]+)\b'
         crop_line_last_t = None
         crop_line_last_filter = None

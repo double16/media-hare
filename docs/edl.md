@@ -24,3 +24,14 @@ The type field is an integer of one of the following values:
 - 4 - Blur the video background
 
 The file column is optional and is only used by `scene-extract.py`. If specified, the scene will use this file name. Otherwise the source file name plus a number will be used.
+
+When using the media-hare tools, names can be used for the `type`: cut, mute, scene, com/commercial, blur. However, the names won't be read correctly by other tools.
+
+```
+## start        end             type    file
+100.2           360.0           cut
+00:01:05.456    00:02:10.000    mute
+#32750          #40000          com
+00:01:00.000    00:05:00.000    scene   Show - S01E01
+00:05:10.000    00:05:30.000    blue
+```

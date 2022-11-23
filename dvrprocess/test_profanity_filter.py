@@ -1,9 +1,10 @@
 import logging
 import os
 import re
-import shutil
 import tempfile
 import unittest
+
+import pysrt
 
 import profanity_filter
 
@@ -552,8 +553,9 @@ class ProfanityFilterTest(unittest.TestCase):
     def test_audio_to_text_cleanup(self):
         fd, path = tempfile.mkstemp(suffix='.srt')
         os.close(fd)
-        shutil.copy('../fixtures/audio_to_text.srt.txt', path)
-        profanity_filter.audio_to_text_cleanup(path)
+        srt = pysrt.open('../fixtures/audio_to_text.srt.txt')
+        profanity_filter.audio_to_text_cleanup(srt)
+        srt.save(path)
         with open(path, "r") as file:
             cleaned = ''.join(file.readlines())
         self.assertEqual("""1
