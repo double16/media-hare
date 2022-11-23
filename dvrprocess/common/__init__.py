@@ -322,11 +322,11 @@ def _find_desired_keyframe(keyframes: list[float], target_time: float, start_tim
         return keyframes[0]
     elif len(keyframes) == 2:
         if search_preference == KeyframeSearchPreference.AFTER:
-            if _keyframe_compare(keyframes[0], target_time, start_time) > 0:
+            if _keyframe_compare(keyframes[0], target_time, start_time) >= 0:
                 return keyframes[0]
             return keyframes[1]
         elif search_preference == KeyframeSearchPreference.BEFORE:
-            if _keyframe_compare(keyframes[0], target_time, start_time) < 0:
+            if _keyframe_compare(keyframes[0], target_time, start_time) >= 0:
                 return keyframes[1]
             return keyframes[0]
 
@@ -1082,6 +1082,7 @@ def dumpstacks(signal, frame):
 def setup_debugging():
     signal.signal(signal.SIGUSR1, debug)
     signal.signal(signal.SIGQUIT, dumpstacks)
+    logger.debug("__debug__ is %s", __debug__)
 
 
 def setup_logging():

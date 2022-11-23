@@ -213,7 +213,7 @@ def build_comskip_ini(comskip_ini, leaf_comskip_ini=None, video_path=None, input
 
 
 def write_chapter_metadata(metafd, start_seconds, end_seconds, title, min_seconds=1) -> bool:
-    logger.debug(f"write_chapter_metadata({start_seconds}, {end_seconds}, {title}, {min_seconds})")
+    logger.debug(f"write_chapter_metadata({common.s_to_ts(start_seconds)}, {common.s_to_ts(end_seconds)}, {title}, {min_seconds})")
     if start_seconds >= 0 and (end_seconds - start_seconds) >= min_seconds:
         metafd.write(f"""
 [CHAPTER]

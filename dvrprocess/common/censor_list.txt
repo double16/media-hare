@@ -78,9 +78,7 @@ oh crap
 craps
 crappy
 holy crap
-crapface
-crap face
-crap-face
+crap[\s-]\w+
 piece[\s-]of[\s-]crap
 bullcrap
 bull[\s-]crap
@@ -317,14 +315,20 @@ piss
 piss[\s-]off
 pissing
 sucks
-you suck
-that sucks
+he .* sucks
+she .* sucks
+you .* suck
+we .* suck
+they .* suck
 that .* sucks
 suck[!]
 suck it[!,.-]+
 suck at
-that blows$
-that blows[!,.-]+
+he .* blows
+she .* blows
+you .* blow
+we .* blow
+they .* blow
 that .* blows$
 that .* blows[!,.-]+
 egg[\s-]sucker

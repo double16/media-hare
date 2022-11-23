@@ -17,7 +17,8 @@ from common import subtitle
 from common import hwaccel
 from common import crop_frame
 
-KEYFRAME_DISTANCE_TOLERANCE = 1.0
+# http://ffmpeg.org/ffmpeg-all.html#select_002c-aselect
+FILTER_AV_CONCAT_DEMUX = False
 
 logger = logging.getLogger(__name__)
 
@@ -121,33 +122,13 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     # sanity check edl to ensure it hasn't already been applied, i.e. check if last cut is past duration
     input_duration = float(input_info[common.K_FORMAT]['duration'])
     if len(edl_events) > 0:
-        if edl_events[-1].end > input_duration + 1:
+        if edl_events[-1].end > input_duration + 3:
             logger.fatal(f"edl cuts past end of file")
             return 255
 
     start_time = float(input_info[common.K_FORMAT].get('start_time', 0.0))
-    keyframes = []
-    if not force_encode and len(
-            list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
-        # If we are recoding, we aren't restricted to key frames
-        keyframes = common.load_keyframes_by_seconds(infile)
-        logger.debug("Loaded %s keyframes", len(keyframes))
-        disable_keyframes = False
-        keyframe_distance = 0.0
-        for event in list(
-                filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
-            adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start,
-                                                                       common.KeyframeSearchPreference.BEFORE,
-                                                                       start_time))
-            adjusted2 = abs(
-                event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER,
-                                                         start_time))
-            if adjusted1 > KEYFRAME_DISTANCE_TOLERANCE or adjusted2 > KEYFRAME_DISTANCE_TOLERANCE:
-                disable_keyframes = True
-                keyframe_distance = max(adjusted1, adjusted2, keyframe_distance)
-        if disable_keyframes:
-            logger.info("Re-encoding video due to distance from keyframes: %s seconds", keyframe_distance)
-            keyframes = []
+    keyframes = common.load_keyframes_by_seconds(infile)
+    logger.debug("Loaded %s keyframes", len(keyframes))
 
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
@@ -233,24 +214,27 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     continue
 
                 end = edl_event.start
-                end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.BEFORE, start_time)
-                if end != edl_event.start:
-                    logger.debug("Moved cut start from %f to keyframe %f", edl_event.start, end)
+                if edl_event.start > 0:  # allow special case of cut from beginning
+                    end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.BEFORE, start_time)
+                    assert end <= (edl_event.start + start_time)
+                    if end != edl_event.start:
+                        logger.debug("Moved cut start from %s to keyframe %s", common.s_to_ts(edl_event.start), common.s_to_ts(end))
 
                 start_next = edl_event.end
                 if start_next < input_duration:
                     # handle special case of cutting the end
-                    if len(keyframes) > 0 and abs(start_next - (keyframes[-1] - keyframes[0])) < 0.05:
+                    if len(keyframes) > 0 and abs(start_next - (keyframes[-1] + start_time)) < 1.0:
                         start_next = input_duration
                     else:
                         start_next = common.find_desired_keyframe(keyframes, start_next,
                                                                   common.KeyframeSearchPreference.AFTER,
                                                                   start_time)
+                        assert start_next >= (edl_event.end + start_time)
                 else:
                     # limit to duration
                     start_next = input_duration
                 if start_next != edl_event.end:
-                    logger.debug("Moved cut end from %f to keyframe %f", edl_event.end, start_next)
+                    logger.debug("Moved cut end from %s to keyframe %s", common.s_to_ts(edl_event.end), common.s_to_ts(start_next))
 
                 duration = end - start
                 if duration > 1:
@@ -337,6 +321,11 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             # we are not creating a new outfile, so don't return success
             return 1
 
+    if FILTER_AV_CONCAT_DEMUX:
+        # not really sure how this affects subtitle streams
+        audio_filters.append('aselect=concatdec_select')
+        video_filters.append('select=concatdec_select')
+
     hwaccel.hwaccel_configure(hwaccel_requested)
 
     ffmpeg_command = [ffmpeg]
@@ -353,14 +342,14 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     height = common.get_video_height(video_info)
     target_video_codec = common.resolve_video_codec(desired_video_codecs, height, video_info)
 
-    if len(video_filters) > 0 or len(keyframes) == 0:
+    if len(video_filters) > 0 or len(keyframes) == 0 or force_encode:
         input_video_codec = common.resolve_video_codec(video_info[common.K_CODEC_NAME])
         ffmpeg_command.extend(
             hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
         ffmpeg_command.extend(hwaccel.hwaccel_decoding(input_video_codec))
 
     ffmpeg_command.extend(["-i", metafile,
-                           "-f", "concat", "-safe", "0", "-i", partsfile])
+                           "-f", "concat", "-safe", "0", "-segment_time_metadata", "1", "-i", partsfile])
 
     input_stream_idx = 2
     subtitle_stream_idx_to_input_idx: dict[int, int] = {}
@@ -398,7 +387,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     output_stream_idx = 0
 
     for stream in common.sort_streams(input_info[common.K_STREAMS]):
-        if common.is_video_stream(stream) and (len(video_filters) > 0 or len(keyframes) == 0):
+        if common.is_video_stream(stream) and (len(video_filters) > 0 or len(keyframes) == 0 or force_encode):
             height = common.get_video_height(stream)
             crf, bitrate, qp = common.recommended_video_quality(height, target_video_codec)
 
@@ -491,7 +480,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         subprocess.run(ffmpeg_command, check=True, capture_output=not verbose)
     except subprocess.CalledProcessError as e:
         with open(partsfile, "r") as f:
-            print(f.read())
+            print(f.read(), file=sys.stderr)
+        print(common.array_as_command(ffmpeg_command), file=sys.stderr)
         raise e
 
     # verify video is valid

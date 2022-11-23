@@ -205,6 +205,28 @@ class ProfanityFilterTest(unittest.TestCase):
         expected = r'***'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
+        text = r'crap-hole'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'crap face'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
+    def test_exclamation_phrase13(self):
+        text = r'he blows'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'we blow'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'we absolutely blow'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
 
     def test_exclamation_phrase_wildcards1(self):
         text = r'What the f'
