@@ -230,7 +230,7 @@ def _find_desired_keyframe(keyframes: list[float], target_time: float, start_tim
                 return keyframes[0]
             return keyframes[1]
         elif search_preference == KeyframeSearchPreference.BEFORE:
-            if _keyframe_compare(keyframes[0], target_time, start_time) >= 0:
+            if _keyframe_compare(keyframes[1], target_time, start_time) <= 0:
                 return keyframes[1]
             return keyframes[0]
 
