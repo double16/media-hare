@@ -18,6 +18,8 @@ from common import subtitle
 from common import tools
 from profanity_filter import MASK_STR
 
+KEYFRAME_DISTANCE_TOLERANCE = 1.0
+KEYFRAME_IGNORE_FOR_ENCODING = True
 # http://ffmpeg.org/ffmpeg-all.html#select_002c-aselect
 FILTER_AV_CONCAT_DEMUX = False
 
@@ -127,14 +129,38 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             return 255
 
     start_time = float(input_info[common.K_FORMAT].get('start_time', 0.0))
-    keyframes = common.load_keyframes_by_seconds(infile)
-    logger.debug("Loaded %s keyframes", len(keyframes))
+    keyframes = []
+    if KEYFRAME_IGNORE_FOR_ENCODING:
+        if not force_encode and len(
+                list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
+            keyframes = common.load_keyframes_by_seconds(infile)
+            logger.debug("Loaded %s keyframes", len(keyframes))
+            # If we are encoding, we aren't restricted to key frames, so encode if cuts are too far from keyframes
+            disable_keyframes = False
+            keyframe_distance = 0.0
+            for event in list(
+                    filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
+                adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start,
+                                                                           common.KeyframeSearchPreference.BEFORE,
+                                                                           start_time))
+                adjusted2 = abs(
+                    event.end - common.find_desired_keyframe(keyframes, event.end, common.KeyframeSearchPreference.AFTER,
+                                                             start_time))
+                if adjusted1 > KEYFRAME_DISTANCE_TOLERANCE or adjusted2 > KEYFRAME_DISTANCE_TOLERANCE:
+                    disable_keyframes = True
+                    keyframe_distance = max(adjusted1, adjusted2, keyframe_distance)
+            if disable_keyframes:
+                logger.info("Re-encoding video due to distance from keyframes: %s seconds", keyframe_distance)
+                keyframes = []
+    else:
+        keyframes = common.load_keyframes_by_seconds(infile)
+        logger.debug("Loaded %s keyframes", len(keyframes))
 
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
     subtitle_data = {}
     if len(list(filter(lambda e: e.event_type in [common.EdlType.MUTE], edl_events))) > 0:
-        # Extract all of the text based subtitles for masking
+        # Extract all text based subtitles for masking
         extract_subtitle_command = ['-y', '-i', infile, '-c', 'copy']
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[common.K_STREAMS]):
             suffix = stream.get(common.K_CODEC_NAME)
@@ -481,7 +507,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     except subprocess.CalledProcessError as e:
         with open(partsfile, "r") as f:
             print(f.read(), file=sys.stderr)
-        print(common.array_as_command(ffmpeg_command), file=sys.stderr)
+        print(tools.ffmpeg.array_as_command(ffmpeg_command), file=sys.stderr)
         raise e
 
     # verify video is valid
