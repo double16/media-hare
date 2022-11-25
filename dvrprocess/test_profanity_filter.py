@@ -229,6 +229,20 @@ class ProfanityFilterTest(unittest.TestCase):
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
 
+    def test_exclamation_phrase14(self):
+        text = r'mad as hell'
+        expected = r'mad as ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'what the hell'
+        expected = r'what ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'ah hell'
+        expected = r'ah ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
     def test_exclamation_phrase_wildcards1(self):
         text = r'What the f'
         expected = r'***'

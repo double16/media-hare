@@ -209,9 +209,10 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             metafd.write(f""";FFMETADATA1
 [FORMAT]
 {common.K_COMSKIP_HASH}={comskipini_hash}
+{common.K_COMSKIP_SKIP}=true
 """)
             for k, v in input_info[common.K_FORMAT].get(common.K_TAGS, {}).items():
-                if k != common.K_COMSKIP_HASH:
+                if k not in [common.K_COMSKIP_HASH, common.K_COMSKIP_SKIP]:
                     metafd.write(f"{k}={v}\n")
             video_title = input_info[common.K_FORMAT].get(common.K_STREAM_TITLE, None)
             if video_title:

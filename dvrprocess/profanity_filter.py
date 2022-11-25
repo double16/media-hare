@@ -158,9 +158,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     allow_list = load_allow_list()
 
     # Compute filter hash
-    hash_input = str(FILTER_VERSION) + ','.join(censor_list) + ','.join(stop_list) + ','.join(allow_list)
-    filter_hash = hashlib.sha512(hash_input.encode("utf-8")).hexdigest()
-    logger.info(f"expected filter hash = {filter_hash}, expected filter version = {FILTER_VERSION}")
+    filter_hash = compute_filter_hash(censor_list, stop_list, allow_list)
 
     # Compare and exit if the same
     current_filter_version = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_VERSION)
@@ -229,15 +227,27 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         audio_to_text_filter = 'lowpass=f=3000,highpass=f=200,anlmdn'
         _srt_text, subtitle_srt_words = audio_to_srt(input_info, audio_original, workdir, audio_to_text_filter,
                                                      language, verbose=verbose)
-        if _srt_text:
+        if _srt_text and os.stat(_srt_text).st_size > 0:
+            audio_to_text_version = AUDIO_TO_TEXT_VERSION
             if not subtitle_original and subtitle_srt_generated is None:
                 subtitle_srt_generated = _srt_text
-            audio_to_text_version = AUDIO_TO_TEXT_VERSION
+
+    tags = input_info[common.K_FORMAT].get(common.K_TAGS, {}).copy()
+    tags[common.K_FILTER_HASH] = filter_hash
+    tags[common.K_FILTER_VERSION] = FILTER_VERSION
+    tags[common.K_AUDIO_TO_TEXT_VERSION] = audio_to_text_version if audio_to_text_version else ''
+    tags[common.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
+    if common.should_replace_media_title(input_info):
+        tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
+    tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
 
     if not subtitle_original and subtitle_srt_generated is None:
-        # TODO: mark as filtered so we don't repeat
+        # mark as filtered so we don't repeat
         logger.fatal("Cannot find text based subtitle")
-        return CMD_RESULT_ERROR
+        common.write_mkv_tags(tags, tags_filename)
+        if not dry_run and not debug:
+            tools.mkvpropedit.run([filename, "--tags", f"global:{tags_filename}"])
+        return CMD_RESULT_UNCHANGED
 
     if not audio_original:
         if filter_skip:
@@ -246,9 +256,12 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                                        verbose=verbose)
             return CMD_RESULT_UNCHANGED
         else:
-            # TODO: mark as filtered so we don't repeat
+            # mark as filtered so we don't repeat
             logger.fatal("Cannot find audio stream for original")
-            return CMD_RESULT_ERROR
+            common.write_mkv_tags(tags, tags_filename)
+            if not dry_run and not debug:
+                tools.mkvpropedit.run([filename, "--tags", f"global:{tags_filename}"])
+            return CMD_RESULT_UNCHANGED
 
     if subtitle_srt_generated is not None:
         subtitle_codec = common.CODEC_SUBTITLE_SRT
@@ -404,18 +417,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info(f"Unknown subtitle codec {subtitle_codec}")
             return CMD_RESULT_ERROR
 
-        tags = input_info[common.K_FORMAT].get(common.K_TAGS, {}).copy()
-        tags[common.K_FILTER_HASH] = filter_hash
-        tags[common.K_FILTER_VERSION] = FILTER_VERSION
-        tags[common.K_AUDIO_TO_TEXT_VERSION] = audio_to_text_version if audio_to_text_version else ''
-        tags[common.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
         if len(stopped_spans) > 0:
             tags[common.K_FILTER_STOPPED] = span_list_to_str(stopped_spans)
         if common.K_FILTER_SKIP in tags:
             del tags[common.K_FILTER_SKIP]
-        if common.should_replace_media_title(input_info):
-            tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
-        tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
         common.write_mkv_tags(tags, tags_filename)
 
         if subtitle_filtered_idx is not None:
@@ -532,7 +537,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
     # Remaining subtitle streams
     for extra_audio in list(filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_SUBTITLE and stream[
-        common.K_STREAM_INDEX] not in [subtitle_original_idx, subtitle_filtered_idx, subtitle_filtered_forced_idx],
+        common.K_STREAM_INDEX] not in [subtitle_original_idx, subtitle_filtered_idx, subtitle_filtered_forced_idx,
+                                       subtitle_words_idx],
                                    input_info['streams'])):
         arguments.extend(["-map", f"{streams_file}:{extra_audio[common.K_STREAM_INDEX]}",
                           f"-disposition:s:{subtitle_output_idx}", "0"])
@@ -633,6 +639,19 @@ def load_allow_list():
     result = list(filter(phrase_list_accept_condition, result))
     result = list(map(lambda e: phrase_to_pattern(e), result))
     return result
+
+
+def compute_filter_hash(censor_list=None, stop_list=None, allow_list=None):
+    if censor_list is None:
+        censor_list = load_censor_list()
+    if stop_list is None:
+        stop_list = load_stop_list()
+    if allow_list is None:
+        allow_list = load_allow_list()
+    hash_input = str(FILTER_VERSION) + ','.join(censor_list) + ','.join(stop_list) + ','.join(allow_list)
+    filter_hash = hashlib.sha512(hash_input.encode("utf-8")).hexdigest()
+    logger.info(f"expected filter hash = {filter_hash}, expected filter version = {FILTER_VERSION}")
+    return filter_hash
 
 
 def need_original_subtitle_ocr(subtitle_original: dict, media_duration: float, force: bool) -> bool:
