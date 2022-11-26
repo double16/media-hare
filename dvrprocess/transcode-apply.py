@@ -2,6 +2,7 @@
 
 import getopt
 import logging
+import os
 import sys
 from subprocess import CalledProcessError
 
@@ -56,7 +57,9 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
             if limit < 0:
                 break
 
+        original_size = -1
         try:
+            original_size = os.stat(file_info.host_file_path).st_size
             post_process_code = dvr_post_process(file_info.host_file_path, dry_run=dry_run, verbose=verbose,
                                                  profanity_filter=True)
         except CalledProcessError as e:
@@ -65,11 +68,12 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
             # conflict with multiple processors
             post_process_code = 255
         if post_process_code == 0 and plex_url and file_info.item_key:
-            input_type = file_info.host_file_path.split(".")[-1]
-            if file_info.library and input_type != 'mkv':
+            file_changed = not os.path.exists(file_info.host_file_path) or os.stat(
+                file_info.host_file_path).st_size != original_size
+            if file_info.library and not os.path.exists(file_info.host_file_path):
                 # We changed output types, i.e. filenames, Plex requires a library scan to find it
                 libraries_to_scan.add(file_info.library)
-            else:
+            elif file_changed:
                 # Updating a file without changing the name, we can analyze the item
                 analyze_url = f'{plex_url}{file_info.item_key}/analyze'
                 logger.info('HTTP PUT: %s', analyze_url)
