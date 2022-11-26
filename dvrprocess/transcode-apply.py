@@ -8,6 +8,7 @@ from subprocess import CalledProcessError
 import requests
 
 import common
+from common import config, constants
 from dvr_post_process import dvr_post_process
 from find_need_transcode import need_transcode_generator
 
@@ -15,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def usage():
-    video_codecs = common.get_global_config_option('video', 'codecs')
-    audio_codecs = common.get_global_config_option('audio', 'codecs')
+    video_codecs = config.get_global_config_option('video', 'codecs')
+    audio_codecs = config.get_global_config_option('audio', 'codecs')
     print(f"""{sys.argv[0]} [options] [media_paths]
 
 Transcode content not matching desired video or audio codecs. This program is sensitive to current compute usage and
@@ -30,7 +31,7 @@ will not start running on a system under load and also will stop if the system b
     Desired video codecs. Defaults to {video_codecs}
 -a, --audio=
     Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
--f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
+-f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Desired frame rate. If the current frame rate is within 25%, the file isn't considered.
 --maxres=480
     Limit to specified height. Use to keep a lower powered machine from processing HD videos.

@@ -4,8 +4,8 @@ import re
 import subprocess
 from enum import Enum
 
-from . import get_video_width, get_video_height, K_FORMAT
-from . import tools
+from . import get_video_width, get_video_height
+from . import tools, constants
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
         width = get_video_width(input_info)
         height = get_video_height(input_info)
         duration = float(input_info['format']['duration'])
-        filename = input_info.get(K_FORMAT, {}).get("filename")
+        filename = input_info.get(constants.K_FORMAT, {}).get("filename")
         crop_frame_rect_histo = {}
         crop_detect_command = ['-hide_banner', '-skip_frame', 'nointra', '-i', filename,
                                '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',

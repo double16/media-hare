@@ -19,8 +19,7 @@ from numpy import loadtxt
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 
 import common
-from common import subtitle
-from common import tools
+from common import subtitle, tools, config, constants
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 11
@@ -63,7 +62,7 @@ Filter audio and subtitles for profanity.
     Keep original file in a backup prefixed by ".~"
 --debug
     Only create hidden output file for debugging
---work-dir={common.get_work_dir()}
+--work-dir={config.get_work_dir()}
 --remove
     Remove filtering
 --mark-skip
@@ -84,7 +83,7 @@ def profanity_filter(*args, **kwargs) -> int:
 
 
 def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,
-                        unmark_skip=None, language=common.LANGUAGE_ENGLISH, workdir=None, verbose=False) -> int:
+                        unmark_skip=None, language=constants.LANGUAGE_ENGLISH, workdir=None, verbose=False) -> int:
     if mark_skip and unmark_skip:
         logger.fatal("mark-skip and unmark-skip both set")
         return CMD_RESULT_ERROR
@@ -98,7 +97,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     input_type = base_filename.split(".")[-1]
     dir_filename = os.path.dirname(filename)
     if workdir is None:
-        workdir = common.get_work_dir()
+        workdir = config.get_work_dir()
 
     logger.info(f"filtering {filename}")
 
@@ -133,7 +132,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         filter_skip = True
     if filter_skip is None and not unmark_skip:
         filter_skip = common.is_truthy(
-            input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_SKIP))
+            input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(constants.K_FILTER_SKIP))
 
     streams_file = 0
 
@@ -161,22 +160,23 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     filter_hash = compute_filter_hash(censor_list, stop_list, allow_list)
 
     # Compare and exit if the same
-    current_filter_version = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_VERSION)
-    current_filter_hash = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_FILTER_HASH)
-    current_audio2text_version = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(
-        common.K_AUDIO_TO_TEXT_VERSION)
+    current_filter_version = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+        constants.K_FILTER_VERSION)
+    current_filter_hash = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(constants.K_FILTER_HASH)
+    current_audio2text_version = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+        constants.K_AUDIO_TO_TEXT_VERSION)
     logger.info("current filter hash = %s, current filter version = %s, current audio-to-text version = %s",
                 current_filter_hash, current_filter_version, current_audio2text_version)
 
     # Find original and filtered subtitle
     subtitle_original, subtitle_filtered, subtitle_filtered_forced, subtitle_words = common.find_original_and_filtered_streams(
         input_info,
-        common.CODEC_SUBTITLE,
-        common.CODEC_SUBTITLE_TEXT_BASED,
+        constants.CODEC_SUBTITLE,
+        constants.CODEC_SUBTITLE_TEXT_BASED,
         language)
     # Find original and filtered audio stream
     audio_original, audio_filtered, _, _ = common.find_original_and_filtered_streams(input_info,
-                                                                                     common.CODEC_AUDIO,
+                                                                                     constants.CODEC_AUDIO,
                                                                                      None,
                                                                                      language)
     tags_filename = f"{temp_base}.tags.xml"
@@ -185,13 +185,13 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
     if filter_skip:
         if audio_filtered is None and subtitle_filtered is None:
-            logger.info("%s: filter skipped due to %s property", filename, common.K_FILTER_SKIP)
+            logger.info("%s: filter skipped due to %s property", filename, constants.K_FILTER_SKIP)
             if mark_skip:
                 return _tag_as_skipped(filename, tags_filename, input_info, dry_run=dry_run, debug=debug,
                                        verbose=verbose)
             return CMD_RESULT_UNCHANGED
         else:
-            logger.info("%s: removing filter due to %s property", filename, common.K_FILTER_SKIP)
+            logger.info("%s: removing filter due to %s property", filename, constants.K_FILTER_SKIP)
     else:
         if not force and current_filter_hash == filter_hash and current_filter_version == str(
                 FILTER_VERSION) and current_audio2text_version in [None, '', str(AUDIO_TO_TEXT_VERSION)]:
@@ -209,7 +209,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     audio_to_text_filter = None
 
     if need_original_subtitle_ocr(subtitle_original=subtitle_original,
-                                  media_duration=float(input_info[common.K_FORMAT][common.K_DURATION]),
+                                  media_duration=float(input_info[constants.K_FORMAT][constants.K_DURATION]),
                                   force=force):
         subtitle_srt_generated = ocr_subtitle_bitmap_to_srt(input_info, temp_base, language, verbose=verbose)
 
@@ -217,7 +217,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                                                              subtitle_words=subtitle_words,
                                                              current_audio2text_version=current_audio2text_version,
                                                              media_duration=float(
-                                                                 input_info[common.K_FORMAT][common.K_DURATION]),
+                                                                 input_info[constants.K_FORMAT][constants.K_DURATION]),
                                                              force=force):
         # We may only need the words from transcription
         if subtitle_srt_generated or subtitle_original:
@@ -232,14 +232,14 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             if not subtitle_original and subtitle_srt_generated is None:
                 subtitle_srt_generated = _srt_text
 
-    tags = input_info[common.K_FORMAT].get(common.K_TAGS, {}).copy()
-    tags[common.K_FILTER_HASH] = filter_hash
-    tags[common.K_FILTER_VERSION] = FILTER_VERSION
-    tags[common.K_AUDIO_TO_TEXT_VERSION] = audio_to_text_version if audio_to_text_version else ''
-    tags[common.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
+    tags = input_info[constants.K_FORMAT].get(constants.K_TAGS, {}).copy()
+    tags[constants.K_FILTER_HASH] = filter_hash
+    tags[constants.K_FILTER_VERSION] = FILTER_VERSION
+    tags[constants.K_AUDIO_TO_TEXT_VERSION] = audio_to_text_version if audio_to_text_version else ''
+    tags[constants.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
     if common.should_replace_media_title(input_info):
-        tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
-    tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
+        tags[constants.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
+    tags[constants.K_MEDIA_PROCESSOR] = constants.V_MEDIA_PROCESSOR
 
     if not subtitle_original and subtitle_srt_generated is None:
         # mark as filtered so we don't repeat
@@ -264,11 +264,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             return CMD_RESULT_UNCHANGED
 
     if subtitle_srt_generated is not None:
-        subtitle_codec = common.CODEC_SUBTITLE_SRT
+        subtitle_codec = constants.CODEC_SUBTITLE_SRT
     else:
-        subtitle_codec = subtitle_original.get(common.K_CODEC_NAME)
-        if subtitle_codec == common.CODEC_SUBTITLE_SUBRIP:
-            subtitle_codec = common.CODEC_SUBTITLE_SRT
+        subtitle_codec = subtitle_original.get(constants.K_CODEC_NAME)
+        if subtitle_codec == constants.CODEC_SUBTITLE_SUBRIP:
+            subtitle_codec = constants.CODEC_SUBTITLE_SRT
     subtitle_original_filename = f"{temp_base}.original.{subtitle_codec}"
     subtitle_filtered_filename = f"{temp_base}.filtered.{subtitle_codec}"
     subtitle_filtered_forced_filename = f"{temp_base}.filtered-forced.{subtitle_codec}"
@@ -281,12 +281,12 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         common.TEMPFILENAMES.append(subtitle_filtered_previous_filename)
         common.TEMPFILENAMES.append(subtitle_words_filename)
 
-    subtitle_original_idx = (subtitle_original or {}).get(common.K_STREAM_INDEX)
-    subtitle_filtered_idx = (subtitle_filtered or {}).get(common.K_STREAM_INDEX)
-    subtitle_filtered_forced_idx = (subtitle_filtered_forced or {}).get(common.K_STREAM_INDEX)
-    subtitle_words_idx = (subtitle_words or {}).get(common.K_STREAM_INDEX)
-    audio_original_idx = audio_original.get(common.K_STREAM_INDEX)
-    audio_filtered_idx = (audio_filtered or {}).get(common.K_STREAM_INDEX)
+    subtitle_original_idx = (subtitle_original or {}).get(constants.K_STREAM_INDEX)
+    subtitle_filtered_idx = (subtitle_filtered or {}).get(constants.K_STREAM_INDEX)
+    subtitle_filtered_forced_idx = (subtitle_filtered_forced or {}).get(constants.K_STREAM_INDEX)
+    subtitle_words_idx = (subtitle_words or {}).get(constants.K_STREAM_INDEX)
+    audio_original_idx = audio_original.get(constants.K_STREAM_INDEX)
+    audio_filtered_idx = (audio_filtered or {}).get(constants.K_STREAM_INDEX)
 
     logger.info(f"subtitle original = {subtitle_original_idx}, audio original = {audio_original_idx}")
     logger.info(
@@ -297,23 +297,24 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info(f"Removing filtered streams")
         if common.should_replace_media_title(input_info):
             arguments.extend(
-                ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
-        arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
-        arguments.extend(["-metadata", f"{common.K_FILTER_HASH}="])
-        arguments.extend(["-metadata", f"{common.K_FILTER_VERSION}="])
+                ['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+        arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_HASH}="])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_VERSION}="])
         arguments.extend(
-            ["-metadata", f"{common.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         arguments.extend(
-            ["-metadata", f"{common.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
-        arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}="])
+            ["-metadata", f"{constants.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}="])
         if mark_skip:
-            arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}=true"])
+            arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}=true"])
         arguments.extend(["-c:s", "copy"])
 
         # Original audio stream
         arguments.extend(["-map", f"{streams_file}:{audio_original_idx}",
                           "-c:a:0", "copy",
-                          "-metadata:s:a:0", f'title={common.TITLE_ORIGINAL}',
+                          "-metadata:s:a:0", f'title={constants.TITLE_ORIGINAL}',
                           "-disposition:a:0", "default"])
 
         audio_output_idx = 1
@@ -321,14 +322,14 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if subtitle_original_idx is not None:
             # Original subtitle stream
             arguments.extend(["-map", f"{streams_file}:{subtitle_original_idx}",
-                              "-metadata:s:s:0", f'title={common.TITLE_ORIGINAL}',
+                              "-metadata:s:s:0", f'title={constants.TITLE_ORIGINAL}',
                               "-disposition:s:0", "default"])
             subtitle_output_idx = 1
         elif subtitle_srt_generated is not None:
             # Keep generated streams
             arguments.extend(["-i", subtitle_srt_generated,
                               "-map", f"{streams_file + 1}:0",
-                              "-metadata:s:s:0", f'title={common.TITLE_ORIGINAL}',
+                              "-metadata:s:s:0", f'title={constants.TITLE_ORIGINAL}',
                               "-disposition:s:0", "default"])
             subtitle_output_idx = 1
         else:
@@ -336,12 +337,12 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if subtitle_srt_words is not None:
             arguments.extend(["-i", subtitle_srt_words,
                               "-map", f"{streams_file + 2}:0",
-                              f"-metadata:s:s:1", f'title={common.TITLE_WORDS}',
+                              f"-metadata:s:s:1", f'title={constants.TITLE_WORDS}',
                               f"-disposition:s:1", "-default+metadata"])
             subtitle_output_idx += 1
         elif subtitle_words_idx is not None:
             arguments.extend(["-map", f"{streams_file}:{subtitle_words_idx}",
-                              f"-metadata:s:s:{subtitle_output_idx}", f'title={common.TITLE_WORDS}',
+                              f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_WORDS}',
                               f"-disposition:s:{subtitle_output_idx}", "-default+metadata"])
             subtitle_output_idx += 1
     else:
@@ -380,7 +381,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         # subtitles
         filtered_spans = []
         stopped_spans = []
-        if subtitle_codec == common.CODEC_SUBTITLE_ASS:
+        if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
             ass_data = read_ass(Path(subtitle_original_filename))
             ass_data_forced = copy.copy(ass_data)
             ass_data_forced.events = AssEventList()
@@ -395,7 +396,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                         stopped_spans.append([event.start, event.end])
             write_ass(ass_data, Path(subtitle_filtered_filename))
             write_ass(ass_data_forced, Path(subtitle_filtered_forced_filename))
-        elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
+        elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
             srt_data_forced = copy.copy(srt_data)
             srt_data_forced.data = []
@@ -418,9 +419,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             return CMD_RESULT_ERROR
 
         if len(stopped_spans) > 0:
-            tags[common.K_FILTER_STOPPED] = span_list_to_str(stopped_spans)
-        if common.K_FILTER_SKIP in tags:
-            del tags[common.K_FILTER_SKIP]
+            tags[constants.K_FILTER_STOPPED] = span_list_to_str(stopped_spans)
+        if constants.K_FILTER_SKIP in tags:
+            del tags[constants.K_FILTER_SKIP]
         common.write_mkv_tags(tags, tags_filename)
 
         if subtitle_filtered_idx is not None:
@@ -442,19 +443,20 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 tools.mkvpropedit.run([filename, "--tags", f"global:{tags_filename}"])
             return CMD_RESULT_MARKED
 
-        arguments.extend(["-metadata", f"{common.K_FILTER_HASH}={filter_hash}"])
-        arguments.extend(["-metadata", f"{common.K_FILTER_VERSION}={FILTER_VERSION}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_HASH}={filter_hash}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_VERSION}={FILTER_VERSION}"])
         arguments.extend(
-            ["-metadata", f"{common.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         arguments.extend(
-            ["-metadata", f"{common.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
+            ["-metadata", f"{constants.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
         if len(stopped_spans) > 0:
-            arguments.extend(["-metadata", f"{common.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
-        arguments.extend(["-metadata", f"{common.K_FILTER_SKIP}="])
+            arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}="])
         if common.should_replace_media_title(input_info):
             arguments.extend(
-                ['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
-        arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
+                ['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+        arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
         arguments.extend(["-c:s", "copy"])
 
         # Filtered audio stream
@@ -470,7 +472,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                     mute_filters.append(f"volume=enable='between(t,{span[0] / 1000.0},{span[1] / 1000.0})':volume=0")
             arguments.extend(["-map", f"{streams_file}:{audio_original_idx}",
                               f"-c:a:{audio_output_idx}", "libopus",
-                              f"-metadata:s:a:{audio_output_idx}", f'title={common.TITLE_FILTERED}',
+                              f"-metadata:s:a:{audio_output_idx}", f'title={constants.TITLE_FILTERED}',
                               f"-disposition:a:{audio_output_idx}", "default"])
             common.extend_opus_arguments(arguments, input_info['streams'][audio_original_idx], f'a:{audio_output_idx}',
                                          mute_filters)
@@ -479,7 +481,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         # Original audio stream
         arguments.extend(["-map", f"{streams_file}:{audio_original_idx}",
                           f"-c:a:{audio_output_idx}", "copy",
-                          f"-metadata:s:a:{audio_output_idx}", f'title={common.TITLE_ORIGINAL}'])
+                          f"-metadata:s:a:{audio_output_idx}", f'title={constants.TITLE_ORIGINAL}'])
         if audio_output_idx == 0:
             arguments.extend([f"-disposition:a:{audio_output_idx}", "default"])
         else:
@@ -490,12 +492,12 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         subtitle_output_idx = 0
         if len(filtered_spans) > 0:
             arguments.extend(["-map", f"{subtitle_filtered_stream}:0",
-                              f"-metadata:s:s:{subtitle_output_idx}", f'title={common.TITLE_FILTERED}',
+                              f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_FILTERED}',
                               f"-metadata:s:s:{subtitle_output_idx}", f'language={language}',
                               f"-disposition:s:{subtitle_output_idx}", "default"])
             subtitle_output_idx += 1
             arguments.extend(["-map", f"{subtitle_filtered_forced_stream}:0",
-                              f"-metadata:s:s:{subtitle_output_idx}", f'title={common.TITLE_FILTERED_FORCED}',
+                              f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_FILTERED_FORCED}',
                               f"-metadata:s:s:{subtitle_output_idx}", f'language={language}',
                               f"-disposition:s:{subtitle_output_idx}", "-default+forced"])
             subtitle_output_idx += 1
@@ -506,7 +508,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         elif subtitle_original_idx is not None:
             arguments.extend(["-map", f"{streams_file}:{subtitle_original_idx}"])
 
-        arguments.extend([f"-metadata:s:s:{subtitle_output_idx}", f'title={common.TITLE_ORIGINAL}',
+        arguments.extend([f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_ORIGINAL}',
                           f"-metadata:s:s:{subtitle_output_idx}", f'language={language}'])
         if subtitle_output_idx == 0:
             arguments.extend([f"-disposition:s:{subtitle_output_idx}", "default"])
@@ -516,31 +518,31 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
         if subtitle_srt_words is not None:
             arguments.extend(["-map", f"{subtitle_srt_words_file}:0"])
-            arguments.extend([f"-metadata:s:s:{subtitle_output_idx}", f'title={common.TITLE_WORDS}',
+            arguments.extend([f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_WORDS}',
                               f"-metadata:s:s:{subtitle_output_idx}", f'language={language}',
                               f"-disposition:s:{subtitle_output_idx}", "-default+metadata"])
             subtitle_output_idx += 1
         elif subtitle_words_idx is not None:
             arguments.extend(["-map", f"{streams_file}:{subtitle_words_idx}"])
-            arguments.extend([f"-metadata:s:s:{subtitle_output_idx}", f'title={common.TITLE_WORDS}',
+            arguments.extend([f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_WORDS}',
                               f"-metadata:s:s:{subtitle_output_idx}", f'language={language}',
                               f"-disposition:s:{subtitle_output_idx}", "-default+metadata"])
             subtitle_output_idx += 1
 
     # Remaining audio streams
-    for extra_audio in list(filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_AUDIO and stream[
-        common.K_STREAM_INDEX] not in [audio_original_idx, audio_filtered_idx], input_info['streams'])):
-        arguments.extend(["-map", f"{streams_file}:{extra_audio[common.K_STREAM_INDEX]}",
+    for extra_audio in list(filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO and stream[
+        constants.K_STREAM_INDEX] not in [audio_original_idx, audio_filtered_idx], input_info['streams'])):
+        arguments.extend(["-map", f"{streams_file}:{extra_audio[constants.K_STREAM_INDEX]}",
                           f"-c:a:{audio_output_idx}", "copy",
                           f"-disposition:a:{audio_output_idx}", "0"])
         audio_output_idx += 1
 
     # Remaining subtitle streams
-    for extra_audio in list(filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_SUBTITLE and stream[
-        common.K_STREAM_INDEX] not in [subtitle_original_idx, subtitle_filtered_idx, subtitle_filtered_forced_idx,
-                                       subtitle_words_idx],
+    for extra_audio in list(filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_SUBTITLE and stream[
+        constants.K_STREAM_INDEX] not in [subtitle_original_idx, subtitle_filtered_idx, subtitle_filtered_forced_idx,
+                                          subtitle_words_idx],
                                    input_info['streams'])):
-        arguments.extend(["-map", f"{streams_file}:{extra_audio[common.K_STREAM_INDEX]}",
+        arguments.extend(["-map", f"{streams_file}:{extra_audio[constants.K_STREAM_INDEX]}",
                           f"-disposition:s:{subtitle_output_idx}", "0"])
         subtitle_output_idx += 1
 
@@ -733,7 +735,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
                            common.ANALYZE_DURATION,
                            '-probesize', common.PROBE_SIZE,
                            '-i', input_info['format']['filename'],
-                           '-map', f'0:{bluray[common.K_STREAM_INDEX]}', '-c:s', 'copy',
+                           '-map', f'0:{bluray[constants.K_STREAM_INDEX]}', '-c:s', 'copy',
                            subtitle_filename
                            ]
         if verbose:
@@ -750,7 +752,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
                            common.ANALYZE_DURATION,
                            '-probesize', common.PROBE_SIZE,
                            '-i', input_info['format']['filename'],
-                           '-map', f'0:{dvd[common.K_STREAM_INDEX]}', '-c:s', 'dvdsub',
+                           '-map', f'0:{dvd[constants.K_STREAM_INDEX]}', '-c:s', 'dvdsub',
                            subtitle_filename
                            ]
         if verbose:
@@ -813,7 +815,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     # ffmpeg -nostdin -loglevel quiet -i /tmp/tmp09gxo8oz.ac3 -ar 16000.0 -ac 1 -f s16le -
     extract_command = ['-nostdin', "-loglevel", "error",
                        '-i', input_info['format']['filename'],
-                       '-map', f'0:{audio_original[common.K_STREAM_INDEX]}',
+                       '-map', f'0:{audio_original[constants.K_STREAM_INDEX]}',
                        '-ar', str(freq), '-ac', '1']
     if audio_filter:
         extract_command.extend(['-af', audio_filter])
@@ -920,7 +922,7 @@ def words_in_dictionary_pct(subtitle_srt_filename, language):
         import hunspell
 
         # verify with spell checker (hunspell) that text looks like English
-        if language == common.LANGUAGE_ENGLISH:
+        if language == constants.LANGUAGE_ENGLISH:
             hobj = hunspell.HunSpell('/usr/share/hunspell/en_US.dic', '/usr/share/hunspell/en_US.aff')
         else:
             hobj = hunspell.HunSpell(f'/usr/share/hunspell/{language[0:2]}.dic',
@@ -946,13 +948,15 @@ def words_in_dictionary_pct(subtitle_srt_filename, language):
 
 def find_subtitle_dvdsub(input_info, language=None):
     return one_or_zero_streams(
-        common.find_streams_by_codec_and_language(input_info, common.CODEC_SUBTITLE, [common.CODEC_SUBTITLE_DVDSUB],
+        common.find_streams_by_codec_and_language(input_info, constants.CODEC_SUBTITLE,
+                                                  [constants.CODEC_SUBTITLE_DVDSUB],
                                                   language))
 
 
 def find_subtitle_bluray(input_info, language=None):
     return one_or_zero_streams(
-        common.find_streams_by_codec_and_language(input_info, common.CODEC_SUBTITLE, [common.CODEC_SUBTITLE_BLURAY],
+        common.find_streams_by_codec_and_language(input_info, constants.CODEC_SUBTITLE,
+                                                  [constants.CODEC_SUBTITLE_BLURAY],
                                                   language))
 
 
@@ -1112,18 +1116,18 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
     :param input_info:
     :return: CMD_RESULT_UNCHANGED or CMD_RESULT_MARKED
     """
-    tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).copy()
-    if common.is_truthy(tags.get(common.K_FILTER_SKIP)):
+    tags = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).copy()
+    if common.is_truthy(tags.get(constants.K_FILTER_SKIP)):
         # already marked
         return CMD_RESULT_UNCHANGED
 
-    tags[common.K_FILTER_SKIP] = 'true'
-    for key in [common.K_FILTER_HASH, common.K_FILTER_VERSION, common.K_FILTER_STOPPED]:
+    tags[constants.K_FILTER_SKIP] = 'true'
+    for key in [constants.K_FILTER_HASH, constants.K_FILTER_VERSION, constants.K_FILTER_STOPPED]:
         if key in tags:
             del tags[key]
     if common.should_replace_media_title(input_info):
-        tags[common.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
-    tags[common.K_MEDIA_PROCESSOR] = common.V_MEDIA_PROCESSOR
+        tags[constants.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
+    tags[constants.K_MEDIA_PROCESSOR] = constants.V_MEDIA_PROCESSOR
     common.write_mkv_tags(tags, tags_filename)
     if not dry_run and not debug:
         tools.mkvpropedit.run([filename, "--tags", f"global:{tags_filename}"])
@@ -1140,8 +1144,8 @@ if __name__ == '__main__':
     filter_skip = None
     mark_skip = None
     unmark_skip = None
-    language = common.LANGUAGE_ENGLISH
-    workdir = common.get_work_dir()
+    language = constants.LANGUAGE_ENGLISH
+    workdir = config.get_work_dir()
 
     try:
         opts, args = getopt.getopt(

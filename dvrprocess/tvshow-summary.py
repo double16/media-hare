@@ -15,6 +15,7 @@ import requests
 from imdb import IMDbDataAccessError
 
 import common
+from common import config
 
 #
 # List of libraries: /library/sections, want type="show"
@@ -341,7 +342,7 @@ def tvshow_summary_cli(argv) -> int:
     plex_url = common.get_plex_url()
     episode_csv = ''
     completion_csv = ''
-    cache_dir = os.path.join(common.get_work_dir(), 'tvshow-summary')
+    cache_dir = os.path.join(config.get_work_dir(), 'tvshow-summary')
     os.makedirs(cache_dir, exist_ok=True)
 
     try:

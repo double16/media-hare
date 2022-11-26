@@ -1,7 +1,11 @@
 import re
 import subprocess
+from multiprocessing import Semaphore
 
+from . import config
 from .proc_invoker import SubprocessProcInvoker
+
+disk_semaphore = Semaphore(config.get_global_config_int('background_limits', 'disk_processes', fallback=10))
 
 
 def _ffmpeg_version_parser(path):
@@ -12,7 +16,7 @@ def _ffmpeg_version_parser(path):
     return _maybe_version
 
 
-ffmpeg = SubprocessProcInvoker('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.'])
+ffmpeg = SubprocessProcInvoker('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.'], semaphore=disk_semaphore)
 
 
 def _ffprobe_version_parser(path):

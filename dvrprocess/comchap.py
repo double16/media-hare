@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 import common
-from common import hwaccel, tools
+from common import hwaccel, tools, config, constants
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ Usage: {sys.argv[0]} infile [outfile]
 -k, --keep-all
 --verbose
 --comskip-ini=
---work-dir={common.get_work_dir()}
+--work-dir={config.get_work_dir()}
 --mark-skip
     Mark file(s) to skip commercial scanning. Existing commercial markers, EDL and comskip.ini files will be removed.
 --force
@@ -58,7 +58,7 @@ Usage: {sys.argv[0]} infile [outfile]
 
 
 def find_comskip_ini():
-    return common.find_config('comskip.ini')
+    return config.find_config('comskip.ini')
 
 
 def get_expected_adjusted_duration(video_info):
@@ -122,7 +122,7 @@ def build_comskip_ini(comskip_ini, leaf_comskip_ini=None, video_path=None, input
     if input_info is None:
         input_info = common.find_input_info(video_path)
     elif video_path is None:
-        video_path = input_info.get(common.K_FORMAT, {}).get("filename")
+        video_path = input_info.get(constants.K_FORMAT, {}).get("filename")
 
     if video_path:
         comskip_temp = os.path.join(workdir, f".~{os.path.basename(video_path)}.ini")
@@ -133,7 +133,7 @@ def build_comskip_ini(comskip_ini, leaf_comskip_ini=None, video_path=None, input
     if not keep:
         common.TEMPFILENAMES.append(comskip_temp)
 
-    duration_in_seconds = float(input_info[common.K_FORMAT]['duration'])
+    duration_in_seconds = float(input_info[constants.K_FORMAT]['duration'])
     ini_dir = os.path.dirname(os.path.abspath(comskip_ini))
 
     comskip_obj = configparser.ConfigParser()
@@ -248,7 +248,7 @@ def get_comskip_hwassist_options() -> list[str]:
     :return: hardware assist options, or empty list
     """
     options = []
-    if common.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
+    if config.get_global_config_boolean('comskip', 'hwaccel', fallback=False):
         options.append("--hwassist")
         if hwaccel.find_hwaccel_method() == hwaccel.HWAccelMethod.NVENC:
             options.append("--cuvid")
@@ -268,13 +268,14 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                force=False, debug=False, backup_edl=False, use_csv=True, csvfile=None, input_info=None):
     if input_info is None:
         input_info = common.find_input_info(infile)
-    duration = float(input_info[common.K_FORMAT]['duration'])
+    duration = float(input_info[constants.K_FORMAT]['duration'])
 
-    if common.is_truthy(input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(common.K_COMSKIP_SKIP)) and not force:
-        logger.info("%s: filter skipped due to %s property", infile, common.K_COMSKIP_SKIP)
+    if common.is_truthy(input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+            constants.K_COMSKIP_SKIP)) and not force:
+        logger.info("%s: filter skipped due to %s property", infile, constants.K_COMSKIP_SKIP)
         return 1
 
-    chapters = input_info.get(common.K_CHAPTERS, []).copy()
+    chapters = input_info.get(constants.K_CHAPTERS, []).copy()
     chapters.sort(key=lambda c: float(c['start_time']))
     has_chapters_from_source_media, chapters_commercials = common.has_chapters_from_source_media(input_info)
     if has_chapters_from_source_media:
@@ -282,7 +283,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         return 1
 
     if workdir is None:
-        workdir = common.get_work_dir()
+        workdir = config.get_work_dir()
 
     if not comskipini:
         try:
@@ -331,8 +332,8 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     comskipini_hash = compute_comskip_ini_hash(comskipini, leaf_comskip_ini=leaf_comskip_ini, video_path=infile,
                                                input_info=input_info,
                                                workdir=workdir if delete_ini else tempfile.gettempdir())
-    current_comskip_hash = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(
-        common.K_COMSKIP_HASH)
+    current_comskip_hash = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+        constants.K_COMSKIP_HASH)
     logger.debug("comskip.ini hash is %s, current hash is %s", comskipini_hash, current_comskip_hash)
 
     run_comskip = force
@@ -408,13 +409,13 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     if common.assert_not_transcoding(infile, exit=False) != 0:
         return 255
 
-    tags = input_info[common.K_FORMAT].get(common.K_TAGS, {}).copy()
-    if common.K_COMSKIP_SKIP in tags:
-        del tags[common.K_COMSKIP_SKIP]
-    tags[common.K_COMSKIP_HASH] = comskipini_hash
-    video_title = input_info[common.K_FORMAT].get(common.K_STREAM_TITLE, None)
+    tags = input_info[constants.K_FORMAT].get(constants.K_TAGS, {}).copy()
+    if constants.K_COMSKIP_SKIP in tags:
+        del tags[constants.K_COMSKIP_SKIP]
+    tags[constants.K_COMSKIP_HASH] = comskipini_hash
+    video_title = input_info[constants.K_FORMAT].get(constants.K_STREAM_TITLE, None)
     if video_title:
-        tags[common.K_STREAM_TITLE] = video_title
+        tags[constants.K_STREAM_TITLE] = video_title
     common.write_mkv_tags(tags, tags_filename)
 
     edl_events = common.parse_edl_cuts(edlfile)
@@ -490,7 +491,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                               "-map_metadata", "0",
                               "-map_chapters", "1",
                               "-map", "0",
-                              "-metadata", f"{common.K_COMSKIP_HASH}={comskipini_hash}",
+                              "-metadata", f"{constants.K_COMSKIP_HASH}={comskipini_hash}",
                               "-codec", "copy", "-y"]
             tempoutfile = None
             if infile == outfile:
@@ -523,11 +524,11 @@ def comchap_mark_skip(filename: str, workdir: str) -> int:
     """
     # add tag to media file
     input_info = common.find_input_info(filename)
-    tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).copy()
-    if not common.is_truthy(tags.get(common.K_COMSKIP_SKIP)):
+    tags = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).copy()
+    if not common.is_truthy(tags.get(constants.K_COMSKIP_SKIP)):
         # add tag to media file
-        tags[common.K_COMSKIP_SKIP] = 'true'
-        for key in [common.K_COMSKIP_HASH]:
+        tags[constants.K_COMSKIP_SKIP] = 'true'
+        for key in [constants.K_COMSKIP_HASH]:
             if key in tags:
                 del tags[key]
         tags_filename = os.path.join(workdir, f".~{'.'.join(os.path.basename(filename).split('.')[0:-1])}.tags.xml")
@@ -557,15 +558,15 @@ def comchap_mark_skip(filename: str, workdir: str) -> int:
 
 
 def comchap_cli(argv):
-    delete_edl = not common.get_global_config_boolean('general', 'keep_edl')
+    delete_edl = not config.get_global_config_boolean('general', 'keep_edl')
     backup_edl = False
-    delete_meta = not common.get_global_config_boolean('general', 'keep_meta')
+    delete_meta = not config.get_global_config_boolean('general', 'keep_meta')
     delete_log = True
     delete_logo = True
     delete_txt = True
     delete_ini = True
     verbose = False
-    workdir = common.get_work_dir()
+    workdir = config.get_work_dir()
     comskipini = None
     modify_video = True
     force = False

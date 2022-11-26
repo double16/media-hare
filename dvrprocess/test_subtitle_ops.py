@@ -1,6 +1,7 @@
 import logging
 import unittest
-from common import subtitle, parse_edl_ts, CODEC_SUBTITLE_ASS, CODEC_SUBTITLE_SRT
+
+from common import subtitle, parse_edl_ts, constants
 
 
 class SubtitleOperationsTest(unittest.TestCase):
@@ -13,7 +14,7 @@ class SubtitleOperationsTest(unittest.TestCase):
 
     def test_cut_start_srt(self):
         subtitle.subtitle_cut(self.srt_data, 0, parse_edl_ts('00:00:03'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_SRT, None, self.srt_data), """1
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_SRT, None, self.srt_data), """1
 00:00:01,137 --> 00:00:04,596
 the
 
@@ -32,7 +33,7 @@ The the
 
     def test_cut_middle_srt(self):
         subtitle.subtitle_cut(self.srt_data, parse_edl_ts('00:00:12'), parse_edl_ts('00:00:13'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_SRT, None, self.srt_data), """1
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_SRT, None, self.srt_data), """1
 00:00:00,500 --> 00:00:04,027
 Hey there
 
@@ -51,7 +52,7 @@ The the
 
     def test_cut_multiple_srt(self):
         subtitle.subtitle_cut(self.srt_data, parse_edl_ts('00:00:12'), parse_edl_ts('00:00:15'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_SRT, None, self.srt_data), """1
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_SRT, None, self.srt_data), """1
 00:00:00,500 --> 00:00:04,027
 Hey there
 
@@ -66,7 +67,7 @@ The the
 
     def test_cut_end_srt(self):
         subtitle.subtitle_cut(self.srt_data, parse_edl_ts('00:00:31'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_SRT, None, self.srt_data), """1
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_SRT, None, self.srt_data), """1
 00:00:00,500 --> 00:00:04,027
 Hey there
 
@@ -85,7 +86,7 @@ The lazy brown fox the the
 
     def test_cut_before_start_srt(self):
         subtitle.subtitle_cut(self.srt_data, 0, parse_edl_ts('00:00:00.250'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_SRT, None, self.srt_data), """1
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_SRT, None, self.srt_data), """1
 00:00:00,250 --> 00:00:03,777
 Hey there
 
@@ -108,7 +109,7 @@ The the
 
     def test_cut_after_end_srt(self):
         subtitle.subtitle_cut(self.srt_data, parse_edl_ts('00:00:40'), parse_edl_ts('00:00:42'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_SRT, None, self.srt_data), """1
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_SRT, None, self.srt_data), """1
 00:00:00,500 --> 00:00:04,027
 Hey there
 
@@ -131,7 +132,7 @@ The the
 
     def test_cut_start_ssa(self):
         subtitle.subtitle_cut(self.ass_data, 0, parse_edl_ts('00:00:03'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
 ScriptType: v4.00+
 PlayResX: 384
 PlayResY: 288
@@ -151,7 +152,7 @@ Dialogue: 0,0:00:27.16,0:00:29.65,Default,,0,0,0,,{TIME:27160,29650}The the
 
     def test_cut_middle_ssa(self):
         subtitle.subtitle_cut(self.ass_data, parse_edl_ts('00:00:12'), parse_edl_ts('00:00:13'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
 ScriptType: v4.00+
 PlayResX: 384
 PlayResY: 288
@@ -171,7 +172,7 @@ Dialogue: 0,0:00:29.16,0:00:31.65,Default,,0,0,0,,{TIME:29160,31650}The the
 
     def test_cut_multiple_ssa(self):
         subtitle.subtitle_cut(self.ass_data, parse_edl_ts('00:00:12'), parse_edl_ts('00:00:15'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
 ScriptType: v4.00+
 PlayResX: 384
 PlayResY: 288
@@ -190,7 +191,7 @@ Dialogue: 0,0:00:27.16,0:00:29.65,Default,,0,0,0,,{TIME:27160,29650}The the
 
     def test_cut_end_ssa(self):
         subtitle.subtitle_cut(self.ass_data, parse_edl_ts('00:00:31'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
 ScriptType: v4.00+
 PlayResX: 384
 PlayResY: 288
@@ -210,7 +211,7 @@ Dialogue: 0,0:00:13.68,0:00:16.31,Default,,0,0,0,,{TIME:13680,16310}The lazy bro
 
     def test_cut_before_start_ssa(self):
         subtitle.subtitle_cut(self.ass_data, 0, parse_edl_ts('00:00:00.250'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
 ScriptType: v4.00+
 PlayResX: 384
 PlayResY: 288
@@ -231,7 +232,7 @@ Dialogue: 0,0:00:29.91,0:00:32.40,Default,,0,0,0,,{TIME:29910,32400}The the
 
     def test_cut_after_end_ssa(self):
         subtitle.subtitle_cut(self.ass_data, parse_edl_ts('00:00:40'), parse_edl_ts('00:00:42'))
-        self.assertEqual(subtitle.write_subtitle_data(CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
+        self.assertEqual(subtitle.write_subtitle_data(constants.CODEC_SUBTITLE_ASS, None, self.ass_data), """[Script Info]
 ScriptType: v4.00+
 PlayResX: 384
 PlayResY: 288

@@ -11,7 +11,7 @@ import pysrt
 from ass_parser import read_ass, errors
 
 import common
-from common import tools
+from common import tools, constants
 
 logger = logging.getLogger(__name__)
 
@@ -28,28 +28,28 @@ def profanity_filter_report_cli(argv):
 def extract_pf_data(mkv):
     input_info = common.find_input_info(mkv)
     subtitle_original, subtitle_filtered, _, _ = common.find_original_and_filtered_streams(input_info,
-                                                                                           common.CODEC_SUBTITLE,
+                                                                                           constants.CODEC_SUBTITLE,
                                                                                            [
-                                                                                               common.CODEC_SUBTITLE_ASS,
-                                                                                               common.CODEC_SUBTITLE_SRT,
-                                                                                               common.CODEC_SUBTITLE_SUBRIP],
-                                                                                           common.LANGUAGE_ENGLISH)
+                                                                                               constants.CODEC_SUBTITLE_ASS,
+                                                                                               constants.CODEC_SUBTITLE_SRT,
+                                                                                               constants.CODEC_SUBTITLE_SUBRIP],
+                                                                                           constants.LANGUAGE_ENGLISH)
     if subtitle_original is None or subtitle_filtered is None:
         print(f"INFO: {mkv} has no filtered subtitles", file=sys.stderr)
         return None
 
-    tags = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {})
+    tags = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {})
     data = {
         'filename': mkv,
-        common.K_FILTER_VERSION: tags.get(common.K_FILTER_VERSION, None),
-        common.K_FILTER_HASH: tags.get(common.K_FILTER_HASH, None),
-        common.K_FILTER_STOPPED: tags.get(common.K_FILTER_STOPPED, None),
-        common.K_AUDIO_TO_TEXT_VERSION: tags.get(common.K_AUDIO_TO_TEXT_VERSION, None),
+        constants.K_FILTER_VERSION: tags.get(constants.K_FILTER_VERSION, None),
+        constants.K_FILTER_HASH: tags.get(constants.K_FILTER_HASH, None),
+        constants.K_FILTER_STOPPED: tags.get(constants.K_FILTER_STOPPED, None),
+        constants.K_AUDIO_TO_TEXT_VERSION: tags.get(constants.K_AUDIO_TO_TEXT_VERSION, None),
         'changes': []
     }
     subtitle_codec = subtitle_original['codec_name']
-    if subtitle_codec == common.CODEC_SUBTITLE_SUBRIP:
-        subtitle_codec = common.CODEC_SUBTITLE_SRT
+    if subtitle_codec == constants.CODEC_SUBTITLE_SUBRIP:
+        subtitle_codec = constants.CODEC_SUBTITLE_SRT
     fd, file_original = tempfile.mkstemp(suffix='.' + subtitle_codec, prefix='.~')
     os.close(fd)
     fd, file_filtered = tempfile.mkstemp(suffix='.' + subtitle_codec, prefix='.~')
@@ -58,8 +58,8 @@ def extract_pf_data(mkv):
                        '-probesize', common.PROBE_SIZE,
                        '-i', input_info['format']['filename'],
                        '-c:s', 'copy',
-                       '-map', f'0:{subtitle_original[common.K_STREAM_INDEX]}', file_original,
-                       '-map', f'0:{subtitle_filtered[common.K_STREAM_INDEX]}', file_filtered
+                       '-map', f'0:{subtitle_original[constants.K_STREAM_INDEX]}', file_original,
+                       '-map', f'0:{subtitle_filtered[constants.K_STREAM_INDEX]}', file_filtered
                        ]
     tools.ffmpeg.run(extract_command, check=True, capture_output=True)
 
@@ -70,12 +70,12 @@ def extract_pf_data(mkv):
     parsed_original = None
     parsed_filtered = None
     try:
-        if subtitle_codec == common.CODEC_SUBTITLE_ASS:
+        if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
             parsed_original = list(
                 map(lambda e: {'when': e.start, 'text': e.text}, read_ass(Path(file_original)).events))
             parsed_filtered = list(
                 map(lambda e: {'when': e.start, 'text': e.text}, read_ass(Path(file_filtered)).events))
-        elif subtitle_codec in [common.CODEC_SUBTITLE_SRT, common.CODEC_SUBTITLE_SUBRIP]:
+        elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             parsed_original = list(map(lambda e: {'when': e.start.ordinal, 'text': e.text}, pysrt.open(file_original)))
             parsed_filtered = list(map(lambda e: {'when': e.start.ordinal, 'text': e.text}, pysrt.open(file_filtered)))
         else:

@@ -13,7 +13,7 @@ from pysrt import SubRipItem, SubRipFile, SubRipTime
 from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit
 
 import common
-from common import tools
+from common import tools, constants
 
 
 def usage():
@@ -80,10 +80,10 @@ def audio_transcribe(input_path, freq=16000, words_path=None, text_path=None, bu
 
     input_info = common.find_input_info(input_path)
     ffmpeg_command = ['-nostdin', '-loglevel', 'quiet', '-i', input_path]
-    audio_original, audio_filtered, _, _ = common.find_original_and_filtered_streams(input_info, common.CODEC_AUDIO)
+    audio_original, audio_filtered, _, _ = common.find_original_and_filtered_streams(input_info, constants.CODEC_AUDIO)
     if not audio_original:
         audio_original = common.find_audio_streams(input_info)[0]
-    ffmpeg_command.extend(['-map', f"0:{audio_original.get(common.K_STREAM_INDEX)}", '-ar', str(freq), '-ac', '1'])
+    ffmpeg_command.extend(['-map', f"0:{audio_original.get(constants.K_STREAM_INDEX)}", '-ar', str(freq), '-ac', '1'])
     if duration is not None:
         ffmpeg_command.extend(['-to', str(common.parse_edl_ts(duration))])
 

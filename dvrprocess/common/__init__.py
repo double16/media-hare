@@ -1,6 +1,5 @@
 import _thread
 import code
-import configparser
 import datetime
 import json
 import logging
@@ -9,24 +8,18 @@ import re
 import signal
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 import traceback
 from enum import Enum
 
 import psutil
-from psutil import AccessDenied
+from psutil import AccessDenied, NoSuchProcess
 
-from . import hwaccel, tools
-
-KILOBYTES_MULT = 1024
-MEGABYTES_MULT = 1024 * 1024
-GIGABYTES_MULT = 1024 * 1024 * 1024
+from . import hwaccel, tools, config, constants
 
 _allocate_lock = _thread.allocate_lock
 _once_lock = _allocate_lock()
-_config_lock = _allocate_lock()
 
 logger = logging.getLogger(__name__)
 
@@ -40,50 +33,6 @@ HIDDEN_FILENAME = None
 
 ANALYZE_DURATION = '20000000'
 PROBE_SIZE = '20000000'
-
-K_STREAM_TITLE = 'title'
-K_STREAM_LANGUAGE = 'language'
-K_STREAM_INDEX = 'index'
-K_CODEC_NAME = 'codec_name'
-K_CODEC_TYPE = 'codec_type'
-K_FORMAT = 'format'
-K_DURATION = 'duration'
-K_TAGS = 'tags'
-K_CHAPTERS = 'chapters'
-K_BIT_RATE = 'bit_rate'
-K_CHANNELS = 'channels'
-K_DISPOSITION = 'disposition'
-K_STREAMS = 'streams'
-K_FILTER_VERSION = 'PFILTER_VERSION'
-K_FILTER_HASH = 'PFILTER_HASH'
-K_FILTER_SKIP = 'PFILTER_SKIP'
-K_FILTER_STOPPED = 'PFILTER_STOPPED'
-K_COMSKIP_HASH = 'COMSKIP_HASH'
-K_COMSKIP_SKIP = 'COMSKIP_SKIP'
-K_AUDIO_TO_TEXT_VERSION = 'AUDIO2TEXT_VERSION'
-K_AUDIO_TO_TEXT_FILTER = 'AUDIO2TEXT_FILTER'
-K_MEDIA_TITLE = 'title'
-K_MEDIA_PROCESSOR = 'processor'
-V_MEDIA_PROCESSOR = 'media-hare, https://github.com/double16/media-hare'
-K_ENCODER_OPTIONS = 'encoder_options'
-
-CODEC_SUBTITLE_ASS = 'ass'
-CODEC_SUBTITLE_SRT = 'srt'
-CODEC_SUBTITLE_SUBRIP = 'subrip'
-CODEC_SUBTITLE_TEXT_BASED = [CODEC_SUBTITLE_ASS, CODEC_SUBTITLE_SRT, CODEC_SUBTITLE_SUBRIP]
-CODEC_SUBTITLE_DVDSUB = 'dvd_subtitle'
-CODEC_SUBTITLE_BLURAY = 'hdmv_pgs_subtitle'
-LANGUAGE_ENGLISH = 'eng'
-CODEC_SUBTITLE = 'subtitle'
-CODEC_AUDIO = 'audio'
-CODEC_VIDEO = 'video'
-
-FRAME_RATE_NAMES = {'ntsc': '30000/1001', 'pal': '25.0', 'film': '24.0', 'ntsc_film': '24000/1001'}
-
-TITLE_ORIGINAL = 'Original'
-TITLE_FILTERED = 'Filtered'
-TITLE_FILTERED_FORCED = 'Filtered Only'
-TITLE_WORDS = 'Words'
 
 MEDIA_BASE = None
 
@@ -101,12 +50,12 @@ def get_media_base():
 
 
 def find_media_base():
-    paths = get_global_config_option('media', 'paths').split(',')
+    paths = config.get_global_config_option('media', 'paths').split(',')
     if len(paths) > 0:
         for p in psutil.disk_partitions(all=True):
             if os.path.isdir(os.path.join(p.mountpoint, paths[0])):
                 return p.mountpoint
-    for root in get_global_config_option('media', 'root').split(','):
+    for root in config.get_global_config_option('media', 'root').split(','):
         root = root.replace('$HOME', os.environ['HOME'])
         if os.path.isdir(root):
             return root
@@ -116,7 +65,7 @@ def find_media_base():
 def get_media_paths(base=None):
     if base is None:
         base = get_media_base()
-    paths = get_global_config_option('media', 'paths').split(',')
+    paths = config.get_global_config_option('media', 'paths').split(',')
     return list(map(lambda e: os.path.join(base, e), paths))
 
 
@@ -170,7 +119,7 @@ def finisher(func):
 
 
 def get_plex_url():
-    return get_global_config_option('plex', 'url', fallback=None)
+    return config.get_global_config_option('plex', 'url', fallback=None)
 
 
 def load_keyframes_by_seconds(filepath) -> list[float]:
@@ -348,27 +297,27 @@ def find_original_and_filtered_streams(input_info, codec_type, codec_names=None,
     streams = find_streams_by_codec_and_language(input_info, codec_type, codec_names, language)
 
     filtered_streams = list(
-        filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) == TITLE_FILTERED, streams))
+        filter(lambda stream: stream['tags'].get(constants.K_STREAM_TITLE) == constants.TITLE_FILTERED, streams))
     if (len(filtered_streams)) > 0:
         filtered = filtered_streams[0]
 
     filtered_forced_streams = list(
-        filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) == TITLE_FILTERED_FORCED, streams))
+        filter(lambda stream: stream['tags'].get(constants.K_STREAM_TITLE) == constants.TITLE_FILTERED_FORCED, streams))
     if (len(filtered_forced_streams)) > 0:
         filtered_forced = filtered_forced_streams[0]
 
     words_streams = list(
-        filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) == TITLE_WORDS, streams))
+        filter(lambda stream: stream['tags'].get(constants.K_STREAM_TITLE) == constants.TITLE_WORDS, streams))
     if (len(words_streams)) > 0:
         words = words_streams[0]
 
     original_streams = list(
-        filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) == TITLE_ORIGINAL, streams))
+        filter(lambda stream: stream['tags'].get(constants.K_STREAM_TITLE) == constants.TITLE_ORIGINAL, streams))
     if (len(original_streams)) > 0:
         original = original_streams[0]
     else:
         original_streams = list(
-            filter(lambda stream: stream['tags'].get(K_STREAM_TITLE) != TITLE_FILTERED, streams))
+            filter(lambda stream: stream['tags'].get(constants.K_STREAM_TITLE) != constants.TITLE_FILTERED, streams))
         if (len(original_streams)) > 0:
             original = original_streams[0]
 
@@ -427,19 +376,21 @@ def has_stream_with_language(input_info, codec_type, codec_names=None, language=
 
 
 def is_video_stream(stream_info: dict) -> bool:
-    return stream_info[K_CODEC_TYPE] == CODEC_VIDEO and (
-            not stream_info.get(K_DISPOSITION) or stream_info.get(K_DISPOSITION).get('attached_pic') != 1)
+    return stream_info[constants.K_CODEC_TYPE] == constants.CODEC_VIDEO and (
+            not stream_info.get(constants.K_DISPOSITION) or stream_info.get(constants.K_DISPOSITION).get(
+        'attached_pic') != 1)
 
 
 def is_audio_stream(stream_info: dict) -> bool:
-    return stream_info[K_CODEC_TYPE] == CODEC_AUDIO
+    return stream_info[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO
 
 
 def is_subtitle_text_stream(stream_info: dict) -> bool:
     if stream_info is None:
         return False
-    return stream_info.get(K_CODEC_TYPE, '') == CODEC_SUBTITLE and stream_info.get(K_CODEC_NAME,
-                                                                                   '') in CODEC_SUBTITLE_TEXT_BASED
+    return stream_info.get(constants.K_CODEC_TYPE, '') == constants.CODEC_SUBTITLE and stream_info.get(
+        constants.K_CODEC_NAME,
+        '') in constants.CODEC_SUBTITLE_TEXT_BASED
 
 
 def find_video_streams(input_info) -> list[dict]:
@@ -448,7 +399,7 @@ def find_video_streams(input_info) -> list[dict]:
     :param input_info:
     :return: list of stream info maps
     """
-    streams = list(filter(lambda stream: is_video_stream(stream), input_info[K_STREAMS]))
+    streams = list(filter(lambda stream: is_video_stream(stream), input_info[constants.K_STREAMS]))
     return streams
 
 
@@ -468,11 +419,12 @@ def find_video_stream(input_info) -> [None, dict]:
 
 
 def find_audio_streams(input_info):
-    streams = list(filter(lambda stream: is_audio_stream(stream), input_info[K_STREAMS]))
+    streams = list(filter(lambda stream: is_audio_stream(stream), input_info[constants.K_STREAMS]))
 
     # Check for profanity filter streams
     filter_streams = list(
-        filter(lambda s: s.get('tags', {}).get(K_STREAM_TITLE) in [TITLE_ORIGINAL, TITLE_FILTERED], streams))
+        filter(lambda s: s.get('tags', {}).get(constants.K_STREAM_TITLE) in [constants.TITLE_ORIGINAL,
+                                                                             constants.TITLE_FILTERED], streams))
     if len(filter_streams) == 2:
         return filter_streams
 
@@ -483,22 +435,23 @@ def find_audio_streams(input_info):
     if len(streams) < 2:
         return streams
     # Pick the largest bitrate
-    if len(list(filter(lambda stream: K_BIT_RATE in stream, streams))) == len(streams):
+    if len(list(filter(lambda stream: constants.K_BIT_RATE in stream, streams))) == len(streams):
         # In case all of the bit rates are the same, we don't want to lose the order when we leave this block
         streams2 = streams.copy()
-        streams2.sort(key=lambda e: e[K_BIT_RATE], reverse=True)
-        if streams2[0][K_BIT_RATE] > streams2[1][K_BIT_RATE]:
+        streams2.sort(key=lambda e: e[constants.K_BIT_RATE], reverse=True)
+        if streams2[0][constants.K_BIT_RATE] > streams2[1][constants.K_BIT_RATE]:
             return streams2[0:1]
     # Pick the most channels
-    if len(list(filter(lambda stream: K_CHANNELS in stream, streams))) == len(streams):
+    if len(list(filter(lambda stream: constants.K_CHANNELS in stream, streams))) == len(streams):
         # In case all of the channel counts are the same, we don't want to lose the order when we leave this block
         streams2 = streams.copy()
-        streams2.sort(key=lambda e: e[K_CHANNELS], reverse=True)
-        if streams2[0][K_CHANNELS] > streams2[1][K_CHANNELS]:
+        streams2.sort(key=lambda e: e[constants.K_CHANNELS], reverse=True)
+        if streams2[0][constants.K_CHANNELS] > streams2[1][constants.K_CHANNELS]:
             return streams2[0:1]
     # Pick default disposition
     default_streams = list(
-        filter(lambda stream: stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('default') > 0, streams))
+        filter(lambda stream: stream.get(constants.K_DISPOSITION) and stream.get(constants.K_DISPOSITION).get(
+            'default') > 0, streams))
     if len(default_streams) > 0:
         return default_streams[0:1]
 
@@ -506,10 +459,12 @@ def find_audio_streams(input_info):
 
 
 def find_attached_pic_stream(input_info):
-    return list(filter(lambda stream: (stream.get(K_DISPOSITION) and stream.get(K_DISPOSITION).get('attached_pic') > 0)
-                                      or (stream.get(K_TAGS) and stream.get(K_TAGS).get('MIMETYPE', '').startswith(
+    return list(filter(lambda stream: (stream.get(constants.K_DISPOSITION) and stream.get(constants.K_DISPOSITION).get(
+        'attached_pic') > 0)
+                                      or (stream.get(constants.K_TAGS) and stream.get(constants.K_TAGS).get('MIMETYPE',
+                                                                                                            '').startswith(
         'image/')),
-                       input_info[K_STREAMS]))
+                       input_info[constants.K_STREAMS]))
 
 
 def sort_streams(streams: list[dict]) -> list[dict]:
@@ -522,12 +477,12 @@ def sort_streams(streams: list[dict]) -> list[dict]:
     result = streams.copy()
 
     def stream_sort_key(stream: dict):
-        codec_type = stream[K_CODEC_TYPE]
-        if codec_type == CODEC_VIDEO:
-            if stream.get(K_DISPOSITION, {}).get('attached_pic', 0) == 1:
+        codec_type = stream[constants.K_CODEC_TYPE]
+        if codec_type == constants.CODEC_VIDEO:
+            if stream.get(constants.K_DISPOSITION, {}).get('attached_pic', 0) == 1:
                 return 3
             return 0
-        elif codec_type == CODEC_AUDIO:
+        elif codec_type == constants.CODEC_AUDIO:
             return 1
         else:
             return 2
@@ -539,13 +494,13 @@ def sort_streams(streams: list[dict]) -> list[dict]:
 def get_media_title_from_tags(input_info: dict) -> [None, str]:
     if input_info is None:
         return None
-    return input_info.get(K_FORMAT, {}).get(K_TAGS, {}).get(K_MEDIA_TITLE)
+    return input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(constants.K_MEDIA_TITLE)
 
 
 def get_media_title_from_filename(input_info: dict) -> [None, str]:
     if input_info is None:
         return None
-    filename = input_info.get(K_FORMAT, {}).get("filename")
+    filename = input_info.get(constants.K_FORMAT, {}).get("filename")
     if not filename:
         return None
     base_filename = os.path.basename(filename)
@@ -553,7 +508,7 @@ def get_media_title_from_filename(input_info: dict) -> [None, str]:
 
 
 def should_replace_media_title(input_info: dict) -> bool:
-    if K_FORMAT not in input_info:
+    if constants.K_FORMAT not in input_info:
         # do not replace title if we didn't query for format
         return False
     filename_title = get_media_title_from_filename(input_info)
@@ -736,8 +691,8 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
 
     # use original bit rate if lower than default
     target_bitrate = None
-    channels = audio_info[K_CHANNELS]
-    audio_bitrate = int(audio_info[K_BIT_RATE]) if K_BIT_RATE in audio_info else None
+    channels = audio_info[constants.K_CHANNELS]
+    audio_bitrate = int(audio_info[constants.K_BIT_RATE]) if constants.K_BIT_RATE in audio_info else None
     if audio_bitrate is not None:
         if channels == 1 and audio_bitrate < (64 * 1024):
             target_bitrate = max(6, audio_bitrate)
@@ -840,52 +795,6 @@ def write_mkv_tags(tags, filepath) -> None:
         f.write(f"</Tag></Tags>\n")
 
 
-def parse_bytes(s: str) -> int:
-    if s is None:
-        return 0
-    s = s.strip().lower()
-    if len(s) == 0:
-        return 0
-    if s.endswith("b"):
-        multiplier = 1
-    elif s.endswith("k"):
-        multiplier = KILOBYTES_MULT
-    elif s.endswith("m"):
-        multiplier = MEGABYTES_MULT
-    elif s.endswith("g"):
-        multiplier = GIGABYTES_MULT
-    else:
-        return int(s)
-    return int(float(s[0:-1]) * multiplier)
-
-
-def bytes_to_human_str(byte_count: int) -> str:
-    if byte_count > GIGABYTES_MULT:
-        return "{:.2f}G".format(float(byte_count) / GIGABYTES_MULT)
-    if byte_count > MEGABYTES_MULT:
-        return "{:.2f}M".format(float(byte_count) / MEGABYTES_MULT)
-    if byte_count > KILOBYTES_MULT:
-        return "{:.2f}M".format(float(byte_count) / KILOBYTES_MULT)
-    return str(byte_count)
-
-
-def parse_seconds(s: str) -> int:
-    if s is None:
-        return 0
-    s = s.strip().lower()
-    if len(s) == 0:
-        return 0
-    if s.endswith("s"):
-        multiplier = 1
-    elif s.endswith("m"):
-        multiplier = 60
-    elif s.endswith("h"):
-        multiplier = 3600
-    else:
-        return int(s)
-    return int(float(s[0:-1]) * multiplier)
-
-
 def filepath_is_mkv(filepath):
     filename = os.path.basename(filepath)
     return filename.endswith(".mkv") and not filename.startswith('.')
@@ -910,7 +819,7 @@ def check_already_running():
         try:
             if my_name in " ".join(p.cmdline()) and p.pid != os.getpid():
                 others.append(p)
-        except (PermissionError, AccessDenied, ProcessLookupError):
+        except (PermissionError, AccessDenied, ProcessLookupError, NoSuchProcess):
             pass
     if len(others) > 0:
         logger.error(f"process(es) already running: {list(map(lambda p: p.pid, others))}")
@@ -1028,8 +937,10 @@ def is_video_file(filepath) -> bool:
         input_info = json.loads(tools.ffprobe.check_output(
             ['-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
              'json', '-show_format', '-show_streams', filepath]))
-        return len(list(filter(lambda s: s[K_CODEC_TYPE] == CODEC_VIDEO, input_info.get('streams', [])))) > 0 and len(
-            list(filter(lambda s: s[K_CODEC_TYPE] == CODEC_AUDIO, input_info.get('streams', [])))) > 0
+        return len(list(filter(lambda s: s[constants.K_CODEC_TYPE] == constants.CODEC_VIDEO,
+                               input_info.get('streams', [])))) > 0 and len(
+            list(filter(lambda s: s[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO,
+                        input_info.get('streams', [])))) > 0
     except subprocess.CalledProcessError:
         return False
 
@@ -1138,7 +1049,7 @@ def has_chapters_from_source_media(input_info) -> (bool, list[dict]):
     :param input_info:
     :return: True if there are chapters and none are commercials, list of commercial chapter info
     """
-    chapters = input_info.get(K_CHAPTERS, [])
+    chapters = input_info.get(constants.K_CHAPTERS, [])
     chapters_commercials = list(filter(__is_commercial_chapter, chapters))
     return len(chapters) > 0 and len(chapters_commercials) == 0, chapters_commercials
 
@@ -1161,12 +1072,12 @@ def is_from_dvr(input_info):
     :param input_info:
     :return:
     """
-    if is_truthy(input_info.get(K_FORMAT, {}).get(K_TAGS, {}).get(K_COMSKIP_SKIP)):
+    if is_truthy(input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(constants.K_COMSKIP_SKIP)):
         return False
     if has_chapters_from_source_media(input_info)[0]:
         return False
 
-    duration = float(input_info[K_FORMAT][K_DURATION])
+    duration = float(input_info[constants.K_FORMAT][constants.K_DURATION])
     rounded_duration = round_duration(duration)
     already_cut = (100 * abs(rounded_duration - duration) / duration) > 15
     return not already_cut
@@ -1222,10 +1133,10 @@ def episode_info(input_info: dict) -> (int, float, float):
     :param input_info:
     :return: number of episodes, episode duration (seconds), total duration (seconds)
     """
-    duration = float(input_info[K_FORMAT]['duration'])
+    duration = float(input_info[constants.K_FORMAT]['duration'])
     episode_duration = duration
     episode_count = 1
-    filename = input_info[K_FORMAT]['filename']
+    filename = input_info[constants.K_FORMAT]['filename']
     if filename:
         episode_range = re.search(r"E(\d+)-E(\d+)", filename)
         if episode_range:
@@ -1257,177 +1168,6 @@ def get_common_episode_duration(video_infos: list[dict]):
     stats_list.sort(key=lambda e: e[1], reverse=True)
     return stats_list[0][0]
 
-
-def _get_config_sources(filename: str):
-    script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
-    # TODO: check Windows places
-    return [f"{os.environ['HOME']}/.{filename}",
-            f"/etc/{filename}",
-            f"{script_dir}/{filename}",
-            f"./{filename}"]
-
-
-def find_config(filename: str) -> str:
-    """
-    Locate a config file from a list of common locations. The first one found is returned.
-    See _get_config_sources for locations.
-    :param filename: filename, like 'config.ini'
-    :return: resolved path to a file that exists
-    """
-    sources = _get_config_sources(filename)
-    for f in sources:
-        if os.access(f, os.R_OK):
-            return f
-    raise OSError(f"Cannot find {filename} in any of {','.join(sources)}")
-
-
-def load_config(filename: str, start_path=None, input_info=None,
-                config: configparser.ConfigParser = None) -> configparser.ConfigParser:
-    """
-    Load configuration from one or more INI files. Overrides to the common configuration can be made by creating file(s)
-    named :filename: in the directory tree of :start_path: or location of :input_info:.
-
-    :param filename: the name of the config file, usually something like 'config.ini'
-    :param start_path: the lowest directory or file of the directory tree to search for overrides
-    :param input_info: if specified and the info contains the filename, set start_path from this
-    :param config: an existing config to update
-    :return: ConfigParser object
-    """
-    filenames = [find_config(filename)]
-
-    if not start_path and input_info:
-        input_path = input_info.get(K_FORMAT, {}).get("filename")
-        if input_path:
-            if os.path.isfile(input_path):
-                start_path = os.path.dirname(input_path)
-            elif os.path.isdir(input_path):
-                start_path = input_path
-
-    if start_path:
-        path = start_path
-        insert_idx = len(filenames)
-        while True:
-            p = os.path.dirname(os.path.abspath(path))
-            if not p or p == path:
-                break
-            conf = os.path.join(p, filename)
-            if os.path.isfile(conf):
-                filenames.insert(insert_idx, conf)
-            path = p
-
-    if not config:
-        config = configparser.ConfigParser()
-    config.read(filenames)
-
-    return config
-
-
-config_obj: [configparser.ConfigParser, None] = None
-_UNSET = object()
-
-
-def get_global_config_option(section: str, option: str, fallback: [None, str] = _UNSET):
-    """
-    Get an option from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
-    :param section:
-    :param option:
-    :param fallback:
-    :return:
-    """
-    if fallback is not _UNSET:
-        return get_global_config().get(section, option, fallback=fallback)
-    return get_global_config().get(section, option)
-
-
-def get_global_config_boolean(section: str, option: str, fallback: bool = None):
-    """
-    Get a boolean from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
-    :param section:
-    :param option:
-    :param fallback:
-    :return:
-    """
-    if fallback is not None:
-        return get_global_config().getboolean(section, option, fallback=fallback)
-    return get_global_config().getboolean(section, option)
-
-
-def get_global_config_int(section: str, option: str, fallback: int = None):
-    """
-    Get an int from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
-    :param section:
-    :param option:
-    :param fallback:
-    :return:
-    """
-    if fallback is not None:
-        return get_global_config().getint(section, option, fallback=fallback)
-    return get_global_config().getint(section, option)
-
-
-def get_global_config_time_seconds(section: str, option: str, fallback: int = None):
-    """
-    Get number of seconds from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
-    :param section:
-    :param option:
-    :param fallback:
-    :return:
-    """
-    if fallback is not None:
-        return parse_seconds(get_global_config().get(section, option, fallback=fallback))
-    return parse_seconds(get_global_config().get(section, option))
-
-
-def get_global_config_bytes(section: str, option: str, fallback: int = None):
-    """
-    Get number of bytes from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
-    :param section:
-    :param option:
-    :param fallback:
-    :return:
-    """
-    if fallback is not None:
-        return parse_bytes(get_global_config().get(section, option, fallback=fallback))
-    return parse_bytes(get_global_config().get(section, option))
-
-
-def get_global_config_frame_rate(section: str, option: str, fallback: [None, str] = _UNSET) -> [None, str]:
-    """
-    Get the frame rate from the global config (i.e., media-hare.ini and media-hare.defaults.ini)
-    :param section:
-    :param option:
-    :param fallback:
-    :return: numeric frame rate, named frame rates are converted to numeric
-    """
-
-    if fallback == _UNSET:
-        value = get_global_config().get(section, option)
-    else:
-        value = get_global_config().get(section, option, fallback=fallback)
-    if value is None:
-        return None
-    return FRAME_RATE_NAMES.get(value.lower(), value)
-
-
-def get_work_dir() -> str:
-    return get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
-
-
-def get_global_config() -> configparser.ConfigParser:
-    global config_obj
-    if config_obj is None:
-        _config_lock.acquire()
-        try:
-            if config_obj is None:
-                config_obj = _load_media_hare_config()
-        finally:
-            _config_lock.release()
-    return config_obj
-
-
-def _load_media_hare_config() -> configparser.ConfigParser:
-    defaults = load_config('media-hare.defaults.ini')
-    return load_config('media-hare.ini', config=defaults)
 
 
 def match_owner_and_perm(target_path: str, source_path: str) -> bool:
@@ -1462,8 +1202,8 @@ def frame_rate_from_s(frame_rate_s: [str, None]) -> [float, None]:
     if frame_rate_s[0].isdigit():
         # remove suffix, like 'p'
         framerate = float(re.sub(r'\D', '', frame_rate_s))
-    elif frame_rate_s in FRAME_RATE_NAMES.keys():
-        framerate = float(eval(FRAME_RATE_NAMES[frame_rate_s]))
+    elif frame_rate_s in constants.FRAME_RATE_NAMES.keys():
+        framerate = float(eval(constants.FRAME_RATE_NAMES[frame_rate_s]))
     else:
         logger.warning("Unknown framerate %s", frame_rate_s)
     return framerate
@@ -1475,12 +1215,12 @@ def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_fra
         return False
 
     if type(current_frame_rate) == str:
-        current_frame_rate_f = eval(FRAME_RATE_NAMES.get(current_frame_rate.lower(), current_frame_rate))
+        current_frame_rate_f = eval(constants.FRAME_RATE_NAMES.get(current_frame_rate.lower(), current_frame_rate))
     else:
         current_frame_rate_f = current_frame_rate
 
     if type(desired_frame_rate) == str:
-        desired_frame_rate_f = eval(FRAME_RATE_NAMES.get(desired_frame_rate.lower(), desired_frame_rate))
+        desired_frame_rate_f = eval(constants.FRAME_RATE_NAMES.get(desired_frame_rate.lower(), desired_frame_rate))
     else:
         desired_frame_rate_f = desired_frame_rate
 

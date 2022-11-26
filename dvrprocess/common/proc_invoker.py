@@ -1,10 +1,11 @@
-import _thread
 import logging
 import os
 import subprocess
 import sys
 from io import StringIO, BytesIO
+from multiprocessing import Semaphore
 from shutil import which
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
@@ -60,22 +61,41 @@ class BaseProcInvoker(object):
 class SubprocessProcInvoker(BaseProcInvoker):
     # TODO: add method to install or prompt user for install instructions
 
-    def __init__(self, command_basename: str, version_parser=None, version_target: list[str] = None, required=True):
+    def __init__(self, command_basename: str, version_parser=None, version_target: list[str] = None, required=True,
+                 semaphore: [None, Semaphore] = None):
         super().__init__(command_basename, version=None)
-        self._once_lock = _thread.allocate_lock()
+        self._once_lock = Lock()
         self.command_path = None
         self.version_parser = version_parser
         self.version_target = version_target
         self._required = required
+        self.semaphore = semaphore
 
     def run(self, arguments: list[str], **kwargs) -> int:
-        return subprocess.run(self._build_command(arguments), **kwargs).returncode
+        if self.semaphore:
+            self.semaphore.acquire()
+
+        result = subprocess.run(self._build_command(arguments), **kwargs).returncode
+
+        if self.semaphore:
+            self.semaphore.release()
+
+        return result
 
     def check_output(self, arguments: list[str], **kwargs) -> str:
-        return subprocess.check_output(self._build_command(arguments), **kwargs)
+        if self.semaphore:
+            self.semaphore.acquire()
+
+        result = subprocess.check_output(self._build_command(arguments), **kwargs)
+
+        if self.semaphore:
+            self.semaphore.release()
+
+        return result
 
     def Popen(self, arguments: list[str], **kwargs) -> subprocess.Popen[str]:
-        return subprocess.Popen(self._build_command(arguments), **kwargs)
+        result = subprocess.Popen(self._build_command(arguments), **kwargs)
+        return result
 
     def _build_command(self, arguments: list[str]) -> list[str]:
         command_array = [self._get_command()]

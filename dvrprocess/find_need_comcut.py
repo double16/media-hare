@@ -3,8 +3,10 @@ import getopt
 import logging
 import os
 import sys
-import common
 from collections.abc import Iterable
+
+import common
+from common import constants
 
 #
 # Find media that has pending commercials to cut.
@@ -115,7 +117,7 @@ def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[Co
                 if len(edl) == 0:
                     continue
                 input_info = common.find_input_info(filepath)
-                uncut_length = float(input_info[common.K_FORMAT][common.K_DURATION])
+                uncut_length = float(input_info[constants.K_FORMAT][constants.K_DURATION])
                 cut_length = uncut_length - sum(map(lambda e: e.length(), edl))
                 file_info = ComcutPendingFileInfo(file_name=filepath.replace(host_home + '/', ''),
                                                   host_file_path=filepath,

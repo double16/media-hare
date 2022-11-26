@@ -6,9 +6,8 @@ import tempfile
 import unittest
 from xml.etree import ElementTree as ET
 
-import common
 import profanity_filter
-from common import tools, proc_invoker
+from common import tools, proc_invoker, constants
 
 
 #
@@ -206,13 +205,13 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                             'Original audio expected: ' + arguments_str)
             self.assertTrue("':volume=0" in arguments_str, 'audio filter with mute expected: ' + arguments_str)
             self.assertTrue(
-                f"{common.K_AUDIO_TO_TEXT_VERSION}={profanity_filter.AUDIO_TO_TEXT_VERSION}" in arguments_str,
+                f"{constants.K_AUDIO_TO_TEXT_VERSION}={profanity_filter.AUDIO_TO_TEXT_VERSION}" in arguments_str,
                 'audio2text version expected: ' + arguments_str)
             self.assertTrue(
-                f"{common.K_FILTER_VERSION}={profanity_filter.FILTER_VERSION}" in arguments_str,
+                f"{constants.K_FILTER_VERSION}={profanity_filter.FILTER_VERSION}" in arguments_str,
                 'filter version expected: ' + arguments_str)
             self.assertTrue(
-                f"{common.K_FILTER_HASH}={profanity_filter.compute_filter_hash()}" in arguments_str,
+                f"{constants.K_FILTER_HASH}={profanity_filter.compute_filter_hash()}" in arguments_str,
                 'filter hash expected: ' + arguments_str)
             stream_counts = [('Filtered', 2), ('Filtered Only', 1), ('Original', 2), ('Words', 1)]
             for title, count in stream_counts:
@@ -240,21 +239,21 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                              'Filtered Only streams not expected: ' + arguments_str)
             self.assertFalse("':volume=0" in arguments_str, 'audio filter with mute unexpected: ' + arguments_str)
             self.assertTrue(
-                f"{common.K_AUDIO_TO_TEXT_VERSION}={profanity_filter.AUDIO_TO_TEXT_VERSION}" in arguments_str,
+                f"{constants.K_AUDIO_TO_TEXT_VERSION}={profanity_filter.AUDIO_TO_TEXT_VERSION}" in arguments_str,
                 'audio2text version expected: ' + arguments_str)
             if removed:
                 self.assertTrue(
-                    f"{common.K_FILTER_VERSION}='" in arguments_str,
+                    f"{constants.K_FILTER_VERSION}='" in arguments_str,
                     'filter version not expected: ' + arguments_str)
                 self.assertTrue(
-                    f"{common.K_FILTER_HASH}='" in arguments_str,
+                    f"{constants.K_FILTER_HASH}='" in arguments_str,
                     'filter hash not expected: ' + arguments_str)
             else:
                 self.assertTrue(
-                    f"{common.K_FILTER_VERSION}={profanity_filter.FILTER_VERSION}" in arguments_str,
+                    f"{constants.K_FILTER_VERSION}={profanity_filter.FILTER_VERSION}" in arguments_str,
                     'filter version expected: ' + arguments_str)
                 self.assertTrue(
-                    f"{common.K_FILTER_HASH}={profanity_filter.compute_filter_hash()}" in arguments_str,
+                    f"{constants.K_FILTER_HASH}={profanity_filter.compute_filter_hash()}" in arguments_str,
                     'filter hash expected: ' + arguments_str)
             stream_counts = [('Filtered', 0), ('Filtered Only', 0), ('Original', 2), ('Words', 1)]
             for title, count in stream_counts:
@@ -455,16 +454,16 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
         os.close(fd)
         self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
-                           {common.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION),
-                            common.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
-                            common.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION),
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
+                            constants.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
         profanity_filter.do_profanity_filter(mkv_path)
 
     def test_apply_filtered_sub_orig_text_sub_filtered_sub_words_text__filter_version_changed(self):
         fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
         os.close(fd)
         self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
-                           {common.K_FILTER_VERSION: '0'})
+                           {constants.K_FILTER_VERSION: '0'})
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_subtitle_original_filtered_words('needs_filtered.ssa.txt',
                                                                        'needs_filtered.ssa.txt',
@@ -477,7 +476,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
         os.close(fd)
         self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
-                           {common.K_AUDIO_TO_TEXT_VERSION: '0'})
+                           {constants.K_AUDIO_TO_TEXT_VERSION: '0'})
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
             self._mock_ffmpeg_extract_subtitle_original_filtered('needs_filtered.ssa.txt', 'needs_filtered.ssa.txt'),
@@ -489,7 +488,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
         os.close(fd)
         self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
-                           {common.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION)})
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION)})
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_subtitle_original_filtered_words('needs_filtered.ssa.txt',
                                                                        'needs_filtered.ssa.txt',
@@ -502,14 +501,14 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
         os.close(fd)
         self._mock_ffprobe('media_state_unfiltered_sub_orig_none.json',
-                           {common.K_AUDIO_TO_TEXT_VERSION: '0',
-                            common.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
-                            common.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
+                           {constants.K_AUDIO_TO_TEXT_VERSION: '0',
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
+                            constants.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_audio_for_transcribing(None),
         ])
         tools.mkvpropedit = proc_invoker.MockProcInvoker('mkvpropedit', mocks=[
-            self._mock_mkvpropedit_tags(expected_tags={common.K_AUDIO_TO_TEXT_VERSION: '0'})
+            self._mock_mkvpropedit_tags(expected_tags={constants.K_AUDIO_TO_TEXT_VERSION: '0'})
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 
