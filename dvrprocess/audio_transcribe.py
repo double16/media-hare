@@ -30,7 +30,7 @@ audio transcriber debugging
 -b, --buffer=4000
     bytes to process at one time
 -a, --audio-filter=
-    ffmpeg audio filter, passed to option '-af', example: -a "lowpass=f=3000,highpass=f=200,anlmdn=s=.01"
+    ffmpeg audio filter, passed to option '-af', example: -a "anlmdn=s=.01"
 --max-alt=
     set max alternatives
 """, file=sys.stderr)
@@ -83,12 +83,21 @@ def audio_transcribe(input_path, freq=16000, words_path=None, text_path=None, bu
     audio_original, audio_filtered, _, _ = common.find_original_and_filtered_streams(input_info, constants.CODEC_AUDIO)
     if not audio_original:
         audio_original = common.find_audio_streams(input_info)[0]
-    ffmpeg_command.extend(['-map', f"0:{audio_original.get(constants.K_STREAM_INDEX)}", '-ar', str(freq), '-ac', '1'])
+    ffmpeg_command.extend(['-map', f"0:{audio_original.get(constants.K_STREAM_INDEX)}", '-ar', str(freq)])
+
     if duration is not None:
         ffmpeg_command.extend(['-to', str(common.parse_edl_ts(duration))])
 
     if audio_filter:
+        if 'pan=' not in audio_filter:
+            ffmpeg_command.extend(['-ac', '1'])
         ffmpeg_command.extend(['-af', audio_filter])
+    else:
+        channels = int(audio_original.get(constants.K_CHANNELS, 0))
+        if channels > 2:
+            ffmpeg_command.extend(['-af', 'pan=1c|FC<0.5*FL+FC+0.5*FR'])
+        else:
+            ffmpeg_command.extend(['-ac', '1'])
 
     ffmpeg_command.extend(['-f', 's16le', '-'])
     print(tools.ffmpeg.array_as_command(ffmpeg_command))

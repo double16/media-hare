@@ -224,7 +224,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info("Transcribing for words")
         else:
             logger.info("Transcribing for text and words")
-        audio_to_text_filter = 'lowpass=f=3000,highpass=f=200,anlmdn'
+        audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
+        if audio_channels > 2:
+            audio_to_text_filter = 'pan=1c|FC<0.3*FL+FC+0.3*FR,anlmdn'
+        else:
+            audio_to_text_filter = 'anlmdn'
         _srt_text, subtitle_srt_words = audio_to_srt(input_info, audio_original, workdir, audio_to_text_filter,
                                                      language, verbose=verbose)
         if _srt_text and os.stat(_srt_text).st_size > 0:
@@ -816,9 +820,13 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     extract_command = ['-nostdin', "-loglevel", "error",
                        '-i', input_info['format']['filename'],
                        '-map', f'0:{audio_original[constants.K_STREAM_INDEX]}',
-                       '-ar', str(freq), '-ac', '1']
+                       '-ar', str(freq)]
     if audio_filter:
+        if 'pan=' not in audio_filter:
+            extract_command.extend(['-ac', '1'])
         extract_command.extend(['-af', audio_filter])
+    else:
+        extract_command.extend(['-ac', '1'])
     extract_command.extend(['-f', 's16le', '-'])
 
     if verbose:
