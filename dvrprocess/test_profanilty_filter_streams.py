@@ -217,6 +217,12 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             for title, count in stream_counts:
                 self.assertEqual(count, len(list(filter(lambda e: e == f'title={title}', arguments))),
                                  f'{count} {title} streams expected: ' + arguments_str)
+
+            output = arguments[-1]
+            if output[0] == '/':
+                with open(output, 'w') as f:
+                    f.write('test')
+
             return 0
 
         return mock
@@ -259,6 +265,12 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             for title, count in stream_counts:
                 self.assertEqual(count, len(list(filter(lambda e: e == f'title={title}', arguments))),
                                  f'{count} {title} streams expected: ' + arguments_str)
+
+            output = arguments[-1]
+            if output[0] == '/':
+                with open(output, 'w') as f:
+                    f.write('test')
+
             return 0
 
         return mock
@@ -522,3 +534,56 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             self._mock_mkvpropedit_tags()
         ])
         profanity_filter.do_profanity_filter(mkv_path)
+
+    def test_apply_filtered_sub_orig_text_sub_filtered_sub_words_text__audio2text_version_greater_than_current(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION + 1),
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
+                            constants.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
+        self.assertEqual(profanity_filter.CMD_RESULT_UNCHANGED, profanity_filter.do_profanity_filter(mkv_path),
+                         "return code")
+
+    def test_apply_filtered_sub_orig_text_sub_filtered_sub_words_text__audio2text_version_greater_than_current_forced(
+            self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION + 1),
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
+                            constants.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
+            self._mock_ffmpeg_extract_subtitle_original_filtered('needs_filtered.ssa.txt',
+                                                                 'needs_filtered.ssa.txt'),
+            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
+        ])
+        self.assertEqual(profanity_filter.CMD_RESULT_FILTERED,
+                         profanity_filter.do_profanity_filter(mkv_path, force=True), "return code")
+
+    def test_apply_filtered_sub_orig_text_sub_filtered_sub_words_text__filter_version_greater_than_current(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION),
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION + 1),
+                            constants.K_FILTER_HASH: ''})
+        self.assertEqual(profanity_filter.CMD_RESULT_UNCHANGED, profanity_filter.do_profanity_filter(mkv_path),
+                         "return code")
+
+    def test_apply_filtered_sub_orig_text_sub_filtered_sub_words_text__filter_version_greater_than_current_forced(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_filtered_sub_orig_text_sub_filtered_sub_words_text.json',
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION),
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION + 1),
+                            constants.K_FILTER_HASH: ''})
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_audio_for_transcribing(None),
+            self._mock_ffmpeg_extract_subtitle_original_filtered('needs_filtered.ssa.txt',
+                                                                 'needs_filtered.ssa.txt'),
+            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
+        ])
+        self.assertEqual(profanity_filter.CMD_RESULT_FILTERED,
+                         profanity_filter.do_profanity_filter(mkv_path, force=True), "return code")

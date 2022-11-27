@@ -168,6 +168,14 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     logger.info("current filter hash = %s, current filter version = %s, current audio-to-text version = %s",
                 current_filter_hash, current_filter_version, current_audio2text_version)
 
+    if not force:
+        if current_filter_version and int(current_filter_version) > FILTER_VERSION:
+            logger.info("Future filter version found: %s", current_filter_version)
+            return CMD_RESULT_UNCHANGED
+        if current_audio2text_version and int(current_audio2text_version) > AUDIO_TO_TEXT_VERSION:
+            logger.info("Future audio2text version found: %s", current_audio2text_version)
+            return CMD_RESULT_UNCHANGED
+
     # Find original and filtered subtitle
     subtitle_original, subtitle_filtered, subtitle_filtered_forced, subtitle_words = common.find_original_and_filtered_streams(
         input_info,
