@@ -59,7 +59,7 @@ from common import tools, proc_invoker, constants
 #
 #  Remove filter:
 #    - A -> A, B -> B, C -> C, D -> D, E -> E, F -> F, G -> G, H -> H
-#    - I -> A
+#    x I -> A
 #    - J -> C
 #    - K -> C
 #    - L -> N
@@ -78,22 +78,10 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
 
     def setUp(self) -> None:
         logging.getLogger().setLevel(logging.DEBUG)
-        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg')
-        tools.ffprobe = proc_invoker.MockProcInvoker('ffprobe')
-        tools.comskip = proc_invoker.MockProcInvoker('comskip')
-        tools.comskip_gui = proc_invoker.MockProcInvoker('comskip-gui')
-        tools.mkvpropedit = proc_invoker.MockProcInvoker('mkvpropedit')
-        tools.ccextractor = proc_invoker.MockProcInvoker('ccextractor')
-        tools.subtitle_edit = proc_invoker.MockProcInvoker('subtitle-edit')
+        tools.mock_all()
 
     def tearDown(self) -> None:
-        tools.ffmpeg.verify()
-        tools.ffprobe.verify()
-        tools.comskip.verify()
-        tools.comskip_gui.verify()
-        tools.mkvpropedit.verify()
-        tools.ccextractor.verify()
-        tools.subtitle_edit.verify()
+        tools.mock_verify_all()
 
     def _read_file(self, path):
         with open(path, 'rt') as f:
@@ -283,6 +271,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                     if 'global:' in arg:
                         global_tag_filename = arg[7:]
                 self.assertTrue(global_tag_filename, "Expected mkvpropedit --tags global:...")
+                self.assertTrue(os.path.exists(global_tag_filename), 'tag filename exists')
                 tree = ET.parse(global_tag_filename)
                 root = tree.getroot()
                 for k, v in expected_tags.items():

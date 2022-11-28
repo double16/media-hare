@@ -12,6 +12,7 @@ import threading
 import time
 import traceback
 from enum import Enum
+from xml.etree import ElementTree as ET
 
 import psutil
 from psutil import AccessDenied, NoSuchProcess
@@ -785,14 +786,20 @@ def write_mkv_tags(tags, filepath) -> None:
     :param tags: name-value strings of tags
     :param filepath: path-like object for the file, will be overwritten
     """
-    with open(filepath, "w") as f:
-        f.write(f"<Tags><Tag>\n")
-        for k, v in tags.items():
-            f.write(f"<Simple>"
-                    f"<Name>{k}</Name>"
-                    f"<String>{v}</String>"
-                    f"</Simple>\n")
-        f.write(f"</Tag></Tags>\n")
+    root = ET.Element("Tags")
+    tag = ET.Element("Tag")
+    root.append(tag)
+    for k, v in tags.items():
+        simple = ET.Element("Simple")
+        tag.append(simple)
+        name = ET.Element("Name")
+        name.text = str(k)
+        simple.append(name)
+        value = ET.Element("String")
+        value.text = str(v)
+        simple.append(value)
+    with open(filepath, "wb") as f:
+        ET.ElementTree(root).write(f)
 
 
 def filepath_is_mkv(filepath):
