@@ -459,25 +459,27 @@ def do_dvr_post_process(input_file,
         copy_audio = preset == "copy" or input_audio_codec == target_audio_codec
         audio_input_stream = f"{streams_file}:{audio_info['index']}"
         channels = audio_info['channels']
-        arguments.extend(["-map", audio_input_stream])
         if stereo and channels > 2:
-            transcoding = True
             copy_audio = False
-            arguments.extend([f"-ac:{current_output_stream}", "2"])
 
         if copy_audio:
-            arguments.extend([f"-c:{current_output_stream}", "copy"])
+            arguments.extend(["-map", audio_input_stream, f"-c:{current_output_stream}", "copy"])
         else:
             transcoding = True
-            arguments.extend([f"-c:{current_output_stream}", hwaccel.ffmpeg_sw_codec(target_audio_codec)])
             audio_bitrate = int(audio_info[constants.K_BIT_RATE]) if constants.K_BIT_RATE in audio_info else None
             if target_audio_codec == 'opus':
-                common.extend_opus_arguments(arguments, audio_info, current_output_stream, [], stereo)
-            elif target_audio_codec == 'aac':
-                # use original bit rate if lower than default
-                if audio_bitrate is not None:
-                    if audio_bitrate < (64 * 1024 * channels):
-                        arguments.extend([f"-b:{current_output_stream}", str(max(32, audio_bitrate))])
+                common.map_opus_audio_stream(arguments, audio_info, streams_file, str(current_output_stream), None,
+                                             stereo)
+            else:
+                arguments.extend(["-map", audio_input_stream])
+                arguments.extend([f"-c:{current_output_stream}", hwaccel.ffmpeg_sw_codec(target_audio_codec)])
+                if stereo and channels > 2:
+                    arguments.extend([f"-ac:{current_output_stream}", "2"])
+                if target_audio_codec == 'aac':
+                    # use original bit rate if lower than default
+                    if audio_bitrate is not None:
+                        if audio_bitrate < (64 * 1024 * (2 if stereo else channels)):
+                            arguments.extend([f"-b:{current_output_stream}", str(max(32, audio_bitrate))])
 
         current_output_stream += 1
 

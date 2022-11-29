@@ -124,6 +124,8 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
         while len(results) > 0:
             for i in range(len(results)):
+                if i >= len(results):  # results may have changed
+                    break
                 result = results[i]
                 tfi = result[0]
                 filepath = tfi.host_file_path

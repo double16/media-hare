@@ -58,6 +58,10 @@ Filter audio and subtitles for profanity.
 
 --dry-run
     Output command that would be used but do nothing
+--mute-voice-channels
+    Mute only voice channels for audio with 3+ channels
+--mute-all-channels
+    Mute all channels for audio with 3+ channels
 --keep
     Keep original file in a backup prefixed by ".~"
 --debug
@@ -83,7 +87,8 @@ def profanity_filter(*args, **kwargs) -> int:
 
 
 def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,
-                        unmark_skip=None, language=constants.LANGUAGE_ENGLISH, workdir=None, verbose=False) -> int:
+                        unmark_skip=None, language=constants.LANGUAGE_ENGLISH, workdir=None, verbose=False,
+                        mute_channels: [None, config.MuteChannels] = None) -> int:
     if mark_skip and unmark_skip:
         logger.fatal("mark-skip and unmark-skip both set")
         return CMD_RESULT_ERROR
@@ -133,6 +138,12 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     if filter_skip is None and not unmark_skip:
         filter_skip = common.is_truthy(
             input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(constants.K_FILTER_SKIP))
+
+    if mute_channels is None:
+        mute_channels_tag = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+            constants.K_MUTE_CHANNELS)
+        if mute_channels_tag is not None:
+            mute_channels = config.mute_channels(mute_channels_tag)
 
     streams_file = 0
 
@@ -249,6 +260,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     tags[constants.K_FILTER_VERSION] = FILTER_VERSION
     tags[constants.K_AUDIO_TO_TEXT_VERSION] = audio_to_text_version if audio_to_text_version else ''
     tags[constants.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
+    if mute_channels:
+        tags[constants.K_MUTE_CHANNELS] = mute_channels.name
     if common.should_replace_media_title(input_info):
         tags[constants.K_MEDIA_TITLE] = common.get_media_title_from_filename(input_info)
     tags[constants.K_MEDIA_PROCESSOR] = constants.V_MEDIA_PROCESSOR
@@ -321,6 +334,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}="])
         if mark_skip:
             arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}=true"])
+        if mute_channels:
+            arguments.extend(["-metadata", f"{constants.K_MUTE_CHANNELS}={mute_channels.name}"])
         arguments.extend(["-c:s", "copy"])
 
         # Original audio stream
@@ -473,7 +488,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
         # Filtered audio stream
         audio_output_idx = 0
-        # TODO: For surround sound, filter only the channel in which we expect speech
+        # For surround sound, filter only the channel in which we expect speech
         # https://stackoverflow.com/questions/33533401/volume-adjust-and-channel-merge-on-video-using-ffmpeg
         if len(filtered_spans) > 0:
             mute_filters = []
@@ -482,12 +497,13 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                     mute_filters.append(f"volume=enable='between(t,{span[0] / 1000.0},{span[1] / 1000.0})':volume=0")
                 else:
                     mute_filters.append(f"volume=enable='between(t,{span[0] / 1000.0},{span[1] / 1000.0})':volume=0")
-            arguments.extend(["-map", f"{streams_file}:{audio_original_idx}",
-                              f"-c:a:{audio_output_idx}", "libopus",
-                              f"-metadata:s:a:{audio_output_idx}", f'title={constants.TITLE_FILTERED}',
+
+            common.map_opus_audio_stream(arguments, input_info['streams'][audio_original_idx],
+                                         audio_stream_idx=streams_file,
+                                         output_stream_spec=f'a:{audio_output_idx}',
+                                         audio_filters=mute_filters, mute_channels=mute_channels)
+            arguments.extend([f"-metadata:s:a:{audio_output_idx}", f'title={constants.TITLE_FILTERED}',
                               f"-disposition:a:{audio_output_idx}", "default"])
-            common.extend_opus_arguments(arguments, input_info['streams'][audio_original_idx], f'a:{audio_output_idx}',
-                                         mute_filters)
             audio_output_idx += 1
 
         # Original audio stream
@@ -1162,11 +1178,13 @@ if __name__ == '__main__':
     unmark_skip = None
     language = constants.LANGUAGE_ENGLISH
     workdir = config.get_work_dir()
+    mute_channels = None
 
     try:
         opts, args = getopt.getopt(
             list(argv), "nkdrf",
-            ["dry-run", "keep", "debug", "remove", "mark-skip", "unmark-skip", "force", "work-dir="])
+            ["dry-run", "keep", "debug", "remove", "mark-skip", "unmark-skip", "force", "work-dir=",
+             "mute-voice-channels", "mute-all-channels"])
     except getopt.GetoptError:
         usage()
         sys.exit(CMD_RESULT_ERROR)
@@ -1190,6 +1208,10 @@ if __name__ == '__main__':
             force = True
         elif opt == "--work-dir":
             workdir = arg
+        elif opt == "--mute-voice-channels":
+            mute_channels = config.MuteChannels.VOICE
+        elif opt == "--mute-all-channels":
+            mute_channels = config.MuteChannels.ALL
 
     if len(args) == 0:
         usage()
@@ -1201,4 +1223,5 @@ if __name__ == '__main__':
 
     sys.exit(
         profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
-                         mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True))
+                         mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
+                         mute_channels=mute_channels))

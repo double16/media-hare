@@ -447,10 +447,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             ffmpeg_command.extend(encoding_options)
             video_encoder_options_tag_value.extend(encoding_options)
         elif common.is_audio_stream(stream) and len(audio_filters) > 0:
-            ffmpeg_command.extend(["-map", f"{output_file}:{str(stream[constants.K_STREAM_INDEX])}"])
-            # Preserve original audio codec??
-            ffmpeg_command.extend([f"-c:{output_stream_idx}", hwaccel.ffmpeg_sw_codec("opus")])
-            common.extend_opus_arguments(ffmpeg_command, stream, str(output_stream_idx), audio_filters)
+            common.map_opus_audio_stream(ffmpeg_command, stream, output_file, str(output_stream_idx), audio_filters)
         elif common.is_subtitle_text_stream(stream) and len(subtitle_filters) > 0:
             ffmpeg_command.extend([
                 "-map", f"{subtitle_stream_idx_to_input_idx[stream[constants.K_STREAM_INDEX]]}:0",

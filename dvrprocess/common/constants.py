@@ -23,6 +23,7 @@ K_AUDIO_TO_TEXT_FILTER = 'AUDIO2TEXT_FILTER'
 K_MEDIA_TITLE = 'title'
 K_MEDIA_PROCESSOR = 'processor'
 V_MEDIA_PROCESSOR = 'media-hare, https://github.com/double16/media-hare'
+K_MUTE_CHANNELS = 'mute_channels'
 K_ENCODER_OPTIONS = 'encoder_options'
 
 CODEC_SUBTITLE_ASS = 'ass'

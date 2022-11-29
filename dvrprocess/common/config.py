@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import threading
+from enum import Enum
 
 from . import constants
 
@@ -169,6 +170,29 @@ def get_global_config_frame_rate(section: str, option: str, fallback: [None, str
     if value is None:
         return None
     return constants.FRAME_RATE_NAMES.get(value.lower(), value)
+
+
+class MuteChannels(Enum):
+    ALL = 0
+    VOICE = 1
+
+
+def get_global_config_mute_channels() -> MuteChannels:
+    """
+    Get the mute channels config.
+    :return: numeric frame rate, named frame rates are converted to numeric
+    """
+
+    return mute_channels(get_global_config().get('profanity_filter', 'mute_channels', fallback='all').lower())
+
+
+def mute_channels(value: str) -> MuteChannels:
+    if value == 'voice':
+        return MuteChannels.VOICE
+    elif value == 'all':
+        return MuteChannels.ALL
+    else:
+        raise configparser.Error(f"mute_channels value unknown: {value}")
 
 
 def get_global_config() -> configparser.ConfigParser:

@@ -667,28 +667,80 @@ def fps_video_filter(desired_frame_rate: [None, str, float]):
     return f"minterpolate=fps={desired_frame_rate}:mi_mode=blend"
 
 
-def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_filters=None, force_stereo=False):
+def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_idx: int, output_stream_spec: str,
+                          audio_filters=None, force_stereo=False, mute_channels: [None, config.MuteChannels] = None):
     if audio_filters is None:
         audio_filters = []
+    if mute_channels is None:
+        mute_channels = config.get_global_config_mute_channels()
 
-    arguments.extend([f"-vbr:{current_output_stream}", "on"])
+    if mute_channels == config.MuteChannels.VOICE and "volume=" in ",".join(audio_filters):
+        audio_layouts = list(filter(lambda e: e.name == audio_info.get(constants.K_CHANNEL_LAYOUT, ''),
+                                    tools.get_audio_layouts()))
+        if len(audio_layouts) == 1:
+            audio_layout = audio_layouts[0]
+            # opus does not support side layout, pan needs to specify non-side version with differing channels
+            if "(side)" in audio_layout.name:
+                output_audio_layout_name = audio_layout.name.replace("(side)", "")
+            elif 2 < len(audio_layout.channels) < 5:
+                # use ffmpeg upmix system to use more common 5.1 layout
+                output_audio_layout_name = "5.1"
+            else:
+                output_audio_layout_name = None
+            if output_audio_layout_name:
+                output_audio_layout = list(filter(lambda e: e.name == output_audio_layout_name,
+                                                  tools.get_audio_layouts()))[0]
+            else:
+                output_audio_layout = audio_layout
+            logger.info("Audio layout found %s, output layout %s", audio_layout, output_audio_layout)
+        else:
+            logger.info("Muting all channels, audio layout not found %s",
+                        audio_info.get(constants.K_CHANNEL_LAYOUT, ''))
+            audio_layout = None
+            output_audio_layout = None
+        if audio_layout is not None:
+            mute_filter_complex = f"[{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}]channelsplit=channel_layout={audio_layout.name}"
+            for c in audio_layout.channels:
+                mute_filter_complex += f"[{c}]"
+            mute_filter_complex += ';'
+            for c in audio_layout.voice_channels:
+                mute_filter_complex += f"[{c}]"
+                mute_filter_complex += ",".join(audio_filters)
+                mute_filter_complex += f"[{c}m];"
+            for c in audio_layout.channels:
+                if c in audio_layout.voice_channels:
+                    mute_filter_complex += f"[{c}m]"
+                else:
+                    mute_filter_complex += f"[{c}]"
+            mute_filter_complex += f"amerge=inputs={len(audio_layout.channels)},pan={output_audio_layout.name}"
+            for i, c in enumerate(output_audio_layout.channels):
+                # FIXME: map input to output channels
+                mute_filter_complex += f"|{c}=c{i}"
+            mute_filter_complex += f'[afiltered]'
+            arguments.extend(["-filter_complex", mute_filter_complex, "-map", "[afiltered]"])
+    else:
+        arguments.extend(["-map", f"{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}"])
+
+        if audio_info.get('channel_layout') == '5.1(side)':
+            audio_filters.insert(0, "channelmap=channel_layout=5.1")
+        elif audio_info.get('channel_layout') == '7.1(side)':
+            audio_filters.insert(0, "channelmap=channel_layout=7.1")
+        elif audio_info.get('channel_layout') == '4.0' and not force_stereo:
+            # use ffmpeg upmix system to use more common 5.1 layout
+            arguments.extend([f"-ac:{output_stream_spec}", "6"])
+
+        if audio_filters:
+            arguments.extend([f"-filter:{output_stream_spec}", ",".join(audio_filters)])
+
+    arguments.extend([f"-c:{output_stream_spec}", hwaccel.ffmpeg_sw_codec("opus")])
+
+    arguments.extend([f"-vbr:{output_stream_spec}", "on"])
 
     # enables optimizations in opus v1.1+
     if force_stereo or audio_info.get('channel_layout') in ['mono', 'stereo', '1.0', '2.0']:
-        arguments.extend([f"-mapping_family:{current_output_stream}", "0"])
+        arguments.extend([f"-mapping_family:{output_stream_spec}", "0"])
     else:
-        arguments.extend([f"-mapping_family:{current_output_stream}", "1"])
-
-    if audio_info.get('channel_layout') == '5.1(side)':
-        audio_filters.insert(0, "channelmap=channel_layout=5.1")
-    elif audio_info.get('channel_layout') == '7.1(side)':
-        audio_filters.insert(0, "channelmap=channel_layout=7.1")
-    elif audio_info.get('channel_layout') == '4.0' and not force_stereo:
-        # use ffmpeg upmix system to use more common 5.1 layout
-        arguments.extend([f"-ac:{current_output_stream}", "6"])
-
-    if audio_filters:
-        arguments.extend([f"-filter:{current_output_stream}", ",".join(audio_filters)])
+        arguments.extend([f"-mapping_family:{output_stream_spec}", "1"])
 
     # use original bit rate if lower than default
     target_bitrate = None
@@ -703,7 +755,7 @@ def extend_opus_arguments(arguments, audio_info, current_output_stream, audio_fi
             target_bitrate = max(6, audio_bitrate)
 
     if target_bitrate is not None:
-        arguments.extend([f"-b:{current_output_stream}", str(target_bitrate)])
+        arguments.extend([f"-b:{output_stream_spec}", str(target_bitrate)])
 
 
 class EdlType(Enum):
