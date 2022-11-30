@@ -3,7 +3,7 @@ Hardware acceleration support.
 Use as follows:
 
 hwaccel_configure("none"|"full")
-cmd = [find_ffmpeg()]
+cmd = []
 cmd.extend(hwaccel_threads())
 cmd.extend(hwaccel_prologue('mpeg2video', 'h264'))
 cmd.extend(hwaccel_decoding('mpeg2video'))
@@ -12,12 +12,11 @@ cmd.extend(hwaccel_encoding(output_stream='1', codec='h264', output_type='mkv', 
 
 """
 import _thread
-import os
 import logging
-import subprocess
 import re
+import subprocess
 from enum import Enum
-from shutil import which
+
 from . import tools
 
 _once_lock = _thread.allocate_lock()
@@ -28,6 +27,7 @@ class HWAccelMethod(Enum):
     NONE = 0
     VAAPI = 1
     NVENC = 2
+    VIDEO_TOOLBOX = 3
 
 
 class HWAccelRequest(Enum):
@@ -39,12 +39,14 @@ class HWAccelRequest(Enum):
     FULL = 2  # Use full decode and encode acceleration
     VAAPI = 3  # Use VAAPI decode and encode acceleration, if available, otherwise software
     NVENC = 4  # Use nvidia decode and encode acceleration, if available, otherwise software
+    VIDEO_TOOLBOX = 5  # Use macos decode and encode acceleration, if available, otherwise software
 
 
 hwaccel_method = None
 hwaccel_requested = HWAccelRequest.AUTO
 vaapi_encoders = []
 nvenc_encoders = []
+video_toolbox_encoders = []
 
 
 def hwaccel_configure(user_option: [None, str]) -> HWAccelRequest:
@@ -87,18 +89,25 @@ def find_hwaccel_method() -> HWAccelMethod:
 
 
 def _find_hwaccel_method() -> HWAccelMethod:
-    global vaapi_encoders, nvenc_encoders
-    for line in subprocess.check_output([tools.find_ffmpeg(), "-hide_banner", "-encoders"], stderr=subprocess.STDOUT,
-                                        text=True).splitlines():
+    global vaapi_encoders, nvenc_encoders, video_toolbox_encoders
+    for line in tools.ffmpeg.check_output(["-hide_banner", "-encoders"], stderr=subprocess.STDOUT,
+                                          text=True).splitlines():
         m = re.search(r'\b\w+_vaapi\b', line)
         if m:
             vaapi_encoders.append(m.group(0))
         m = re.search(r'\b\w+_nvenc\b', line)
         if m:
             nvenc_encoders.append(m.group(0))
+        m = re.search(r'\b\w+_videotoolbox\b', line)
+        if m:
+            video_toolbox_encoders.append(m.group(0))
 
     logger.debug("vaapi encoders = %s", vaapi_encoders)
     logger.debug("nvenc encoders = %s", nvenc_encoders)
+    logger.debug("videotoolbox encoders = %s", video_toolbox_encoders)
+
+    if len(video_toolbox_encoders) > 0:
+        return HWAccelMethod.VIDEO_TOOLBOX
 
     result = _find_nvenc_method()
     if result != HWAccelMethod.NONE:
@@ -115,13 +124,12 @@ def _find_vaapi_method() -> HWAccelMethod:
 
     global vaapi_encoders
 
-    vainfo = which("vainfo")
-    if not (vainfo and os.access(vainfo, os.X_OK)):
+    if not tools.vainfo.present():
         return HWAccelMethod.NONE
 
     vaapi_profiles = []
     try:
-        for line in subprocess.check_output([vainfo, "-a"], stderr=subprocess.STDOUT, text=True).splitlines():
+        for line in tools.vainfo.check_output(["-a"], stderr=subprocess.STDOUT, text=True).splitlines():
             m = re.search(r'(?:\b|^)(VAProfile\w+(?:Main|High))(?:\b|/)', line)
             if m:
                 vaapi_profiles.append(m.group(1))
@@ -147,13 +155,12 @@ def _find_nvenc_method() -> HWAccelMethod:
 
     global nvenc_encoders
 
-    nvidia_smi = which("nvidia-smi")
-    if not (nvidia_smi and os.access(nvidia_smi, os.X_OK)):
+    if not tools.nvidia_smi.present():
         return HWAccelMethod.NONE
 
     try:
-        gpus = subprocess.check_output([nvidia_smi, "--list-gpus"], text=True)
-        return HWAccelMethod.NVENC if 'GPU ' in gpus and len(nvidia_smi) > 0 else HWAccelMethod.NONE
+        gpus = tools.nvidia_smi.check_output(["--list-gpus"], text=True)
+        return HWAccelMethod.NVENC if 'GPU ' in gpus else HWAccelMethod.NONE
     except subprocess.CalledProcessError:
         return HWAccelMethod.NONE
 
@@ -169,6 +176,9 @@ def has_hw_codec(codec: str) -> bool:
         return f"{codec}_nvenc" in nvenc_encoders
     elif method == HWAccelMethod.VAAPI:
         return f"{codec}_vaapi" in vaapi_encoders
+    elif method == HWAccelMethod.VIDEO_TOOLBOX:
+        return f"{codec}_videotoolbox" in video_toolbox_encoders
+    return False
 
 
 def require_hw_codec(codec: str) -> bool:
@@ -243,6 +253,15 @@ def hwaccel_decoding(codec: str) -> list[str]:
     return []
 
 
+def hwaccel_required_hwupload_filter() -> bool:
+    """
+    Determine if the 'hwupload' video filter is required.
+    :return:
+    """
+    method = find_hwaccel_method()
+    return method not in [HWAccelMethod.NONE, HWAccelMethod.VIDEO_TOOLBOX]
+
+
 def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [None, str], preset: str, crf: int,
                      qp: int,
                      target_bitrate: int) -> (list[str], HWAccelMethod):
@@ -269,6 +288,12 @@ def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [No
                                HWAccelRequest.VAAPI] and method == HWAccelMethod.VAAPI and has_hw_codec(codec):
         return (_vaapi_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
                                 preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.VAAPI)
+    elif hwaccel_requested in [HWAccelRequest.FULL,
+                               HWAccelRequest.VIDEO_TOOLBOX] and method == HWAccelMethod.VIDEO_TOOLBOX and has_hw_codec(
+        codec):
+        return (_video_toolbox_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
+                                        preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate),
+                HWAccelMethod.VIDEO_TOOLBOX)
     else:
         return (_sw_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
                              preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.NONE)
@@ -353,6 +378,30 @@ def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str,
     if codec in ['h264']:
         options.extend([f"-profile:{output_stream}", "high"])
         options.extend([f"-quality:{output_stream}", "0"])
+
+    return options
+
+
+def _video_toolbox_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
+                            target_bitrate: int):
+    options = [f"-c:{output_stream}"]
+    if codec in ['h265']:
+        options.extend(["hevc_videotoolbox"])
+    else:
+        options.extend([f"{codec}_videotoolbox"])
+
+    # It appears the encoder defaults to optimize for size
+    # if codec in ['h264', 'h265', 'hevc']:
+    #     options.extend([f'-b:{output_stream}', f'{target_bitrate}k'])
+
+    if codec in ['h264']:
+        options.extend([f"-profile:{output_stream}", "high"])
+        if output_type != 'ts':
+            options.extend([f'-a53cc:{output_stream}', 'false'])
+
+    if codec == 'h265':
+        # https://trac.ffmpeg.org/wiki/Encode/H.265
+        options.extend([f'-tag:{output_stream}', 'hvc1'])
 
     return options
 

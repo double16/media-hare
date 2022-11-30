@@ -6,7 +6,7 @@ likely require re-encoding to cut. This process will preserve subtitles, I have 
 subtitles or mangle them or is very difficult to use.
 
 1. Use MakeMKV to rip. Choose the audio for your language with the highest bitrate. Choose the first subtitle, don't pick any forced subtitle. If a subtitle with "ccextractor" is available, also pick that.
-2. Run `profanity_filter.py` on the `.mkv` file. Inspect the tags using `ffprobe` and look for `PFILTER_STOPPED`. These are indicators of possible scenes to cut.
+2. Run `profanity_filter.py` on the `.mkv` file. Inspect the tags using `ffprobe` and look for `PFILTER_STOPPED`. These are indicators of possible scenes to cut. Also run `profanity-filter-report.py` on the `.mkv` file to see the list of filtered subtitles.
 3. Review the "Parent's Guide" on imdb.com for the movie for scenes you may want to cut.
 4. Open a `.edl` file using the same name of the movie, replacing `.mkv` with `.edl`.
 5. Open in avidemux to find cut and mute points and add to the EDL file. Don't cut with avidemux. Each line must have start time, end time and an integer indicating what you want to do. You can copy and paste from the time marker in avidemux.

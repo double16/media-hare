@@ -3,16 +3,16 @@ import getopt
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 from enum import Enum
-from multiprocessing import Pool
+from multiprocessing import Pool, TimeoutError
 from subprocess import CalledProcessError
 
 import requests
 
 import common
+from common import tools, constants, config
 from find_need_transcode import need_transcode_generator
 from profanity_filter import profanity_filter, FILTER_VERSION
 
@@ -30,10 +30,10 @@ This program will run only if configuration profanity_filter.enable is set to tr
 -n, --dry-run
 -f, --force
     Override configuration profanity_filter.enable
---work-dir={common.get_work_dir()}
--b, --bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
+--work-dir={config.get_work_dir()}
+-b, --bytes-limit={config.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
--t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
+-t, --time-limit={config.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 -p, --processes=2
 -s, --selector={','.join(ProfanityFilterSelector.__members__.keys())}
@@ -70,32 +70,32 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
             yield item
             continue
 
-        tags = json.loads(subprocess.check_output(
-            [common.find_ffprobe(), '-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
+        tags = json.loads(tools.ffprobe.check_output(
+            ['-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
             'format', {}).get('tags', {})
 
-        if common.is_truthy(tags.get(common.K_FILTER_SKIP, None)):
+        if common.is_truthy(tags.get(constants.K_FILTER_SKIP, None)):
             continue
 
-        if ProfanityFilterSelector.unfiltered in selectors and common.K_FILTER_HASH not in tags:
+        if ProfanityFilterSelector.unfiltered in selectors and constants.K_FILTER_HASH not in tags:
             yield item
             continue
-        if ProfanityFilterSelector.new_version in selectors and common.K_FILTER_VERSION in tags and int(
-                tags.get(common.K_FILTER_VERSION)) < FILTER_VERSION:
+        if ProfanityFilterSelector.new_version in selectors and constants.K_FILTER_VERSION in tags and int(
+                tags.get(constants.K_FILTER_VERSION)) < FILTER_VERSION:
             yield item
             continue
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
-                           size_limit=common.get_global_config_bytes('background_limits', 'size_limit'),
-                           time_limit=common.get_global_config_time_seconds('background_limits', 'time_limit'),
+                           size_limit=config.get_global_config_bytes('background_limits', 'size_limit'),
+                           time_limit=config.get_global_config_time_seconds('background_limits', 'time_limit'),
                            processes=1,
                            check_compute=True,
                            selectors: set[ProfanityFilterSelector] = None):
     logger.info(f"Applying profanity filter to media files in {plex_url or ','.join(media_paths)}")
 
     if workdir is None:
-        workdir = common.get_work_dir()
+        workdir = config.get_work_dir()
 
     if selectors is None:
         selectors = set(ProfanityFilterSelector)
@@ -123,76 +123,73 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 break
 
         while len(results) > 0:
-            result = None
-            while result is None:
-                for i in range(len(results)):
-                    val = results[i]
-                    try:
-                        val[1].wait(3)
-                        results.pop(i)
-                        result = val
-                        break
-                    except TimeoutError:
-                        pass
+            for i in range(len(results)):
+                if i >= len(results):  # results may have changed
+                    break
+                result = results[i]
+                tfi = result[0]
+                filepath = tfi.host_file_path
+                try:
+                    return_code = result[1].get(3)
+                except TimeoutError:
+                    continue
+                except UnicodeDecodeError as e:
+                    # FIXME: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfe in position 1855: invalid start byte
+                    logger.error(e.__repr__())
+                    return_code = 255
+                except CalledProcessError as e:
+                    return_code = e.returncode
+                except:
+                    pool.terminate()
+                    return 255
 
-            tfi = result[0]
-            filepath = tfi.host_file_path
-            try:
-                return_code = result[1].get()
-            except UnicodeDecodeError as e:
-                # FIXME: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfe in position 1855: invalid start byte
-                logger.error(e.__repr__())
-                return_code = 255
-            except CalledProcessError as e:
-                return_code = e.returncode
-            except:
-                pool.terminate()
-                return 255
-            if return_code == 0:
-                # filtered
-                bytes_processed += os.stat(filepath).st_size
-                if time_start is None:
-                    time_start = time.time()
-                # Run Plex analyze so playback works
-                if tfi.item_key and plex_url:
-                    logger.info(f'HTTP PUT: {plex_url}{tfi.item_key}/analyze')
-                    if not dry_run:
-                        try:
-                            requests.put(f'{plex_url}{tfi.item_key}/analyze')
-                        except requests.exceptions.ConnectTimeout:
-                            pass
-            elif return_code == 1:
-                # marked but content unchanged
-                pass
-            elif return_code == 2:
-                # unchanged
-                pass
-            elif return_code == 255:
-                # error
-                pass
+                results.pop(i)
 
-            if 0 < size_limit < bytes_processed:
-                logger.info(
-                    f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes, size limit of {common.bytes_to_human_str(size_limit)} reached")
-                return 0
+                if return_code == 0:
+                    # filtered
+                    bytes_processed += os.stat(filepath).st_size
+                    if time_start is None:
+                        time_start = time.time()
+                    # Run Plex analyze so playback works
+                    if tfi.item_key and plex_url:
+                        logger.info(f'HTTP PUT: {plex_url}{tfi.item_key}/analyze')
+                        if not dry_run:
+                            try:
+                                requests.put(f'{plex_url}{tfi.item_key}/analyze')
+                            except requests.exceptions.ConnectTimeout:
+                                pass
+                elif return_code == 1:
+                    # marked but content unchanged
+                    pass
+                elif return_code == 2:
+                    # unchanged
+                    pass
+                elif return_code == 255:
+                    # error
+                    pass
 
-            if time_start is not None:
-                duration = time.time() - time_start
-                if 0 < time_limit < duration:
+                if 0 < size_limit < bytes_processed:
                     logger.info(
-                        f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
+                        f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes, size limit of {config.bytes_to_human_str(size_limit)} reached")
                     return 0
 
-            if check_compute and common.should_stop_processing():
-                logger.info(f"not enough compute available")
-                return 0
+                if time_start is not None:
+                    duration = time.time() - time_start
+                    if 0 < time_limit < duration:
+                        logger.info(
+                            f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
+                        return 0
 
-            try:
-                tfi = next(generator)
-                results.append([tfi, pool.apply_async(profanity_filter, (tfi.host_file_path,),
-                                                      {'dry_run': dry_run, 'workdir': workdir})])
-            except StopIteration:
-                pass
+                if check_compute and common.should_stop_processing():
+                    logger.info(f"not enough compute available")
+                    return 0
+
+                try:
+                    tfi = next(generator)
+                    results.append([tfi, pool.apply_async(profanity_filter, (tfi.host_file_path,),
+                                                          {'dry_run': dry_run, 'workdir': workdir})])
+                except StopIteration:
+                    pass
 
     except KeyboardInterrupt:
         pool.terminate()
@@ -201,21 +198,21 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
         logger.info("Waiting for pool workers to finish")
         pool.join()
 
-    logger.info(f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes")
+    logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes")
     return 0
 
 
 def profanity_filter_apply_cli(argv):
-    workdir = common.get_work_dir()
+    workdir = config.get_work_dir()
     dry_run = False
-    bytes_limit = common.get_global_config_bytes('background_limits', 'size_limit')
-    time_limit = common.get_global_config_time_seconds('background_limits', 'time_limit')
+    bytes_limit = config.get_global_config_bytes('background_limits', 'size_limit')
+    time_limit = config.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
     plex_url = None
     force = False
     selectors = None
 
-    processes = common.get_global_config_int('background_limits', 'processes',
+    processes = config.get_global_config_int('background_limits', 'processes',
                                              fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
@@ -237,9 +234,9 @@ def profanity_filter_apply_cli(argv):
         elif opt == "--work-dir":
             workdir = arg
         elif opt in ["-b", "--bytes-limit"]:
-            bytes_limit = common.parse_bytes(arg)
+            bytes_limit = config.parse_bytes(arg)
         elif opt in ["-t", "--time-limit"]:
-            time_limit = common.parse_seconds(arg)
+            time_limit = config.parse_seconds(arg)
         elif opt in ["-p", "--processes"]:
             processes = int(arg)
             check_compute = False
@@ -253,7 +250,7 @@ def profanity_filter_apply_cli(argv):
             for selector_str in arg.split(','):
                 selectors.add(ProfanityFilterSelector.__members__[selector_str.lower()])
 
-    if not common.get_global_config_boolean('profanity_filter', 'enable', False) and not force:
+    if not config.get_global_config_boolean('profanity_filter', 'enable', False) and not force:
         logger.info("profanity filter not enabled, set profanity_filter.enable to true or use --force")
         return 0
 

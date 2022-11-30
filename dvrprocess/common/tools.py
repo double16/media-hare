@@ -1,112 +1,105 @@
-import _thread
-import logging
-import os
 import re
 import subprocess
-import sys
-from shutil import which
+import threading
+from multiprocessing import Semaphore
 
-_allocate_lock = _thread.allocate_lock
-_once_lock = _allocate_lock()
+from . import config
+from .proc_invoker import SubprocessProcInvoker, MockProcInvoker
 
-logger = logging.getLogger(__name__)
-
-
-def _fatal(message):
-    logger.fatal(message)
-    sys.exit(255)
+disk_semaphore = Semaphore(config.get_global_config_int('background_limits', 'disk_processes', fallback=10))
 
 
-ffmpeg_path = None
-ffmpeg_version: float = 0.0
+def _ffmpeg_version_parser(path):
+    _maybe_version = float(
+        re.search(r"version (\d+[.]\d+)", subprocess.check_output([path, '-version'], text=True))[1])
+    if int(_maybe_version) not in [4, 5]:
+        raise FileNotFoundError('ffmpeg version [4,5] not found')
+    return _maybe_version
 
 
-def find_ffmpeg():
-    global ffmpeg_path, ffmpeg_version
-    if ffmpeg_path is None:
-        _once_lock.acquire()
-        try:
-            if ffmpeg_path is None:
-                _maybe_path = _find_ffmpeg()
-                _maybe_version = float(
-                    re.search(r"version (\d+[.]\d+)", subprocess.check_output([_maybe_path, '-version'], text=True))[1])
-                if int(_maybe_version) not in [4, 5]:
-                    raise FileNotFoundError('ffmpeg version [4,5] not found')
-                ffmpeg_path = _maybe_path
-                ffmpeg_version = _maybe_version
-        finally:
-            _once_lock.release()
-    return ffmpeg_path
+ffmpeg = SubprocessProcInvoker('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.'], semaphore=disk_semaphore)
 
 
-def _find_ffmpeg():
-    # Never use Plex's version. We have no guarantees on version or patches applied. Keep the code so people know we tried.
-    ffmpeg = "x /usr/lib/plexmediaserver/Plex\\ Transcoder"
-
-    if os.access(ffmpeg, os.X_OK):
-        ld_library_path = "/usr/lib/plexmediaserver:/usr/lib/plexmediaserver/lib"
-    else:
-        ffmpeg = which("ffmpeg")
-    if len(ffmpeg) == 0:
-        _fatal("'ffmpeg' not found")
-    if not os.access(ffmpeg, os.X_OK):
-        _fatal(f"{ffmpeg} is not an executable")
-
-    return ffmpeg
+def _ffprobe_version_parser(path):
+    _maybe_version = float(
+        re.search(r"version (\d+[.]\d+)", subprocess.check_output([path, '-version'], text=True))[1])
+    if int(_maybe_version) not in [4, 5]:
+        raise FileNotFoundError('ffprobe version [4,5] not found')
+    return _maybe_version
 
 
-ffprobe_path = None
-ffprobe_version: float = 0.0
+ffprobe = SubprocessProcInvoker('ffprobe', _ffprobe_version_parser, ffmpeg.version_target)
+
+ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
+    re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[
+        1]))
+
+subtitle_edit = SubprocessProcInvoker('subtitle-edit', version_target=['3.6.8'])
+
+comskip = SubprocessProcInvoker('comskip')
+
+comskip_gui = SubprocessProcInvoker('comskip-gui', required=False)
+
+mkvpropedit = SubprocessProcInvoker('mkvpropedit')
+
+vainfo = SubprocessProcInvoker('vainfo', required=False)
+vainfo.install = lambda: False
+
+nvidia_smi = SubprocessProcInvoker('nvidia-smi', required=False)
+nvidia_smi.install = lambda: False
 
 
-def find_ffprobe():
-    global ffprobe_path, ffprobe_version
-    if ffprobe_path is None:
-        _once_lock.acquire()
-        try:
-            if ffprobe_path is None:
-                _maybe_path = _find_ffprobe()
-                _maybe_version = float(
-                    re.search(r"version (\d+[.]\d+)", subprocess.check_output([_maybe_path, '-version'], text=True))[1])
-                if int(_maybe_version) not in [4, 5]:
-                    raise FileNotFoundError('ffprobe version [4,5] not found')
-                ffprobe_path = _maybe_path
-                ffprobe_version = _maybe_version
-        finally:
-            _once_lock.release()
-    return ffprobe_path
+def mock_all():
+    global ffmpeg, ffprobe, comskip, comskip_gui, mkvpropedit, ccextractor, subtitle_edit
+    ffmpeg = MockProcInvoker('ffmpeg')
+    ffprobe = MockProcInvoker('ffprobe')
+    comskip = MockProcInvoker('comskip')
+    comskip_gui = MockProcInvoker('comskip-gui')
+    mkvpropedit = MockProcInvoker('mkvpropedit')
+    ccextractor = MockProcInvoker('ccextractor')
+    subtitle_edit = MockProcInvoker('subtitle-edit')
 
 
-def _find_ffprobe():
-    ffprobe = which("ffprobe")
-    if not os.access(ffprobe, os.X_OK):
-        _fatal(f"{ffprobe} is not an executable")
-    return ffprobe
+def mock_verify_all():
+    ffmpeg.verify()
+    ffprobe.verify()
+    comskip.verify()
+    comskip_gui.verify()
+    mkvpropedit.verify()
+    ccextractor.verify()
+    subtitle_edit.verify()
 
 
-ccextractor_path = None
-ccextractor_version: float = 0.0
+class AudioLayout(object):
+    def __init__(self, name, channels: list[str], voice_channels: list[str]):
+        self.name = name
+        self.channels = channels
+        self.voice_channels = voice_channels
+
+    def __str__(self):
+        return f"{self.name} - {'+'.join(self.channels)}"
+
+    def __repr__(self):
+        return f"{self.name}, all({'+'.join(self.channels)}), voice({'+'.join(self.voice_channels)})"
 
 
-def find_ccextractor():
-    global ccextractor_path, ccextractor_version
-    if ccextractor_path is None:
-        _once_lock.acquire()
-        try:
-            if ccextractor_path is None:
-                _maybe_path = _find_ccextractor()
-                _maybe_version = float(
-                    re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([_maybe_path, '--version'], text=True))[
-                        1])
-                ccextractor_path = _maybe_path
-                ccextractor_version = _maybe_version
-        finally:
-            _once_lock.release()
-    return ccextractor_path
+_ffmpeg_audio_layouts: list[AudioLayout] = []
+_ffmpeg_audio_layouts_lock = threading.Lock()
 
 
-def _find_ccextractor():
-    ccextractor = which("ccextractor")
-    if not os.access(ccextractor, os.X_OK):
-        _fatal(f"{ccextractor} is not an executable")
-    return ccextractor
+def get_audio_layouts(refresh=False) -> list[AudioLayout]:
+    _ffmpeg_audio_layouts_lock.acquire()
+
+    if refresh or len(_ffmpeg_audio_layouts) == 0:
+        _ffmpeg_audio_layouts.clear()
+        matches = re.findall(r"(\S+)\s+([A-Za-z]*\+[A-Za-z]*\+[A-Za-z]*.*)",
+                             ffmpeg.check_output(['-hide_banner', '-layouts'], text=True))
+        for m in matches:
+            name = m[0]
+            channels_str = m[1]
+            channels = channels_str.split('+')
+            voice_channels = list(filter(lambda e: e in ['FC', 'FR', 'FL'], channels))
+            _ffmpeg_audio_layouts.append(AudioLayout(name=name, channels=channels, voice_channels=voice_channels))
+
+    _ffmpeg_audio_layouts_lock.release()
+    return _ffmpeg_audio_layouts

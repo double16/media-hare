@@ -1,9 +1,10 @@
 import logging
 import os
 import re
-import shutil
 import tempfile
 import unittest
+
+import pysrt
 
 import profanity_filter
 
@@ -225,6 +226,20 @@ class ProfanityFilterTest(unittest.TestCase):
         self.assertEqual(expected, filtered)
         text = r'we absolutely blow'
         expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
+    def test_exclamation_phrase14(self):
+        text = r'mad as hell'
+        expected = r'mad as ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'what the hell'
+        expected = r'what ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'ah hell'
+        expected = r'ah ***'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
 
@@ -552,8 +567,9 @@ class ProfanityFilterTest(unittest.TestCase):
     def test_audio_to_text_cleanup(self):
         fd, path = tempfile.mkstemp(suffix='.srt')
         os.close(fd)
-        shutil.copy('../fixtures/audio_to_text.srt.txt', path)
-        profanity_filter.audio_to_text_cleanup(path)
+        srt = pysrt.open('../fixtures/audio_to_text.srt.txt')
+        profanity_filter.audio_to_text_cleanup(srt)
+        srt.save(path)
         with open(path, "r") as file:
             cleaned = ''.join(file.readlines())
         self.assertEqual("""1

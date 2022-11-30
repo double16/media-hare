@@ -1,0 +1,74 @@
+{
+    "streams": [
+        {
+            "index": 0,
+            "codec_name": "hevc",
+            "codec_long_name": "H.265 / HEVC (High Efficiency Video Coding)",
+            "profile": "Main",
+            "codec_type": "video",
+            "codec_tag_string": "[0][0][0][0]",
+            "codec_tag": "0x0000",
+            "width": 630,
+            "height": 480,
+            "coded_width": 640,
+            "coded_height": 480,
+            "closed_captions": 0,
+            "film_grain": 0,
+            "has_b_frames": 2,
+            "sample_aspect_ratio": "64:63",
+            "display_aspect_ratio": "4:3",
+            "pix_fmt": "yuv420p",
+            "level": 90,
+            "color_range": "tv",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 1,
+            "r_frame_rate": "24000/1001",
+            "avg_frame_rate": "24000/1001",
+            "time_base": "1/1000",
+            "start_pts": 1793,
+            "start_time": "1.793000",
+            "extradata_size": 132,
+            "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
+            },
+            "tags": {
+                "ENCODER": "Lavc58.134.100 hevc_nvenc",
+                "DURATION": "01:33:56.673000000"
+            }
+        }
+    ],
+    "chapters": [
+    ],
+    "format": {
+        "filename": "/Media/DVRShows/Doctor Who (1963)/Season 14/Doctor Who (1963) - S14E01-E04 - The Masque of Mandragora.mkv",
+        "nb_streams": 3,
+        "nb_programs": 0,
+        "format_name": "matroska,webm",
+        "format_long_name": "Matroska / WebM",
+        "start_time": "-0.007000",
+        "duration": "5636.720000",
+        "size": "286746427",
+        "bit_rate": "406969",
+        "probe_score": 100,
+        "tags": {
+            "ENCODER": "Lavf58.76.100"
+        }
+    }
+}

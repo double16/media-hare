@@ -101,9 +101,15 @@ take off .* clothes
 take .* clothes off
 look up .* dress
 look down .* dress
+look up .* skirt
+look down .* skirt
 look down .* shirt
 get in .* pants
 keep it in .* pants
+take off .* pants
+take .* pants off
+take off .* dress
+take .* dress off
 get it up
 undress
 have sex

@@ -8,6 +8,7 @@ import dropbox
 from dropbox.exceptions import ApiError
 
 import common
+from common import config
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ def find_precut_revision(dbx, path, has_been_cut: bool):
     entries = dbx.files_list_revisions(path, limit=30).entries
     revisions = sorted(entries, key=lambda entry: entry.server_modified, reverse=True)
     latest_size = revisions[0].size
-    logger.info("%s: latest_size = %s, has been cut = %s", path, common.bytes_to_human_str(latest_size),
+    logger.info("%s: latest_size = %s, has been cut = %s", path, config.bytes_to_human_str(latest_size),
                 str(has_been_cut))
     if has_been_cut:
         target_size = latest_size * 1.07
@@ -26,7 +27,7 @@ def find_precut_revision(dbx, path, has_been_cut: bool):
     stop_size_lg = latest_size * 1.8
     sizes = list()
     for rev in revisions[1:]:
-        size_str = common.bytes_to_human_str(rev.size)
+        size_str = config.bytes_to_human_str(rev.size)
         if len(sizes) == 0 or sizes[-1] != size_str:
             sizes.append(size_str)
 
@@ -96,7 +97,7 @@ def comcut_restore_cli(argv):
             logger.info(dropbox_path)
             uncut_rev = find_precut_revision(dbx, dropbox_path, has_been_cut)
             if uncut_rev is not None:
-                logger.info("Restoring %s, size %s", dropbox_path, common.bytes_to_human_str(uncut_rev.size))
+                logger.info("Restoring %s, size %s", dropbox_path, config.bytes_to_human_str(uncut_rev.size))
                 if not dry_run:
                     try:
                         dbx.files_restore(dropbox_path, uncut_rev.rev)

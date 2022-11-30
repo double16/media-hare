@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pysrt
 from ass_parser import read_ass, write_ass
-from . import fatal, CODEC_SUBTITLE_ASS, CODEC_SUBTITLE_SRT, CODEC_SUBTITLE_SUBRIP
+
+from . import fatal, constants
 
 logger = logging.getLogger(__name__)
 
@@ -12,9 +13,9 @@ def subtitle_codec_from_filename(f, subtitle_codec_hint: [None, str]):
     if subtitle_codec_hint is None:
         f_s = str(f).lower()
         if '.ass' in f_s or '.ssa' in f_s:
-            subtitle_codec_hint = CODEC_SUBTITLE_ASS
+            subtitle_codec_hint = constants.CODEC_SUBTITLE_ASS
         elif '.srt' in f_s or '.sub' in f_s:
-            subtitle_codec_hint = CODEC_SUBTITLE_SRT
+            subtitle_codec_hint = constants.CODEC_SUBTITLE_SRT
         else:
             fatal(f"INFO: Unknown subtitle {f}")
     return subtitle_codec_hint
@@ -22,9 +23,9 @@ def subtitle_codec_from_filename(f, subtitle_codec_hint: [None, str]):
 
 def read_subtitle_data(subtitle_codec, f):
     subtitle_codec = subtitle_codec_from_filename(f, subtitle_codec)
-    if subtitle_codec == CODEC_SUBTITLE_ASS:
+    if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
         return read_ass(Path(f))
-    elif subtitle_codec in [CODEC_SUBTITLE_SRT, CODEC_SUBTITLE_SUBRIP]:
+    elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
         return pysrt.open(f)
     else:
         raise f"INFO: Unknown subtitle codec {subtitle_codec}"
@@ -32,11 +33,11 @@ def read_subtitle_data(subtitle_codec, f):
 
 def write_subtitle_data(subtitle_codec, f, data) -> [None, str]:
     subtitle_codec = subtitle_codec_from_filename(f, subtitle_codec)
-    if subtitle_codec == CODEC_SUBTITLE_ASS:
+    if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
         if f is None:
             return write_ass(data)
         write_ass(data, Path(f))
-    elif subtitle_codec in [CODEC_SUBTITLE_SRT, CODEC_SUBTITLE_SUBRIP]:
+    elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
         if f is None:
             return "\n".join([str(x) for x in data])
         data.save(Path(f), 'utf-8')
@@ -48,11 +49,11 @@ def write_subtitle_data(subtitle_codec, f, data) -> [None, str]:
 def read_subtitle_text(subtitle_codec: [None, str], f):
     subtitle_codec = subtitle_codec_from_filename(f, subtitle_codec)
     lines = []
-    if subtitle_codec == CODEC_SUBTITLE_ASS:
+    if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
         ass_data = read_ass(Path(f))
         for event in list(ass_data.events):
             lines.append(event.text)
-    elif subtitle_codec in [CODEC_SUBTITLE_SRT, CODEC_SUBTITLE_SUBRIP]:
+    elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
         srt_data = pysrt.open(f)
         for event in list(srt_data):
             lines.append(event.text)

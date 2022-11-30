@@ -1,0 +1,588 @@
+{
+    "streams": [
+        {
+            "index": 0,
+            "codec_name": "ac3",
+            "codec_long_name": "ATSC A/52A (AC-3)",
+            "codec_type": "audio",
+            "codec_tag_string": "[0][0][0][0]",
+            "codec_tag": "0x0000",
+            "sample_fmt": "fltp",
+            "sample_rate": "48000",
+            "channels": 6,
+            "channel_layout": "5.1(side)",
+            "bits_per_sample": 0,
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "time_base": "1/1000",
+            "start_pts": 17,
+            "start_time": "0.017000",
+            "bit_rate": "448000",
+            "disposition": {
+                "default": 0,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
+            },
+            "tags": {
+                "language": "eng",
+                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
+                "BPS-eng": "448000",
+                "DURATION-eng": "02:18:17.376000000",
+                "NUMBER_OF_FRAMES-eng": "259293",
+                "NUMBER_OF_BYTES-eng": "464653056",
+                "SOURCE_ID-eng": "0180BD",
+                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
+                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
+                "DURATION": "02:18:17.393000000"
+            }
+        },
+        {
+            "index": 1,
+            "codec_name": "subrip",
+            "codec_long_name": "SubRip subtitle",
+            "codec_type": "subtitle",
+            "codec_tag_string": "[0][0][0][0]",
+            "codec_tag": "0x0000",
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "time_base": "1/1000",
+            "start_pts": -13,
+            "start_time": "-0.013000",
+            "duration_ts": 8297539,
+            "duration": "8297.539000",
+            "disposition": {
+                "default": 0,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
+            },
+            "tags": {
+                "language": "eng",
+                "BPS-eng": "82",
+                "DURATION-eng": "02:17:13.022000000",
+                "NUMBER_OF_FRAMES-eng": "1676",
+                "NUMBER_OF_BYTES-eng": "84811",
+                "SOURCE_ID-eng": "0100E0",
+                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
+                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
+                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
+                "DURATION": "02:17:24.318000000"
+            }
+        },
+        {
+            "index":3,
+            "codec_name": "mpeg2video",
+            "codec_long_name": "MPEG-2 video",
+            "profile": "Main",
+            "codec_type": "video",
+            "codec_tag_string": "[0][0][0][0]",
+            "codec_tag": "0x0000",
+            "width": 720,
+            "height": 480,
+            "coded_width": 0,
+            "coded_height": 0,
+            "closed_captions": 0,
+            "film_grain": 0,
+            "has_b_frames": 1,
+            "sample_aspect_ratio": "186:157",
+            "display_aspect_ratio": "279:157",
+            "pix_fmt": "yuv420p",
+            "level": 8,
+            "color_range": "tv",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 1,
+            "r_frame_rate": "30000/1001",
+            "avg_frame_rate": "30000/1001",
+            "time_base": "1/1000",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "extradata_size": 152,
+            "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
+            },
+            "tags": {
+                "language": "eng",
+                "BPS-eng": "5434757",
+                "DURATION-eng": "02:18:17.622666666",
+                "NUMBER_OF_FRAMES-eng": "198944",
+                "NUMBER_OF_BYTES-eng": "5636945924",
+                "SOURCE_ID-eng": "0100E0",
+                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
+                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
+                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
+                "DURATION": "02:18:17.539000000"
+            },
+            "side_data_list": [
+                {
+                    "side_data_type": "CPB properties",
+                    "max_bitrate": 7500000,
+                    "min_bitrate": 0,
+                    "avg_bitrate": 0,
+                    "buffer_size": 1835008,
+                    "vbv_delay": -1
+                }
+            ]
+        }
+    ],
+    "chapters": [
+        {
+            "id": 1500981055,
+            "time_base": "1/1000000000",
+            "start": 416666,
+            "start_time": "0.000417",
+            "end": 232115633333,
+            "end_time": "232.115633",
+            "tags": {
+                "title": "Chapter 01"
+            }
+        },
+        {
+            "id": 4039256607,
+            "time_base": "1/1000000000",
+            "start": 232115633333,
+            "start_time": "232.115633",
+            "end": 537287166666,
+            "end_time": "537.287167",
+            "tags": {
+                "title": "Chapter 02"
+            }
+        },
+        {
+            "id": 2731479016,
+            "time_base": "1/1000000000",
+            "start": 537287166666,
+            "start_time": "537.287167",
+            "end": 738621633333,
+            "end_time": "738.621633",
+            "tags": {
+                "title": "Chapter 03"
+            }
+        },
+        {
+            "id": 1699369486,
+            "time_base": "1/1000000000",
+            "start": 738621633333,
+            "start_time": "738.621633",
+            "end": 986202300000,
+            "end_time": "986.202300",
+            "tags": {
+                "title": "Chapter 04"
+            }
+        },
+        {
+            "id": 1956934213,
+            "time_base": "1/1000000000",
+            "start": 986202300000,
+            "start_time": "986.202300",
+            "end": 1185067633333,
+            "end_time": "1185.067633",
+            "tags": {
+                "title": "Chapter 05"
+            }
+        },
+        {
+            "id": 898152957,
+            "time_base": "1/1000000000",
+            "start": 1185067633333,
+            "start_time": "1185.067633",
+            "end": 1411293633333,
+            "end_time": "1411.293633",
+            "tags": {
+                "title": "Chapter 06"
+            }
+        },
+        {
+            "id": 1792981325,
+            "time_base": "1/1000000000",
+            "start": 1411293633333,
+            "start_time": "1411.293633",
+            "end": 1648697466666,
+            "end_time": "1648.697467",
+            "tags": {
+                "title": "Chapter 07"
+            }
+        },
+        {
+            "id": 1839243292,
+            "time_base": "1/1000000000",
+            "start": 1648697466666,
+            "start_time": "1648.697467",
+            "end": 1923138300000,
+            "end_time": "1923.138300",
+            "tags": {
+                "title": "Chapter 08"
+            }
+        },
+        {
+            "id": 951650883,
+            "time_base": "1/1000000000",
+            "start": 1923138300000,
+            "start_time": "1923.138300",
+            "end": 2025106833333,
+            "end_time": "2025.106833",
+            "tags": {
+                "title": "Chapter 09"
+            }
+        },
+        {
+            "id": 965541650,
+            "time_base": "1/1000000000",
+            "start": 2025106833333,
+            "start_time": "2025.106833",
+            "end": 2279160633333,
+            "end_time": "2279.160633",
+            "tags": {
+                "title": "Chapter 10"
+            }
+        },
+        {
+            "id": 1511037594,
+            "time_base": "1/1000000000",
+            "start": 2279160633333,
+            "start_time": "2279.160633",
+            "end": 2457338633333,
+            "end_time": "2457.338633",
+            "tags": {
+                "title": "Chapter 11"
+            }
+        },
+        {
+            "id": 908833383,
+            "time_base": "1/1000000000",
+            "start": 2457338633333,
+            "start_time": "2457.338633",
+            "end": 2626841300000,
+            "end_time": "2626.841300",
+            "tags": {
+                "title": "Chapter 12"
+            }
+        },
+        {
+            "id": 611820175,
+            "time_base": "1/1000000000",
+            "start": 2626841300000,
+            "start_time": "2626.841300",
+            "end": 3044591966666,
+            "end_time": "3044.591967",
+            "tags": {
+                "title": "Chapter 13"
+            }
+        },
+        {
+            "id": 2376883361,
+            "time_base": "1/1000000000",
+            "start": 3044591966666,
+            "start_time": "3044.591967",
+            "end": 3310357466666,
+            "end_time": "3310.357467",
+            "tags": {
+                "title": "Chapter 14"
+            }
+        },
+        {
+            "id": 2600021409,
+            "time_base": "1/1000000000",
+            "start": 3310357466666,
+            "start_time": "3310.357467",
+            "end": 3604985133333,
+            "end_time": "3604.985133",
+            "tags": {
+                "title": "Chapter 15"
+            }
+        },
+        {
+            "id": 343621440,
+            "time_base": "1/1000000000",
+            "start": 3604985133333,
+            "start_time": "3604.985133",
+            "end": 3771651633333,
+            "end_time": "3771.651633",
+            "tags": {
+                "title": "Chapter 16"
+            }
+        },
+        {
+            "id": 2430475097,
+            "time_base": "1/1000000000",
+            "start": 3771651633333,
+            "start_time": "3771.651633",
+            "end": 4134180466666,
+            "end_time": "4134.180467",
+            "tags": {
+                "title": "Chapter 17"
+            }
+        },
+        {
+            "id": 925557565,
+            "time_base": "1/1000000000",
+            "start": 4134180466666,
+            "start_time": "4134.180467",
+            "end": 4388634666666,
+            "end_time": "4388.634667",
+            "tags": {
+                "title": "Chapter 18"
+            }
+        },
+        {
+            "id": 3360661563,
+            "time_base": "1/1000000000",
+            "start": 4388634666666,
+            "start_time": "4388.634667",
+            "end": 4583295800000,
+            "end_time": "4583.295800",
+            "tags": {
+                "title": "Chapter 19"
+            }
+        },
+        {
+            "id": 1972966651,
+            "time_base": "1/1000000000",
+            "start": 4583295800000,
+            "start_time": "4583.295800",
+            "end": 4833712633333,
+            "end_time": "4833.712633",
+            "tags": {
+                "title": "Chapter 20"
+            }
+        },
+        {
+            "id": 912108652,
+            "time_base": "1/1000000000",
+            "start": 4833712633333,
+            "start_time": "4833.712633",
+            "end": 4969047833333,
+            "end_time": "4969.047833",
+            "tags": {
+                "title": "Chapter 21"
+            }
+        },
+        {
+            "id": 1246911926,
+            "time_base": "1/1000000000",
+            "start": 4969047833333,
+            "start_time": "4969.047833",
+            "end": 5174386300000,
+            "end_time": "5174.386300",
+            "tags": {
+                "title": "Chapter 22"
+            }
+        },
+        {
+            "id": 1085728378,
+            "time_base": "1/1000000000",
+            "start": 5174386300000,
+            "start_time": "5174.386300",
+            "end": 5394773133333,
+            "end_time": "5394.773133",
+            "tags": {
+                "title": "Chapter 23"
+            }
+        },
+        {
+            "id": 210693519,
+            "time_base": "1/1000000000",
+            "start": 5394773133333,
+            "start_time": "5394.773133",
+            "end": 5572817666666,
+            "end_time": "5572.817667",
+            "tags": {
+                "title": "Chapter 24"
+            }
+        },
+        {
+            "id": 2428067749,
+            "time_base": "1/1000000000",
+            "start": 5572817666666,
+            "start_time": "5572.817667",
+            "end": 5832710633333,
+            "end_time": "5832.710633",
+            "tags": {
+                "title": "Chapter 25"
+            }
+        },
+        {
+            "id": 540930402,
+            "time_base": "1/1000000000",
+            "start": 5832710633333,
+            "start_time": "5832.710633",
+            "end": 6053130833333,
+            "end_time": "6053.130833",
+            "tags": {
+                "title": "Chapter 26"
+            }
+        },
+        {
+            "id": 1807282821,
+            "time_base": "1/1000000000",
+            "start": 6053130833333,
+            "start_time": "6053.130833",
+            "end": 6299710500000,
+            "end_time": "6299.710500",
+            "tags": {
+                "title": "Chapter 27"
+            }
+        },
+        {
+            "id": 3730458830,
+            "time_base": "1/1000000000",
+            "start": 6299710500000,
+            "start_time": "6299.710500",
+            "end": 6494037966666,
+            "end_time": "6494.037967",
+            "tags": {
+                "title": "Chapter 28"
+            }
+        },
+        {
+            "id": 156728013,
+            "time_base": "1/1000000000",
+            "start": 6494037966666,
+            "start_time": "6494.037967",
+            "end": 6747290966666,
+            "end_time": "6747.290967",
+            "tags": {
+                "title": "Chapter 29"
+            }
+        },
+        {
+            "id": 3795310256,
+            "time_base": "1/1000000000",
+            "start": 6747290966666,
+            "start_time": "6747.290967",
+            "end": 6944821633333,
+            "end_time": "6944.821633",
+            "tags": {
+                "title": "Chapter 30"
+            }
+        },
+        {
+            "id": 3523253484,
+            "time_base": "1/1000000000",
+            "start": 6944821633333,
+            "start_time": "6944.821633",
+            "end": 7059436133333,
+            "end_time": "7059.436133",
+            "tags": {
+                "title": "Chapter 31"
+            }
+        },
+        {
+            "id": 1806517881,
+            "time_base": "1/1000000000",
+            "start": 7059436133333,
+            "start_time": "7059.436133",
+            "end": 7313356466666,
+            "end_time": "7313.356467",
+            "tags": {
+                "title": "Chapter 32"
+            }
+        },
+        {
+            "id": 3822364641,
+            "time_base": "1/1000000000",
+            "start": 7313356466666,
+            "start_time": "7313.356467",
+            "end": 7460336633333,
+            "end_time": "7460.336633",
+            "tags": {
+                "title": "Chapter 33"
+            }
+        },
+        {
+            "id": 2177153595,
+            "time_base": "1/1000000000",
+            "start": 7460336633333,
+            "start_time": "7460.336633",
+            "end": 7626002133333,
+            "end_time": "7626.002133",
+            "tags": {
+                "title": "Chapter 34"
+            }
+        },
+        {
+            "id": 4039653374,
+            "time_base": "1/1000000000",
+            "start": 7626002133333,
+            "start_time": "7626.002133",
+            "end": 8191567133333,
+            "end_time": "8191.567133",
+            "tags": {
+                "title": "Chapter 35"
+            }
+        },
+        {
+            "id": 587731374,
+            "time_base": "1/1000000000",
+            "start": 8191567133333,
+            "start_time": "8191.567133",
+            "end": 8297539666666,
+            "end_time": "8297.539667",
+            "tags": {
+                "title": "Chapter 36"
+            }
+        }
+    ],
+    "format": {
+        "filename": "/Users/double/Movies/working/The Matrix Reloaded (2003)/The Matrix Reloaded (2003).mkv",
+        "nb_streams": 7,
+        "nb_programs": 0,
+        "format_name": "matroska,webm",
+        "format_long_name": "Matroska / WebM",
+        "start_time": "-0.013000",
+        "duration": "8297.539000",
+        "size": "6404985771",
+        "bit_rate": "6175311",
+        "probe_score": 100,
+        "tags": {
+            "title": "THE MATRIX RELOADED DISC 1",
+            "creation_time": "2022-04-30T01:29:19.000000Z",
+            "AUDIO2TEXT_VERSION": "3",
+            "PFILTER_SKIP": "true",
+            "ENCODER": "Lavf58.76.100"
+        }
+    }
+}

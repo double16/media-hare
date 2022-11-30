@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 import common
+from common import config, constants
 
 #
 # Developer notes:
@@ -29,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 def usage():
-    video_codecs = common.get_global_config_option('video', 'codecs')
-    audio_codecs = common.get_global_config_option('audio', 'codecs')
+    video_codecs = config.get_global_config_option('video', 'codecs')
+    audio_codecs = config.get_global_config_option('audio', 'codecs')
     print(f"""{sys.argv[0]} [options] [media_paths]
 
 List files needing transcode from the Plex database. There are two output formats:
@@ -49,7 +50,7 @@ List files needing transcode from the Plex database. There are two output format
     Desired video codecs. Defaults to {video_codecs}
 -a, --audio=
     Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
--f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
+-f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Desired frame rate. If the current frame rate is within 25%, the file isn't considered.
 --maxres=480
     Limit to specified height. Use to keep a lower powered machine from processing HD videos.
@@ -197,7 +198,8 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                 need_transcode = False
 
                 video_streams = list(
-                    filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_VIDEO, input_info['streams']))
+                    filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_VIDEO,
+                           input_info['streams']))
 
                 min_height = min(map(lambda e: int(e['height']), video_streams))
                 if max_resolution is not None and min_height > max_resolution:
@@ -209,22 +211,23 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                     need_transcode = True
 
                 if desired_video_codecs is not None:
-                    video_codecs = set(map(lambda e: e[common.K_CODEC_NAME], video_streams))
+                    video_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], video_streams))
                     if not video_codecs.issubset(set(desired_video_codecs)):
                         need_transcode = True
 
                 if desired_audio_codecs is not None:
                     audio_streams = list(
-                        filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_AUDIO, input_info['streams']))
-                    audio_codecs = set(map(lambda e: e[common.K_CODEC_NAME], audio_streams))
+                        filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO,
+                               input_info['streams']))
+                    audio_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], audio_streams))
                     if not audio_codecs.issubset(set(desired_audio_codecs)):
                         need_transcode = True
 
                 if desired_subtitle_codecs is not None:
                     subtitle_streams = list(
-                        filter(lambda stream: stream[common.K_CODEC_TYPE] == common.CODEC_SUBTITLE,
+                        filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_SUBTITLE,
                                input_info['streams']))
-                    subtitle_codecs = set(map(lambda e: e[common.K_CODEC_NAME], subtitle_streams))
+                    subtitle_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], subtitle_streams))
                     if len(subtitle_codecs) == 0:
                         need_transcode = False
                     elif not subtitle_codecs.intersection(set(desired_subtitle_codecs)):
@@ -232,7 +235,7 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 
                 if need_transcode:
                     yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
-                                            runtime=int(float(input_info[common.K_FORMAT]['duration'])),
+                                            runtime=int(float(input_info[constants.K_FORMAT]['duration'])),
                                             framerate=min_framerate, item_key=None)
 
 
@@ -247,9 +250,9 @@ def need_transcode_generator(
         desired_frame_rate: [None, float] = None,
 ):
     if desired_video_codecs is None and desired_audio_codecs is None and desired_frame_rate is None:
-        desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
-        desired_audio_codecs = common.get_global_config_option('audio', 'codecs').split(',')
-        desired_frame_rate = common.get_global_config_frame_rate('post_process', 'frame_rate', None)
+        desired_video_codecs = config.get_global_config_option('video', 'codecs').split(',')
+        desired_audio_codecs = config.get_global_config_option('audio', 'codecs').split(',')
+        desired_frame_rate = config.get_global_config_frame_rate('post_process', 'frame_rate', None)
     if host_home is None:
         host_home = common.get_media_base()
 
@@ -385,7 +388,7 @@ def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):
     :param host_home: the current host media home
     :return: valid file name or None
     """
-    paths = common.get_global_config_option('media', 'paths').split(',')
+    paths = config.get_global_config_option('media', 'paths').split(',')
     for path in paths:
         i = file_name.find(path)
         if i >= 0:

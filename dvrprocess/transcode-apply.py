@@ -2,12 +2,14 @@
 
 import getopt
 import logging
+import os
 import sys
 from subprocess import CalledProcessError
 
 import requests
 
 import common
+from common import config, constants
 from dvr_post_process import dvr_post_process
 from find_need_transcode import need_transcode_generator
 
@@ -15,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def usage():
-    video_codecs = common.get_global_config_option('video', 'codecs')
-    audio_codecs = common.get_global_config_option('audio', 'codecs')
+    video_codecs = config.get_global_config_option('video', 'codecs')
+    audio_codecs = config.get_global_config_option('audio', 'codecs')
     print(f"""{sys.argv[0]} [options] [media_paths]
 
 Transcode content not matching desired video or audio codecs. This program is sensitive to current compute usage and
@@ -30,7 +32,7 @@ will not start running on a system under load and also will stop if the system b
     Desired video codecs. Defaults to {video_codecs}
 -a, --audio=
     Desired audio codecs. Defaults to only querying for video to transcode. Configured audio codecs are {audio_codecs}
--f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
+-f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Desired frame rate. If the current frame rate is within 25%, the file isn't considered.
 --maxres=480
     Limit to specified height. Use to keep a lower powered machine from processing HD videos.
@@ -55,7 +57,9 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
             if limit < 0:
                 break
 
+        original_size = -1
         try:
+            original_size = os.stat(file_info.host_file_path).st_size
             post_process_code = dvr_post_process(file_info.host_file_path, dry_run=dry_run, verbose=verbose,
                                                  profanity_filter=True)
         except CalledProcessError as e:
@@ -64,11 +68,12 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
             # conflict with multiple processors
             post_process_code = 255
         if post_process_code == 0 and plex_url and file_info.item_key:
-            input_type = file_info.host_file_path.split(".")[-1]
-            if file_info.library and input_type != 'mkv':
+            file_changed = not os.path.exists(file_info.host_file_path) or os.stat(
+                file_info.host_file_path).st_size != original_size
+            if file_info.library and not os.path.exists(file_info.host_file_path):
                 # We changed output types, i.e. filenames, Plex requires a library scan to find it
                 libraries_to_scan.add(file_info.library)
-            else:
+            elif file_changed:
                 # Updating a file without changing the name, we can analyze the item
                 analyze_url = f'{plex_url}{file_info.item_key}/analyze'
                 logger.info('HTTP PUT: %s', analyze_url)

@@ -8,9 +8,9 @@ import sys
 from statistics import stdev, mean
 
 import common
-from common import crop_frame
 from comchap import comchap, get_expected_adjusted_duration
 from comcut import comcut
+from common import crop_frame, config
 
 VIDEO_MIN_COUNT = 5
 
@@ -35,9 +35,9 @@ Cuts commercials only when a season fits closely within the average of length po
     Sigma limit in seconds
 -a, --all
     Cut all files regardless of fit
---work-dir={common.get_work_dir()}
+--work-dir={config.get_work_dir()}
 --preset=veryslow,slow,medium,fast,veryfast
-    Set ffmpeg preset, defaults to {common.get_global_config_option('ffmpeg', 'preset')}
+    Set ffmpeg preset, defaults to {config.get_global_config_option('ffmpeg', 'preset')}
 --force-encode
     Force encoding to be precise, i.e. skip cutting by key frames
 --crop-frame
@@ -47,7 +47,7 @@ Cuts commercials only when a season fits closely within the average of length po
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
 -v, --vcodec=h264[,hvec,...]
-    The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
+    The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 """, file=sys.stderr)
 
 
@@ -82,7 +82,7 @@ def smart_comcut(argv):
     strict = False
     all_videos = False
     keep = False
-    workdir = common.get_work_dir()
+    workdir = config.get_work_dir()
     sigma = None
     preset = None
     force_encode = False
@@ -138,7 +138,7 @@ def smart_comcut(argv):
         return 255
 
     if not workdir:
-        workdir = common.get_work_dir()
+        workdir = config.get_work_dir()
 
     for arg in args:
         for root, dirs, files in os.walk(arg, topdown=True):

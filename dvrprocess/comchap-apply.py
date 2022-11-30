@@ -10,6 +10,7 @@ from subprocess import CalledProcessError
 
 import common
 from comchap import comchap, find_comskip_ini, compute_comskip_ini_hash
+from common import config, constants
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,10 @@ there by this program.
 Usage: {sys.argv[0]} [options] media_paths ...
 
 --comskip-ini=comskip.ini
---work-dir={common.get_work_dir()}
--b, --bytes-limit={common.get_global_config_option('background_limits', 'size_limit')}
+--work-dir={config.get_work_dir()}
+-b, --bytes-limit={config.get_global_config_option('background_limits', 'size_limit')}
     Limit changed data to this many bytes. Set to 0 for no limit.
--t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
+-t, --time-limit={config.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --processes=2
 --dry-run
@@ -36,15 +37,15 @@ Usage: {sys.argv[0]} [options] media_paths ...
 
 
 def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, force=False,
-                  size_limit=common.get_global_config_bytes('background_limits', 'size_limit'),
-                  time_limit=common.get_global_config_time_seconds('background_limits', 'time_limit'),
+                  size_limit=config.get_global_config_bytes('background_limits', 'size_limit'),
+                  time_limit=config.get_global_config_time_seconds('background_limits', 'time_limit'),
                   processes=1,
                   check_compute=True,
                   delete_log=True):
     logger.info(f"Applying comchap to media files in {','.join(media_paths)}")
 
     if workdir is None:
-        workdir = common.get_work_dir()
+        workdir = config.get_work_dir()
 
     if not comskip_ini:
         try:
@@ -75,8 +76,8 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                     # check for existing chapters
                     remove_edl = force
                     if not force and len(input_info.get('chapters', [])) > 0:
-                        current_comskip_hash = input_info.get(common.K_FORMAT, {}).get(common.K_TAGS, {}).get(
-                            common.K_COMSKIP_HASH)
+                        current_comskip_hash = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+                            constants.K_COMSKIP_HASH)
                         if not current_comskip_hash:
                             # we did not add these chapters
                             logger.info(f"{filepath}: Chapters from another source present")
@@ -144,7 +145,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
 
                 if 0 < size_limit < bytes_processed:
                     logger.info(
-                        f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes, size limit of {common.bytes_to_human_str(size_limit)} reached")
+                        f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes, size limit of {config.bytes_to_human_str(size_limit)} reached")
                     return 0
 
                 if time_start is not None:
@@ -158,21 +159,21 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                     logger.info(f"INFO: not enough compute available")
                     return 0
 
-    logger.info(f"Exiting normally after processing {common.bytes_to_human_str(bytes_processed)} bytes")
+    logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes")
     return 0
 
 
 def comchap_apply_cli(argv):
-    workdir = common.get_work_dir()
+    workdir = config.get_work_dir()
     comskipini = None
     dry_run = False
     force = False
-    bytes_limit = common.get_global_config_bytes('background_limits', 'size_limit')
-    time_limit = common.get_global_config_time_seconds('background_limits', 'time_limit')
+    bytes_limit = config.get_global_config_bytes('background_limits', 'size_limit')
+    time_limit = config.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
     delete_log = True
 
-    processes = common.get_global_config_int('background_limits', 'processes',
+    processes = config.get_global_config_int('background_limits', 'processes',
                                              fallback=max(1, int(common.core_count() / 3) - 1))
 
     try:
@@ -198,9 +199,9 @@ def comchap_apply_cli(argv):
         elif opt == "--work-dir":
             workdir = arg
         elif opt in ["-b", "--bytes-limit"]:
-            bytes_limit = common.parse_bytes(arg)
+            bytes_limit = config.parse_bytes(arg)
         elif opt in ["-t", "--time-limit"]:
-            time_limit = common.parse_seconds(arg)
+            time_limit = config.parse_seconds(arg)
         elif opt in ["-p", "--processes"]:
             processes = int(arg)
             check_compute = False

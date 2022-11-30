@@ -5,18 +5,16 @@ import getopt
 import logging
 import math
 import os
-import subprocess
 import sys
 import tempfile
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import mkstemp
+
 from ass_parser import CorruptAssLineError
 
 import common
-from common import hwaccel
-from common import tools
-from common import crop_frame
+from common import crop_frame, hwaccel, tools, config, constants
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
@@ -42,17 +40,17 @@ The file closest to the input file will be taken. Comments start with '#'.
 -k, --keep
     Keep original file in a backup prefixed by ".~".
 -v, --vcodec=h264[,hvec,...]
-    The video codec: {common.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
+    The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 -a, --acodec=opus[,aac,...]
-    The audio codec: {common.get_global_config_option('audio', 'codecs')} (default), aac, ac3, ...
+    The audio codec: {config.get_global_config_option('audio', 'codecs')} (default), aac, ac3, ...
 -h, --height=480
     Scale down to this height, maintaining aspect ratio.
 -o, --output-type=mkv
     Output type: mkv (default), ts, mp4, ...
 -l, --prevent-larger=true,false
-    Prevent conversion to a larger file (default is {common.get_global_config_boolean('post_process', 'prevent_larger')}).
+    Prevent conversion to a larger file (default is {config.get_global_config_boolean('post_process', 'prevent_larger')}).
 -w, --hwaccel=false,auto,full
-    Enable hardware acceleration, if available (default is {common.get_global_config_option('ffmpeg', 'hwaccel', 'auto')}).
+    Enable hardware acceleration, if available (default is {config.get_global_config_option('ffmpeg', 'hwaccel', 'auto')}).
 -s, --stereo
     Scale down audio to stereo.
 -p, --preset=copy,medium,fast,veryfast
@@ -71,7 +69,7 @@ The file closest to the input file will be taken. Comments start with '#'.
     Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
--f, --framerate={','.join(common.FRAME_RATE_NAMES.keys())},24,30000/1001,...
+-f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
 -c, --ignore-errors
     Ignore errors in the stream, as much as can be done. This may still produce an undesired stream, such as out of sync audio. 
@@ -99,16 +97,16 @@ def parse_args(argv) -> (list[str], dict):
     desired_frame_rate = None
     desired_height = None
     preset = None
-    prevent_larger_file = common.get_global_config_boolean('post_process', 'prevent_larger')
+    prevent_larger_file = config.get_global_config_boolean('post_process', 'prevent_larger')
     output_type = "mkv"
     tune = None
-    hwaccel_requested = common.get_global_config_option('ffmpeg', 'hwaccel', fallback=None)
+    hwaccel_requested = config.get_global_config_option('ffmpeg', 'hwaccel', fallback=None)
     dry_run = False
     keep = False
     stereo = False
     rerun = None
     ignore_errors = None
-    profanity_filter = common.get_global_config_boolean('post_process', 'profanity_filter')
+    profanity_filter = config.get_global_config_boolean('post_process', 'profanity_filter')
     crop_frame_op = crop_frame.CropFrameOperation.NONE
     verbose = None
 
@@ -154,7 +152,7 @@ def parse_args(argv) -> (list[str], dict):
         elif opt in ("-p", "--preset"):
             preset = arg
         elif opt in ("-f", "--framerate"):
-            desired_frame_rate = common.FRAME_RATE_NAMES.get(arg, arg)
+            desired_frame_rate = constants.FRAME_RATE_NAMES.get(arg, arg)
         elif opt in ("-c", "--ignore-errors"):
             ignore_errors = True
         elif opt == "--profanity-filter":
@@ -217,7 +215,7 @@ def do_dvr_post_process(input_file,
                         # medium is the ffmpeg default
                         preset=None,
                         # If defined, keep the original file if the transcoded file is larger
-                        prevent_larger_file=common.get_global_config_boolean('post_process', 'prevent_larger'),
+                        prevent_larger_file=config.get_global_config_boolean('post_process', 'prevent_larger'),
                         output_type="mkv",
                         tune=None,
                         # True to attempt to use hardware acceleration for decoding and encoding as available. Falls back to software.
@@ -226,23 +224,23 @@ def do_dvr_post_process(input_file,
                         keep=False,
                         stereo=False,
                         rerun=None,
-                        profanity_filter=common.get_global_config_boolean('post_process', 'profanity_filter'),
+                        profanity_filter=config.get_global_config_boolean('post_process', 'profanity_filter'),
                         crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
                         ignore_errors=None,
                         verbose=False,
                         require_audio=True,
                         ):
     if preset is None:
-        preset = os.environ.get('PRESET', common.get_global_config_option('ffmpeg', 'preset'))
+        preset = os.environ.get('PRESET', config.get_global_config_option('ffmpeg', 'preset'))
 
     if desired_video_codecs is None:
-        desired_video_codecs = common.get_global_config_option('video', 'codecs').split(',')
+        desired_video_codecs = config.get_global_config_option('video', 'codecs').split(',')
 
     if desired_audio_codecs is None:
-        desired_audio_codecs = common.get_global_config_option('audio', 'codecs').split(',')
+        desired_audio_codecs = config.get_global_config_option('audio', 'codecs').split(',')
 
     if desired_frame_rate is None:
-        desired_frame_rate = common.get_global_config_frame_rate('post_process', 'frame_rate', None)
+        desired_frame_rate = config.get_global_config_frame_rate('post_process', 'frame_rate', None)
 
     if not os.path.isfile(input_file):
         logger.error(f"{input_file} does not exist")
@@ -264,12 +262,6 @@ def do_dvr_post_process(input_file,
         return 255
 
     os.nice(12)
-
-    #
-    # Find transcoder
-    #
-
-    ffmpeg = common.find_ffmpeg()
 
     input_info = common.find_input_info(filename)
     duration = float(input_info['format']['duration'])
@@ -347,18 +339,18 @@ def do_dvr_post_process(input_file,
                     copy_video = False
         if copy_video:
             # Re-encode if the bit rate looks too high
-            if common.K_BIT_RATE in input_info['format']:
+            if constants.K_BIT_RATE in input_info['format']:
                 # calculate video bitrate
-                video_bitrate = float(input_info['format'][common.K_BIT_RATE])
+                video_bitrate = float(input_info['format'][constants.K_BIT_RATE])
                 for s in input_info['streams']:
                     if s['codec_type'] != 'video':
-                        if common.K_BIT_RATE in s:
-                            video_bitrate -= int(s[common.K_BIT_RATE])
+                        if constants.K_BIT_RATE in s:
+                            video_bitrate -= int(s[constants.K_BIT_RATE])
                         elif 'tags' in s and 'BPS-eng' in s['tags']:
                             video_bitrate -= int(s['tags']['BPS-eng'])
-                        elif s[common.K_CODEC_NAME] == 'opus':
+                        elif s[constants.K_CODEC_NAME] == 'opus':
                             # opus is VBR and therefore doesn't advertise a bitrate, make assumptions
-                            video_bitrate -= (s[common.K_CHANNELS] * 48000)
+                            video_bitrate -= (s[constants.K_CHANNELS] * 48000)
 
                 # adjust video bitrate by 60 fps increments for comparison purposes
                 video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 60.0))
@@ -378,7 +370,7 @@ def do_dvr_post_process(input_file,
     #
 
     # Global arguments
-    arguments = [ffmpeg]
+    arguments = []
     if not verbose:
         arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
@@ -387,27 +379,27 @@ def do_dvr_post_process(input_file,
         arguments.extend(['-err_detect', 'ignore_err'])
 
     has_text_subtitle_stream = common.has_stream_with_language(input_info,
-                                                               common.CODEC_SUBTITLE,
-                                                               [common.CODEC_SUBTITLE_ASS, common.CODEC_SUBTITLE_SRT],
-                                                               common.LANGUAGE_ENGLISH)
+                                                               constants.CODEC_SUBTITLE,
+                                                               [constants.CODEC_SUBTITLE_ASS,
+                                                                constants.CODEC_SUBTITLE_SRT],
+                                                               constants.LANGUAGE_ENGLISH)
     has_closed_captions = video_info.get('closed_captions', 0) > 0
     extract_closed_captions = has_closed_captions and not has_text_subtitle_stream
 
     if extract_closed_captions:
         # use ccextractor, sometimes lavfi corrupts the subtitles, and ccextractor cleans up the text better
-        ccextractor = tools.find_ccextractor()
         cc_filename = os.path.join(dir_filename, f".~{base_filename}.cc.ass")
         common.TEMPFILENAMES.append(cc_filename)
-        cc_command = [ccextractor, "-out=ass", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
+        cc_command = ["-out=ass", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
         # cc_command.append("--sentencecap")  # this will re-capitalize mixed case
         # cc_command.append("--videoedited")
         if not verbose:
             cc_command.append("-quiet")
         cc_command.extend([os.path.realpath(filename), "-o", cc_filename])
         logger.info(f"Extracting closed captions transcode of {filename} to {cc_filename}")
-        logger.info(common.array_as_command(cc_command))
+        logger.info(tools.ccextractor.array_as_command(cc_command))
         if not dry_run:
-            subprocess.run(cc_command, check=True)
+            tools.ccextractor.run(cc_command, check=True)
 
         if dry_run or os.stat(cc_filename).st_size > 0:
             arguments.extend(['-i', cc_filename])
@@ -467,25 +459,27 @@ def do_dvr_post_process(input_file,
         copy_audio = preset == "copy" or input_audio_codec == target_audio_codec
         audio_input_stream = f"{streams_file}:{audio_info['index']}"
         channels = audio_info['channels']
-        arguments.extend(["-map", audio_input_stream])
         if stereo and channels > 2:
-            transcoding = True
             copy_audio = False
-            arguments.extend([f"-ac:{current_output_stream}", "2"])
 
         if copy_audio:
-            arguments.extend([f"-c:{current_output_stream}", "copy"])
+            arguments.extend(["-map", audio_input_stream, f"-c:{current_output_stream}", "copy"])
         else:
             transcoding = True
-            arguments.extend([f"-c:{current_output_stream}", hwaccel.ffmpeg_sw_codec(target_audio_codec)])
-            audio_bitrate = int(audio_info[common.K_BIT_RATE]) if common.K_BIT_RATE in audio_info else None
+            audio_bitrate = int(audio_info[constants.K_BIT_RATE]) if constants.K_BIT_RATE in audio_info else None
             if target_audio_codec == 'opus':
-                common.extend_opus_arguments(arguments, audio_info, current_output_stream, [], stereo)
-            elif target_audio_codec == 'aac':
-                # use original bit rate if lower than default
-                if audio_bitrate is not None:
-                    if audio_bitrate < (64 * 1024 * channels):
-                        arguments.extend([f"-b:{current_output_stream}", str(max(32, audio_bitrate))])
+                common.map_opus_audio_stream(arguments, audio_info, streams_file, str(current_output_stream), None,
+                                             stereo)
+            else:
+                arguments.extend(["-map", audio_input_stream])
+                arguments.extend([f"-c:{current_output_stream}", hwaccel.ffmpeg_sw_codec(target_audio_codec)])
+                if stereo and channels > 2:
+                    arguments.extend([f"-ac:{current_output_stream}", "2"])
+                if target_audio_codec == 'aac':
+                    # use original bit rate if lower than default
+                    if audio_bitrate is not None:
+                        if audio_bitrate < (64 * 1024 * (2 if stereo else channels)):
+                            arguments.extend([f"-b:{current_output_stream}", str(max(32, audio_bitrate))])
 
         current_output_stream += 1
 
@@ -522,7 +516,7 @@ def do_dvr_post_process(input_file,
             filter_stage += 1
         filter_complex += f"[{filter_stage}];[{filter_stage}]format=nv12"
         filter_stage += 1
-        if encoding_method != hwaccel.HWAccelMethod.NONE:
+        if hwaccel.hwaccel_required_hwupload_filter():
             # must be last
             filter_complex += f"[{filter_stage}];[{filter_stage}]hwupload"
             filter_stage += 1
@@ -545,7 +539,7 @@ def do_dvr_post_process(input_file,
     # Attached pictures
     for attached_pic in common.find_attached_pic_stream(input_info):
         arguments.extend(
-            ["-map", f"{streams_file}:{attached_pic[common.K_STREAM_INDEX]}", f"-c:{current_output_stream}", "copy",
+            ["-map", f"{streams_file}:{attached_pic[constants.K_STREAM_INDEX]}", f"-c:{current_output_stream}", "copy",
              f"-disposition:{current_output_stream}", "attached_pic"])
         current_output_stream += 1
 
@@ -556,15 +550,15 @@ def do_dvr_post_process(input_file,
         if extract_closed_captions and streams_file > 0:
             # Closed captions
             arguments.extend(
-                ["-map", f"{closed_caption_file}:s?", "-c:s", common.CODEC_SUBTITLE_ASS, "-metadata:s:s:0",
-                 f"language={common.LANGUAGE_ENGLISH}"])
+                ["-map", f"{closed_caption_file}:s?", "-c:s", constants.CODEC_SUBTITLE_ASS, "-metadata:s:s:0",
+                 f"language={constants.LANGUAGE_ENGLISH}"])
             transcoding = True
             remove_closed_captions = True
         else:
             for idx, subtitle in enumerate(
-                    common.find_streams_by_codec_and_language(input_info, common.CODEC_SUBTITLE, None,
-                                                              common.LANGUAGE_ENGLISH)):
-                if subtitle['tags'].get('language') == common.LANGUAGE_ENGLISH:
+                    common.find_streams_by_codec_and_language(input_info, constants.CODEC_SUBTITLE, None,
+                                                              constants.LANGUAGE_ENGLISH)):
+                if subtitle['tags'].get('language') == constants.LANGUAGE_ENGLISH:
                     remove_closed_captions = True
                 arguments.extend(["-map", f"{streams_file}:{subtitle['index']}"])
                 codec_subtitle_switcher = {
@@ -588,11 +582,11 @@ def do_dvr_post_process(input_file,
     arguments.extend(
         ["-map_chapters", str(streams_file), "-map_metadata", str(streams_file),
          "-c:t", "copy", "-map", f"{streams_file}:t?"])
-    arguments.extend(['-metadata', f"{common.K_MEDIA_PROCESSOR}={common.V_MEDIA_PROCESSOR}"])
+    arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
     if common.should_replace_media_title(input_info):
-        arguments.extend(['-metadata', f"{common.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+        arguments.extend(['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
     if len(video_encoder_options_tag_value) > 0:
-        arguments.extend(['-metadata', f"{common.K_ENCODER_OPTIONS}={' '.join(video_encoder_options_tag_value)}"])
+        arguments.extend(['-metadata', f"{constants.K_ENCODER_OPTIONS}={' '.join(video_encoder_options_tag_value)}"])
     if output_type == 'mov':
         arguments.extend(["-c:d", "copy", "-map", f"{streams_file}:d?"])
 
@@ -603,7 +597,7 @@ def do_dvr_post_process(input_file,
         return 0
 
     if dry_run:
-        logger.info(f"{common.array_as_command(arguments)}")
+        logger.info(f"{tools.ffmpeg.array_as_command(arguments)}")
         return 0
 
     #
@@ -619,8 +613,8 @@ def do_dvr_post_process(input_file,
         return 255
 
     logger.info(f"Starting transcode of {filename} to {common.TEMPFILENAME}")
-    logger.info(f"{common.array_as_command(arguments)}")
-    subprocess.run(arguments, check=True)
+    logger.info(f"{tools.ffmpeg.array_as_command(arguments)}")
+    tools.ffmpeg.run(arguments, check=True)
 
     if os.stat(common.TEMPFILENAME).st_size == 0:
         logger.error(f"Output at {common.TEMPFILENAME} is zero length")

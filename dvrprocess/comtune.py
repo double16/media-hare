@@ -22,6 +22,7 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
     get_comskip_hwassist_options
+from common import tools, config, constants
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
 
@@ -115,13 +116,13 @@ Automated tuning of comskip configurations. Considers show seasons as a group.
 Usage: {sys.argv[0]} file | dir
 
 -p, --processes=2
--t, --time-limit={common.get_global_config_option('background_limits', 'time_limit')}
+-t, --time-limit={config.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 -e, --expensive
     Tune parameters that are expensive to compute, i.e. require processing of video for each value combination.
 --verbose
 -n, --dry-run
---work-dir={common.get_work_dir()}
+--work-dir={config.get_work_dir()}
 -f, --force
     Force re-running tuning algorithm even if tuning is present. Give this option twice to re-run comskip CSV.
 """, file=sys.stderr)
@@ -376,7 +377,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
         # generate CSV using starter configuration to determine black frame tuning
         comskip_starter_ini = find_comskip_starter_ini()
         for video_info in dvr_infos:
-            file_path = video_info[common.K_FORMAT]['filename']
+            file_path = video_info[constants.K_FORMAT]['filename']
             try:
                 framearray_results.append(
                     pool.apply_async(ensure_framearray, (
@@ -404,7 +405,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
         max_volume_list = []
         non_uniformity_list = []
         for video_info in dvr_infos:
-            file_path = video_info[common.K_FORMAT]['filename']
+            file_path = video_info[constants.K_FORMAT]['filename']
             max_avg_brightness, max_volume, non_uniformity = compute_black_frame_tunings(file_path, workdir)
             if max_avg_brightness:
                 max_avg_brightness_list.append(max_avg_brightness)
@@ -446,7 +447,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
 
         results = []
         for video_info in dvr_infos:
-            file_path = video_info[common.K_FORMAT]['filename']
+            file_path = video_info[constants.K_FORMAT]['filename']
             csvfile = common.replace_extension(
                 os.path.join(workdir, common.remove_extension(os.path.basename(file_path)) + csv_suffix),
                 'csv')
@@ -483,7 +484,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
 
         adjusted_durations = []
         for video_info in video_infos:
-            file_path = video_info[common.K_FORMAT]['filename']
+            file_path = video_info[constants.K_FORMAT]['filename']
             episode_count, episode_duration, video_duration = common.episode_info(video_info)
             adjusted_duration = video_duration
             edl_path = edl_tempfile(file_path, workdir)
@@ -577,15 +578,14 @@ def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, 
     infile_base, csv_path, _ = paths(infile, workdir, infile_base=infile_base)
     if not force and os.path.isfile(csv_path):
         return
-    comskip = common.find_comskip()
-    command = [comskip, "-v", "9"]
+    command = ["-v", "9"]
     command.extend(get_comskip_hwassist_options())
     command.extend(["--quiet", "--csvout",
                     f"--ini={comskip_ini}",
                     f"--output={workdir}", f"--output-filename={infile_base}", infile])
-    logger.info(common.array_as_command(command))
+    logger.info(tools.comskip.array_as_command(command))
     if not dry_run:
-        subprocess.run(command, check=True, capture_output=True)
+        tools.comskip.run(command, check=True, capture_output=True)
 
 
 def get_comskip_starter_ini_sources():
@@ -680,20 +680,21 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
         "Parameters of the adjusted solution : {solution}".format(solution=solution_repl(genes, solution)))
 
     write_ini_from_solution(os.path.join(season_dir, 'comskip.ini'), genes, solution)
+    # TODO: run in parallel
     for filepath in files:
         comchap(filepath, filepath, force=True, delete_edl=False, workdir=workdir)
 
 
 def comtune_cli(argv):
     verbose = False
-    workdir = common.get_work_dir()
+    workdir = config.get_work_dir()
     force = 0
     dry_run = False
     expensive_genes = False
     check_compute = True
-    time_limit = int(common.get_global_config_time_seconds('background_limits', 'time_limit'))
+    time_limit = int(config.get_global_config_time_seconds('background_limits', 'time_limit'))
 
-    processes = common.get_global_config_int('background_limits', 'processes',
+    processes = config.get_global_config_int('background_limits', 'processes',
                                              fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
@@ -717,7 +718,7 @@ def comtune_cli(argv):
         elif opt in ["-n", "--dry-run"]:
             dry_run = True
         elif opt in ["-t", "--time-limit"]:
-            time_limit = common.parse_seconds(arg)
+            time_limit = config.parse_seconds(arg)
         elif opt in ["-p", "--processes"]:
             if len(arg) > 0:
                 processes = int(arg)
