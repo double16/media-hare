@@ -795,7 +795,8 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         logger.error(f"SRT not generated from OCR")
         return None
 
-    word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language)
+    word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language,
+                                             float(input_info[constants.K_FORMAT][constants.K_DURATION]))
     if word_found_pct < WORD_FOUND_PCT_THRESHOLD:
         logger.error(f"OCR text appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None
@@ -822,7 +823,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
         GpuThreadInit()
     except ImportError as e:
         logger.warning("Cannot transcribe audio, vosk missing")
-        return None
+        return None, None
 
     freq = 16000
     chunk_size = 4000
@@ -883,7 +884,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     extract_return_code = audio_process.wait()
     if extract_return_code != 0:
         logger.error("Cannot transcribe audio, ffmpeg returned %s", extract_return_code)
-        return None
+        return None, None
 
     subs_words = []
     subs_text = []
@@ -916,11 +917,12 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     audio_to_text_cleanup(srt)
     srt.save(Path(subtitle_srt_filename), 'utf-8')
 
-    word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language)
+    word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language,
+                                             float(input_info[constants.K_FORMAT][constants.K_DURATION]))
     if word_found_pct < WORD_FOUND_PCT_THRESHOLD:
         logger.error(
             f"audio-to-text transcription appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
-        return None
+        return None, None
 
     # TODO: Add "transcribed by media-hare+Vosk" at beginning and end
 
@@ -949,7 +951,7 @@ def audio_to_text_cleanup(srt_data: SubRipFile) -> None:
             event.text = cleaned_text
 
 
-def words_in_dictionary_pct(subtitle_srt_filename, language):
+def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
     try:
         import hunspell
 
@@ -967,8 +969,8 @@ def words_in_dictionary_pct(subtitle_srt_filename, language):
                 word_count += 1
                 if hobj.spell(word):
                     word_found_count += 1
-        if word_count < 100:
-            logger.warning("word count less than 100, returning 0%")
+        if word_count < 100 and duration > 630:
+            logger.warning(f"word count less than 100 for duration {duration}, returning 0%")
             return 0.0
         word_found_pct = 100.0 * float(word_found_count) / float(word_count)
         logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")

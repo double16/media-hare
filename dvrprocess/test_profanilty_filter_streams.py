@@ -79,6 +79,8 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.getLogger().setLevel(logging.DEBUG)
         tools.mock_all()
+        # This method will unnecessarily fail for our test cases
+        profanity_filter.words_in_dictionary_pct = lambda a, b, c: 100.00
 
     def tearDown(self) -> None:
         tools.mock_verify_all()
