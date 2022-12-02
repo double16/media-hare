@@ -16,7 +16,8 @@ from common import crop_frame, hwaccel, subtitle, tools, config, constants
 from profanity_filter import MASK_STR
 
 KEYFRAME_DISTANCE_TOLERANCE = 1.0
-KEYFRAME_IGNORE_FOR_ENCODING = True
+KEYFRAME_IGNORE_FOR_ENCODING = False
+USE_FIRST_KEYFRAME_FOR_START_TIME = True
 # http://ffmpeg.org/ffmpeg-all.html#select_002c-aselect
 FILTER_AV_CONCAT_DEMUX = False
 
@@ -152,6 +153,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     else:
         keyframes = common.load_keyframes_by_seconds(infile)
         logger.debug("Loaded %s keyframes", len(keyframes))
+    if USE_FIRST_KEYFRAME_FOR_START_TIME and len(keyframes) > 0:
+        start_time = keyframes[0]
 
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
@@ -240,7 +243,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                 end = edl_event.start
                 if edl_event.start > 0:  # allow special case of cut from beginning
                     end = common.find_desired_keyframe(keyframes, end, common.KeyframeSearchPreference.BEFORE, start_time)
-                    assert end <= (edl_event.start + start_time)
+                    # assert end <= (edl_event.start + start_time)
                     if end != edl_event.start:
                         logger.debug("Moved cut start from %s to keyframe %s", common.s_to_ts(edl_event.start), common.s_to_ts(end))
 
@@ -253,7 +256,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                         start_next = common.find_desired_keyframe(keyframes, start_next,
                                                                   common.KeyframeSearchPreference.AFTER,
                                                                   start_time)
-                        assert start_next >= (edl_event.end + start_time)
+                        # assert start_next >= (edl_event.end + start_time)
                 else:
                     # limit to duration
                     start_next = input_duration
