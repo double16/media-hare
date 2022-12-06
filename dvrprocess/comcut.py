@@ -126,13 +126,20 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             logger.fatal(f"edl cuts past end of file")
             return 255
 
-    start_time = float(input_info[constants.K_FORMAT].get('start_time', 0.0))
-    keyframes = []
+    keyframes = common.load_keyframes_by_seconds(infile)
+    logger.debug("Loaded %s keyframes", len(keyframes))
+
+    if USE_FIRST_KEYFRAME_FOR_START_TIME and len(keyframes) > 0:
+        start_time = keyframes[0]
+    else:
+        start_time = float(input_info[constants.K_FORMAT].get('start_time', 0.0))
+
     if KEYFRAME_IGNORE_FOR_ENCODING:
-        if not force_encode and len(
-                list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) == 0:
-            keyframes = common.load_keyframes_by_seconds(infile)
-            logger.debug("Loaded %s keyframes", len(keyframes))
+        if force_encode or len(
+                list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) > 0:
+            keyframes = []
+            logger.info("Discarding keyframes because we're encoding")
+        else:
             # If we are encoding, we aren't restricted to key frames, so encode if cuts are too far from keyframes
             disable_keyframes = False
             keyframe_distance = 0.0
@@ -150,11 +157,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             if disable_keyframes:
                 logger.info("Re-encoding video due to distance from keyframes: %s seconds", keyframe_distance)
                 keyframes = []
-    else:
-        keyframes = common.load_keyframes_by_seconds(infile)
-        logger.debug("Loaded %s keyframes", len(keyframes))
-    if USE_FIRST_KEYFRAME_FOR_START_TIME and len(keyframes) > 0:
-        start_time = keyframes[0]
 
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}

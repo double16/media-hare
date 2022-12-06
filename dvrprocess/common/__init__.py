@@ -628,35 +628,35 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
     if target_height <= 480:
         if target_video_codec == 'h264':
             crf = 23
-            bitrate = 800
+            bitrate = 600
         else:
             crf = 28
-            bitrate = 640
+            bitrate = 440
     elif target_height <= 720:
         if target_video_codec == 'h264':
             crf = 23
-            bitrate = 1400
+            bitrate = 1200
         else:
             crf = 28
-            bitrate = 800
+            bitrate = 600
     elif target_height <= 1080:
         # q=36 observed with libx264, crf=31
         qp = 34
         if target_video_codec == 'h264':
             crf = 31
-            bitrate = 1400
+            bitrate = 1100
         else:
             crf = 28
-            bitrate = 1200
+            bitrate = 900
     else:
         # q=36 observed with libx264, crf=31
         qp = 34
         if target_video_codec == 'h264':
             crf = 31
-            bitrate = 2800
+            bitrate = 2500
         else:
             crf = 28
-            bitrate = 1700
+            bitrate = 1100
 
     return crf, bitrate, qp
 
@@ -677,6 +677,7 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
     if mute_channels == config.MuteChannels.VOICE and "volume=" in ",".join(audio_filters):
         audio_layouts = list(filter(lambda e: e.name == audio_info.get(constants.K_CHANNEL_LAYOUT, ''),
                                     tools.get_audio_layouts()))
+        # TODO: if we transcribe each channel individually, we can determine which channels to mute
         if len(audio_layouts) == 1:
             audio_layout = audio_layouts[0]
             # opus does not support side layout, pan needs to specify non-side version with differing channels

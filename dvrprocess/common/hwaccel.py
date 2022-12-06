@@ -390,9 +390,10 @@ def _video_toolbox_encoding(output_stream: str, codec: str, output_type: str, tu
     else:
         options.extend([f"{codec}_videotoolbox"])
 
-    # It appears the encoder defaults to optimize for size
-    # if codec in ['h264', 'h265', 'hevc']:
-    #     options.extend([f'-b:{output_stream}', f'{target_bitrate}k'])
+    # It appears the encoder defaults to optimize for size (?) but quality isn't great
+    if codec in ['h264', 'h265', 'hevc']:
+        options.extend([f'-prio_speed:{output_stream}', 'false'])
+        options.extend([f'-b:{output_stream}', f'{target_bitrate}k'])
 
     if codec in ['h264']:
         options.extend([f"-profile:{output_stream}", "high"])
