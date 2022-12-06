@@ -680,6 +680,7 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
         if len(audio_layouts) == 1:
             audio_layout = audio_layouts[0]
             # opus does not support side layout, pan needs to specify non-side version with differing channels
+            # TODO: force_stereo
             if "(side)" in audio_layout.name:
                 output_audio_layout_name = audio_layout.name.replace("(side)", "")
             elif 2 < len(audio_layout.channels) < 5:
@@ -721,11 +722,13 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
     else:
         arguments.extend(["-map", f"{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}"])
 
-        if audio_info.get('channel_layout') == '5.1(side)':
+        if force_stereo:
+            arguments.extend([f"-ac:{output_stream_spec}", "2"])
+        elif audio_info.get('channel_layout') == '5.1(side)':
             audio_filters.insert(0, "channelmap=channel_layout=5.1")
         elif audio_info.get('channel_layout') == '7.1(side)':
             audio_filters.insert(0, "channelmap=channel_layout=7.1")
-        elif audio_info.get('channel_layout') == '4.0' and not force_stereo:
+        elif audio_info.get('channel_layout') == '4.0':
             # use ffmpeg upmix system to use more common 5.1 layout
             arguments.extend([f"-ac:{output_stream_spec}", "6"])
 
