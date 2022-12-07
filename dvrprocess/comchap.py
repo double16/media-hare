@@ -337,7 +337,6 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     logger.debug("comskip.ini hash is %s, current hash is %s", comskipini_hash, current_comskip_hash)
 
     run_comskip = force
-    # TODO: ensure if edl file is changed and bakedl is present, it gets updated
     if not os.path.isfile(edlfile):
         if backup_edl and not force and os.path.isfile(edlbakfile):
             shutil.copyfile(edlbakfile, edlfile)
@@ -400,8 +399,10 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             # copying permissions may have failed, but the file may have been copied
             if not os.path.exists(edlfile):
                 raise e
-        if backup_edl:
+        common.match_owner_and_perm(edlfile, infile)
+        if backup_edl or os.path.exists(edlbakfile):
             shutil.copyfile(edlfile, edlbakfile)
+            common.match_owner_and_perm(edlbakfile, infile)
 
     if not modify_video:
         return 0
