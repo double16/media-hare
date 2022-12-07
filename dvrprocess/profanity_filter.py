@@ -318,25 +318,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         f"subtitle filtered = {subtitle_filtered_idx}, subtitle filtered forced = {subtitle_filtered_forced_idx}, audio filtered = {audio_filtered_idx}, subtitle per words = {subtitle_words_idx}")
 
     if filter_skip:
-        if verbose:
-            logger.info(f"Removing filtered streams")
-        if common.should_replace_media_title(input_info):
-            arguments.extend(
-                ['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
-        arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
-        arguments.extend(["-metadata", f"{constants.K_FILTER_HASH}="])
-        arguments.extend(["-metadata", f"{constants.K_FILTER_VERSION}="])
-        arguments.extend(
-            ["-metadata",
-             f"{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
-        arguments.extend(
-            ["-metadata", f"{constants.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
-        arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}="])
-        if mark_skip:
-            arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}=true"])
-        if mute_channels:
-            arguments.extend(["-metadata", f"{constants.K_MUTE_CHANNELS}={mute_channels.name}"])
-        arguments.extend(["-c:s", "copy"])
+        logger.debug(f"Removing filtered streams")
 
         # Original audio stream
         arguments.extend(["-map", f"{streams_file}:{audio_original_idx}",
@@ -372,6 +354,24 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                               f"-metadata:s:s:{subtitle_output_idx}", f'title={constants.TITLE_WORDS}',
                               f"-disposition:s:{subtitle_output_idx}", "-default+metadata"])
             subtitle_output_idx += 1
+
+        if common.should_replace_media_title(input_info):
+            arguments.extend(
+                ['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
+        arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_HASH}="])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_VERSION}="])
+        arguments.extend(
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
+        arguments.extend(
+            ["-metadata", f"{constants.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
+        arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}="])
+        if mark_skip:
+            arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}=true"])
+        if mute_channels:
+            arguments.extend(["-metadata", f"{constants.K_MUTE_CHANNELS}={mute_channels.name}"])
+        arguments.extend(["-c:s", "copy"])
     else:
         subtitle_filtered_stream = 1
         arguments.extend(["-i", subtitle_filtered_filename])
