@@ -161,6 +161,16 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
 
         return mock
 
+    def _mock_ffmpeg_extract_subtitle_transcribe_check(self, srt_basename: [None, str]):
+        def mock(method_name: str, arguments: list, **kwargs):
+            self.assertTrue('-map' in arguments and 'srt' in arguments, arguments)
+            self.assertTrue(arguments[-1] == '-', 'stream to stdout')
+            with open(f"../fixtures/{srt_basename}", "rt") as f:
+                subtitle = f.read()
+            return subtitle
+
+        return mock
+
     def _mock_ffmpeg_extract_dvdsub(self, method_name: str, arguments: list, **kwargs):
         self.assertTrue('-map' in arguments and 'dvdsub' in arguments, arguments)
         return 0
@@ -499,6 +509,30 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                                                                        'needs_filtered.ssa.txt',
                                                                        'needs_filtered.ssa.txt'),
             self._mock_ffmpeg_create_with_filtered_streams(3, mapped_stream_count=8),
+        ])
+        profanity_filter.do_profanity_filter(mkv_path)
+
+    def test_apply_unfiltered_sub_orig_transcribed__filtered(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_unfiltered_sub_orig_transcribed_noversion.json')
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_subtitle_transcribe_check("transcribed.srt.txt"),
+            self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
+            self._mock_ffmpeg_extract_subtitle_original('needs_filtered.srt.txt'),
+            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
+        ])
+        profanity_filter.do_profanity_filter(mkv_path)
+
+    def test_apply_unfiltered_sub_orig_transcribed__notfiltered(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_unfiltered_sub_orig_transcribed_noversion.json')
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_subtitle_transcribe_check("needs_filtered.srt.txt"),
+            self._mock_ffmpeg_extract_audio_for_transcribing("s16le_not_filtered.raw"),
+            self._mock_ffmpeg_extract_subtitle_original('not_filtered.ssa.txt'),
+            self._mock_ffmpeg_create_with_nofiltered_streams(4, mapped_stream_count=5),
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 

@@ -399,9 +399,11 @@ def do_dvr_post_process(input_file,
         logger.info(f"Extracting closed captions transcode of {filename} to {cc_filename}")
         logger.info(tools.ccextractor.array_as_command(cc_command))
         if not dry_run:
-            tools.ccextractor.run(cc_command, check=True)
+            cc_returncode = tools.ccextractor.run(cc_command, check=False)
+        else:
+            cc_returncode = 0
 
-        if dry_run or os.stat(cc_filename).st_size > 0:
+        if dry_run or (cc_returncode == 0 and os.stat(cc_filename).st_size > 0):
             arguments.extend(['-i', cc_filename])
         else:
             logger.warning(f"Output at {cc_filename} is zero length, using ffmpeg lavfi to extract")

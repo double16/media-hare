@@ -93,8 +93,7 @@
                 "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
                 "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
                 "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
-                "DURATION": "02:17:24.318000000",
-                "AUDIO2TEXT_VERSION": "3"
+                "DURATION": "02:17:24.318000000"
             }
         },
         {
@@ -582,7 +581,6 @@
             "title": "THE MATRIX RELOADED DISC 1",
             "creation_time": "2022-04-30T01:29:19.000000Z",
             "AUDIO2TEXT_VERSION": "3",
-            "PFILTER_SKIP": "true",
             "ENCODER": "Lavf58.76.100"
         }
     }
