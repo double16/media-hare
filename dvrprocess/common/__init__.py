@@ -675,23 +675,21 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
         mute_channels = config.get_global_config_mute_channels()
 
     if mute_channels == config.MuteChannels.VOICE and "volume=" in ",".join(audio_filters):
-        audio_layouts = list(filter(lambda e: e.name == audio_info.get(constants.K_CHANNEL_LAYOUT, ''),
-                                    tools.get_audio_layouts()))
+        audio_layout = tools.get_audio_layout_by_name(audio_info.get(constants.K_CHANNEL_LAYOUT, ''))
         # TODO: if we transcribe each channel individually, we can determine which channels to mute
-        if len(audio_layouts) == 1:
-            audio_layout = audio_layouts[0]
-            # opus does not support side layout, pan needs to specify non-side version with differing channels
-            # TODO: force_stereo
-            if "(side)" in audio_layout.name:
-                output_audio_layout_name = audio_layout.name.replace("(side)", "")
+        if audio_layout:
+            if force_stereo:
+                output_audio_layout_name = "stereo"
+            elif "(" in audio_layout.name:
+                # opus does not support side or wide layouts
+                output_audio_layout_name = re.sub(r'[(].*[)]', '', audio_layout.name)
             elif 2 < len(audio_layout.channels) < 5:
                 # use ffmpeg upmix system to use more common 5.1 layout
                 output_audio_layout_name = "5.1"
             else:
                 output_audio_layout_name = None
             if output_audio_layout_name:
-                output_audio_layout = list(filter(lambda e: e.name == output_audio_layout_name,
-                                                  tools.get_audio_layouts()))[0]
+                output_audio_layout = tools.get_audio_layout_by_name(output_audio_layout_name)
             else:
                 output_audio_layout = audio_layout
             logger.info("Audio layout found %s, output layout %s", audio_layout, output_audio_layout)
@@ -727,10 +725,10 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
             arguments.extend([f"-ac:{output_stream_spec}", "2"])
         elif audio_info.get('channel_layout') == '5.1(side)':
             audio_filters.insert(0, "channelmap=channel_layout=5.1")
-        elif audio_info.get('channel_layout') == '7.1(side)':
+        elif audio_info.get('channel_layout') == '7.1(wide)':
             audio_filters.insert(0, "channelmap=channel_layout=7.1")
         elif audio_info.get('channel_layout') == '4.0':
-            # use ffmpeg upmix system to use more common 5.1 layout
+            # use ffmpeg up mix system to use more common 5.1 layout
             arguments.extend([f"-ac:{output_stream_spec}", "6"])
 
         if audio_filters:

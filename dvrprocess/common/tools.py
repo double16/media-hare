@@ -1,3 +1,4 @@
+import logging
 import re
 import subprocess
 import threading
@@ -5,6 +6,8 @@ from multiprocessing import Semaphore
 
 from . import config
 from .proc_invoker import SubprocessProcInvoker, MockProcInvoker
+
+logger = logging.getLogger(__name__)
 
 disk_semaphore = Semaphore(config.get_global_config_int('background_limits', 'disk_processes', fallback=10))
 
@@ -82,6 +85,52 @@ class AudioLayout(object):
     def __repr__(self):
         return f"{self.name}, all({'+'.join(self.channels)}), voice({'+'.join(self.voice_channels)})"
 
+    def map_to(self, target) -> dict[str, list[str]]:
+        """
+        Map channels to the target audio layout. The mapping may contain multiple channels.
+        :param target:
+        :return: key is target channel, value is zero or more source channels (zero indicates to drop the channel)
+        """
+        result = dict()
+        # Handle equal channels
+        target_remaining = []
+        source_remaining = self.channels.copy()
+        for target_channel in target.channels:
+            if target_channel in self.channels:
+                result[target_channel] = [target_channel]
+                source_remaining.remove(target_channel)
+            else:
+                result[target_channel] = []
+                target_remaining.append(target_channel)
+        if 'LFE' in target_remaining:
+            target_remaining.remove('LFE')  # nothing we can do for LFE
+        # Handle channels based on Center, Left or Right. This won't work if there's multiples left
+        for target_channel in target_remaining:
+            position_ch = None
+            for c in ['C', 'R', 'L']:
+                if c in target_channel:
+                    position_ch = c
+            found = False
+            if position_ch is not None:
+                for source_channel in source_remaining:
+                    if position_ch in source_channel:
+                        result[target_channel] = [source_channel]
+                        # target_remaining.remove(target_channel)
+                        source_remaining.remove(source_channel)
+                        found = True
+                        break
+            if not found:
+                if 'C' in target_channel:
+                    result[target_channel] = list(filter(lambda e: 'R' in e or 'L' in e, source_remaining))
+                else:
+                    result[target_channel] = list(filter(lambda e: 'C' in e, source_remaining))
+
+        if len(source_remaining) > 0:
+            logger.warning("Unmapped source channels: %s, mapping from %s, to %s", ",".join(source_remaining),
+                           self.name, target.name)
+
+        return result
+
 
 _ffmpeg_audio_layouts: list[AudioLayout] = []
 _ffmpeg_audio_layouts_lock = threading.Lock()
@@ -103,3 +152,10 @@ def get_audio_layouts(refresh=False) -> list[AudioLayout]:
 
     _ffmpeg_audio_layouts_lock.release()
     return _ffmpeg_audio_layouts
+
+
+def get_audio_layout_by_name(name: str) -> [None, AudioLayout]:
+    for audio_layout in get_audio_layouts():
+        if audio_layout.name == name:
+            return audio_layout
+    return None
