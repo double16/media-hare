@@ -674,13 +674,14 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
     if mute_channels is None:
         mute_channels = config.get_global_config_mute_channels()
 
-    if mute_channels == config.MuteChannels.VOICE and "volume=" in ",".join(audio_filters):
+    audio_layout = None
+    output_audio_layout = None
+
+    if mute_channels == config.MuteChannels.VOICE and "volume=" in ",".join(audio_filters) and not force_stereo:
         audio_layout = tools.get_audio_layout_by_name(audio_info.get(constants.K_CHANNEL_LAYOUT, ''))
         # TODO: if we transcribe each channel individually, we can determine which channels to mute
         if audio_layout:
-            if force_stereo:
-                output_audio_layout_name = "stereo"
-            elif "(" in audio_layout.name:
+            if "(" in audio_layout.name:
                 # opus does not support side or wide layouts
                 output_audio_layout_name = re.sub(r'[(].*[)]', '', audio_layout.name)
             elif 2 < len(audio_layout.channels) < 5:
@@ -698,26 +699,38 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
                         audio_info.get(constants.K_CHANNEL_LAYOUT, ''))
             audio_layout = None
             output_audio_layout = None
-        if audio_layout is not None:
-            mute_filter_complex = f"[{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}]channelsplit=channel_layout={audio_layout.name}"
-            for c in audio_layout.channels:
+
+    if audio_layout is not None and output_audio_layout is not None:
+        mute_filter_complex = f"[{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}]channelsplit=channel_layout={audio_layout.name}"
+        for c in audio_layout.channels:
+            mute_filter_complex += f"[{c}]"
+        mute_filter_complex += ';'
+        for c in audio_layout.voice_channels:
+            mute_filter_complex += f"[{c}]"
+            mute_filter_complex += ",".join(audio_filters)
+            mute_filter_complex += f"[{c}m];"
+        for c in audio_layout.channels:
+            if c in audio_layout.voice_channels:
+                mute_filter_complex += f"[{c}m]"
+            else:
                 mute_filter_complex += f"[{c}]"
-            mute_filter_complex += ';'
-            for c in audio_layout.voice_channels:
-                mute_filter_complex += f"[{c}]"
-                mute_filter_complex += ",".join(audio_filters)
-                mute_filter_complex += f"[{c}m];"
-            for c in audio_layout.channels:
-                if c in audio_layout.voice_channels:
-                    mute_filter_complex += f"[{c}m]"
+        mute_filter_complex += f"amerge=inputs={len(audio_layout.channels)},pan={output_audio_layout.name}"
+        audio_mapping = audio_layout.map_to(output_audio_layout)
+        for out_ch in output_audio_layout.channels:
+            m = audio_mapping.get(out_ch)
+            if m:
+                mute_filter_complex += f"|{out_ch}"
+                if len(m) > 1:
+                    mute_filter_complex += "<"
                 else:
-                    mute_filter_complex += f"[{c}]"
-            mute_filter_complex += f"amerge=inputs={len(audio_layout.channels)},pan={output_audio_layout.name}"
-            for i, c in enumerate(output_audio_layout.channels):
-                # FIXME: map input to output channels
-                mute_filter_complex += f"|{c}=c{i}"
-            mute_filter_complex += f'[afiltered]'
-            arguments.extend(["-filter_complex", mute_filter_complex, "-map", "[afiltered]"])
+                    mute_filter_complex += "="
+                for i, in_ch in enumerate(m):
+                    in_ch_idx = [i for i, value in enumerate(audio_layout.channels) if value == in_ch]
+                    if i > 0:
+                        mute_filter_complex += '+'
+                    mute_filter_complex += f"c{in_ch_idx[0]}"
+        mute_filter_complex += f'[afiltered]'
+        arguments.extend(["-filter_complex", mute_filter_complex, "-map", "[afiltered]"])
     else:
         arguments.extend(["-map", f"{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}"])
 

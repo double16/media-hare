@@ -53,7 +53,7 @@ nvidia_smi.install = lambda: False
 
 
 def mock_all():
-    global ffmpeg, ffprobe, comskip, comskip_gui, mkvpropedit, ccextractor, subtitle_edit
+    global ffmpeg, ffprobe, comskip, comskip_gui, mkvpropedit, ccextractor, subtitle_edit, _ffmpeg_audio_layouts
     ffmpeg = MockProcInvoker('ffmpeg')
     ffprobe = MockProcInvoker('ffprobe')
     comskip = MockProcInvoker('comskip')
@@ -61,6 +61,7 @@ def mock_all():
     mkvpropedit = MockProcInvoker('mkvpropedit')
     ccextractor = MockProcInvoker('ccextractor')
     subtitle_edit = MockProcInvoker('subtitle-edit')
+    _ffmpeg_audio_layouts = []
 
 
 def mock_verify_all():
