@@ -236,6 +236,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     if audio_original:
         if detect_transcribed_by_version_3(current_audio2text_version, input_info, subtitle_original):
             subtitle_original[constants.K_TAGS][constants.K_AUDIO_TO_TEXT_VERSION] = "3"
+            audio_to_text_subtitle_version = "3"
 
         need_original, need_words = need_original_subtitle_transcribed(subtitle_original=subtitle_original,
                                                                        subtitle_words=subtitle_words,
