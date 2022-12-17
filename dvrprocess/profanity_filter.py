@@ -1218,7 +1218,8 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
         return CMD_RESULT_UNCHANGED
 
     tags[constants.K_FILTER_SKIP] = 'true'
-    for key in [constants.K_FILTER_HASH, constants.K_FILTER_VERSION, constants.K_FILTER_STOPPED]:
+    for key in [constants.K_FILTER_HASH, constants.K_FILTER_VERSION, constants.K_FILTER_STOPPED,
+                constants.K_MUTE_CHANNELS]:
         if key in tags:
             del tags[key]
     if common.should_replace_media_title(input_info):

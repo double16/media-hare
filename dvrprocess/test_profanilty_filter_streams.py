@@ -7,7 +7,7 @@ import unittest
 from xml.etree import ElementTree as ET
 
 import profanity_filter
-from common import tools, proc_invoker, constants
+from common import tools, proc_invoker, constants, config
 
 
 #
@@ -183,7 +183,8 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
 
         return mock
 
-    def _mock_ffmpeg_create_with_filtered_streams(self, input_file_count: int, mapped_stream_count: [None, int] = None):
+    def _mock_ffmpeg_create_with_filtered_streams(self, input_file_count: int, mapped_stream_count: [None, int] = None,
+                                                  expected_args: [None, list[str]] = None):
         def mock(method_name: str, arguments: list, **kwargs):
             arguments_str = str(arguments)
             self.assertEqual(input_file_count, len(list(filter(lambda e: e == '-i', arguments))),
@@ -217,6 +218,10 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             for title, count in stream_counts:
                 self.assertEqual(count, len(list(filter(lambda e: e == f'title={title}', arguments))),
                                  f'{count} {title} streams expected: ' + arguments_str)
+
+            if expected_args is not None:
+                for expected_arg in expected_args:
+                    self.assertTrue(expected_arg in arguments_str, 'expected: ' + expected_arg)
 
             output = arguments[-1]
             if output[0] == '/':
@@ -612,3 +617,30 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         ])
         self.assertEqual(profanity_filter.CMD_RESULT_FILTERED,
                          profanity_filter.do_profanity_filter(mkv_path, force=True), "return code")
+
+    def test_apply_unfiltered_sub_orig_text__mute_voice_channels__filtered(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_unfiltered_sub_orig_text.json')
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
+            self._mock_ffmpeg_extract_subtitle_original('needs_filtered.ssa.txt'),
+            {'method_name': 'check_output', 'result': self._read_file(f'../fixtures/ffmpeg-5-layouts.txt')},
+            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
+        ])
+        profanity_filter.do_profanity_filter(mkv_path, mute_channels=config.MuteChannels.VOICE)
+
+    def test_apply_unfiltered_sub_orig_image__mute_voice_channels__filtered(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_unfiltered_sub_orig_image.json')
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_dvdsub,
+            self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
+            {'method_name': 'check_output', 'result': self._read_file(f'../fixtures/ffmpeg-5-layouts.txt')},
+            self._mock_ffmpeg_create_with_filtered_streams(5, mapped_stream_count=9, expected_args=['pan=5.1']),
+        ])
+        tools.subtitle_edit = proc_invoker.MockProcInvoker('subtitle-edit', mocks=[
+            self._mock_subtitle_edit('needs_filtered.srt.txt')
+        ])
+        profanity_filter.do_profanity_filter(mkv_path, mute_channels=config.MuteChannels.VOICE)
