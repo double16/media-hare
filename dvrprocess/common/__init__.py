@@ -638,7 +638,7 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
             bitrate = 1200
         else:
             crf = 28
-            bitrate = 600
+            bitrate = 700
     elif target_height <= 1080:
         # q=36 observed with libx264, crf=31
         qp = 34
@@ -647,7 +647,7 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
             bitrate = 1100
         else:
             crf = 28
-            bitrate = 900
+            bitrate = 1000
     else:
         # q=36 observed with libx264, crf=31
         qp = 34
@@ -656,7 +656,7 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
             bitrate = 2500
         else:
             crf = 28
-            bitrate = 1100
+            bitrate = 1200
 
     return crf, bitrate, qp
 
