@@ -33,5 +33,5 @@ When using the media-hare tools, names can be used for the `type`: cut, mute, sc
 00:01:05.456    00:02:10.000    mute
 #32750          #40000          com
 00:01:00.000    00:05:00.000    scene   Show - S01E01
-00:05:10.000    00:05:30.000    blue
+00:05:10.000    00:05:30.000    blur
 ```

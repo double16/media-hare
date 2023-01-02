@@ -168,6 +168,14 @@ class ProfanityFilterTest(unittest.TestCase):
         expected = r'***'
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
+        text = r'son-of-a-gun'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        text = r'son of...'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
 
     def test_exclamation_phrase8(self):
         text = r'{\an7}{\pos(115,243)} My God, what happened?'

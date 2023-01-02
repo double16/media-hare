@@ -387,18 +387,19 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         logger.debug("subtitle_filters = %s", subtitle_filters)
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[constants.K_STREAMS]):
             data = subtitle_data[stream[constants.K_STREAM_INDEX]]
-            if stream[constants.K_CODEC_NAME] == constants.CODEC_SUBTITLE_ASS:
-                for subtitle_filter in subtitle_filters:
-                    for event in data.events:
-                        if subtitle_filter[0] <= event.end and subtitle_filter[1] >= event.start:
-                            logger.debug("Masking subtitle event %s", event)
-                            event.text = MASK_STR
-            else:
-                for subtitle_filter in subtitle_filters:
-                    for event in data:
-                        if subtitle_filter[0] <= event.end.ordinal and subtitle_filter[1] >= event.start.ordinal:
-                            logger.debug("Masking subtitle event %s", event)
-                            event.text = MASK_STR
+            if stream.get(constants.K_TAGS, {}).get(constants.K_STREAM_TITLE, '') != constants.TITLE_WORDS:
+                if stream[constants.K_CODEC_NAME] == constants.CODEC_SUBTITLE_ASS:
+                    for subtitle_filter in subtitle_filters:
+                        for event in data.events:
+                            if subtitle_filter[0] <= event.end and subtitle_filter[1] >= event.start:
+                                logger.debug("Masking subtitle event %s", event)
+                                event.text = MASK_STR
+                else:
+                    for subtitle_filter in subtitle_filters:
+                        for event in data:
+                            if subtitle_filter[0] <= event.end.ordinal and subtitle_filter[1] >= event.start.ordinal:
+                                logger.debug("Masking subtitle event %s", event)
+                                event.text = MASK_STR
             subtitle_filename = subtitle_streams[stream[constants.K_STREAM_INDEX]]
             subtitle.write_subtitle_data(stream[constants.K_CODEC_NAME], subtitle_filename, data)
             ffmpeg_command.extend(["-i", subtitle_filename])
@@ -604,7 +605,7 @@ def comcut_cli(argv):
         usage()
         return 255
 
-    if not preset:
+    if not preset or preset == 'copy':
         preset = os.environ.get('PRESET', config.get_global_config_option('ffmpeg', 'preset'))
 
     atexit.register(common.finish)

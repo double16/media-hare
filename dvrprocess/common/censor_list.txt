@@ -119,15 +119,17 @@ oh dang it
 bitch
 bitchs
 bitches
-son of a bitch
-sons of bitches
-sons of bitchs
+son[\s-]of[\s-]a[\s-]bitch
+sons[\s-]of[\s-]bitches
+sons[\s-]of[\s-]bitchs
+sons[\s-]of\s*[.-]+
 bitchin
 bitch-in
 biatch
-son of a biatch
-son of a gun
-son of a [.]+
+son[\s-]of[\s-]a[\s-]biatch
+son[\s-]of[\s-]a[\s-]gun
+son[\s-]of[\s-]a\s*[.-]+
+son[\s-]of\s*[.-]+
 screw you
 screw them
 screw him

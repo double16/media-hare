@@ -29,6 +29,9 @@ orgasms
 orgi
 orgis
 orgies
+semen
+ejaculate
+ejaculation
 oral[\s-]sex
 anal[\s-]sex
 butt[\s-]sex
@@ -115,6 +118,10 @@ undress
 have sex
 having sex
 had sex
+sex toys
+sexual
+vibrator
+vibrators
 ride you
 ride me
 hos
@@ -162,3 +169,7 @@ canoodle
 stripper pole
 she .* stripper
 he .* stripper
+tongue bath
+camel[\s-]?toe
+camel[\s-]?knuckle
+dildo

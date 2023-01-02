@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import signal
+import stat
 import subprocess
 import sys
 import threading
@@ -1243,7 +1244,6 @@ def get_common_episode_duration(video_infos: list[dict]):
     return stats_list[0][0]
 
 
-
 def match_owner_and_perm(target_path: str, source_path: str) -> bool:
     result = True
     source_stat = os.stat(source_path)
@@ -1254,7 +1254,11 @@ def match_owner_and_perm(target_path: str, source_path: str) -> bool:
         result = False
 
     try:
-        os.chmod(target_path, source_stat.st_mode)
+        st_mode = source_stat.st_mode
+        # if source is dir and has suid or guid and target is a file, mask suid/guid
+        if os.path.isfile(target_path):
+            st_mode &= ~(stat.S_ISUID | stat.S_ISGID)
+        os.chmod(target_path, st_mode)
     except OSError:
         logger.warning(f"Changing permission of {target_path} failed, continuing")
         result = False
