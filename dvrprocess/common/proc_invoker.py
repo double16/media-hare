@@ -75,10 +75,11 @@ class SubprocessProcInvoker(BaseProcInvoker):
         if self.semaphore:
             self.semaphore.acquire()
 
-        result = subprocess.run(self._build_command(arguments), **kwargs).returncode
-
-        if self.semaphore:
-            self.semaphore.release()
+        try:
+            result = subprocess.run(self._build_command(arguments), **kwargs).returncode
+        finally:
+            if self.semaphore:
+                self.semaphore.release()
 
         return result
 
@@ -86,10 +87,11 @@ class SubprocessProcInvoker(BaseProcInvoker):
         if self.semaphore:
             self.semaphore.acquire()
 
-        result = subprocess.check_output(self._build_command(arguments), **kwargs)
-
-        if self.semaphore:
-            self.semaphore.release()
+        try:
+            result = subprocess.check_output(self._build_command(arguments), **kwargs)
+        finally:
+            if self.semaphore:
+                self.semaphore.release()
 
         return result
 
