@@ -258,6 +258,9 @@ def hwaccel_required_hwupload_filter() -> bool:
     Determine if the 'hwupload' video filter is required.
     :return:
     """
+    global hwaccel_requested
+    if hwaccel_requested == HWAccelRequest.NONE:
+        return False
     method = find_hwaccel_method()
     return method not in [HWAccelMethod.NONE, HWAccelMethod.VIDEO_TOOLBOX]
 
