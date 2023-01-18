@@ -27,10 +27,10 @@ RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
     add-apt-repository ppa:savoury1/ffmpeg4 -y && \
     add-apt-repository ppa:savoury1/ffmpeg5 -y && \
-    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq ccextractor \
+    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq ccextractor less \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat58 libsdl1.2-compat &&\
-    pip -q --no-input install -r /tmp/requirements.txt && \
+    pip --no-input install --compile --ignore-installed -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip software-properties-common &&\
     apt-get autoremove -y &&\
     apt-get clean &&\
