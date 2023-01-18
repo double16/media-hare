@@ -1,12 +1,16 @@
 ass-parser==1.0
 pysrt==1.1.2
 hunspell==0.5.5
-numpy==1.23.5
 plexapi==4.13.2
 psutil==5.9.4
 requests==2.28.2
+
+# pygad and missing/broken deps
 pygad==2.18.1
+numpy==1.23.5
 pyparsing==3.0.9
+six==1.16.0
+
 dropbox==11.36.0
 vosk==0.3.44
 websockets==10.4
