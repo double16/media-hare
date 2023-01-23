@@ -3,6 +3,7 @@ import re
 import subprocess
 import threading
 from multiprocessing import Semaphore
+from typing import Union
 
 from . import config
 from .proc_invoker import SubprocessProcInvoker, MockProcInvoker
@@ -39,7 +40,28 @@ ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
 
 subtitle_edit = SubprocessProcInvoker('subtitle-edit', version_target=['3.6.8'])
 
-comskip = SubprocessProcInvoker('comskip')
+class ComskipProcInvoker(SubprocessProcInvoker):
+    def __init__(self):
+        super().__init__('comskip')
+
+    def _run(self, arguments: list[str], kwargs) -> int:
+        check = kwargs.get('check', False)
+        kwargs_nocheck = kwargs.copy()
+        kwargs_nocheck['check'] = False
+        result = subprocess.run(arguments, **kwargs_nocheck)
+        if result.returncode == 1:
+            if 'Commercials were not found' in (str(result.stdout) + str(result.stderr)):
+                # edl_file = infile_base + ".edl"
+                # if not os.path.exists(edl_file):
+                #     with open(edl_file, "w") as f:
+                #         f.write("")
+                return 0
+        if check:
+            result.check_returncode()
+        return result.returncode
+
+
+comskip = ComskipProcInvoker()
 
 comskip_gui = SubprocessProcInvoker('comskip-gui', required=False)
 
@@ -155,7 +177,7 @@ def get_audio_layouts(refresh=False) -> list[AudioLayout]:
     return _ffmpeg_audio_layouts
 
 
-def get_audio_layout_by_name(name: str) -> [None, AudioLayout]:
+def get_audio_layout_by_name(name: str) -> Union[None, AudioLayout]:
     for audio_layout in get_audio_layouts():
         if audio_layout.name == name:
             return audio_layout

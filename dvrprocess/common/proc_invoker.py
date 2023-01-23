@@ -6,6 +6,7 @@ from io import StringIO, BytesIO
 from multiprocessing import Semaphore
 from shutil import which
 from threading import Lock
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class SubprocessProcInvoker(BaseProcInvoker):
     # TODO: add method to install or prompt user for install instructions
 
     def __init__(self, command_basename: str, version_parser=None, version_target: list[str] = None, required=True,
-                 semaphore: [None, Semaphore] = None):
+                 semaphore: Union[None, Semaphore] = None):
         super().__init__(command_basename, version=None)
         self._once_lock = Lock()
         self.command_path = None
@@ -71,32 +72,41 @@ class SubprocessProcInvoker(BaseProcInvoker):
         self._required = required
         self.semaphore = semaphore
 
+    def _run(self, arguments: list[str], kwargs) -> int:
+        return subprocess.run(arguments, **kwargs).returncode
+
     def run(self, arguments: list[str], **kwargs) -> int:
         if self.semaphore:
             self.semaphore.acquire()
 
         try:
-            result = subprocess.run(self._build_command(arguments), **kwargs).returncode
+            result = self._run(self._build_command(arguments), kwargs)
         finally:
             if self.semaphore:
                 self.semaphore.release()
 
         return result
+
+    def _check_output(self, arguments: list[str], kwargs) -> str:
+        return subprocess.check_output(arguments, **kwargs)
 
     def check_output(self, arguments: list[str], **kwargs) -> str:
         if self.semaphore:
             self.semaphore.acquire()
 
         try:
-            result = subprocess.check_output(self._build_command(arguments), **kwargs)
+            result = self._check_output(self._build_command(arguments), kwargs)
         finally:
             if self.semaphore:
                 self.semaphore.release()
 
         return result
 
+    def _Popen(self, arguments: list[str], kwargs) -> subprocess.Popen[str]:
+        return subprocess.Popen(arguments, **kwargs)
+
     def Popen(self, arguments: list[str], **kwargs) -> subprocess.Popen[str]:
-        result = subprocess.Popen(self._build_command(arguments), **kwargs)
+        result = self._Popen(self._build_command(arguments), kwargs)
         return result
 
     def _build_command(self, arguments: list[str]) -> list[str]:
@@ -119,7 +129,7 @@ class SubprocessProcInvoker(BaseProcInvoker):
                 self._once_lock.release()
         return self.command_path
 
-    def _find_or_install(self) -> [None, str]:
+    def _find_or_install(self) -> Union[None, str]:
         command = self.find_command()
         if command is None or not os.path.exists(command):
             if self.install():
@@ -133,7 +143,7 @@ class SubprocessProcInvoker(BaseProcInvoker):
 
         return command
 
-    def find_command(self) -> [None, str]:
+    def find_command(self) -> Union[None, str]:
         return which(self.command_basename)
 
     def required(self) -> bool:
