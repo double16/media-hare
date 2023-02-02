@@ -19,6 +19,7 @@ nut-sacks
 ball[\s-]sack
 ball[\s-]sacks
 testicles?
+gonads?
 scheiße
 fondle
 tryst
@@ -136,7 +137,9 @@ makin love
 makin' love
 makin’ love
 sleep with
+sleeping with
 sleep together
+sleeping together
 slept with
 slept together
 boner
