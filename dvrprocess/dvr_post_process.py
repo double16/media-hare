@@ -5,6 +5,7 @@ import getopt
 import logging
 import math
 import os
+import subprocess
 import sys
 import tempfile
 from collections.abc import Iterable
@@ -71,7 +72,7 @@ The file closest to the input file will be taken. Comments start with '#'.
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
 -f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
--c, --ignore-errors
+-c, --forgiving
     Ignore errors in the stream, as much as can be done. This may still produce an undesired stream, such as out of sync audio. 
 --verbose
     Verbose information about the process
@@ -105,7 +106,7 @@ def parse_args(argv) -> (list[str], dict):
     keep = False
     stereo = False
     rerun = None
-    ignore_errors = None
+    forgiving = None
     profanity_filter = config.get_global_config_boolean('post_process', 'profanity_filter')
     crop_frame_op = crop_frame.CropFrameOperation.NONE
     verbose = None
@@ -115,7 +116,7 @@ def parse_args(argv) -> (list[str], dict):
                                    "v:a:h:o:t:p:f:w:nklsrc",
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
-                                    "prevent-larger=", "stereo", "rerun", "no-rerun", "ignore-errors",
+                                    "prevent-larger=", "stereo", "rerun", "no-rerun", "forgiving",
                                     "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "verbose"])
     except getopt.GetoptError:
         return None
@@ -153,8 +154,8 @@ def parse_args(argv) -> (list[str], dict):
             preset = arg
         elif opt in ("-f", "--framerate"):
             desired_frame_rate = constants.FRAME_RATE_NAMES.get(arg, arg)
-        elif opt in ("-c", "--ignore-errors"):
-            ignore_errors = True
+        elif opt in ("-c", "--forgiving"):
+            forgiving = True
         elif opt == "--profanity-filter":
             profanity_filter = True
         elif opt == "--crop-frame":
@@ -186,7 +187,7 @@ def parse_args(argv) -> (list[str], dict):
         'rerun': rerun,
         'profanity_filter': profanity_filter,
         'crop_frame_op': crop_frame_op,
-        'ignore_errors': ignore_errors,
+        'forgiving': forgiving,
     }
     if verbose is not None:
         options['verbose'] = verbose
@@ -196,11 +197,19 @@ def parse_args(argv) -> (list[str], dict):
 
 def dvr_post_process(*args, **kwargs):
     parsed = parse_args(args)
-    if parsed is None:
-        return do_dvr_post_process(args, kwargs)
-    else:
-        merged_args = {**parsed[1], **kwargs}
-        return do_dvr_post_process(parsed[0][0], **merged_args)
+    try:
+        if parsed is None:
+            merged_args = {**kwargs}
+        else:
+            args = parsed[0][0]
+            merged_args = {**parsed[1], **kwargs}
+        return do_dvr_post_process(args, **merged_args)
+    except subprocess.CalledProcessError as e:
+        if e.returncode in [-8]:
+            logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
+            merged_args['forgiving'] = True
+            return do_dvr_post_process(args, **merged_args)
+        raise e
 
 
 @common.finisher
@@ -226,7 +235,7 @@ def do_dvr_post_process(input_file,
                         rerun=None,
                         profanity_filter=config.get_global_config_boolean('post_process', 'profanity_filter'),
                         crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
-                        ignore_errors=None,
+                        forgiving=False,
                         verbose=False,
                         require_audio=True,
                         ):
@@ -309,7 +318,10 @@ def do_dvr_post_process(input_file,
 
     target_video_codec = common.resolve_video_codec(desired_video_codecs, target_height, video_info)
 
-    crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, frame_rate)
+    if forgiving:
+        crop_frame_filter = None
+    else:
+        crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, frame_rate)
 
     logger.debug("input video codec = %s, target video codec = %s", input_video_codec, target_video_codec)
     copy_video = not scale_height and crop_frame_filter is None and (
@@ -375,7 +387,7 @@ def do_dvr_post_process(input_file,
         arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
                       '-probesize', common.PROBE_SIZE])
-    if ignore_errors:
+    if forgiving:
         arguments.extend(['-err_detect', 'ignore_err'])
 
     has_text_subtitle_stream = common.has_stream_with_language(input_info,
@@ -439,7 +451,7 @@ def do_dvr_post_process(input_file,
         closed_caption_file = -1
         streams_file = 0
 
-    hwaccel.hwaccel_configure(hwaccel_requested)
+    hwaccel.hwaccel_configure(hwaccel_requested, forgiving=forgiving)
     arguments.extend(hwaccel.hwaccel_threads())
     arguments.extend(
         hwaccel.hwaccel_prologue(input_video_codec=input_video_codec, target_video_codec=target_video_codec))
@@ -504,18 +516,20 @@ def do_dvr_post_process(input_file,
                                                                      target_bitrate=bitrate)
         video_encoder_options_tag_value.extend(encoding_options)
 
-        filter_complex = f"[{video_input_stream}]yadif"
+        filter_complex = ""
         filter_stage = 0
-        if crop_frame_filter is not None:
-            filter_complex += f"[{filter_stage}];[{filter_stage}]{crop_frame_filter}"
-            filter_stage += 1
-        if scale_height:
-            filter_complex += f"[{filter_stage}];[{filter_stage}]scale=-2:{desired_height}:flags=bicubic"
-            filter_stage += 1
-        if adjust_frame_rate:
-            # "mi_mode=mci" produces better quality but is single-threaded
-            filter_complex += f"[{filter_stage}];[{filter_stage}]{common.fps_video_filter(desired_frame_rate)}"
-            filter_stage += 1
+        filter_complex = f"[{video_input_stream}]yadif"
+        if not forgiving:
+            if crop_frame_filter is not None:
+                filter_complex += f"[{filter_stage}];[{filter_stage}]{crop_frame_filter}"
+                filter_stage += 1
+            if scale_height:
+                filter_complex += f"[{filter_stage}];[{filter_stage}]scale=-2:{desired_height}:flags=bicubic"
+                filter_stage += 1
+            if adjust_frame_rate:
+                # "mi_mode=mci" produces better quality but is single-threaded
+                filter_complex += f"[{filter_stage}];[{filter_stage}]{common.fps_video_filter(desired_frame_rate)}"
+                filter_stage += 1
         filter_complex += f"[{filter_stage}];[{filter_stage}]format=nv12"
         filter_stage += 1
         if hwaccel.hwaccel_required_hwupload_filter():
@@ -682,7 +696,16 @@ def dvr_post_process_cli(argv):
     return_code = 0
     for infile, outfile in common.generate_video_files(args, suffix=None):
         # TODO: allow a different outfile
-        this_file_return_code = do_dvr_post_process(infile, **parsed[1])
+        try:
+            this_file_return_code = do_dvr_post_process(infile, **parsed[1])
+        except subprocess.CalledProcessError as e:
+            if not parsed[1].get('forgiving', False) and e.returncode in [-8]:
+                logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
+                merged_args = parsed[1].copy()
+                merged_args['forgiving'] = True
+                this_file_return_code = do_dvr_post_process(infile, **merged_args)
+            else:
+                raise e
         if this_file_return_code != 0 and return_code == 0:
             return_code = this_file_return_code
 
