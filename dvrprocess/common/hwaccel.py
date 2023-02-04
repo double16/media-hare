@@ -16,6 +16,7 @@ import logging
 import re
 import subprocess
 from enum import Enum
+from typing import Union
 
 from . import tools
 
@@ -49,21 +50,29 @@ nvenc_encoders = []
 video_toolbox_encoders = []
 
 
-def hwaccel_configure(user_option: [None, str]) -> HWAccelRequest:
+def hwaccel_configure(user_option: Union[None, str], forgiving: bool = False) -> HWAccelRequest:
     """
     Convert the hwaccel option as a string to an enum. Defaults to AUTO. Sets the use of acceleration in the
     other methods.
+    :param user_option: hwaccel config option
+    :param forgiving: True for best effort to forgive errors
     """
     global hwaccel_requested
-    hwaccel_requested = _hwaccel_configure(user_option)
+    hwaccel_requested = _hwaccel_configure(user_option, forgiving=forgiving)
     logger.info("hwaccel configured as %s", hwaccel_requested)
     return hwaccel_requested
 
 
-def _hwaccel_configure(user_option: [None, str]) -> HWAccelRequest:
+def _hwaccel_configure(user_option: Union[None, str], forgiving: bool = False) -> HWAccelRequest:
     """
     Convert the hwaccel option as a string to an enum. Defaults to AUTO.
+    :param user_option: hwaccel config option
+    :param forgiving: True for best effort to forgive errors
     """
+    # if forgiving:
+    #     NVENC works well with damaged frames
+    #     return HWAccelRequest.NONE
+
     if user_option is None:
         return HWAccelRequest.AUTO
     user_option = user_option.upper()

@@ -13,12 +13,15 @@ oh gods
 oh god almighty
 oh god in heaven
 oh my god
+oh my gad
 oh my gods
 swear to god
 swear to gods
 ^my god[!,.-]+
+^my gad[!,.-]+
 ^my gods[!,.-]+
 ^by god[!,.-]+
+^by gad[!,.-]+
 ^by gods[!,.-]+
 ^dear god[!,.-]+
 ^dear gods[!,.-]+
@@ -44,6 +47,7 @@ for god’s sake
 for god sakes
 for god's sakes
 for god’s sakes
+chrissake
 [\w-]*shit
 s-h-i-t
 oh shit
@@ -374,3 +378,4 @@ g[ia]ve [\w\s]* the finger
 sexy on
 skank
 mo[\s-]?fos?
+douche

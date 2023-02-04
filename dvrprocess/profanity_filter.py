@@ -71,6 +71,8 @@ Filter audio and subtitles for profanity.
     Remove filtering
 --mark-skip
     Mark file(s) for the filter to skip. If a file has been filtered, filtering will be removed. 
+--unmark-skip
+    Unmark file(s) for the filter to skip, so they will be filtered. Filtering will be performed. 
 --force
     Force re-filtering
 """, file=sys.stderr)
@@ -226,7 +228,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     subtitle_srt_words = None
     audio_to_text_version = current_audio2text_version
     audio_to_text_subtitle_version = (subtitle_original or {}).get(constants.K_TAGS, {}).get(constants.K_AUDIO_TO_TEXT_VERSION, '')
-    audio_to_text_filter = None
+    audio_to_text_filter = (subtitle_original or {}).get(constants.K_TAGS, {}).get(constants.K_AUDIO_TO_TEXT_FILTER, '')
 
     if need_original_subtitle_ocr(subtitle_original=subtitle_original,
                                   media_duration=float(input_info[constants.K_FORMAT][constants.K_DURATION]),

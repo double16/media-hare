@@ -648,6 +648,7 @@ def recommended_video_quality(target_height: int, target_video_codec: str) -> (i
             bitrate = 1100
         else:
             crf = 28
+            # TODO: Avatar 1080p is 2055 with 2 5.1 streams
             bitrate = 1000
     else:
         # q=36 observed with libx264, crf=31
