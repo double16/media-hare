@@ -145,6 +145,32 @@ class ProfanityFilterTest(unittest.TestCase):
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
 
+        text = r'God damn it.'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
+        text = r'Please God!'
+        expected = r'Please God!'
+        filtered, stopped = profanity_filter.filter_text(
+            self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
+        text = r'Please! God damn it.'
+        expected = r'Please! ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
+        text = r'Please! God damn it. I hate this hacker crap.'
+        expected = r'Please! *** I hate this hacker ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
+        text = r'Please! God damn it.\nI hate this hacker crap.'
+        expected = r'Please! ***\nI hate this hacker ***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+
     def test_exclamation_phrase6(self):
         text = r' God'
         expected = r' ***'

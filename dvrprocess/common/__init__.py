@@ -327,14 +327,21 @@ def find_original_and_filtered_streams(input_info, codec_type, codec_names=None,
 
 
 def find_streams_by_codec_and_language(input_info, codec_type, codec_names=None, language=None):
+    # select by preferred language
     streams = list(filter(lambda stream: stream['codec_type'] == codec_type
                                          and (codec_names is None or stream['codec_name'] in codec_names)
                                          and stream['tags'].get('language') == language,
                           input_info['streams']))
+    # select by unspecified language
     if len(streams) == 0:
         streams = list(filter(lambda stream: stream['codec_type'] == codec_type
                                              and (codec_names is None or stream['codec_name'] in codec_names)
                                              and stream['tags'].get('language') is None,
+                              input_info['streams']))
+    # select anything
+    if len(streams) == 0:
+        streams = list(filter(lambda stream: stream['codec_type'] == codec_type
+                              and (codec_names is None or stream['codec_name'] in codec_names),
                               input_info['streams']))
     return streams
 

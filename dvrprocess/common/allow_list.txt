@@ -16,7 +16,7 @@ private hell
 the good lord
 the dear good lord
 god[\s-]fearing
-please god
+please[\s,]+god
 cock[\s-]a[\s-]doodle[\s-]doo
 cock[\s-]and[\s-]bull
 screwed on

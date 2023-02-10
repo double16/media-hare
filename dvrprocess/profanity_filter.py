@@ -1129,7 +1129,8 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (
     for allow_pattern in allow_list:
         try:
             for m in re.finditer(allow_pattern, text, flags=re.IGNORECASE):
-                allow_ranges.append(m.span(0))
+                range, group = get_allow_range(m)
+                allow_ranges.append(range)
         except re.error as e:
             print(f"ERROR in allow list: {allow_pattern}")
             raise e
@@ -1160,6 +1161,20 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (
     # clean up redundant replacements
     text = re.sub(r'(\*\*\*[\s,]*)+\*\*\*', MASK_STR, text)
     return text, False
+
+
+def get_allow_range(m: re.Match[str]) -> tuple[tuple[int, int], str]:
+    original = m.string
+    # print(f"get_allow_range(): original = {original}")
+    begin = m.span(0)[0]
+    end = m.span(0)[1]
+    # print(f"get_allow_range(): begin = {begin}, end = {end}")
+    while begin < (end-1) and original[begin].isspace():
+        begin += 1
+    while begin < (end-1) and original[end-1].isspace():
+        end -= 1
+    # print(f"get_allow_range(): begin = {begin}, end = {end}")
+    return ((begin, end), original[begin:end])
 
 
 def phrase_to_pattern(phrase):
