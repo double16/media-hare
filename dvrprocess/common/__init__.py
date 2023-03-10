@@ -747,6 +747,8 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
             arguments.extend([f"-ac:{output_stream_spec}", "2"])
         elif audio_info.get('channel_layout') == '5.1(side)':
             audio_filters.insert(0, "channelmap=channel_layout=5.1")
+        elif audio_info.get('channel_layout') == '5.0(side)':
+            audio_filters.insert(0, "channelmap=channel_layout=5.0")
         elif audio_info.get('channel_layout') == '7.1(wide)':
             audio_filters.insert(0, "channelmap=channel_layout=7.1")
         elif audio_info.get('channel_layout') == '4.0':

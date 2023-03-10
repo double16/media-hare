@@ -87,6 +87,7 @@ piece[\s-]of[\s-]crap
 bullcrap
 bull[\s-]crap
 crappier
+crapping?
 damn
 damn it
 damn straight
@@ -123,6 +124,7 @@ oh dang it
 bitch
 bitchs
 bitches
+bitched
 son[\s-]of[\s-]a[\s-]bitch
 sons[\s-]of[\s-]bitches
 sons[\s-]of[\s-]bitchs
@@ -212,6 +214,7 @@ old bastards
 whore
 whores
 hell
+helluva
 oh hell
 bloody hell
 the hell
@@ -365,6 +368,8 @@ has a pair[.!]
 grow a pair
 grow some balls
 grow some cojones
+balls of \w+
+cojones of \w+
 balls to bones
 prick
 little prick
@@ -378,4 +383,5 @@ g[ia]ve [\w\s]* the finger
 sexy on
 skank
 mo[\s-]?fos?
-douche
+douche[\w-]*
+
