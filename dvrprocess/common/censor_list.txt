@@ -84,8 +84,8 @@ crappy
 holy crap
 crap[\s-]\w+
 piece[\s-]of[\s-]crap
-bullcrap
-bull[\s-]crap
+bull[\s-]?crap
+crap[\s-]?hole
 crappier
 crapping?
 damn
