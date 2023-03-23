@@ -355,20 +355,30 @@ ballsy
 my balls
 has balls
 has cojones
+has stones
+has the balls
+has the cojones
+has the stones
 has some balls
 has some cojones
+has some stones
 have balls
 have cojones
+have stones
 have some balls
 have some cojones
+have some stones
 got balls
 got cojones
+got stones
 got some balls
 got some cojones
+got some stones
 has a pair[.!]
 grow a pair
 grow some balls
 grow some cojones
+grow some stones
 balls of \w+
 cojones of \w+
 balls to bones
@@ -385,4 +395,7 @@ sexy on
 skank
 mo[\s-]?fos?
 douche[\w-]*
-
+dick[\s-]?heads?
+dick[\s-]?head's
+dick[\s-]?head’s
+\w+-dicks?

@@ -59,10 +59,6 @@ hairy dick
 tiny dick
 pencil dick
 dicks
-dick[\s-]?head
-dick[\s-]?heads
-dick[\s-]?head's
-dick[\s-]?head’s
 suck my
 tit
 tits
@@ -159,7 +155,7 @@ take [\w]* cherry
 taking [\w]* cherry
 took [\w]* cherry
 rock\w* [\w]* world
-booty call
+booty[\s-]call
 skinny[-\s]dip\w*
 sucking the sack
 junk in \w+ trunk
