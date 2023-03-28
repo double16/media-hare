@@ -7,7 +7,7 @@ RUN apt-get -q update &&\
     apt-get install -y autoconf libtool git build-essential libargtable2-dev libavformat-dev libsdl1.2-dev libswscale-dev
 RUN git clone https://github.com/erikkaashoek/Comskip --branch master --single-branch
 RUN cd Comskip &&\
-    git reset 8b5d7c98778018a97c46d598f0ce5fea27fa4a3b --hard
+    git reset 6e66de54358498aa276d233f5b3e7fa673526af1 --hard
 RUN cd Comskip &&\
     ./autogen.sh &&\
     ./configure &&\
@@ -20,15 +20,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /tmp
 RUN apt-get -q update &&\
-    apt-get install -y autoconf libtool git build-essential libargtable2-dev libavformat-dev libsdl1.2-dev libswscale-dev
+    apt-get install -y autoconf libtool git build-essential libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 RUN git clone https://github.com/CCExtractor/ccextractor --branch master --single-branch
 RUN cd ccextractor &&\
     git reset v0.94 --hard
-RUN cd ccextractor &&\
-    ./autogen.sh &&\
-    ./configure &&\
-    make &&\
-    make install
+RUN cd ccextractor/linux &&\
+    ./build -without-rust &&\
+    ./ccextractor --version &&\
+    cp ccextractor /usr/local/bin
 
 FROM ubuntu:22.10
 
