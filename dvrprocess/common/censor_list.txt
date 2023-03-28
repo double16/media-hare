@@ -375,10 +375,10 @@ got some balls
 got some cojones
 got some stones
 has a pair[.!]
-grow a pair
-grow some balls
-grow some cojones
-grow some stones
+gr[oe]w a pair
+gr[oe]w some balls
+gr[oe]w some cojones
+gr[oe]w some stones
 balls of \w+
 cojones of \w+
 balls to bones
