@@ -412,6 +412,11 @@ def do_dvr_post_process(input_file,
         logger.info(tools.ccextractor.array_as_command(cc_command))
         if not dry_run:
             cc_returncode = tools.ccextractor.run(cc_command, check=False)
+            # ccextractor creates additional subtitle files that we don't use
+            for cc_root, cc_dirs, cc_files in os.walk(dir_filename):
+                for file in cc_files:
+                    if file.startswith(f".~{base_filename}.cc.") and file.endswith(".ass") and not file.endswith('.cc.ass'):
+                        os.remove(os.path.join(cc_root, file))
         else:
             cc_returncode = 0
 
