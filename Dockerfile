@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as comskipbuild
+FROM ubuntu:22.10 as comskipbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -7,14 +7,29 @@ RUN apt-get -q update &&\
     apt-get install -y autoconf libtool git build-essential libargtable2-dev libavformat-dev libsdl1.2-dev libswscale-dev
 RUN git clone https://github.com/erikkaashoek/Comskip --branch master --single-branch
 RUN cd Comskip &&\
-    git reset 8b5d7c98778018a97c46d598f0ce5fea27fa4a3b --hard
+    git reset 6e66de54358498aa276d233f5b3e7fa673526af1 --hard
 RUN cd Comskip &&\
     ./autogen.sh &&\
     ./configure &&\
     make &&\
     make install
 
-FROM ubuntu:22.04
+FROM ubuntu:22.10 as ccbuild
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /tmp
+RUN apt-get -q update &&\
+    apt-get install -y autoconf libtool git build-essential libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
+RUN git clone https://github.com/CCExtractor/ccextractor --branch master --single-branch
+RUN cd ccextractor &&\
+    git reset v0.94 --hard
+RUN cd ccextractor/linux &&\
+    ./build -without-rust &&\
+    ./ccextractor --version &&\
+    cp ccextractor /usr/local/bin
+
+FROM ubuntu:22.10
 
 ARG SYSTEMCTL_VER=1.5.4505
 ENV DEBIAN_FRONTEND=noninteractive
@@ -25,11 +40,9 @@ COPY requirements.txt /tmp/
 # vosk models: https://alphacephei.com/vosk/models
 RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
-    add-apt-repository ppa:savoury1/ffmpeg4 -y && \
-    add-apt-repository ppa:savoury1/ffmpeg5 -y && \
-    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq ccextractor less \
+    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
-    libargtable2-0 libavformat58 libsdl1.2-compat &&\
+    libargtable2-0 libavformat59 libsdl1.2-compat &&\
     pip --no-input install --compile --ignore-installed -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip software-properties-common &&\
     apt-get autoremove -y &&\
@@ -61,6 +74,7 @@ RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/release
 COPY SubtitleEdit-Settings.xml /usr/share/subtitle-edit/Settings.xml
 ADD subtitle-edit /usr/local/bin/
 COPY --from=comskipbuild /usr/local/bin/comskip /usr/local/bin
+COPY --from=ccbuild /usr/local/bin/ccextractor /usr/local/bin
 ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
