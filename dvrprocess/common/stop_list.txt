@@ -78,9 +78,9 @@ breasts
 kinky
 horny
 butt[\s-]fuck
-butt[\s-]fucker
+butt[\s-]fuckers?
 ass[\s-]fuck
-ass[\s-]fucker
+ass[\s-]fuckers?
 masturbate
 masturbates
 masturbated
@@ -173,4 +173,12 @@ camel[\s-]?toe
 camel[\s-]?knuckle
 dildo
 cajones?
-
+fore[\s-]?play
+nice tail
+g[eo]t some tail
+after some tail
+some \w+ tail
+piece of tail
+whore[\s-]?houses?
+the clap
+cleavage

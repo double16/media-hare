@@ -5,6 +5,7 @@ import logging
 import os
 import random
 import sys
+from typing import Tuple, Union
 import xml.etree.ElementTree as ET
 
 import requests
@@ -156,8 +157,8 @@ def find_need_transcode_cli(argv):
 
 class TranscodeFileInfo(object):
 
-    def __init__(self, file_name: str, host_file_path: str, item_key: [str, None], video_resolution: int, runtime: int,
-                 framerate: [None, float] = None, library: [None, str] = None):
+    def __init__(self, file_name: str, host_file_path: str, item_key: Union[str, None], video_resolution: int, runtime: int,
+                 framerate: Union[None, float] = None, library: Union[None, str] = None):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.item_key = item_key
@@ -182,7 +183,7 @@ class TranscodeFileInfo(object):
 
 def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desired_video_codecs: list[str],
                              desired_subtitle_codecs: list[str],
-                             max_resolution: [None, int], desired_frame_rate: [None, float]):
+                             max_resolution: Union[None, int], desired_frame_rate: Union[None, float]):
     random.shuffle(media_paths)
     for media_path in media_paths:
         for root, dirs, files in os.walk(media_path, topdown=True):
@@ -246,8 +247,8 @@ def need_transcode_generator(
         desired_video_codecs: list[str] = None,
         desired_audio_codecs: list[str] = None,
         desired_subtitle_codecs: list[str] = None,
-        max_resolution: [None, int] = None,
-        desired_frame_rate: [None, float] = None,
+        max_resolution: Union[None, int] = None,
+        desired_frame_rate: Union[None, float] = None,
 ):
     if desired_video_codecs is None and desired_audio_codecs is None and desired_frame_rate is None:
         desired_video_codecs = config.get_global_config_option('video', 'codecs').split(',')
@@ -302,8 +303,8 @@ def need_transcode_generator(
 
 def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str],
                     desired_subtitle_codecs: list[str], file_names, host_home,
-                    show_response, max_resolution: [None, int], desired_frame_rate: [None, float],
-                    library: [None, str] = None):
+                    show_response, max_resolution: Union[None, int], desired_frame_rate: Union[None, float],
+                    library: Union[None, str] = None):
     episodes = list(filter(
         lambda el: el.tag == 'Video' and (
                 el.attrib['type'] == 'episode' or el.attrib['type'] == 'movie'),
@@ -381,7 +382,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                                                 framerate=framerate, runtime=duration, library=library)
 
 
-def _plex_host_name_to_local(file_name: str, host_home: str) -> (str, str):
+def _plex_host_name_to_local(file_name: str, host_home: str) -> Tuple[str, str]:
     """
     Try to find a file referenced by the Plex host name to the local host name.
     :param file_name: the file name on the host running Plex

@@ -18,11 +18,6 @@ import common
 from common import config
 
 #
-# List of libraries: /library/sections, want type="show"
-# Shows for a section: /library/sections/2/all from Directory.key in section
-# All Episodes: /library/metadata/83179/allLeaves from Directory.key in show
-#
-
 # Produce a structure from the API:
 #   dict: key=show title, value=list of tuple (library, show title, year, season, episode, duration in minutes, video_codec, audio_codec, videoResolution, bitrate)
 #
@@ -36,7 +31,6 @@ Produce two reports on TV episodes. One is a CSV of episode data such as length,
 a report of missing episodes and seasons.
 
 Usage: {sys.argv[0]} -u http://127.0.0.1:32400 -e episodes.csv -c completion.csv
-"url=", "episodes=", "completion=", "cache_dir="
 
 -u, --url=
     The Plex Media Server URL. Specify as http://127.0.0.1:32400, default is {common.get_plex_url()}
@@ -343,7 +337,6 @@ def tvshow_summary_cli(argv) -> int:
     episode_csv = ''
     completion_csv = ''
     cache_dir = os.path.join(config.get_work_dir(), 'tvshow-summary')
-    os.makedirs(cache_dir, exist_ok=True)
 
     try:
         opts, args = getopt.getopt(argv, "hu:e:c:t:", ["url=", "episodes=", "completion=", "cache_dir="])
@@ -362,6 +355,8 @@ def tvshow_summary_cli(argv) -> int:
             completion_csv = arg
         elif opt in ("-t", "--cache_dir"):
             cache_dir = arg
+
+    os.makedirs(cache_dir, exist_ok=True)
 
     shows = read_from_api(plex_url)
 

@@ -1,5 +1,5 @@
-freaking out
-freaking \w+ out
+freaking? out
+freaking? \w+ out
 feel a prick
 prick yourself
 suck .* thumb

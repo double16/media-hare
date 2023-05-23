@@ -44,7 +44,7 @@ for christ’s sakes
 for god sake
 for god's sake
 for god’s sake
-for god sakes
+for god[\s-]?sakes
 for god's sakes
 for god’s sakes
 chrissake
@@ -62,6 +62,7 @@ shitin
 shiting
 holy shit
 holy s-h-i-t
+shitless
 shitstorm
 shit storm
 shit-storm
@@ -82,6 +83,7 @@ oh crap
 craps
 crappy
 holy crap
+crapless
 crap[\s-]\w+
 piece[\s-]of[\s-]crap
 bull[\s-]?crap
@@ -95,7 +97,8 @@ goddamn
 god[\s-]damn
 goddamned
 god[\s-]damned
-goddamn it
+goddamn[\s]?it
+goddammit
 god[\s-]damn it
 oh god[\s-]damn it
 goddamn you
@@ -151,22 +154,43 @@ screwed the pooch
 are screwed
 screwed
 screwed up
+screwing up
+screwin'? up
 fuck
+frick
+unfuck
+unfrick
+unfucked
+unfricked
 [\w-]*fuck
-[\w-]*fucker
-f-u-c-k
+[\w-]*frick
+[\w-]*fuckers?
+[\w-]*frickers?
+\S*f-u-c-k\S*
+\S*f-r-i-c-k\S*
 oh fuck
+oh frick
 fucks
+fricks
 fuck you
+frick you
 fuck it
+frick it
+fudge it
 fuck[\s-]up
+frick[\s-]up
 the fuck
-fuck yourself
-fuck your self
-go fuck yourself
-go fuck your self
-fucker
+the frick
+fuck your\s?self
+frick your\s?self
+go fuck your\s?self
+go frick your\s?self
+fuckers?
+frickers?
+fuckin
+frickin
 fucking
+fricking
 what the$
 what the[!-]+
 what the [!-]+
@@ -174,12 +198,11 @@ what the f[.]*
 what the fu[.]*
 what the fuc[.]*
 what the fuck
-motherfucker
-mother-fucker
-mother fucker
-motherfucking
-mother-fucking
-mother fucking
+what the frick
+mother[\s-]?fuckers?
+mother[\s-]?frickers?
+mother[\s-]?fucking
+mother[\s-]?fricking
 what the eff
 effin[g']?
 eff you
@@ -198,7 +221,8 @@ fricking
 shut the freak up
 what the freak
 shut the frick up
-what the frick
+shut the frick
+the frig
 bastard
 bastards
 little bastard
@@ -213,6 +237,7 @@ old bastard
 old bastards
 whore
 whores
+whoring
 hell
 helluva
 oh hell
@@ -239,6 +264,11 @@ the heck
 sure as heck
 the heck's
 the heck’s
+big[\s-]butt
+fat[\s-]butt
+skinny[\s-]butt
+nice[\s-]butt
+cute[\s-]butt
 ass
 arse
 ass's
@@ -300,9 +330,11 @@ assholes
 ass holes
 a-hole
 a-holes
-ass[\s-]eyes
+ass[\s-]?eyes
+ass[\s-]?clown
 half[\s-]ass
 half[\s-]assed
+\w+[\s-]assing
 \w+-ass
 \w+-arse
 kiss my ass
@@ -334,6 +366,10 @@ that .* sucks
 suck[!]
 suck it[!,.-]+
 suck at
+suck that
+suck this
+suck on that
+suck on this
 he .* blows
 she .* blows
 you .* blow
@@ -353,6 +389,9 @@ nigger's
 cojones
 ballsy
 my balls
+your balls
+your cojones
+your stones
 has balls
 has cojones
 has stones
@@ -368,6 +407,9 @@ have stones
 have some balls
 have some cojones
 have some stones
+have the balls
+have the cojones
+have the stones
 got balls
 got cojones
 got stones
@@ -382,6 +424,7 @@ gr[oe]w some stones
 balls of \w+
 cojones of \w+
 balls to bones
+ball[\s-]?bust\w*
 prick
 little prick
 jack[\s-]off
@@ -399,3 +442,10 @@ dick[\s-]?heads?
 dick[\s-]?head's
 dick[\s-]?head’s
 \w+-dicks?
+dicking
+dicked
+mean dick
+count for dick
+pus[\s-]?ball
+sex[\s-]?fiend
+
