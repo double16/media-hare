@@ -611,7 +611,7 @@ def comcut_cli(argv):
     atexit.register(common.finish)
 
     return_code = 0
-    for infile, outfile in common.generate_video_files(args):
+    for infile, outfile in common.generate_video_files(args, fail_on_missing=True):
         this_file_return_code = comcut(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
                                        debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
                                        force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op,

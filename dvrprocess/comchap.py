@@ -629,7 +629,7 @@ def comchap_cli(argv):
     atexit.register(common.finish)
 
     return_code = 0
-    for infile, outfile in common.generate_video_files(args):
+    for infile, outfile in common.generate_video_files(args, fail_on_missing=True):
         if mark_skip:
             this_file_return_code = comchap_mark_skip(outfile, workdir)
         else:

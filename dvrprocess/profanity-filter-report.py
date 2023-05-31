@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def profanity_filter_report_cli(argv):
     data = []
-    for file, _ in common.generate_video_files(argv):
+    for file, _ in common.generate_video_files(argv, fail_on_missing=True):
         pf_data = extract_pf_data(file)
         if pf_data:
             data.append(pf_data)

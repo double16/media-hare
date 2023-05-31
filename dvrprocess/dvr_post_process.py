@@ -699,7 +699,7 @@ def dvr_post_process_cli(argv):
     atexit.register(common.finish)
 
     return_code = 0
-    for infile, outfile in common.generate_video_files(args, suffix=None):
+    for infile, outfile in common.generate_video_files(args, suffix=None, fail_on_missing=True):
         # TODO: allow a different outfile
         try:
             this_file_return_code = do_dvr_post_process(infile, **parsed[1])

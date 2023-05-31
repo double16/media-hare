@@ -1030,14 +1030,16 @@ def is_video_file(filepath) -> bool:
         return False
 
 
-def generate_video_files(args, suffix=".mkv"):
+def generate_video_files(args, suffix=".mkv", fail_on_missing=False):
     """
     Searches for mkv files from the arguments that can be files and directories. A special case is two arguments, a
     mkv file and a missing second argument specifying the output file.
     :param args: list of files and/or directories
     :param suffix: the file suffix, default ".mkv"
+    :param fail_on_missing: True to fail if an argument is specified that does not exist
     :return: yields a tuple of (input file, output file)
     """
+    logger.debug("generate_video_files for suffix %s in paths %s", suffix, args)
     if len(args) == 2:
         # check special case of input file and output file
         if os.path.isfile(args[0]) and (os.path.isfile(args[1]) or not os.path.exists(args[1])):
@@ -1045,6 +1047,8 @@ def generate_video_files(args, suffix=".mkv"):
             return
 
     for arg in args:
+        if fail_on_missing and not os.path.exists(arg):
+            raise FileNotFoundError(arg)
         if os.path.isfile(arg):
             yield arg, arg
         for root, dirs, files in os.walk(arg):
