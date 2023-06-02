@@ -267,8 +267,10 @@ the heck’s
 big[\s-]butt
 fat[\s-]butt
 skinny[\s-]butt
-nice[\s-]butt
-cute[\s-]butt
+nice\w* .* butt
+cute\w* .* butt
+\w+-butt
+\w+-booty
 ass
 arse
 ass's
@@ -299,6 +301,7 @@ kicked [\w\s]* ass
 kick [\w\s]* arse
 kicks [\w\s]* arse
 kicked [\w\s]* arse
+rat'?s ass
 up [\w\s]* ass
 up [\w\s]* asses
 up [\w\s]* arse
@@ -333,7 +336,7 @@ a-holes
 ass[\s-]?eyes
 ass[\s-]?clown
 half[\s-]ass
-half[\s-]assed
+\w+[\s-]assed
 \w+[\s-]assing
 \w+-ass
 \w+-arse
@@ -350,13 +353,20 @@ kiss[\s-]ass
 hard[\s-]ass
 stupid[\s-]ass
 ass[\s-]wipe
-butt[\s-]sniffer
-booty[\s-]sniffer
+butt[\s-]?head
+butt[\s-]?sniffer
+butt-\w+
+booty[\s-]?sniffer
+booty-\w+
 booty
 piss
 piss[\s-]off
+piss off
+pissed off
+pissed
 pissing
 sucks
+I .* suck
 he .* sucks
 she .* sucks
 you .* suck
@@ -428,6 +438,7 @@ ball[\s-]?bust\w*
 prick
 little prick
 jack[\s-]off
+jerk[\s-]off
 jag[\s-]off
 hot legs
 phlegm[\s-]wad
@@ -436,6 +447,7 @@ flipped [\w\s]* off
 g[ia]ve [\w\s]* the finger
 sexy on
 skank
+slut
 mo[\s-]?fos?
 douche[\w-]*
 dick[\s-]?heads?
@@ -446,6 +458,12 @@ dicking
 dicked
 mean dick
 count for dick
+pecker
+his pecker
+my pecker
+your pecker
+pecker[\s-]?wood
 pus[\s-]?ball
 sex[\s-]?fiend
+sex[\s-]?maniac
 

@@ -36,6 +36,7 @@ ejaculation
 oral[\s-]sex
 anal[\s-]sex
 butt[\s-]sex
+booty[\s-]sex
 ass[\s-]sex
 gay[\s-]sex
 cock
@@ -60,6 +61,14 @@ tiny dick
 pencil dick
 dicks
 suck my
+sucks .* my
+sucking .* my
+sucks .* his
+sucking .* his
+sucks .* yours
+sucking .* yours
+sucks .* hers
+sucking .* hers
 tit
 tits
 tit's
@@ -92,6 +101,8 @@ jacked[\s-]off
 jag-off
 jagging[\s-]off
 jagged[\s-]off
+jerking[\s-]off
+jerked[\s-]off
 bra
 bras
 lingerie
@@ -182,3 +193,4 @@ piece of tail
 whore[\s-]?houses?
 the clap
 cleavage
+g[eo]t laid
