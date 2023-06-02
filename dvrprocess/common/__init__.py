@@ -13,6 +13,7 @@ import threading
 import time
 import traceback
 from enum import Enum
+from typing import Union
 from xml.etree import ElementTree as ET
 
 import psutil
@@ -387,7 +388,7 @@ def has_stream_with_language(input_info, codec_type, codec_names=None, language=
 def is_video_stream(stream_info: dict) -> bool:
     return stream_info[constants.K_CODEC_TYPE] == constants.CODEC_VIDEO and (
             not stream_info.get(constants.K_DISPOSITION) or stream_info.get(constants.K_DISPOSITION).get(
-        'attached_pic') != 1)
+                'attached_pic') != 1) and stream_info.get('avg_frame_rate') != '0/0'
 
 
 def is_audio_stream(stream_info: dict) -> bool:
@@ -1286,10 +1287,10 @@ def is_truthy(value) -> bool:
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
 
 
-def frame_rate_from_s(frame_rate_s: [str, None]) -> [float, None]:
+def frame_rate_from_s(frame_rate_s: Union[str, None]) -> Union[float, None]:
     if frame_rate_s is None:
         return None
-    framerate: [float, None] = None
+    framerate: Union[float, None] = None
     frame_rate_s = frame_rate_s.lower()
     if frame_rate_s[0].isdigit():
         # remove suffix, like 'p'
@@ -1301,9 +1302,12 @@ def frame_rate_from_s(frame_rate_s: [str, None]) -> [float, None]:
     return framerate
 
 
-def should_adjust_frame_rate(current_frame_rate: [None, str, float], desired_frame_rate: [None, str, float],
+def should_adjust_frame_rate(current_frame_rate: Union[None, str, float], desired_frame_rate: Union[None, str, float],
                              tolerance: float = 0.25) -> bool:
-    if current_frame_rate in [None, ''] or desired_frame_rate in [None, '']:
+    logger.debug("should_adjust_frame_rate(current_frame_rate=%s, desired_frame_rate=%s, tolerance=%s",
+                 current_frame_rate, desired_frame_rate, str(tolerance))
+
+    if current_frame_rate in [None, '', '0', '0/0'] or desired_frame_rate in [None, '', '0', '0/0']:
         return False
 
     if type(current_frame_rate) == str:
