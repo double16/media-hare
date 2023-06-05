@@ -198,9 +198,7 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 
                 need_transcode = False
 
-                video_streams = list(
-                    filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_VIDEO,
-                           input_info['streams']))
+                video_streams = common.find_video_streams(input_info)
 
                 min_height = min(map(lambda e: int(e['height']), video_streams))
                 if max_resolution is not None and min_height > max_resolution:
