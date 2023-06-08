@@ -44,7 +44,7 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
                                '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',
                                '-f', 'null', '/dev/null']
         crop_detect_process = tools.ffmpeg.Popen(crop_detect_command, stderr=subprocess.PIPE, universal_newlines=True)
-        crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9.:]+)\b'
+        crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+)\b'
         crop_line_last_t = None
         crop_line_last_filter = None
         for line in crop_detect_process.stderr:
@@ -79,7 +79,11 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
                 crop_frame_filter = None
         logger.info("crop frame detection found %s", crop_frame_filter)
         if crop_frame_op in CROP_FRAME_RESOLUTIONS:
-            rect = get_crop_filter_parts(crop_frame_filter)
+            if crop_frame_filter is None:
+                # assume cropping with centered rect
+                rect = (width, height, 0, 0)
+            else:
+                rect = get_crop_filter_parts(crop_frame_filter)
             target_res = \
                 sorted(CROP_FRAME_RESOLUTIONS[crop_frame_op], key=lambda e: abs(rect[0] - e[0]) + abs(rect[1] - e[1]))[
                     0]
