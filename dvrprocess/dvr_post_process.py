@@ -67,9 +67,13 @@ The file closest to the input file will be taken. Comments start with '#'.
 --crop-frame
     Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
 --crop-frame-ntsc
-    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
+    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions only if a frame is detected.
 --crop-frame-pal
-    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions only if a frame is detected.
+--crop-frame-fallback-ntsc
+    Detect and crop surrounding frame, fallback to one of the NTSC (and HD) common resolutions if no frame detected.
+--crop-frame-fallback-pal
+    Detect and crop surrounding frame, fallback to one of the PAL (and HD) common resolutions if no frame detected.
 -f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
 -c, --forgiving
@@ -117,7 +121,8 @@ def parse_args(argv) -> (list[str], dict):
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
                                     "prevent-larger=", "stereo", "rerun", "no-rerun", "forgiving",
-                                    "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "verbose"])
+                                    "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal",
+                                    "crop-frame-fallback-ntsc", "crop-frame-fallback-pal", "verbose"])
     except getopt.GetoptError:
         return None
     for opt, arg in opts:
@@ -164,6 +169,10 @@ def parse_args(argv) -> (list[str], dict):
             crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
             crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt == "--crop-frame-fallback-ntsc":
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT_NTSC_FALLBACK
+        elif opt == "--crop-frame-fallback-pal":
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT_PAL_FALLBACK
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)

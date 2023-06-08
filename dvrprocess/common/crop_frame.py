@@ -3,6 +3,7 @@ import math
 import re
 import subprocess
 from enum import Enum
+from typing import Union
 
 from . import get_video_width, get_video_height
 from . import tools, constants
@@ -15,17 +16,23 @@ class CropFrameOperation(Enum):
     DETECT = 1
     NTSC = 2
     PAL = 3
+    DETECT_NTSC_FALLBACK = 4
+    DETECT_PAL_FALLBACK = 5
 
 
 # https://en.wikipedia.org/wiki/List_of_common_resolutions
+NTSC_RESOLUTIONS = [(640, 480), (704, 480), (720, 480)]
+PAL_RESOLUTIONS = [(544, 576), (704, 576), (720, 576)]
 HD_RESOLUTIONS = [(1280, 720), (1280, 1080), (1440, 1080), (1920, 1080), (3840, 2160), (7680, 4320)]
 CROP_FRAME_RESOLUTIONS = {
-    CropFrameOperation.NTSC: [(640, 480), (704, 480), (720, 480)] + HD_RESOLUTIONS,
-    CropFrameOperation.PAL: [(544, 576), (704, 576), (720, 576)] + HD_RESOLUTIONS
+    CropFrameOperation.NTSC: NTSC_RESOLUTIONS + HD_RESOLUTIONS,
+    CropFrameOperation.DETECT_NTSC_FALLBACK: NTSC_RESOLUTIONS + HD_RESOLUTIONS,
+    CropFrameOperation.PAL: PAL_RESOLUTIONS + HD_RESOLUTIONS,
+    CropFrameOperation.DETECT_PAL_FALLBACK: PAL_RESOLUTIONS + HD_RESOLUTIONS,
 }
 
 
-def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, frame_rate) -> [None, str]:
+def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, frame_rate) -> Union[None, str]:
     """
     Find crop frame dimensions
     cropdetect output (ffmpeg v4, v5) looks like:
@@ -34,7 +41,7 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
     """
     crop_frame_filter = None
     if crop_frame_op != CropFrameOperation.NONE:
-        logger.info("Running crop frame detection")
+        logger.info("Running crop frame detection for %s", crop_frame_op)
         width = get_video_width(input_info)
         height = get_video_height(input_info)
         duration = float(input_info['format']['duration'])
@@ -78,7 +85,8 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
             if width - get_crop_filter_parts(crop_frame_filter)[0] < 40:
                 crop_frame_filter = None
         logger.info("crop frame detection found %s", crop_frame_filter)
-        if crop_frame_op in CROP_FRAME_RESOLUTIONS:
+        # we want a --crop-frame fallback to NTSC/PAL, if we expect cropping but nothing was found
+        if crop_frame_op in CROP_FRAME_RESOLUTIONS and ((crop_frame_filter is not None) ^ ('FALLBACK' in crop_frame_op.name)):
             if crop_frame_filter is None:
                 # assume cropping with centered rect
                 rect = (width, height, 0, 0)

@@ -43,9 +43,13 @@ Cuts commercials only when a season fits closely within the average of length po
 --crop-frame
     Detect and crop surrounding frame. Does not modify widescreen formats that have top and bottom frames.
 --crop-frame-ntsc
-    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
+    Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions only if a frame is detected.
 --crop-frame-pal
-    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+    Detect and crop surrounding frame to one of the PAL (and HD) common resolutions only if a frame is detected.
+--crop-frame-fallback-ntsc
+    Detect and crop surrounding frame, fallback to one of the NTSC (and HD) common resolutions if no frame detected.
+--crop-frame-fallback-pal
+    Detect and crop surrounding frame, fallback to one of the PAL (and HD) common resolutions if no frame detected.
 -v, --vcodec=h264[,hvec,...]
     The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 """, file=sys.stderr)
@@ -96,7 +100,7 @@ def smart_comcut(argv):
         opts, args = getopt.getopt(dvrconfig + list(argv), "nkcav:",
                                    ["help", "dry-run", "keep", "commercial-details", "strict", "all", "work-dir=",
                                     "verbose", "sigma=", "preset=", "force-encode", "crop-frame", "crop-frame-ntsc",
-                                    "crop-frame-pal", "vcodec="])
+                                    "crop-frame-pal", "crop-frame-fallback-ntsc", "crop-frame-fallback-pal", "vcodec="])
     except getopt.GetoptError:
         usage()
         return 255
@@ -130,6 +134,10 @@ def smart_comcut(argv):
             crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
             crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt == "--crop-frame-fallback-ntsc":
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT_NTSC_FALLBACK
+        elif opt == "--crop-frame-fallback-pal":
+            crop_frame_op = crop_frame.CropFrameOperation.DETECT_PAL_FALLBACK
         elif opt in ("-v", "--vcodec"):
             desired_video_codecs = arg.split(',')
 
