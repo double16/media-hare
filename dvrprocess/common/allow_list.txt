@@ -8,6 +8,7 @@ cocks gun
 gun cocks
 cocks rifle
 rifle cocks
+hammer cocks
 prick .* fingers
 place is hell
 place called hell
