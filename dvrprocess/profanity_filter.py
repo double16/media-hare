@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Tuple, Union
 
 import pysrt
 from ass_parser import read_ass, write_ass, AssEventList, CorruptAssLineError
@@ -19,7 +20,7 @@ from numpy import loadtxt
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 
 import common
-from common import subtitle, tools, config, constants
+from common import subtitle, tools, config, constants, progress
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 11
@@ -90,7 +91,7 @@ def profanity_filter(*args, **kwargs) -> int:
 
 def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,
                         unmark_skip=None, language=constants.LANGUAGE_ENGLISH, workdir=None, verbose=False,
-                        mute_channels: [None, config.MuteChannels] = None) -> int:
+                        mute_channels: Union[None, config.MuteChannels] = None) -> int:
     if mark_skip and unmark_skip:
         logger.fatal("mark-skip and unmark-skip both set")
         return CMD_RESULT_ERROR
@@ -425,9 +426,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data = read_ass(Path(subtitle_original_filename))
             ass_data_forced = copy.copy(ass_data)
             ass_data_forced.events = AssEventList()
-            for event in list(ass_data.events):
+            filter_progress = progress.progress(f"{filename} filtering", 0, len(list(ass_data.events)))
+            for event_idx, event in enumerate(ass_data.events):
                 original_text = event.text
                 filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
+                filter_progress.progress(event_idx)
                 if filtered_text != original_text:
                     event.text = filtered_text
                     ass_data_forced.events.append(copy.copy(event))
@@ -436,13 +439,16 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                         stopped_spans.append([event.start, event.end])
             write_ass(ass_data, Path(subtitle_filtered_filename))
             write_ass(ass_data_forced, Path(subtitle_filtered_forced_filename))
+            filter_progress.stop()
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
             srt_data_forced = copy.copy(srt_data)
             srt_data_forced.data = []
-            for event in list(srt_data):
+            filter_progress = progress.progress(f"{filename} filtering", 0, len(list(srt_data)))
+            for event_idx, event in enumerate(srt_data):
                 original_text = event.text
                 filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
+                filter_progress.progress(event_idx)
                 if filtered_text != original_text:
                     event.text = filtered_text
                     srt_data_forced.data.append(event)
@@ -454,6 +460,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             if len(srt_data_forced.data) == 0:
                 srt_data_forced.data.append(SubRipItem())
             srt_data_forced.save(Path(subtitle_filtered_forced_filename), 'utf-8')
+            filter_progress.stop()
         else:
             logger.info(f"Unknown subtitle codec {subtitle_codec}")
             return CMD_RESULT_ERROR
@@ -726,7 +733,7 @@ def need_original_subtitle_ocr(subtitle_original: dict, media_duration: float, f
 
 
 def need_original_subtitle_transcribed(subtitle_original: dict, subtitle_words: dict, current_audio2text_version: str,
-                                       media_duration: float, force: bool) -> (bool, bool):
+                                       media_duration: float, force: bool) -> Tuple[bool, bool]:
     """
     Determine if the original subtitle needs transcribed from audio.
     :param subtitle_original:
@@ -871,7 +878,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
 
 
 def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None,
-                 verbose=False) -> (str, str):
+                 verbose=False) -> Tuple[str, str]:
     """
     Attempts to create a text subtitle from the original audio stream.
     1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
@@ -929,6 +936,8 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
 
     audio_process.stdout.read(44)  # skip header
     results = []
+    audio_progress = progress.progress(f"{input_info['format']['filename']} transcription", 0, int(float(
+        input_info[constants.K_FORMAT][constants.K_DURATION])))
     while True:
         data = audio_process.stdout.read(chunk_size)
         if len(data) == 0:
@@ -937,6 +946,8 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
             result = json.loads(rec.Result())
             if 'result' in result:
                 results.append(result)
+                if len(result['result']) > 0:
+                    audio_progress.progress(result['result'][-1]['end'])
                 if 'text' in result:
                     logger.debug("text: %s", result['text'])
     result = json.loads(rec.FinalResult())
@@ -945,6 +956,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
         if 'text' in result:
             logger.debug("text: %s", result['text'])
     audio_process.stdout.close()
+    audio_progress.stop()
     extract_return_code = audio_process.wait()
     if extract_return_code != 0:
         logger.error("Cannot transcribe audio, ffmpeg returned %s", extract_return_code)
@@ -955,6 +967,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
 
     for i, res in enumerate(results):
         # 'the' by itself seems to be an artifact of soundtrack / background noise
+        # TODO: check the length of `the` to better determine if it's an artifact
         if res.get('text') == 'the':
             continue
         words = res['result']
@@ -1036,7 +1049,7 @@ def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: floa
         if word_count < 100 and duration > 630:
             logger.warning(f"word count less than 100 for duration {duration}, returning 0%")
             return 0.0
-        word_found_pct = 100.0 * float(word_found_count) / float(word_count)
+        word_found_pct = 100.0 * float(word_found_count) / (float(word_count) + 0.001)
         logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
         return word_found_pct
     except (ImportError, ModuleNotFoundError) as e:
@@ -1115,7 +1128,7 @@ def matches_stop_pattern(stop_pattern, text, allow_ranges: list[tuple]) -> bool:
     return False
 
 
-def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> (str, bool):
+def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> Tuple[str, bool]:
     """
     Filter text using the lists.
     :param censor_list: phrases in the censor list are removed from the text, such as adjectives or exclamations
@@ -1169,9 +1182,9 @@ def get_allow_range(m: re.Match[str]) -> tuple[tuple[int, int], str]:
     begin = m.span(0)[0]
     end = m.span(0)[1]
     # print(f"get_allow_range(): begin = {begin}, end = {end}")
-    while begin < (end-1) and original[begin].isspace():
+    while begin < (end - 1) and original[begin].isspace():
         begin += 1
-    while begin < (end-1) and original[end-1].isspace():
+    while begin < (end - 1) and original[end - 1].isspace():
         end -= 1
     # print(f"get_allow_range(): begin = {begin}, end = {end}")
     return ((begin, end), original[begin:end])
@@ -1207,7 +1220,7 @@ def vosk_language(language: str) -> str:
     return language[0:2]
 
 
-def vosk_model(language: str) -> [None, str]:
+def vosk_model(language: str) -> Union[None, str]:
     """
     Get the Vosk transcriber model to use from the three character language code.
     :param language: three character language code

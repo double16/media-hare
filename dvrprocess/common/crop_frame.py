@@ -3,6 +3,7 @@ import math
 import re
 import subprocess
 from enum import Enum
+from typing import Union
 
 from . import get_video_width, get_video_height
 from . import tools, constants
@@ -25,7 +26,7 @@ CROP_FRAME_RESOLUTIONS = {
 }
 
 
-def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, frame_rate) -> [None, str]:
+def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, frame_rate) -> Union[None, str]:
     """
     Find crop frame dimensions
     cropdetect output (ffmpeg v4, v5) looks like:
