@@ -6,13 +6,14 @@ import os
 import sys
 import time
 from enum import Enum
+from math import ceil
 from multiprocessing import Pool, TimeoutError
 from subprocess import CalledProcessError
 
 import requests
 
 import common
-from common import tools, constants, config
+from common import tools, constants, config, progress
 from find_need_transcode import need_transcode_generator
 from profanity_filter import profanity_filter, FILTER_VERSION
 
@@ -101,7 +102,9 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
         selectors = set(ProfanityFilterSelector)
 
     bytes_processed = 0
+    bytes_progress = progress.progress("byte limit", 0, size_limit)
     time_start = None
+    time_progress = progress.progress("time limit", 0, time_limit)
 
     generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
                                          # get everything
@@ -148,6 +151,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 if return_code == 0:
                     # filtered
                     bytes_processed += os.stat(filepath).st_size
+                    bytes_progress.progress(bytes_processed)
                     if time_start is None:
                         time_start = time.time()
                     # Run Plex analyze so playback works
@@ -175,6 +179,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
                 if time_start is not None:
                     duration = time.time() - time_start
+                    time_progress.progress(ceil(duration))
                     if 0 < time_limit < duration:
                         logger.info(
                             f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")

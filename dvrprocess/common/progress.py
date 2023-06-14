@@ -38,7 +38,7 @@ class ProgressLog(Progress):
         super().__init__(task)
         self._last_pct = -1
 
-    def start(self, start: int, end: int, msg: str | None = None) -> None:
+    def start(self, start: int, end: int, msg: Union[str, None] = None) -> None:
         super().start(start, end, msg)
         if end > start:
             self.progress(start, msg, start, end)
@@ -47,14 +47,14 @@ class ProgressLog(Progress):
         else:
             _logger.info("%s: starting", self.task)
 
-    def stop(self, msg: str | None = None) -> None:
+    def stop(self, msg: Union[str, None] = None) -> None:
         super().stop(msg)
         if msg is not None:
             _logger.info("%s: %s", self.task, msg)
         else:
             _logger.info("%s: stopped", self.task)
 
-    def progress(self, position: int, msg: str | None = None, start: int | None = None, end: int | None = None) -> None:
+    def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None, end: Union[int, None] = None) -> None:
         super().progress(position, msg, start, end)
         if self.pct is not None and self.pct != self._last_pct:
             self._last_pct = self.pct
