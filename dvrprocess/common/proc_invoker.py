@@ -73,7 +73,21 @@ class SubprocessProcInvoker(BaseProcInvoker):
         self.semaphore = semaphore
 
     def _run(self, arguments: list[str], kwargs) -> int:
-        return subprocess.run(arguments, **kwargs).returncode
+        log_output = False
+        if kwargs.get('capture_output') is None and kwargs.get('stdout') is None and kwargs.get('stderr') is None:
+            log_output = True
+            kwargs['capture_output'] = True
+            kwargs['universal_newlines'] = True
+
+        result = subprocess.run(arguments, **kwargs)
+
+        if log_output:
+            if result.stdout:
+                logger.debug(result.stdout)
+            if result.stderr:
+                logger.error(result.stderr)
+
+        return result.returncode
 
     def run(self, arguments: list[str], **kwargs) -> int:
         if self.semaphore:

@@ -437,7 +437,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                     ".mkv") and current_comskip_hash != comskipini_hash and infile == outfile:
                 mkvpropedit_command = [infile, "--tags", f"global:{tags_filename}"]
                 logger.debug(' '.join(mkvpropedit_command))
-                tools.mkvpropedit.run(mkvpropedit_command, check=True, capture_output=not verbose)
+                tools.mkvpropedit.run(mkvpropedit_command, check=True)
             return 255
 
     start = 0
@@ -486,7 +486,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             mkvpropedit_command = [outfile, "--chapters", mkvchapterfile, "--tags",
                                    f"global:{tags_filename}"]
             logger.debug(' '.join(mkvpropedit_command))
-            tools.mkvpropedit.run(mkvpropedit_command, check=True, capture_output=not verbose)
+            tools.mkvpropedit.run(mkvpropedit_command, check=True)
         else:
             ffmpeg_command = ["-loglevel", "error", "-hide_banner", "-nostdin", "-i", infile, "-i", metafile,
                               "-map_metadata", "0",
@@ -503,7 +503,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             else:
                 ffmpeg_command.append(outfile)
             logger.debug(' '.join(ffmpeg_command))
-            tools.ffmpeg.run(ffmpeg_command, check=True, capture_output=not verbose)
+            tools.ffmpeg.run(ffmpeg_command, check=True)
             if tempoutfile is not None:
                 os.replace(tempoutfile, outfile)
         if infile != outfile:
@@ -513,7 +513,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         if infile.endswith(".mkv") and infile == outfile:
             mkvpropedit_command = [outfile, "--tags", f"global:{tags_filename}"]
             logger.debug(' '.join(mkvpropedit_command))
-            tools.mkvpropedit.run(mkvpropedit_command, check=True, capture_output=not verbose)
+            tools.mkvpropedit.run(mkvpropedit_command, check=True)
 
     return 0
 

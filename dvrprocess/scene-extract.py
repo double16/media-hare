@@ -93,7 +93,7 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
             if dry_run:
                 logger.info(tools.ffmpeg.array_as_command(ffmpeg_command))
             else:
-                tools.ffmpeg.run(ffmpeg_command, check=True, capture_output=not verbose)
+                tools.ffmpeg.run(ffmpeg_command, check=True)
         finally:
             os.remove(parts_file)
 

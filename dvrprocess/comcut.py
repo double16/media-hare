@@ -177,7 +177,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                 ['-map', f"0:{stream[constants.K_STREAM_INDEX]}", subtitle_filename])
         if len(subtitle_streams) > 0:
             logger.debug(tools.ffmpeg.array_as_command(extract_subtitle_command))
-            tools.ffmpeg.run(extract_subtitle_command, check=True, capture_output=not verbose)
+            tools.ffmpeg.run(extract_subtitle_command, check=True)
             for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[constants.K_STREAMS]):
                 subtitle_filename = subtitle_streams[stream[constants.K_STREAM_INDEX]]
                 subtitle_data[stream[constants.K_STREAM_INDEX]] = subtitle.read_subtitle_data(
@@ -506,7 +506,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         logger.debug(tools.ffmpeg.array_as_command(ffmpeg_command))
 
     try:
-        tools.ffmpeg.run(ffmpeg_command, check=True, capture_output=not verbose)
+        tools.ffmpeg.run(ffmpeg_command, check=True)
     except subprocess.CalledProcessError as e:
         with open(partsfile, "r") as f:
             print(f.read(), file=sys.stderr)
