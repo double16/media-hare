@@ -878,7 +878,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
 
 
 def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None,
-                 verbose=False) -> tuple[None, None] | tuple[str, str]:
+                 verbose=False) -> Tuple[str, str]:
     """
     Attempts to create a text subtitle from the original audio stream.
     1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
