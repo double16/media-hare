@@ -417,6 +417,8 @@ def do_dvr_post_process(input_file,
                 for file in cc_files:
                     if file.startswith(f".~{base_filename}.cc.") and file.endswith(".ass") and not file.endswith('.cc.ass'):
                         os.remove(os.path.join(cc_root, file))
+                    elif file.startswith(f".~{base_filename}.cc."):
+                        common.match_owner_and_perm(target_path=os.path.join(cc_root, file), source_path=filename)
         else:
             cc_returncode = 0
 

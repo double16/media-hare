@@ -792,7 +792,7 @@ def detect_transcribed_by_version_3(current_audio2text_version: str, input_info:
                                        '-c', 'copy',
                                        '-f', 'srt', '-']
         logger.info('ffmpeg %s', ' '.join(subtitle_original_arguments))
-        subtitle_original_proc = tools.ffmpeg.Popen(subtitle_original_arguments, stdout=subprocess.PIPE, bufsize=1, text=True)
+        subtitle_original_proc = tools.ffmpeg.Popen(subtitle_original_arguments, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=1, text=True)
         transcribed = True
         for sub in pysrt.stream(subtitle_original_proc.stdout):
             if re.search(r'[A-Z.,]', sub.text):
@@ -878,20 +878,21 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
 
 
 def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None,
-                 verbose=False) -> Tuple[str, str]:
+                 verbose=False) -> tuple[None, None] | tuple[str, str]:
     """
     Attempts to create a text subtitle from the original audio stream.
     1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
     2. audio stream is being converted to AC3 stereo with default ffmpeg bitrate (192kbps) for most compatibility
     3. --tasks is being set but so far it doesn't seem to yield more cores used
-    :return: srt filename for subtitle, srt filename for words) or None
+    :return: (srt filename for subtitle, srt filename for words) or None
     """
     global debug
 
     try:
-        from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit
+        from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit, SetLogLevel
         GpuInit()
         GpuThreadInit()
+        SetLogLevel(-1)
     except ImportError as e:
         logger.warning("Cannot transcribe audio, vosk missing")
         return None, None
@@ -927,7 +928,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
 
     if verbose:
         logger.info(tools.ffmpeg.array_as_command(extract_command))
-    audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE)
+    audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     _vosk_language = vosk_language(language)
     model = Model(model_name=vosk_model(_vosk_language), lang=_vosk_language)

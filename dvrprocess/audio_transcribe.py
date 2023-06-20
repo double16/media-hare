@@ -7,7 +7,7 @@ import os
 import sys
 from pathlib import Path
 from statistics import mean, stdev
-from subprocess import PIPE
+from subprocess import PIPE, DEVNULL
 
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit
@@ -101,7 +101,7 @@ def audio_transcribe(input_path, freq=16000, words_path=None, text_path=None, bu
 
     ffmpeg_command.extend(['-f', 's16le', '-'])
     print(tools.ffmpeg.array_as_command(ffmpeg_command))
-    ffmpeg = tools.ffmpeg.Popen(ffmpeg_command, stdout=PIPE)
+    ffmpeg = tools.ffmpeg.Popen(ffmpeg_command, stdout=PIPE, stderr=DEVNULL)
     wf = ffmpeg.stdout
     wf.read(44)  # skip header
 

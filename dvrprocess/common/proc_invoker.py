@@ -77,15 +77,21 @@ class SubprocessProcInvoker(BaseProcInvoker):
         if kwargs.get('capture_output') is None and kwargs.get('stdout') is None and kwargs.get('stderr') is None:
             log_output = True
             kwargs['capture_output'] = True
-            kwargs['universal_newlines'] = True
+            kwargs['text'] = False
 
         result = subprocess.run(arguments, **kwargs)
 
         if log_output:
             if result.stdout:
-                logger.debug(result.stdout)
+                try:
+                    logger.debug(str(result.stdout))
+                except:
+                    pass
             if result.stderr:
-                logger.error(result.stderr)
+                try:
+                    logger.debug(str(result.stderr))
+                except:
+                    pass
 
         return result.returncode
 

@@ -44,7 +44,7 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
         crop_detect_command = ['-hide_banner', '-skip_frame', 'nointra', '-i', filename,
                                '-vf', f'cropdetect=limit=0.15:reset={math.ceil(eval(frame_rate) * 3)}',
                                '-f', 'null', '/dev/null']
-        crop_detect_process = tools.ffmpeg.Popen(crop_detect_command, stderr=subprocess.PIPE, universal_newlines=True)
+        crop_detect_process = tools.ffmpeg.Popen(crop_detect_command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True)
         crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+)\b'
         crop_line_last_t = None
         crop_line_last_filter = None
