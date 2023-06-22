@@ -2,10 +2,11 @@ import logging
 import re
 import subprocess
 import threading
+from math import ceil
 from multiprocessing import Semaphore
 from typing import Union
 
-from . import config
+from . import config, progress, edl_util
 from .proc_invoker import SubprocessProcInvoker, MockProcInvoker
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,51 @@ def _ffmpeg_version_parser(path):
     return _maybe_version
 
 
-ffmpeg = SubprocessProcInvoker('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.'], semaphore=disk_semaphore)
+class FFmpegProcInvoker(SubprocessProcInvoker):
+    def __init__(self):
+        super().__init__('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.'], semaphore=disk_semaphore)
+        self.duration_matcher = re.compile(r'Duration:\s*([0-9][0-9]:[0-9][0-9]:[0-9][0-9])')
+        self.time_matcher = re.compile(r'\btime=\s*([0-9][0-9]:[0-9][0-9]:[0-9][0-9])')
 
+    def _run(self, arguments: list[str], kwargs) -> int:
+        if kwargs.get('capture_output', None) == True or kwargs.get('stderr', None) in [subprocess.PIPE, subprocess.STDOUT]:
+            return super()._run(arguments, kwargs)
+
+        task_name = None
+        for idx, arg in enumerate(arguments):
+            if arg == '-i' and (task_name is None or '.mkv' in arguments[idx+1]):
+                task_name = arguments[idx+1] + ' ffmpeg'
+        if task_name is None:
+            task_name = 'ffmpeg'
+
+        kwargs2 = kwargs.copy()
+        check = kwargs.get('check', False)
+        kwargs2.pop('check', None)
+        kwargs2['stderr'] = subprocess.PIPE
+        kwargs2['encoding'] = 'ascii'
+        kwargs2['bufsize'] = 1
+        proc = subprocess.Popen(arguments, **kwargs2)
+        duration = None
+        ffmpeg_progress = None
+        for l in proc.stderr:
+            duration_match = self.duration_matcher.search(l)
+            if duration_match:
+                duration = ceil(edl_util.parse_edl_ts(duration_match.group(1)))
+                if ffmpeg_progress is None:
+                    ffmpeg_progress = progress.progress(task_name, 0, duration)
+            time_match = self.time_matcher.search(l)
+            if time_match and ffmpeg_progress:
+                ffmpeg_progress.progress(ceil(edl_util.parse_edl_ts(time_match.group(1))), end=duration)
+        proc.wait()
+        if ffmpeg_progress:
+            ffmpeg_progress.stop()
+        if check and proc.returncode:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args, proc.stdout,
+                                                proc.stderr)
+        return proc.returncode
+
+
+ffmpeg = FFmpegProcInvoker()
 
 def _ffprobe_version_parser(path):
     _maybe_version = float(

@@ -3,6 +3,7 @@ import tempfile
 import unittest
 
 import common
+from common import edl_util
 
 
 class EdlParseTest(unittest.TestCase):
@@ -26,15 +27,15 @@ class EdlParseTest(unittest.TestCase):
 3592.42	3596.89	0
 """)
         os.close(fd)
-        events = common.parse_edl_cuts(path)
+        events = edl_util.parse_edl_cuts(path)
         os.remove(path)
         self.assertEqual(8, len(events))
         self.assertEqual(0.0, events[0].start)
         self.assertEqual(13.15, events[0].end)
-        self.assertEqual(common.EdlType.CUT, events[0].event_type)
+        self.assertEqual(edl_util.EdlType.CUT, events[0].event_type)
         self.assertEqual(772.57, events[2].start)
         self.assertEqual(917.95, events[2].end)
-        self.assertEqual(common.EdlType.CUT, events[2].event_type)
+        self.assertEqual(edl_util.EdlType.CUT, events[2].event_type)
 
     def test_parse_mmss(self):
         """
@@ -45,12 +46,12 @@ class EdlParseTest(unittest.TestCase):
 3:45.678	 4:15	0
 """)
         os.close(fd)
-        events = common.parse_edl_cuts(path)
+        events = edl_util.parse_edl_cuts(path)
         os.remove(path)
         self.assertEqual(1, len(events))
         self.assertEqual(225.678, events[0].start)
         self.assertEqual(255, events[0].end)
-        self.assertEqual(common.EdlType.CUT, events[0].event_type)
+        self.assertEqual(edl_util.EdlType.CUT, events[0].event_type)
 
     def test_parse_hhmmss(self):
         """
@@ -61,7 +62,7 @@ class EdlParseTest(unittest.TestCase):
 0:03:45.678	 1:04:15	0
 """)
         os.close(fd)
-        events = common.parse_edl_cuts(path)
+        events = edl_util.parse_edl_cuts(path)
         os.remove(path)
         self.assertEqual(1, len(events))
         self.assertEqual(225.678, events[0].start)
@@ -77,12 +78,12 @@ class EdlParseTest(unittest.TestCase):
 1:13:45.67	 1:35:15	2    Chapter   2
 """)
         os.close(fd)
-        events = common.parse_edl(path)
+        events = edl_util.parse_edl(path)
         os.remove(path)
         self.assertEqual(2, len(events))
         self.assertEqual(225.67, events[0].start)
         self.assertEqual(3855, events[0].end)
-        self.assertEqual(common.EdlType.SCENE, events[0].event_type)
+        self.assertEqual(edl_util.EdlType.SCENE, events[0].event_type)
         self.assertEqual("Chapter 1", events[0].title)
         self.assertEqual("Chapter   2", events[1].title)
 
@@ -103,11 +104,11 @@ class EdlParseTest(unittest.TestCase):
 2473.24	2654.05	blur
 """)
         os.close(fd)
-        events = common.parse_edl(path)
+        events = edl_util.parse_edl(path)
         os.remove(path)
-        self.assertEqual(common.EdlType.CUT, events[0].event_type)
-        self.assertEqual(common.EdlType.MUTE, events[1].event_type)
-        self.assertEqual(common.EdlType.SCENE, events[2].event_type)
-        self.assertEqual(common.EdlType.COMMERCIAL, events[3].event_type)
-        self.assertEqual(common.EdlType.COMMERCIAL, events[4].event_type)
-        self.assertEqual(common.EdlType.BACKGROUND_BLUR, events[5].event_type)
+        self.assertEqual(edl_util.EdlType.CUT, events[0].event_type)
+        self.assertEqual(edl_util.EdlType.MUTE, events[1].event_type)
+        self.assertEqual(edl_util.EdlType.SCENE, events[2].event_type)
+        self.assertEqual(edl_util.EdlType.COMMERCIAL, events[3].event_type)
+        self.assertEqual(edl_util.EdlType.COMMERCIAL, events[4].event_type)
+        self.assertEqual(edl_util.EdlType.BACKGROUND_BLUR, events[5].event_type)

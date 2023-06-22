@@ -20,7 +20,7 @@ from numpy import loadtxt
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 
 import common
-from common import subtitle, tools, config, constants, progress
+from common import subtitle, tools, config, constants, progress, edl_util
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 11
@@ -674,27 +674,31 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     return CMD_RESULT_FILTERED
 
 
-def load_censor_list():
+def load_censor_list() -> list[re.Pattern]:
     # TODO: allow multiple lists based on 'levels' (R, PG, G ?) and allow selection at runtime
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'censor_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
-    result.sort(key=lambda e: len(re.sub('[^A-Za-z]+', '', e)), reverse=True)
+    sort_sub = re.compile('[^A-Za-z]+')
+    result.sort(key=lambda e: len(sort_sub.sub('', e)), reverse=True)
     result = list(map(lambda e: phrase_to_pattern(e), result))
+    result = list(map(lambda e: re.compile(e, flags=re.IGNORECASE), result))
     return result
 
 
-def load_stop_list():
+def load_stop_list() -> list[re.Pattern]:
     # TODO: allow multiple lists based on 'levels' (R, PG, G ?) and allow selection at runtime
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'stop_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
     result = list(map(lambda e: phrase_to_pattern(e), result))
+    result = list(map(lambda e: re.compile(e, flags=re.IGNORECASE), result))
     return result
 
 
-def load_allow_list():
+def load_allow_list() -> list[re.Pattern]:
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'allow_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
     result = list(map(lambda e: phrase_to_pattern(e), result))
+    result = list(map(lambda e: re.compile(e, flags=re.IGNORECASE), result))
     return result
 
 
@@ -705,7 +709,10 @@ def compute_filter_hash(censor_list=None, stop_list=None, allow_list=None):
         stop_list = load_stop_list()
     if allow_list is None:
         allow_list = load_allow_list()
-    hash_input = str(FILTER_VERSION) + ','.join(censor_list) + ','.join(stop_list) + ','.join(allow_list)
+    hash_input = str(FILTER_VERSION) \
+                 + ','.join(list(map(lambda r: r.pattern, censor_list))) \
+                 + ','.join(list(map(lambda r: r.pattern, stop_list))) \
+                 + ','.join(list(map(lambda r: r.pattern, allow_list)))
     filter_hash = hashlib.sha512(hash_input.encode("utf-8")).hexdigest()
     logger.info(f"expected filter hash = {filter_hash}, expected filter version = {FILTER_VERSION}")
     return filter_hash
@@ -723,7 +730,7 @@ def need_original_subtitle_ocr(subtitle_original: dict, media_duration: float, f
     duration_s = subtitle_original.get('tags', {}).get('DURATION', '')
     try:
         if duration_s:
-            duration = common.parse_edl_ts(duration_s)
+            duration = edl_util.parse_edl_ts(duration_s)
             if duration < (media_duration * 0.60):
                 return True
     except:
@@ -750,7 +757,7 @@ def need_original_subtitle_transcribed(subtitle_original: dict, subtitle_words: 
         duration_s = subtitle_original.get('tags', {}).get('DURATION', '')
         try:
             if duration_s:
-                duration = common.parse_edl_ts(duration_s)
+                duration = edl_util.parse_edl_ts(duration_s)
                 if duration < (media_duration * 0.60):
                     need_original = True
         except:
@@ -771,6 +778,8 @@ def need_original_subtitle_transcribed(subtitle_original: dict, subtitle_words: 
 
     return need_original, need_words
 
+
+PATTERN_DETECT_TRANSCRIBED_BY_VERSION_3 = re.compile(r'[A-Z.,]')
 
 def detect_transcribed_by_version_3(current_audio2text_version: str, input_info: dict, subtitle_original: dict):
     """
@@ -795,7 +804,7 @@ def detect_transcribed_by_version_3(current_audio2text_version: str, input_info:
         subtitle_original_proc = tools.ffmpeg.Popen(subtitle_original_arguments, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=1, text=True)
         transcribed = True
         for sub in pysrt.stream(subtitle_original_proc.stdout):
-            if re.search(r'[A-Z.,]', sub.text):
+            if PATTERN_DETECT_TRANSCRIBED_BY_VERSION_3.search(sub.text):
                 transcribed = False
                 break
         if transcribed:
@@ -892,7 +901,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
         from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit, SetLogLevel
         GpuInit()
         GpuThreadInit()
-        SetLogLevel(-1)
+        SetLogLevel(-99)
     except ImportError as e:
         logger.warning("Cannot transcribe audio, vosk missing")
         return None, None
@@ -1029,6 +1038,8 @@ def audio_to_text_cleanup(srt_data: SubRipFile) -> None:
             event.text = cleaned_text
 
 
+PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
+
 def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
     try:
         import hunspell
@@ -1043,7 +1054,7 @@ def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: floa
         word_found_count = 0
         srt_data = pysrt.open(subtitle_srt_filename)
         for event in list(srt_data):
-            for word in re.sub('[^A-Za-z\' ]+', ' ', event.text).split():
+            for word in PATTERN_WORDS_IN_DICT_SPLIT.sub(' ', event.text).split():
                 word_count += 1
                 if hobj.spell(word):
                     word_found_count += 1
@@ -1087,16 +1098,17 @@ def span_list_to_str(span_list: list) -> str:
         map(lambda span: common.s_to_ts(span[0] / 1000.0) + '-' + common.s_to_ts(span[1] / 1000.0), span_list))
 
 
-STOP_CLEAN_PATTERN = "^((?:[{].*?[}])*)"
+STOP_CLEAN_PATTERN = re.compile("^((?:[{].*?[}])*)")
 # Identifies a word break in both SRT and ASS. ASS is more complex than SRT and has it's own markup.
 WORD_BREAKS = r'((?:\\s|[,!]|[{].+?[}]|[\\\\]x[0-9a-fA-F]+|[\\\\][Nh])+|\\b|$)'
 # When the censor list uses the regex "^" for the beginning of text, this is substituted to make it work
 NO_PREVIOUS_WORD = r'(?<!\\w\\s)'
 # Matches subtitles that have text already filtered using various symbols
-PRE_FILTERED = r'[!@#$%^&*+]\s?(?:[@#$%^&*+]\s?){2,}'
+PRE_FILTERED = re.compile(r'[!@#$%^&*+]\s?(?:[@#$%^&*+]\s?){2,}', flags=re.IGNORECASE)
 # The string to use for masking
 MASK_STR = '***'
-
+TRAILING_PUNCUATION = re.compile(r'\*\*\*([,!.?\'’]+)')
+REDUNANT_REPLACEMENTS = re.compile(r'(\*\*\*[\s,]*)+\*\*\*')
 
 def contains_pattern_repl(matchobj, allow_ranges: list[tuple]) -> str:
     original = matchobj.group(0)
@@ -1116,8 +1128,8 @@ def contains_pattern_repl(matchobj, allow_ranges: list[tuple]) -> str:
     return masked
 
 
-def matches_stop_pattern(stop_pattern, text, allow_ranges: list[tuple]) -> bool:
-    for m in re.finditer(stop_pattern, text, flags=re.IGNORECASE):
+def matches_stop_pattern(stop_pattern: re.Pattern, text: str, allow_ranges: list[tuple]) -> bool:
+    for m in stop_pattern.finditer(text):
         allowed = False
         for allow_range in allow_ranges:
             if allow_range[0] <= m.start(0) < allow_range[1] \
@@ -1129,7 +1141,7 @@ def matches_stop_pattern(stop_pattern, text, allow_ranges: list[tuple]) -> bool:
     return False
 
 
-def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> Tuple[str, bool]:
+def filter_text(censor_list: list[re.Pattern], stop_list: list[re.Pattern], allow_list: list[re.Pattern], text) -> Tuple[str, bool]:
     """
     Filter text using the lists.
     :param censor_list: phrases in the censor list are removed from the text, such as adjectives or exclamations
@@ -1142,15 +1154,15 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> T
     allow_ranges: list[tuple] = []
     for allow_pattern in allow_list:
         try:
-            for m in re.finditer(allow_pattern, text, flags=re.IGNORECASE):
+            for m in allow_pattern.finditer(text):
                 range, group = get_allow_range(m)
                 allow_ranges.append(range)
         except re.error as e:
-            print(f"ERROR in allow list: {allow_pattern}")
+            print(f"ERROR in allow list: {allow_pattern.pattern}")
             raise e
 
-    if re.search(PRE_FILTERED, text, flags=re.IGNORECASE):
-        text2 = re.sub(PRE_FILTERED, MASK_STR, text)
+    if PRE_FILTERED.search(text):
+        text2 = PRE_FILTERED.sub(MASK_STR, text)
         if text2 == text:
             # We need the text to change to mute the audio
             text = text2 + ' _'
@@ -1159,21 +1171,21 @@ def filter_text(censor_list: list, stop_list: list, allow_list: list, text) -> T
     for stop_pattern in stop_list:
         try:
             if matches_stop_pattern(stop_pattern, text, allow_ranges):
-                text = re.search(STOP_CLEAN_PATTERN, text).expand(fr"\1{MASK_STR}")
+                text = STOP_CLEAN_PATTERN.search(text).expand(fr"\1{MASK_STR}")
                 return text, True
         except re.error as e:
-            print(f"ERROR in stop list: {stop_pattern}")
+            print(f"ERROR in stop list: {stop_pattern.pattern}")
             raise e
     for contains_pattern in censor_list:
         try:
-            text = re.sub(contains_pattern, lambda m: contains_pattern_repl(m, allow_ranges), text, flags=re.IGNORECASE)
+            text = contains_pattern.sub(lambda m: contains_pattern_repl(m, allow_ranges), text)
         except re.error as e:
-            print(f"ERROR in censor list: {contains_pattern}")
+            print(f"ERROR in censor list: {contains_pattern.pattern}")
             raise e
     # clean up trailing punctuation
-    text = re.sub(r'\*\*\*([,!.?\'’]+)', MASK_STR, text)
+    text = TRAILING_PUNCUATION.sub(MASK_STR, text)
     # clean up redundant replacements
-    text = re.sub(r'(\*\*\*[\s,]*)+\*\*\*', MASK_STR, text)
+    text = REDUNANT_REPLACEMENTS.sub(MASK_STR, text)
     return text, False
 
 
@@ -1191,13 +1203,17 @@ def get_allow_range(m: re.Match[str]) -> tuple[tuple[int, int], str]:
     return ((begin, end), original[begin:end])
 
 
+PHRASE_FANCY_WORD_BREAKS = re.compile(r'([^\s^$]+)\s*', flags=re.IGNORECASE)
+PHRASE_BEGINNING_MARKER = re.compile(r'[\^]')
+PHRASE_STARTING_WORD_BREAK = re.compile(r'.')
+
 def phrase_to_pattern(phrase):
     """
     Transforms a phrase, which is roughly a regex, into something that will match both SRT and ASS markup.
     """
-    phrase_fancy_word_breaks = re.sub(r'([^\s^$]+)\s*', r'(\1)' + WORD_BREAKS, phrase, flags=re.IGNORECASE)
-    phrase_beginning_marker = re.sub(r'[\^]', NO_PREVIOUS_WORD, phrase_fancy_word_breaks)
-    phrase_starting_word_break = re.sub(r'.', WORD_BREAKS, '.') + phrase_beginning_marker
+    phrase_fancy_word_breaks = PHRASE_FANCY_WORD_BREAKS.sub(r'(\1)' + WORD_BREAKS, phrase)
+    phrase_beginning_marker = PHRASE_BEGINNING_MARKER.sub(NO_PREVIOUS_WORD, phrase_fancy_word_breaks)
+    phrase_starting_word_break = PHRASE_STARTING_WORD_BREAK.sub(WORD_BREAKS, '.') + phrase_beginning_marker
     return phrase_starting_word_break
 
 

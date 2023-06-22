@@ -13,7 +13,7 @@ from pysrt import SubRipItem, SubRipFile, SubRipTime
 from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit
 
 import common
-from common import tools, constants
+from common import tools, constants, edl_util
 
 
 def usage():
@@ -86,7 +86,7 @@ def audio_transcribe(input_path, freq=16000, words_path=None, text_path=None, bu
     ffmpeg_command.extend(['-map', f"0:{audio_original.get(constants.K_STREAM_INDEX)}", '-ar', str(freq)])
 
     if duration is not None:
-        ffmpeg_command.extend(['-to', str(common.parse_edl_ts(duration))])
+        ffmpeg_command.extend(['-to', str(edl_util.parse_edl_ts(duration))])
 
     if audio_filter:
         if 'pan=' not in audio_filter:

@@ -7,7 +7,7 @@ import re
 import sys
 
 import common
-from common import tools
+from common import tools, edl_util
 
 #
 # Important info on seeking: https://trac.ffmpeg.org/wiki/Seeking
@@ -43,11 +43,11 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
 
     keyframes = common.load_keyframes_by_seconds(infile)
 
-    edl_events = common.parse_edl(edlfile)
+    edl_events = edl_util.parse_edl(edlfile)
 
     part_num = 1
 
-    for edl_event in filter(lambda e: e.event_type == common.EdlType.SCENE, edl_events):
+    for edl_event in filter(lambda e: e.event_type == edl_util.EdlType.SCENE, edl_events):
         start = edl_event.start
         end = edl_event.end
         start = common.find_desired_keyframe(keyframes, start, common.KeyframeSearchPreference.CLOSEST)

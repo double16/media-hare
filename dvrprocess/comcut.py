@@ -12,7 +12,7 @@ from typing import Iterable
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
-from common import crop_frame, hwaccel, subtitle, tools, config, constants
+from common import crop_frame, hwaccel, subtitle, tools, config, constants, edl_util
 from profanity_filter import MASK_STR
 
 KEYFRAME_DISTANCE_TOLERANCE = 1.0
@@ -117,7 +117,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         if cc_return_code != 0:
             return cc_return_code
 
-    edl_events = common.parse_edl(edlfile)
+    edl_events = edl_util.parse_edl(edlfile)
 
     # sanity check edl to ensure it hasn't already been applied, i.e. check if last cut is past duration
     input_duration = float(input_info[constants.K_FORMAT]['duration'])
@@ -136,7 +136,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     if KEYFRAME_IGNORE_FOR_ENCODING:
         if force_encode or len(
-                list(filter(lambda e: e.event_type in [common.EdlType.BACKGROUND_BLUR], edl_events))) > 0:
+                list(filter(lambda e: e.event_type in [edl_util.EdlType.BACKGROUND_BLUR], edl_events))) > 0:
             keyframes = []
             logger.info("Discarding keyframes because we're encoding")
         else:
@@ -144,7 +144,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             disable_keyframes = False
             keyframe_distance = 0.0
             for event in list(
-                    filter(lambda e: e.event_type in [common.EdlType.CUT, common.EdlType.COMMERCIAL], edl_events)):
+                    filter(lambda e: e.event_type in [edl_util.EdlType.CUT, edl_util.EdlType.COMMERCIAL], edl_events)):
                 adjusted1 = abs(event.start - common.find_desired_keyframe(keyframes, event.start,
                                                                            common.KeyframeSearchPreference.BEFORE,
                                                                            start_time))
@@ -161,7 +161,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
     subtitle_data = {}
-    if len(list(filter(lambda e: e.event_type in [common.EdlType.MUTE], edl_events))) > 0:
+    if len(list(filter(lambda e: e.event_type in [edl_util.EdlType.MUTE], edl_events))) > 0:
         # Extract all text based subtitles for masking
         extract_subtitle_command = ['-y', '-i', infile, '-c', 'copy']
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[constants.K_STREAMS]):
@@ -224,11 +224,11 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             partsfd.write("ffconcat version 1.0\n")
 
             for edl_event in edl_events:
-                if edl_event.event_type == common.EdlType.BACKGROUND_BLUR:
+                if edl_event.event_type == edl_util.EdlType.BACKGROUND_BLUR:
                     video_filters.append(f"smartblur=lt=30:lr=5.0:enable='between(t,"
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'")
                     continue
-                elif edl_event.event_type == common.EdlType.MUTE:
+                elif edl_event.event_type == edl_util.EdlType.MUTE:
                     audio_filters.append(f"volume=enable='between(t,"
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'"
                                          f":volume=0")
@@ -236,9 +236,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     subtitle_filters.append(
                         ((edl_event.start - totalcutduration) * 1000.0, (edl_event.end - totalcutduration) * 1000.0))
                     continue
-                elif edl_event.event_type == common.EdlType.SCENE:
+                elif edl_event.event_type == edl_util.EdlType.SCENE:
                     continue
-                elif edl_event.event_type not in [common.EdlType.CUT, common.EdlType.COMMERCIAL]:
+                elif edl_event.event_type not in [edl_util.EdlType.CUT, edl_util.EdlType.COMMERCIAL]:
                     logger.warning("Unknown EDL type %s, skipping", edl_event.event_type)
                     continue
 

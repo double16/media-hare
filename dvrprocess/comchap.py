@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 import common
-from common import hwaccel, tools, config, constants
+from common import hwaccel, tools, config, constants, edl_util
 
 logger = logging.getLogger(__name__)
 
@@ -419,7 +419,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         tags[constants.K_STREAM_TITLE] = video_title
     common.write_mkv_tags(tags, tags_filename)
 
-    edl_events = common.parse_edl_cuts(edlfile)
+    edl_events = edl_util.parse_edl_cuts(edlfile)
 
     # check if already applied by comparing existing "Commercial" chapters
     if len(edl_events) == len(chapters_commercials):

@@ -103,7 +103,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
     bytes_processed = 0
     bytes_progress = progress.progress("byte limit", 0, size_limit)
-    time_start = None
+    time_start = time.time()
     time_progress = progress.progress("time limit", 0, time_limit)
 
     generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
@@ -152,8 +152,6 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                     # filtered
                     bytes_processed += os.stat(filepath).st_size
                     bytes_progress.progress(bytes_processed)
-                    if time_start is None:
-                        time_start = time.time()
                     # Run Plex analyze so playback works
                     if tfi.item_key and plex_url:
                         logger.info(f'HTTP PUT: {plex_url}{tfi.item_key}/analyze')
@@ -177,13 +175,12 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                         f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes, size limit of {config.bytes_to_human_str(size_limit)} reached")
                     return 0
 
-                if time_start is not None:
-                    duration = time.time() - time_start
-                    time_progress.progress(ceil(duration))
-                    if 0 < time_limit < duration:
-                        logger.info(
-                            f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
-                        return 0
+                duration = time.time() - time_start
+                time_progress.progress(ceil(duration))
+                if 0 < time_limit < duration:
+                    logger.info(
+                        f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
+                    return 0
 
                 if check_compute and common.should_stop_processing():
                     logger.info(f"not enough compute available")

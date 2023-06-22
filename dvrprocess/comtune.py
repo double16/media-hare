@@ -22,7 +22,7 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
     get_comskip_hwassist_options
-from common import tools, config, constants
+from common import tools, config, constants, edl_util
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
 
@@ -489,7 +489,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             adjusted_duration = video_duration
             edl_path = edl_tempfile(file_path, workdir)
             if os.access(edl_path, os.R_OK):
-                for event in common.parse_edl_cuts(edl_path):
+                for event in edl_util.parse_edl_cuts(edl_path):
                     this_duration = (event.end - event.start)
                     adjusted_duration -= this_duration
             # if we want to ignore already cut files, iterate over dvr_infos instead of video_infos

@@ -6,7 +6,7 @@ import sys
 from collections.abc import Iterable
 
 import common
-from common import constants
+from common import constants, edl_util
 
 #
 # Find media that has pending commercials to cut.
@@ -113,7 +113,7 @@ def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[Co
                 edl_filepath = os.path.join(root, edl_file)
                 if os.stat(edl_filepath).st_size < 25:
                     continue
-                edl = common.parse_edl_cuts(edl_filepath)
+                edl = edl_util.parse_edl_cuts(edl_filepath)
                 if len(edl) == 0:
                     continue
                 input_info = common.find_input_info(filepath)

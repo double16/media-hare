@@ -58,7 +58,10 @@ class ProgressLog(Progress):
         super().progress(position, msg, start, end)
         if self.pct is not None and self.pct != self._last_pct:
             self._last_pct = self.pct
-            _logger.info("%s %s %%", self.task, self.pct)
+            if msg:
+                _logger.info("%s %s %% - %s", self.task, self.pct, msg)
+            else:
+                _logger.info("%s %s %%", self.task, self.pct)
 
 
 class ProgressReporter(object):

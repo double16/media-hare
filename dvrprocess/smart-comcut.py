@@ -10,7 +10,7 @@ from statistics import stdev, mean
 import common
 from comchap import comchap, get_expected_adjusted_duration
 from comcut import comcut
-from common import crop_frame, config
+from common import crop_frame, config, edl_util
 
 VIDEO_MIN_COUNT = 5
 
@@ -168,7 +168,7 @@ def smart_comcut(argv):
                         if cc_return_code == 255:
                             return cc_return_code
                     if os.access(edl_path, os.R_OK):
-                        cuts = common.parse_edl_cuts(edl_path)
+                        cuts = edl_util.parse_edl_cuts(edl_path)
                         for idx, event in enumerate(cuts):
                             has_com = True
                             this_duration = (event.end - event.start)
