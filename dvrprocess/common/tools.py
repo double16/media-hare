@@ -17,14 +17,14 @@ disk_semaphore = Semaphore(config.get_global_config_int('background_limits', 'di
 def _ffmpeg_version_parser(path):
     _maybe_version = float(
         re.search(r"version (\d+[.]\d+)", subprocess.check_output([path, '-version'], text=True))[1])
-    if int(_maybe_version) not in [4, 5]:
-        raise FileNotFoundError('ffmpeg version [4,5] not found')
+    if int(_maybe_version) not in [4, 5, 6]:
+        raise FileNotFoundError('ffmpeg version [4,5,6] not found')
     return _maybe_version
 
 
 class FFmpegProcInvoker(SubprocessProcInvoker):
     def __init__(self):
-        super().__init__('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.'], semaphore=disk_semaphore)
+        super().__init__('ffmpeg', _ffmpeg_version_parser, version_target=['4.', '5.', '6.'], semaphore=disk_semaphore)
         self.duration_matcher = re.compile(r'Duration:\s*([0-9][0-9]:[0-9][0-9]:[0-9][0-9])')
         self.time_matcher = re.compile(r'\btime=\s*([0-9][0-9]:[0-9][0-9]:[0-9][0-9])')
 
@@ -71,8 +71,8 @@ ffmpeg = FFmpegProcInvoker()
 def _ffprobe_version_parser(path):
     _maybe_version = float(
         re.search(r"version (\d+[.]\d+)", subprocess.check_output([path, '-version'], text=True))[1])
-    if int(_maybe_version) not in [4, 5]:
-        raise FileNotFoundError('ffprobe version [4,5] not found')
+    if int(_maybe_version) not in [4, 5, 6]:
+        raise FileNotFoundError('ffprobe version [4,5,6] not found')
     return _maybe_version
 
 
