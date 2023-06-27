@@ -383,8 +383,6 @@ def do_dvr_post_process(input_file,
 
     # Global arguments
     arguments = []
-    if not verbose:
-        arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
                       '-probesize', common.PROBE_SIZE])
     if forgiving:

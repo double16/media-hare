@@ -73,8 +73,7 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
             partsfd.write(f"inpoint {start}\n")
             partsfd.write(f"outpoint {end}\n")
 
-        ffmpeg_command = ["-hide_banner", "-loglevel",
-                          "info" if verbose else "error",
+        ffmpeg_command = ["-hide_banner",
                           "-nostdin",
                           "-f", "concat", "-safe", "0", "-i", parts_file,
                           "-codec", "copy", "-map", "0",

@@ -29,7 +29,7 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         self.time_matcher = re.compile(r'\btime=\s*([0-9][0-9]:[0-9][0-9]:[0-9][0-9])')
 
     def _run(self, arguments: list[str], kwargs) -> int:
-        if kwargs.get('capture_output', None) == True or kwargs.get('stderr', None) in [subprocess.PIPE, subprocess.STDOUT]:
+        if kwargs.get('capture_output', None) is True or kwargs.get('stderr', None) in [subprocess.PIPE, subprocess.STDOUT]:
             return super()._run(arguments, kwargs)
 
         task_name = None
@@ -82,7 +82,48 @@ ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
     re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[
         1]))
 
-subtitle_edit = SubprocessProcInvoker('subtitle-edit', version_target=['3.6.8'])
+
+class SubtitleEditProcInvoker(SubprocessProcInvoker):
+    def __init__(self):
+        super().__init__('subtitle-edit', version_target=['3.6.8'])
+        self.pct_matcher = re.compile(r'([0-9]{1,3})\s*%')
+
+    def _run(self, arguments: list[str], kwargs) -> int:
+        if kwargs.get('capture_output', None) is True:
+            return super()._run(arguments, kwargs)
+
+        task_name = None
+        for idx, arg in enumerate(arguments[1:]):
+            if task_name is None:
+                task_name = arg + ' subtitle-edit'
+        if task_name is None:
+            task_name = 'subtitle-edit'
+
+        kwargs2 = kwargs.copy()
+        check = kwargs.get('check', False)
+        kwargs2.pop('check', None)
+        kwargs2['stdout'] = subprocess.PIPE
+        kwargs2['encoding'] = 'ascii'
+        kwargs2['bufsize'] = 1
+        proc = subprocess.Popen(arguments, **kwargs2)
+        se_progress = None
+        for l in proc.stdout:
+            pct_match = self.pct_matcher.search(l)
+            if pct_match:
+                if se_progress is None:
+                    se_progress = progress.progress(task_name, 0, 100)
+                se_progress.progress(int(pct_match.group(1)))
+        proc.wait()
+        if se_progress:
+            se_progress.stop()
+        if check and proc.returncode:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args, proc.stdout,
+                                                proc.stderr)
+        return proc.returncode
+
+
+subtitle_edit = SubtitleEditProcInvoker()
+
 
 class ComskipProcInvoker(SubprocessProcInvoker):
     def __init__(self):

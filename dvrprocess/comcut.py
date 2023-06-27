@@ -360,8 +360,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     ffmpeg_command = []
     ffmpeg_command.extend(hwaccel.hwaccel_threads())
 
-    if not verbose:
-        ffmpeg_command.extend(["-loglevel", "error"])
     if not debug:
         ffmpeg_command.append("-hide_banner")
 

@@ -44,6 +44,8 @@ This program will run only if configuration profanity_filter.enable is set to tr
         config_change: config or wordlist change, version change or unfiltered, basically any change at all
 -u, --url=
     Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for {common.get_plex_url()}
+--verbose
+    Verbose information about the process
 """, file=sys.stderr)
 
 
@@ -142,7 +144,8 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                     return_code = 255
                 except CalledProcessError as e:
                     return_code = e.returncode
-                except:
+                except Exception as e:
+                    logger.error(e.__repr__())
                     pool.terminate()
                     return 255
 
@@ -194,7 +197,14 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                     pass
 
     except KeyboardInterrupt:
-        pool.terminate()
+        try:
+            pool.close()
+            logger.info("Waiting for pool workers to finish, interrupt again to terminate")
+            pool.join()
+        except KeyboardInterrupt:
+            logger.info("Terminating due to user interrupt")
+            pool.terminate()
+            return 130
     finally:
         pool.close()
         logger.info("Waiting for pool workers to finish")
@@ -221,7 +231,7 @@ def profanity_filter_apply_cli(argv):
         opts, args = getopt.getopt(list(argv),
                                    "fnb:t:p:u:s:",
                                    ["force", "dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=",
-                                    "url=", "selector="])
+                                    "url=", "selector=", "verbose"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -247,6 +257,8 @@ def profanity_filter_apply_cli(argv):
                 plex_url = common.get_plex_url()
             else:
                 plex_url = arg
+        elif opt == "--verbose":
+            logging.getLogger().setLevel(logging.DEBUG)
         elif opt in ["-s", "--selector"]:
             selectors = set()
             for selector_str in arg.split(','):

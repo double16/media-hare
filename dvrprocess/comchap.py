@@ -488,7 +488,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             logger.debug(' '.join(mkvpropedit_command))
             tools.mkvpropedit.run(mkvpropedit_command, check=True)
         else:
-            ffmpeg_command = ["-loglevel", "error", "-hide_banner", "-nostdin", "-i", infile, "-i", metafile,
+            ffmpeg_command = ["-hide_banner", "-nostdin", "-i", infile, "-i", metafile,
                               "-map_metadata", "0",
                               "-map_chapters", "1",
                               "-map", "0",

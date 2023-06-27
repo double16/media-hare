@@ -156,8 +156,6 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
     # Global arguments
     arguments = []
-    if not verbose:
-        arguments.extend(["-loglevel", "error"])
     arguments.extend(['-hide_banner', '-y', '-analyzeduration', common.ANALYZE_DURATION,
                       '-probesize', common.PROBE_SIZE])
 
@@ -839,7 +837,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         subtitle_filename = f"{temp_base}.sup"
         if not debug:
             common.TEMPFILENAMES.append(subtitle_filename)
-        extract_command = ["-loglevel", "error", '-hide_banner', '-y', '-analyzeduration',
+        extract_command = ['-hide_banner', '-y', '-analyzeduration',
                            common.ANALYZE_DURATION,
                            '-probesize', common.PROBE_SIZE,
                            '-i', input_info['format']['filename'],
@@ -848,7 +846,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
                            ]
         if verbose:
             logger.info(tools.ffmpeg.array_as_command(extract_command))
-        tools.ffmpeg.run(extract_command, check=True, capture_output=True)
+        tools.ffmpeg.run(extract_command, check=True)
 
     dvd = find_subtitle_dvdsub(input_info, language)
     if dvd:
@@ -856,7 +854,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         subtitle_filename = f"{temp_base}.vob"
         if not debug:
             common.TEMPFILENAMES.append(subtitle_filename)
-        extract_command = ["-loglevel", "error", '-hide_banner', '-y', '-analyzeduration',
+        extract_command = ['-hide_banner', '-y', '-analyzeduration',
                            common.ANALYZE_DURATION,
                            '-probesize', common.PROBE_SIZE,
                            '-i', input_info['format']['filename'],
@@ -865,7 +863,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
                            ]
         if verbose:
             logger.info(tools.ffmpeg.array_as_command(extract_command))
-        tools.ffmpeg.run(extract_command, check=True, capture_output=True)
+        tools.ffmpeg.run(extract_command, check=True)
 
     if subtitle_filename is None:
         return None
@@ -988,7 +986,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
                            text=word['word'])
             subs_words.append(s)
 
-        # TODO: break by character count?
+        # TODO: break by pauses and character count?
         for j in range(0, len(words), words_per_line):
             line = words[j: j + words_per_line]
             s = SubRipItem(index=len(subs_text),
