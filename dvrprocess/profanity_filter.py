@@ -11,19 +11,24 @@ import re
 import subprocess
 import sys
 import tempfile
+from bisect import bisect_left
+from math import ceil, floor
 from pathlib import Path
 from typing import Tuple, Union
 
 import pysrt
-from ass_parser import read_ass, write_ass, AssEventList, CorruptAssLineError
+from ass_parser import read_ass, write_ass, AssFile, AssEventList, CorruptAssLineError
 from numpy import loadtxt
 from pysrt import SubRipItem, SubRipFile, SubRipTime
+from thefuzz import fuzz
+from thefuzz import process as fuzzprocess
+from num2words import num2words
 
 import common
 from common import subtitle, tools, config, constants, progress, edl_util
 
 # Increment when a coding change materially effects the output
-FILTER_VERSION = 11
+FILTER_VERSION = 12
 AUDIO_TO_TEXT_VERSION = 3
 
 # exit code for content had filtering applied, file has been significantly changed
@@ -885,13 +890,13 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
 
 
 def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None,
-                 verbose=False) -> Tuple[str, str]:
+                 verbose=False) -> Union[Tuple[str, str], Tuple[None, None]]:
     """
     Attempts to create a text subtitle from the original audio stream.
     1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
     2. audio stream is being converted to AC3 stereo with default ffmpeg bitrate (192kbps) for most compatibility
     3. --tasks is being set but so far it doesn't seem to yield more cores used
-    :return: (srt filename for subtitle, srt filename for words) or None
+    :return: (srt filename for subtitle, srt filename for words) or (None, None)
     """
     global debug
 
@@ -1274,6 +1279,293 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
     if not dry_run and not debug:
         tools.mkvpropedit.run([filename, "--tags", f"global:{tags_filename}"])
     return CMD_RESULT_MARKED
+
+
+def find_subtitle_element_idx_ge(time_ordinals: list[int], start: float) -> int:
+    i = bisect_left(time_ordinals, start)
+    if i != len(time_ordinals):
+        return i
+    raise ValueError
+
+
+SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(.*?\)|\{.*?}")
+SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!\"-]")
+SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
+SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:[\d.,]+\d)?)")
+SUBTITLE_TEXT_TO_PLAIN_ORDINALS = re.compile(r"(\d+)(?:st|nd|rd|th)")
+SUBTITLE_TEXT_TO_PLAIN_YEAR = re.compile(r"(\d+\d+\d+\d+)s?")
+SUBTITLE_TEXT_TO_PLAIN_CURRENCY = re.compile(r"\$(\d+(?:[\d.,]+\d)?)")
+SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT = {
+    'dr.': 'doctor',
+    'mr.': 'mister',
+    'mrs.': 'misses',
+}
+SUBTITLE_TEXT_TO_PLAIN_ABBREV_PATTERN = re.compile(
+    "(" + "|".join(map(lambda e: e.replace('.', '[.]'), SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT.keys())) + ")",
+    flags=re.IGNORECASE)
+
+
+def _subtitle_text_to_plain(text: str, lang='en') -> str:
+    """
+    Clean up subtitle text to remove non-spoken markers
+    remove [ Name ]
+    remove ( Name )
+    remove { ASS tags }
+    replace "\\N" with " "
+    remove '.' from abbreviations
+    all lowercase to match closer to transcription
+    squeeze whitespace to match closer to transcription
+    numbers to text?
+    """
+    text = SUBTITLE_TEXT_TO_PLAIN_CURRENCY.sub(lambda n: num2words(n.group(1), to='currency', lang=lang), text)
+    text = SUBTITLE_TEXT_TO_PLAIN_ORDINALS.sub(lambda n: num2words(n.group(1), to='ordinal', lang=lang), text)
+    text = SUBTITLE_TEXT_TO_PLAIN_YEAR.sub(lambda n: num2words(n.group(1), to='year', lang=lang), text)
+    text = SUBTITLE_TEXT_TO_PLAIN_NUMBERS.sub(lambda n: num2words(n.group(1), lang=lang), text)
+    text = SUBTITLE_TEXT_TO_PLAIN_ABBREV_PATTERN.sub(lambda m: SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT[m.group(1).lower()],
+                                                     text)
+
+    text = SUBTITLE_TEXT_TO_PLAIN_REMOVE.sub("", text)
+    text = SUBTITLE_TEXT_TO_PLAIN_WS.sub(" ", text)
+    text = SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS.sub(" ", text)
+    text = text.lower().strip()
+    return text
+
+
+def _is_transcribed_word_suspicious(event: SubRipItem) -> bool:
+    if event.text in ['the', 'in', 'is', 'an'] and event.duration.ordinal > 700:
+        return True
+    return False
+
+
+def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, filename: str) -> bool:
+    """
+    Fix the subtitle to be aligned to the audio using the transcribed words.
+    :param subtitle_inout: the subtitle to align, srt or ssa
+    :param words: the transcribed words, srt
+    :return: True if changes were made
+    """
+
+    # an offset is defined as the number of seconds between the input subtitle and the matched sentence in 'words'
+
+    # the max number of seconds the 'words' are searched for a matching sentence
+    max_offset_ms = 5000
+    # minimum fuzz ratios to consider a sentence to match
+    min_fuzz_ratios = [88, 85, 80, 70]
+    # percentage of words to fuzz +/- from each input subtitle element
+    word_count_fuzz_pct = 0.40
+    unclaimed_word_capture_duration_max_ms = 1800
+
+    words_filtered = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
+    print("Removed %i suspicious words from transcription" % (len(words) - len(words_filtered)))
+    words_claimed = [False for i in range(len(words_filtered))]
+    words_start_ms = list(map(lambda e: e.start.ordinal, words_filtered))
+    words_start_end_ms = list(map(lambda e: (e.start.ordinal, e.end.ordinal), words_filtered))
+
+    def get_transcription_info(event: subtitle.SubtitleElementFacade) -> Tuple[int, int, str]:
+        start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
+        end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
+        while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
+            end_word_idx -= 1
+        return start_word_idx, end_word_idx, ' '.join(
+            list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
+
+    # target ranges that have been found, matches event index, (start from words, end from words) or None
+    events = []
+    found_range_ms = []
+    original_duration_ms = []
+    for event_idx, event in subtitle.subtitle_element_generator(subtitle_inout):
+        events.append(event)
+        found_range_ms.append(None)
+        original_duration_ms.append(event.duration())
+
+    align_progress = progress.progress("subtitle alignment", 0, len(min_fuzz_ratios) * len(found_range_ms))
+    changed = False
+    for min_fuzz_ratio_idx, min_fuzz_ratio in enumerate(min_fuzz_ratios):
+        for event_idx, event in enumerate(events):
+            align_progress.progress((min_fuzz_ratio_idx + 1) * (event_idx + 1))
+            if found_range_ms[event_idx] is not None:
+                continue
+
+            event_text = _subtitle_text_to_plain(event.text())
+            word_count = len(event_text.split())
+            if word_count == 0:
+                continue
+            word_counts = range(floor(word_count * (1.0 - word_count_fuzz_pct)),
+                                ceil(word_count * (1.0 + word_count_fuzz_pct)) + 1)
+            logger.debug("Matching sentence from event %s %s, (%i,%i) words", event_idx, event_text, word_counts.start,
+                         word_counts.stop)
+            # ignore ranges that have already been matched
+            start_search_ms = max(event.start() - max_offset_ms,
+                                  max(map(lambda e: e[1], filter(lambda f: f is not None, found_range_ms[:event_idx])),
+                                      default=0))
+            end_search_ms = min(event.start() + max_offset_ms,
+                                min(map(lambda e: e[1],
+                                        filter(lambda f: f is not None, found_range_ms[event_idx + 1:])),
+                                    default=sys.maxsize))
+            start_idx = find_subtitle_element_idx_ge(words_start_ms, start_search_ms)
+            end_idx = find_subtitle_element_idx_ge(words_start_ms, end_search_ms)
+            candidates = dict()
+            for idx in range(start_idx, end_idx + 1):
+                logger.debug("Enumerating candidate sentences from word %s", idx)
+                for c in word_counts:
+                    key = (idx, idx + c)
+                    try:
+                        # ignore ranges that have already been matched
+                        words_claimed.index(True, key[0], key[1])
+                    except ValueError:
+                        value = ' '.join(map(lambda e: e.text, words_filtered[key[0]:key[1]]))
+                        candidates[key] = value
+            logger.debug("candidates are %s", candidates)
+            if not candidates:
+                print("no candidates for min_fuzz_ratio %i '%s' (%i,%i)" % (
+                    min_fuzz_ratio, event_text, start_search_ms, end_search_ms))
+                continue
+            else:
+                match = fuzzprocess.extractOne(event_text, candidates, scorer=fuzz.ratio, score_cutoff=min_fuzz_ratio)
+            if match:
+                start_new_ms = words_filtered[match[2][0]].start.ordinal
+                end_new_ms = words_filtered[match[2][1] - 1].end.ordinal
+                print("==> match offset (%i, %i) for '%s' is %s" % (
+                    start_new_ms - event.start(), end_new_ms - event.end(),
+                    event_text, match))
+                found_range_ms[event_idx] = (start_new_ms, end_new_ms)
+                for word_idx in range(match[2][0], match[2][1]):
+                    words_claimed[word_idx] = True
+
+                # move event time
+                event.set_start(start_new_ms)
+                event.set_end(end_new_ms)
+                changed = True
+            else:
+                if match is None:
+                    print("==> not matched for '%s', candidates are %s" % (event_text, str(candidates)[:200]))
+                    # print("==> not matched for '%s'" % event_text)
+                else:
+                    # print("==> not matched %i < %i '%s' for '%s', candidates are %s" % (match[1], min_fuzz_ratio, match[0], event_text, candidates))
+                    print("==> not matched %i < %i '%s' for '%s'" % (match[1], min_fuzz_ratio, match[0], event_text))
+
+    print("matched count %i/%i" % (len(list(filter(lambda e: e is not None, found_range_ms))), len(found_range_ms)))
+
+    if changed:
+        unclaimed_word_events = []
+        for word_idx, word in enumerate(words_filtered):
+            if not words_claimed[word_idx]:
+                unclaimed_word_events.append(word)
+
+        # fix overlaps
+        event_previous = None
+        for event_idx, event in enumerate(events):
+            try:
+                matched = found_range_ms[event_idx] is not None
+                if event_previous is not None:
+                    if matched:
+                        if event_previous.start() > event.start():
+                            event_previous.set_start(event.start())
+                        if event_previous.end() > event.start():
+                            event_previous.set_end(event.start())
+                    else:
+                        # try to start non-matches at the beginning of an unclaimed word
+                        unclaimed_word = next(filter(
+                            lambda e: e.start.ordinal >= event_previous.end(), unclaimed_word_events), None)
+                        print(f"possible unclaimed word {unclaimed_word}")
+                        if unclaimed_word is not None:
+                            capture_unclaimed_start = max(event_previous.end(), unclaimed_word.start.ordinal - max(0,
+                                                                                                                   event.duration() - (
+                                                                                                                           events[
+                                                                                                                               event_idx + 1].start() - unclaimed_word.start.ordinal)))
+                            print(
+                                f"moving {event.text()} to claim word {unclaimed_word.start.ordinal}, adjusted to {capture_unclaimed_start}")
+                            event.move(capture_unclaimed_start)
+                        else:
+                            event.move(event_previous.end())
+
+            finally:
+                event_previous = event
+
+        # extend durations based on original, not to overlap
+        # for event_idx, event in enumerate(events[:-1]):
+        #     missing_duration = min(
+        #         max(0, original_duration_ms[event_idx] - event.duration()),
+        #         events[event_idx+1].start() - event.end(),
+        #         2,  # don't extend too far, some events are too long
+        #     )
+        #     if missing_duration > 0:
+        #         event.set_end(event.end() + missing_duration)
+
+        # collect stray words into existing events
+        # collect large missing events, but insert later so we don't have to fix up arrays containing info
+        new_events = []
+        last_word_idx = -1
+        for event_idx, event in enumerate(events):
+            start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
+            previous_event = None
+            if event_idx > 0:
+                previous_event = events[event_idx - 1]
+
+            if 0 <= last_word_idx < (start_word_idx - 1):
+                unclaimed_words = []
+                for i in range(last_word_idx, start_word_idx):
+                    if not words_claimed[i]:
+                        unclaimed_words.append(words_filtered[i])
+                if len(unclaimed_words) > 0:
+                    if (unclaimed_words[-1].end.ordinal - unclaimed_words[0].start.ordinal) < unclaimed_word_capture_duration_max_ms:
+                        unclaimed_text = ' '.join(map(lambda e: e.text, unclaimed_words))
+
+                        current_ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
+                        previous_ratio = 101
+                        if event_idx > 0:
+                            previous_start_word_idx, previous_end_word_idx, previous_transcribed_text = get_transcription_info(
+                                previous_event)
+                            previous_ratio = fuzz.ratio(_subtitle_text_to_plain(previous_event.text()),
+                                                        previous_transcribed_text)
+
+                        if previous_ratio < current_ratio:
+                            print("appending to event %i to include %s" % (event_idx - 1, unclaimed_text))
+                            previous_event.set_end(unclaimed_words[-1].end.ordinal)
+                        else:
+                            print("prepending to event %i to include %s" % (event_idx, unclaimed_text))
+                            event.set_start(unclaimed_words[0].start.ordinal)
+                    else:
+                        new_events.insert(0, (event_idx, unclaimed_words))
+
+            last_word_idx = end_word_idx
+
+        if len(new_events) > 0:
+            # TODO: for SRT, ensure monotonically increasing indicies
+            pass
+
+        # report
+        last_word_idx = -1
+        for event_idx, event in enumerate(events):
+            start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
+            end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
+            while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
+                end_word_idx -= 1
+
+            if 0 <= last_word_idx < (start_word_idx - 1):
+                unclaimed_words = []
+                unclaimed_start = sys.maxsize
+                unclaimed_end = 0
+                for i in range(last_word_idx, start_word_idx):
+                    if not words_claimed[i]:
+                        unclaimed_words.append(words_filtered[i].text)
+                        unclaimed_start = min(unclaimed_start, words_filtered[i].start.ordinal)
+                        unclaimed_end = max(unclaimed_end, words_filtered[i].end.ordinal)
+                unclaimed_text = ' '.join(unclaimed_words)
+                print("unclaimed words (%i,%i) '%s'" % (unclaimed_start, unclaimed_end, unclaimed_text))
+            last_word_idx = end_word_idx
+
+            transcribed_text = ' '.join(list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
+            ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
+            matches = "matches" if found_range_ms[event_idx] is not None else "claims"
+            print("event %i (%i-%i %i ms was %i ms) '%s' %s words '%s' with ratio %i" % (
+                event_idx,
+                event.start(), event.end(), event.duration(), original_duration_ms[event_idx],
+                event.text(), matches, transcribed_text, ratio))
+
+    align_progress.stop()
+
+    return changed
 
 
 if __name__ == '__main__':

@@ -132,4 +132,4 @@ dmypy.json
 .idea/
 *.iml
 
-fixtures/*.srt
+.DS_Store
