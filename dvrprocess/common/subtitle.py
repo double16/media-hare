@@ -1,8 +1,10 @@
 import logging
 from pathlib import Path
+from typing import Union
 
 import pysrt
-from ass_parser import read_ass, write_ass
+from ass_parser import read_ass, write_ass, AssFile, AssEvent
+from pysrt import SubRipItem, SubRipFile
 
 from . import fatal, constants
 
@@ -101,3 +103,98 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
             event.index = idx + 1
         except AttributeError:
             pass
+
+
+class SubtitleElementFacade(object):
+    def __init__(self):
+        pass
+
+    def text(self) -> Union[str, None]:
+        return None
+
+    def set_text(self, new_value: str):
+        pass
+
+    def start(self) -> Union[int, None]:
+        return None
+
+    def set_start(self, new_value: int):
+        pass
+
+    def end(self) -> Union[int, None]:
+        return None
+
+    def set_end(self, new_value: int):
+        pass
+
+    def duration(self) -> int:
+        return max(self.end() - self.start(), 0)
+
+    def move(self, new_start: int):
+        d = self.duration()
+        self.set_start(new_start)
+        self.set_end(new_start + d)
+
+
+class AssElementFacade(SubtitleElementFacade):
+    def __init__(self, event: AssEvent):
+        super().__init__()
+        self.event = event
+
+    def text(self) -> Union[str, None]:
+        return self.event.text
+
+    def set_text(self, new_value: str):
+        self.event.text = new_value
+
+    def start(self) -> Union[int, None]:
+        return self.event.start
+
+    def set_start(self, new_value: int):
+        self.event.start = new_value
+
+    def end(self) -> Union[int, None]:
+        return self.event.end
+
+    def set_end(self, new_value: int):
+        self.event.end = new_value
+
+
+class SrtElementFacade(SubtitleElementFacade):
+    def __init__(self, event: SubRipItem):
+        super().__init__()
+        self.event = event
+
+    def text(self) -> Union[str, None]:
+        return self.event.text
+
+    def set_text(self, new_value: str):
+        self.event.text = new_value
+
+    def start(self) -> Union[int, None]:
+        return self.event.start.ordinal
+
+    def set_start(self, new_value: int):
+        self.event.start.from_ordinal(new_value)
+
+    def end(self) -> Union[int, None]:
+        return self.event.end.ordinal
+
+    def set_end(self, new_value: int):
+        self.event.end.from_ordinal(new_value)
+
+
+def srt_element_generator(subtitle: SubRipFile):
+    for event_idx, event in enumerate(subtitle):
+        yield event_idx, SrtElementFacade(event)
+
+
+def ass_element_generator(subtitle: AssFile):
+    for event_idx, event in enumerate(subtitle.events):
+        yield event_idx, AssElementFacade(event)
+
+
+def subtitle_element_generator(subtitle: Union[AssFile, SubRipFile]):
+    if isinstance(subtitle, AssFile):
+        return ass_element_generator(subtitle)
+    return srt_element_generator(subtitle)
