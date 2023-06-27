@@ -134,3 +134,4 @@ dmypy.json
 
 fixtures/*.srt
 .vscode/
+.DS_Store
