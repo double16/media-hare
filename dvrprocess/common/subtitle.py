@@ -163,7 +163,7 @@ class AssElementFacade(SubtitleElementFacade):
         return self.event.text
 
     def set_text(self, new_value: str):
-        self.event.text = new_value
+        self.event.text = new_value.replace('\n', '\\N')
 
     def start(self) -> Union[int, None]:
         return self.event.start
