@@ -1409,6 +1409,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 logger.debug("Enumerating candidate sentences from word %s", idx)
                 for c in word_counts:
                     key = (idx, idx + c)
+                    if words_filtered[key[1]-1].end.ordinal > (words_filtered[key[0]].start.ordinal + event.duration() + max_offset_ms):
+                        continue
                     try:
                         # ignore ranges that have already been matched
                         words_claimed.index(True, key[0], key[1])
@@ -1482,16 +1484,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             finally:
                 event_previous = event
 
-        # extend durations based on original, not to overlap
-        # for event_idx, event in enumerate(events[:-1]):
-        #     missing_duration = min(
-        #         max(0, original_duration_ms[event_idx] - event.duration()),
-        #         events[event_idx+1].start() - event.end(),
-        #         2,  # don't extend too far, some events are too long
-        #     )
-        #     if missing_duration > 0:
-        #         event.set_end(event.end() + missing_duration)
-
         # collect stray words into existing events
         # collect large missing events, but insert later so we don't have to fix up arrays containing info
         new_events = []
@@ -1508,27 +1500,48 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     if not words_claimed[i]:
                         unclaimed_words.append(words_filtered[i])
                 if len(unclaimed_words) > 0:
-                    if (unclaimed_words[-1].end.ordinal - unclaimed_words[0].start.ordinal) < unclaimed_word_capture_duration_max_ms:
-                        unclaimed_text = ' '.join(map(lambda e: e.text, unclaimed_words))
+                    unclaimed_text = ' '.join(map(lambda e: e.text, unclaimed_words))
 
-                        current_ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
-                        previous_ratio = 101
-                        if event_idx > 0:
-                            previous_start_word_idx, previous_end_word_idx, previous_transcribed_text = get_transcription_info(
-                                previous_event)
-                            previous_ratio = fuzz.ratio(_subtitle_text_to_plain(previous_event.text()),
-                                                        previous_transcribed_text)
+                    current_ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
+                    current_extended_duration = event.start() - unclaimed_words[0].start.ordinal
 
-                        if previous_ratio < current_ratio:
-                            print("appending to event %i to include %s" % (event_idx - 1, unclaimed_text))
-                            previous_event.set_end(unclaimed_words[-1].end.ordinal)
-                        else:
-                            print("prepending to event %i to include %s" % (event_idx, unclaimed_text))
-                            event.set_start(unclaimed_words[0].start.ordinal)
+                    previous_ratio = 101
+                    previous_extended_duration = None
+                    if event_idx > 0:
+                        previous_start_word_idx, previous_end_word_idx, previous_transcribed_text = get_transcription_info(
+                            previous_event)
+                        previous_ratio = fuzz.ratio(_subtitle_text_to_plain(previous_event.text()),
+                                                    previous_transcribed_text)
+                        previous_extended_duration = unclaimed_words[-1].end.ordinal - previous_event.end()
+
+                    if previous_ratio < current_ratio and previous_extended_duration <= unclaimed_word_capture_duration_max_ms:
+                        print("appending to event %i to include %s, duration +%i ms" % (event_idx - 1, unclaimed_text, previous_extended_duration))
+                        previous_event.set_end(unclaimed_words[-1].end.ordinal)
+                    elif current_extended_duration <= unclaimed_word_capture_duration_max_ms:
+                        print("prepending to event %i to include %s, duration +%i ms" % (event_idx, unclaimed_text, current_extended_duration))
+                        event.set_start(unclaimed_words[0].start.ordinal)
                     else:
                         new_events.insert(0, (event_idx, unclaimed_words))
 
             last_word_idx = end_word_idx
+
+        # extend durations based on original, not to overlap
+        # NOTE: this seems to mess things up
+        for event_idx, event in enumerate(events[:-1]):
+            missing_duration = max(0, original_duration_ms[event_idx] - event.duration())
+            if missing_duration > 0:
+                # we've already tried to capture words, fill in space at end and then beginning
+                end_space = events[event_idx+1].start() - event.end()
+                if event_idx > 0:
+                    begin_space = event.start() - events[event_idx-1].end()
+                else:
+                    begin_space = 0
+
+                if end_space > 0:
+                    event.set_end(event.end() + min(missing_duration, end_space))
+                    missing_duration -= end_space
+                if missing_duration > 0 and begin_space > 0:
+                    event.set_start(event.start() - min(missing_duration, begin_space))
 
         if len(new_events) > 0:
             # TODO: for SRT, ensure monotonically increasing indicies
