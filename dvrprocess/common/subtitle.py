@@ -159,6 +159,12 @@ class SubtitleElementFacade(ABC):
         self.set_start(new_start)
         self.set_end(new_start + d)
 
+    def new_event(self):
+        """
+        Create a new event if the same type.
+        """
+        raise NotImplementedError()
+
 
 class AssElementFacade(SubtitleElementFacade):
     def __init__(self, event: AssEvent):
@@ -182,6 +188,9 @@ class AssElementFacade(SubtitleElementFacade):
 
     def set_end(self, new_value: int):
         self.event.end = new_value
+
+    def new_event(self):
+        return AssElementFacade(AssEvent())
 
 
 class SubripElementFacade(SubtitleElementFacade):
@@ -212,6 +221,15 @@ class SubripElementFacade(SubtitleElementFacade):
 
     def set_index(self, new_index: int):
         self.event.index = new_index
+
+    def index(self) -> int:
+        return self.event.index
+
+    def set_index(self, new_index: int):
+        self.event.index = new_index
+
+    def new_event(self):
+        return SrtElementFacade(SubRipItem())
 
 
 class SubtitleFileFacade(ABC):
