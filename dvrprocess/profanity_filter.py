@@ -424,7 +424,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data = read_ass(Path(subtitle_original_filename))
             ass_data_forced = copy.copy(ass_data)
             ass_data_forced.events = AssEventList()
-            filter_progress = progress.progress(f"{filename} filtering", 0, len(list(ass_data.events)))
+            filter_progress = progress.progress(f"{os.path.basename(filename)} filtering", 0, len(list(ass_data.events)))
             for event_idx, event in enumerate(ass_data.events):
                 original_text = event.text
                 filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
@@ -442,7 +442,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             srt_data = pysrt.open(subtitle_original_filename)
             srt_data_forced = copy.copy(srt_data)
             srt_data_forced.data = []
-            filter_progress = progress.progress(f"{filename} filtering", 0, len(list(srt_data)))
+            filter_progress = progress.progress(f"{os.path.basename(filename)} filtering", 0, len(list(srt_data)))
             for event_idx, event in enumerate(srt_data):
                 original_text = event.text
                 filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
@@ -944,7 +944,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
 
     audio_process.stdout.read(44)  # skip header
     results = []
-    audio_progress = progress.progress(f"{input_info['format']['filename']} transcription", 0, int(float(
+    audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0, int(float(
         input_info[constants.K_FORMAT][constants.K_DURATION])))
     while True:
         data = audio_process.stdout.read(chunk_size)

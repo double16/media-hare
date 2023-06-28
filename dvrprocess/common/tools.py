@@ -1,4 +1,5 @@
 import logging
+import os.path
 import re
 import subprocess
 import threading
@@ -35,9 +36,9 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         task_name = None
         for idx, arg in enumerate(arguments):
             if arg == '-i' and (task_name is None or '.mkv' in arguments[idx+1]):
-                task_name = arguments[idx+1] + ' ffmpeg'
+                task_name = os.path.basename(arguments[idx+1]) + ' ' + self.command_basename
         if task_name is None:
-            task_name = 'ffmpeg'
+            task_name = self.command_basename
 
         kwargs2 = kwargs.copy()
         check = kwargs.get('check', False)
@@ -95,9 +96,9 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         task_name = None
         for idx, arg in enumerate(arguments[1:]):
             if task_name is None:
-                task_name = arg + ' subtitle-edit'
+                task_name = os.path.basename(arg) + ' ' + self.command_basename
         if task_name is None:
-            task_name = 'subtitle-edit'
+            task_name = self.command_basename
 
         kwargs2 = kwargs.copy()
         check = kwargs.get('check', False)
