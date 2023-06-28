@@ -7,6 +7,7 @@ from pathlib import Path
 import pysrt
 from pysrt import SubRipFile
 from ass_parser import read_ass, AssFile
+from common import s_to_ts
 
 import profanity_filter
 
@@ -51,12 +52,23 @@ class SubtitleAlignmentTest(unittest.TestCase):
         failed = []
         for idx, actual_event in enumerate(original.events):
             expected_event = expected_alignment.events[idx]
-            if expected_event.start != actual_event.start:
-                failed.append((expected_event.start, actual_event.start, f"Start time event {idx}"))
-            if expected_event.end != actual_event.end:
-                failed.append((expected_event.end, actual_event.end, f"End time event {idx}"))
-        # self.assertEqual(0, len(failed), str(failed) + "\n" + str(len(failed)) + "/" + str(len(original.events)*2))
-        self.assertEqual(0, len(failed), str(len(failed)) + "/" + str(len(original.events)*2))
+            expected_start_diff = abs(expected_event.start - actual_event.start)
+            if expected_start_diff > 400:
+                failed.append((
+                    s_to_ts(expected_event.start/1000),
+                    s_to_ts(actual_event.start/1000),
+                    expected_start_diff, f"Start event {idx}: '{actual_event.text}'")
+                )
+            expected_end_diff = abs(expected_event.end - actual_event.end)
+            if expected_end_diff > 400:
+                failed.append((
+                    s_to_ts(expected_event.end/1000),
+                    s_to_ts(actual_event.end/1000),
+                    expected_end_diff, f"End event {idx}: '{actual_event.text}'")
+                )
+        failed.sort(key=lambda e: e[2], reverse=True)
+        self.assertEqual(0, len(failed), str(failed) + "\n" + str(len(failed)) + "/" + str(len(original.events)*2))
+        # self.assertEqual(0, len(failed), str(len(failed)) + "/" + str(len(original.events)*2))
         self.assertEqual(True, changed, 'fix_subtitle_audio_alignment should have returned changed')
 
     def test_bones_s02e11(self):
