@@ -884,7 +884,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         logger.error(f"OCR text appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None
 
-    # TODO: Add "OCR by media-hare+SubtitleEdit" at beginning and end
+    # TODO: Add "[ OCR by media-hare+SubtitleEdit ]" at beginning and end
 
     return subtitle_srt_filename
 
@@ -911,7 +911,6 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
 
     freq = 16000
     chunk_size = 4000
-    words_per_line = 7
 
     temp_fd, subtitle_srt_filename = tempfile.mkstemp(dir=workdir, suffix='.srt')
     os.close(temp_fd)
@@ -976,13 +975,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
         return None, None
 
     subs_words = []
-    subs_text = []
-
     for i, res in enumerate(results):
-        # 'the' by itself seems to be an artifact of soundtrack / background noise
-        # TODO: check the length of `the` to better determine if it's an artifact
-        if res.get('text') == 'the':
-            continue
         words = res['result']
         for word in words:
             s = SubRipItem(index=len(subs_words),
@@ -991,15 +984,6 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
                            text=word['word'])
             subs_words.append(s)
 
-        # TODO: break by pauses and character count?
-        for j in range(0, len(words), words_per_line):
-            line = words[j: j + words_per_line]
-            s = SubRipItem(index=len(subs_text),
-                           start=SubRipTime(seconds=line[0]['start']),
-                           end=SubRipTime(seconds=line[-1]['end']),
-                           text=' '.join([l['word'] for l in line]))
-            subs_text.append(s)
-
     if len(subs_words) == 0:
         logger.warning("audio-to-text transcription empty")
         return None, None
@@ -1007,8 +991,8 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     srt_words = SubRipFile(items=subs_words, path=words_filename)
     srt_words.save(Path(words_filename), 'utf-8')
 
+    subs_text = srt_words_to_sentences(subs_words)
     srt = SubRipFile(items=subs_text, path=subtitle_srt_filename)
-    audio_to_text_cleanup(srt)
     srt.save(Path(subtitle_srt_filename), 'utf-8')
 
     word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language,
@@ -1018,31 +1002,9 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
             f"audio-to-text transcription appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None, None
 
-    # TODO: Add "transcribed by media-hare+Vosk" at beginning and end
+    # TODO: Add "[ transcribed by media-hare+Vosk ]" at beginning and end
 
     return subtitle_srt_filename, words_filename
-
-
-def audio_to_text_cleanup(srt_data: SubRipFile) -> None:
-    """
-    Post process audio to text subtitles. This cleanup is tuned closely to the vosk models and may need to be changed
-    when updated models are used.
-      - 'the' by itself
-      - ' the' at the end
-    """
-    for i in range(len(srt_data) - 1, -1, -1):
-        event = srt_data[i]
-        cleaned_text = event.text
-        while cleaned_text.lower().endswith(' the'):
-            cleaned_text = cleaned_text[0:-4]
-        if cleaned_text.lower() == 'the':
-            cleaned_text = ''
-        if len(cleaned_text) == 0:
-            logger.info("Removed empty SRT event: %s", str(event.start))
-            del srt_data[i]
-        elif cleaned_text != event.text:
-            logger.info("Cleaned SRT event: %s, %s -> %s", str(event.start), event.text, cleaned_text)
-            event.text = cleaned_text
 
 
 PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
@@ -1341,6 +1303,20 @@ def _is_transcribed_word_suspicious(event: SubRipItem) -> bool:
     return False
 
 
+def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
+    words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
+    result = []
+    words_per_line = 7
+    for j in range(0, len(words), words_per_line):
+        line = words[j: j + words_per_line]
+        s = SubRipItem(index=len(result),
+                       start=line[0].start,
+                       end=line[-1].end,
+                       text=' '.join([l.text for l in line]))
+        result.append(s)
+    return result
+
+
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, filename: str) -> bool:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
@@ -1548,8 +1524,23 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     event.set_start(event.start() - min(missing_duration, begin_space))
 
         if len(new_events) > 0:
-            # TODO: for SRT, ensure monotonically increasing indicies
-            pass
+            for new_event in new_events:
+                insert_idx = new_event[0]
+                unclaimed_words = new_event[1]
+
+                for sentence in srt_words_to_sentences(unclaimed_words):
+                    event = events[0].new_event()
+                    event.set_start(sentence.start.ordinal)
+                    event.set_end(sentence.end.ordinal)
+                    event.set_text(sentence.text)
+                    events.insert(insert_idx, event)
+                    found_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
+                    original_duration_ms.insert(insert_idx, sentence.end.ordinal - sentence.start.ordinal)
+                    insert_idx += 1
+
+            # ensure monotonically increasing indicies
+            for event_idx, event in enumerate(events):
+                event.set_index(event_idx + 1)
 
         # report
         last_word_idx = -1
