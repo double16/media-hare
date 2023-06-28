@@ -1009,6 +1009,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
 
 PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
 
+
 def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
     try:
         import hunspell
@@ -1304,16 +1305,36 @@ def _is_transcribed_word_suspicious(event: SubRipItem) -> bool:
 
 
 def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
+    """
+    Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
+    sentences a collection of words.
+    """
+    chars_per_sentence = 40
+    linebreaks_per_sentence = 2
+    silence_for_new_sentence = 1200
+    newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
     result = []
-    words_per_line = 7
-    for j in range(0, len(words), words_per_line):
-        line = words[j: j + words_per_line]
-        s = SubRipItem(index=len(result),
-                       start=line[0].start,
-                       end=line[-1].end,
-                       text=' '.join([l.text for l in line]))
-        result.append(s)
+    s = None
+    for word in words:
+        if s is not None:
+            if word.start.ordinal - s.end.ordinal > silence_for_new_sentence:
+                s = None
+            else:
+                split = (s.text + ' ' + word.text).split(newline)
+                if len(split[-1]) > chars_per_sentence:
+                    if len(split) >= linebreaks_per_sentence:
+                        s = None
+                    else:
+                        s.text = s.text + newline
+
+        if s is None:
+            s = SubRipItem(index=len(result), start=word.start, end=word.end, text=word.text)
+            result.append(s)
+        else:
+            s.end = word.end
+            s.text = s.text + ' ' + word.text
+
     return result
 
 
