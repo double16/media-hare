@@ -254,9 +254,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if need_original or need_words:
             # We may only need the words from transcription
             if need_original:
-                logger.info("Transcribing for text and words")
+                logger.info("%s Transcribing for text and words", base_filename)
             else:
-                logger.info("Transcribing for words")
+                logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
             if audio_channels > 2:
                 audio_to_text_filter = 'pan=1c|FC<0.3*FL+FC+0.3*FR,anlmdn'
@@ -429,7 +429,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data = read_ass(Path(subtitle_original_filename))
             ass_data_forced = copy.copy(ass_data)
             ass_data_forced.events = AssEventList()
-            filter_progress = progress.progress(f"{os.path.basename(filename)} filtering", 0, len(list(ass_data.events)))
+            filter_progress = progress.progress(f"{base_filename} filtering", 0, len(list(ass_data.events)))
             for event_idx, event in enumerate(ass_data.events):
                 original_text = event.text
                 filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
@@ -447,7 +447,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             srt_data = pysrt.open(subtitle_original_filename)
             srt_data_forced = copy.copy(srt_data)
             srt_data_forced.data = []
-            filter_progress = progress.progress(f"{os.path.basename(filename)} filtering", 0, len(list(srt_data)))
+            filter_progress = progress.progress(f"{base_filename} filtering", 0, len(list(srt_data)))
             for event_idx, event in enumerate(srt_data):
                 original_text = event.text
                 filtered_text, stopped = filter_text(censor_list, stop_list, allow_list, original_text)
@@ -488,7 +488,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if not force and not filtered_changed and not subtitle_srt_generated and not subtitle_srt_words and current_filter_version in [
             str(FILTER_VERSION),
             None, '']:
-            logger.info(f"No changes, updating filter hash")
+            logger.info("%s No changes, updating filter hash", base_filename)
             if not dry_run and not debug:
                 tools.mkvpropedit.run([filename, "--tags", f"global:{tags_filename}"])
             return CMD_RESULT_MARKED
@@ -1383,73 +1383,88 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         found_range_ms.append(None)
         original_duration_ms.append(event.duration())
 
-    align_progress = progress.progress("subtitle alignment", 0, len(min_fuzz_ratios) * len(found_range_ms))
+    align_progress = progress.progress("subtitle alignment", 0, len(min_fuzz_ratios))
+
     changed = False
+
+    # run through each ratio and iteratively find matches, using existing matches to narrow the search
     for min_fuzz_ratio_idx, min_fuzz_ratio in enumerate(min_fuzz_ratios):
-        for event_idx, event in enumerate(events):
-            align_progress.progress((min_fuzz_ratio_idx + 1) * (event_idx + 1))
-            if found_range_ms[event_idx] is not None:
-                continue
+        # single words match more things erroneously than longer strings of words
+        for word_count_min in [10, 5, 1]:
+            for event_idx, event in enumerate(events):
+                if found_range_ms[event_idx] is not None:
+                    continue
 
-            event_text = _subtitle_text_to_plain(event.text())
-            word_count = len(event_text.split())
-            if word_count == 0:
-                continue
-            word_counts = range(floor(word_count * (1.0 - word_count_fuzz_pct)),
-                                ceil(word_count * (1.0 + word_count_fuzz_pct)) + 1)
-            logger.debug("Matching sentence from event %s %s, (%i,%i) words", event_idx, event_text, word_counts.start,
-                         word_counts.stop)
-            # ignore ranges that have already been matched
-            start_search_ms = max(event.start() - max_offset_ms,
-                                  max(map(lambda e: e[1], filter(lambda f: f is not None, found_range_ms[:event_idx])),
-                                      default=0))
-            end_search_ms = min(event.start() + max_offset_ms,
-                                min(map(lambda e: e[1],
-                                        filter(lambda f: f is not None, found_range_ms[event_idx + 1:])),
-                                    default=sys.maxsize))
-            start_idx = find_subtitle_element_idx_ge(words_start_ms, start_search_ms)
-            end_idx = find_subtitle_element_idx_ge(words_start_ms, end_search_ms)
-            candidates = dict()
-            for idx in range(start_idx, end_idx + 1):
-                logger.debug("Enumerating candidate sentences from word %s", idx)
-                for c in word_counts:
-                    key = (idx, idx + c)
-                    if words_filtered[key[1]-1].end.ordinal > (words_filtered[key[0]].start.ordinal + event.duration() + max_offset_ms):
-                        continue
-                    try:
-                        # ignore ranges that have already been matched
-                        words_claimed.index(True, key[0], key[1])
-                    except ValueError:
-                        value = ' '.join(map(lambda e: e.text, words_filtered[key[0]:key[1]]))
-                        candidates[key] = value
-            logger.debug("candidates are %s", candidates)
-            if not candidates:
-                print("no candidates for min_fuzz_ratio %i '%s' (%i,%i)" % (
-                    min_fuzz_ratio, event_text, start_search_ms, end_search_ms))
-                continue
-            else:
-                match = fuzzprocess.extractOne(event_text, candidates, scorer=fuzz.ratio, score_cutoff=min_fuzz_ratio)
-            if match:
-                start_new_ms = words_filtered[match[2][0]].start.ordinal
-                end_new_ms = words_filtered[match[2][1] - 1].end.ordinal
-                print("==> match offset (%i, %i) for '%s' is %s" % (
-                    start_new_ms - event.start(), end_new_ms - event.end(),
-                    event_text, match))
-                found_range_ms[event_idx] = (start_new_ms, end_new_ms)
-                for word_idx in range(match[2][0], match[2][1]):
-                    words_claimed[word_idx] = True
-
-                # move event time
-                event.set_start(start_new_ms)
-                event.set_end(end_new_ms)
-                changed = True
-            else:
-                if match is None:
-                    print("==> not matched for '%s', candidates are %s" % (event_text, str(candidates)[:200]))
-                    # print("==> not matched for '%s'" % event_text)
+                event_text = _subtitle_text_to_plain(event.text())
+                word_count = len(event_text.split())
+                if word_count < word_count_min:
+                    continue
+                word_counts = range(floor(word_count * (1.0 - word_count_fuzz_pct)),
+                                    ceil(word_count * (1.0 + word_count_fuzz_pct)) + 1)
+                logger.debug("Matching sentence from event %s %s, (%i,%i) words", event_idx, event_text, word_counts.start,
+                             word_counts.stop)
+                # ignore ranges that have already been matched
+                start_search_ms = max(event.start() - max_offset_ms,
+                                      max(map(lambda e: e[1], filter(lambda f: f is not None, found_range_ms[:event_idx])),
+                                          default=0))
+                end_search_ms = min(event.start() + max_offset_ms,
+                                    min(map(lambda e: e[1],
+                                            filter(lambda f: f is not None, found_range_ms[event_idx + 1:])),
+                                        default=sys.maxsize))
+                start_idx = find_subtitle_element_idx_ge(words_start_ms, start_search_ms)
+                end_idx = find_subtitle_element_idx_ge(words_start_ms, end_search_ms)
+                candidates = dict()
+                for idx in range(start_idx, end_idx + 1):
+                    logger.debug("Enumerating candidate sentences from word %s", idx)
+                    for c in word_counts:
+                        key = (idx, idx + c)
+                        if words_filtered[key[1]-1].end.ordinal > (words_filtered[key[0]].start.ordinal + event.duration() + max_offset_ms):
+                            continue
+                        try:
+                            # ignore ranges that have already been matched
+                            words_claimed.index(True, key[0], key[1])
+                        except ValueError:
+                            value = ' '.join(map(lambda e: e.text, words_filtered[key[0]:key[1]]))
+                            candidates[key] = value
+                logger.debug("candidates are %s", candidates)
+                if not candidates:
+                    print("no candidates for min_fuzz_ratio %i '%s' (%i,%i)" % (
+                        min_fuzz_ratio, event_text, start_search_ms, end_search_ms))
+                    continue
                 else:
-                    # print("==> not matched %i < %i '%s' for '%s', candidates are %s" % (match[1], min_fuzz_ratio, match[0], event_text, candidates))
-                    print("==> not matched %i < %i '%s' for '%s'" % (match[1], min_fuzz_ratio, match[0], event_text))
+                    match = fuzzprocess.extractOne(event_text, candidates, scorer=fuzz.ratio, score_cutoff=min_fuzz_ratio)
+                if match:
+                    start_new_ms = words_filtered[match[2][0]].start.ordinal
+                    end_new_ms = words_filtered[match[2][1] - 1].end.ordinal
+                    start_new_idx = match[2][0]
+                    end_new_idx = match[2][1]
+
+                    # check if current range is the same fit
+                    # current_start_idx, current_end_idx, current_text = get_transcription_info(event)
+                    # if current_text == match[0]:
+                    #     start_new_ms = event.start()
+                    #     end_new_ms = event.end()
+                    #     start_new_idx = current_start_idx
+                    #     end_new_idx = current_end_idx + 1
+                    #     print("keeping original range")
+
+                    print("==> match offset (%i, %i) r%i for '%s' is %s" % (
+                        start_new_ms - event.start(), end_new_ms - event.end(), min_fuzz_ratio,
+                        event.text(), match))
+                    found_range_ms[event_idx] = (start_new_ms, end_new_ms)
+                    for word_idx in range(start_new_idx, end_new_idx):
+                        words_claimed[word_idx] = True
+
+                    # move event time
+                    event.set_start(start_new_ms)
+                    event.set_end(end_new_ms)
+                    changed = True
+                else:
+                    if match is None:
+                        print("==> not matched r%i for '%s', candidates are %s" % (min_fuzz_ratio, event_text, str(candidates)[:200]))
+                        # print("==> not matched for '%s'" % event_text)
+                        pass
+        align_progress.progress(min_fuzz_ratio_idx+1)
 
     print("matched count %i/%i" % (len(list(filter(lambda e: e is not None, found_range_ms))), len(found_range_ms)))
 
@@ -1474,14 +1489,14 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         # try to start non-matches at the beginning of an unclaimed word
                         unclaimed_word = next(filter(
                             lambda e: e.start.ordinal >= event_previous.end(), unclaimed_word_events), None)
-                        print(f"possible unclaimed word {unclaimed_word}")
+                        logger.debug("possible unclaimed word %s", unclaimed_word)
                         if unclaimed_word is not None:
                             capture_unclaimed_start = max(event_previous.end(), unclaimed_word.start.ordinal - max(0,
                                                                                                                    event.duration() - (
                                                                                                                            events[
                                                                                                                                event_idx + 1].start() - unclaimed_word.start.ordinal)))
-                            print(
-                                f"moving {event.text()} to claim word {unclaimed_word.start.ordinal}, adjusted to {capture_unclaimed_start}")
+                            logger.debug(
+                                f"moving %s to claim word %i, adjusted to %i", event.text(), unclaimed_word.start.ordinal, capture_unclaimed_start)
                             event.move(capture_unclaimed_start)
                         else:
                             event.move(event_previous.end())
@@ -1520,10 +1535,10 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         previous_extended_duration = unclaimed_words[-1].end.ordinal - previous_event.end()
 
                     if previous_ratio < current_ratio and previous_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                        print("appending to event %i to include %s, duration +%i ms" % (event_idx - 1, unclaimed_text, previous_extended_duration))
+                        logger.debug("appending to event %i to include %s, duration +%i ms", event_idx - 1, unclaimed_text, previous_extended_duration)
                         previous_event.set_end(unclaimed_words[-1].end.ordinal)
                     elif current_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                        print("prepending to event %i to include %s, duration +%i ms" % (event_idx, unclaimed_text, current_extended_duration))
+                        logger.debug("prepending to event %i to include %s, duration +%i ms", event_idx, unclaimed_text, current_extended_duration)
                         event.set_start(unclaimed_words[0].start.ordinal)
                     else:
                         new_events.insert(0, (event_idx, unclaimed_words))
@@ -1582,35 +1597,39 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         ave_end_adjustment = average(list(map(lambda e: e[1], adjustments)))
         # TODO: use these stats to determine if we adjusted enough to make a difference and return False if not
         print("max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, unmatched_count %i, new events %i" % (max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, unmatched_count, len(new_events)))
+        for event_idx, adjustment in enumerate(adjustments):
+            if adjustment[0] > max_start_adjustment/2 or adjustment[1] > max_end_adjustment/2:
+                print("event %i adjustment (%i,%i) '%s'" % (event_idx, adjustment[0], adjustment[1], events[event_idx].text()))
 
         # report
-        last_word_idx = -1
-        for event_idx, event in enumerate(events):
-            start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
-            end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
-            while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
-                end_word_idx -= 1
+        if logger.isEnabledFor(logging.DEBUG):
+            last_word_idx = -1
+            for event_idx, event in enumerate(events):
+                start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
+                end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
+                while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
+                    end_word_idx -= 1
 
-            if 0 <= last_word_idx < (start_word_idx - 1):
-                unclaimed_words = []
-                unclaimed_start = sys.maxsize
-                unclaimed_end = 0
-                for i in range(last_word_idx, start_word_idx):
-                    if not words_claimed[i]:
-                        unclaimed_words.append(words_filtered[i].text)
-                        unclaimed_start = min(unclaimed_start, words_filtered[i].start.ordinal)
-                        unclaimed_end = max(unclaimed_end, words_filtered[i].end.ordinal)
-                unclaimed_text = ' '.join(unclaimed_words)
-                print("unclaimed words (%i,%i) '%s'" % (unclaimed_start, unclaimed_end, unclaimed_text))
-            last_word_idx = end_word_idx
+                if 0 <= last_word_idx < (start_word_idx - 1):
+                    unclaimed_words = []
+                    unclaimed_start = sys.maxsize
+                    unclaimed_end = 0
+                    for i in range(last_word_idx, start_word_idx):
+                        if not words_claimed[i]:
+                            unclaimed_words.append(words_filtered[i].text)
+                            unclaimed_start = min(unclaimed_start, words_filtered[i].start.ordinal)
+                            unclaimed_end = max(unclaimed_end, words_filtered[i].end.ordinal)
+                    unclaimed_text = ' '.join(unclaimed_words)
+                    print("unclaimed words (%i,%i) '%s'" % (unclaimed_start, unclaimed_end, unclaimed_text))
+                last_word_idx = end_word_idx
 
-            transcribed_text = ' '.join(list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
-            ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
-            matches = "matches" if found_range_ms[event_idx] is not None else "claims"
-            print("event %i (%i-%i %i ms was %i ms) '%s' %s words '%s' with ratio %i" % (
-                event_idx,
-                event.start(), event.end(), event.duration(), original_duration_ms[event_idx],
-                event.text(), matches, transcribed_text, ratio))
+                transcribed_text = ' '.join(list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
+                ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
+                matches = "matches" if found_range_ms[event_idx] is not None else "claims"
+                print("event %i (%i-%i %i ms was %i ms) '%s' %s words '%s' with ratio %i" % (
+                    event_idx,
+                    event.start(), event.end(), event.duration(), original_duration_ms[event_idx],
+                    event.text(), matches, transcribed_text, ratio))
 
     align_progress.stop()
 
