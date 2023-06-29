@@ -1,4 +1,5 @@
 import logging
+from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Union
 
@@ -105,25 +106,34 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
             pass
 
 
-class SubtitleElementFacade(object):
+class SubtitleElementFacade(ABC):
     def __init__(self):
         pass
 
+    def __repr__(self):
+        return f"({self.start(), self.end()} \"{self.text()}\""
+
+    @abstractmethod
     def text(self) -> Union[str, None]:
         return None
 
+    @abstractmethod
     def set_text(self, new_value: str):
         pass
 
+    @abstractmethod
     def start(self) -> Union[int, None]:
         return None
 
+    @abstractmethod
     def set_start(self, new_value: int):
         pass
 
+    @abstractmethod
     def end(self) -> Union[int, None]:
         return None
 
+    @abstractmethod
     def set_end(self, new_value: int):
         pass
 
@@ -146,12 +156,6 @@ class SubtitleElementFacade(object):
         d = self.duration()
         self.set_start(new_start)
         self.set_end(new_start + d)
-
-    def new_event(self):
-        """
-        Create a new event if the same type.
-        """
-        raise NotImplementedError()
 
 
 class AssElementFacade(SubtitleElementFacade):
@@ -177,11 +181,8 @@ class AssElementFacade(SubtitleElementFacade):
     def set_end(self, new_value: int):
         self.event.end = new_value
 
-    def new_event(self):
-        return AssElementFacade(AssEvent())
 
-
-class SrtElementFacade(SubtitleElementFacade):
+class SubripElementFacade(SubtitleElementFacade):
     def __init__(self, event: SubRipItem):
         super().__init__()
         self.event = event
@@ -210,21 +211,63 @@ class SrtElementFacade(SubtitleElementFacade):
     def set_index(self, new_index: int):
         self.event.index = new_index
 
-    def new_event(self):
-        return SrtElementFacade(SubRipItem())
+
+class SubtitleFileFacade(ABC):
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def events(self):
+        """
+        Return a generator of SubtitleElementFacade
+        :return:
+        """
+        yield None
+
+    @abstractmethod
+    def insert(self, index: int) -> SubtitleElementFacade:
+        """
+        Create a new event if the same type.
+        """
+        raise NotImplementedError()
 
 
-def srt_element_generator(subtitle: SubRipFile):
-    for event_idx, event in enumerate(subtitle):
-        yield event_idx, SrtElementFacade(event)
+class AssFileFacade(SubtitleFileFacade):
+
+    def __init__(self, file: AssFile):
+        super().__init__()
+        self.file = file
+
+    def events(self):
+        for event_idx, event in enumerate(self.file.events):
+            yield event_idx, AssElementFacade(event)
+
+    def insert(self, index: int) -> SubtitleElementFacade:
+        event = AssEvent()
+        self.file.events.insert(index, event)
+        return AssElementFacade(event)
 
 
-def ass_element_generator(subtitle: AssFile):
-    for event_idx, event in enumerate(subtitle.events):
-        yield event_idx, AssElementFacade(event)
+class SubripFileFacade(SubtitleFileFacade):
+
+    def __init__(self, file: SubRipFile):
+        super().__init__()
+        self.file = file
+
+    def events(self):
+        for event_idx, event in enumerate(self.file):
+            yield event_idx, SubripElementFacade(event)
+
+    def insert(self, index: int) -> SubtitleElementFacade:
+        event = SubRipItem()
+        self.file.insert(index, event)
+        return SubripElementFacade(event)
 
 
-def subtitle_element_generator(subtitle: Union[AssFile, SubRipFile]):
+def new_subtitle_file_facade(subtitle: Union[AssFile, SubRipFile]) -> SubtitleFileFacade:
     if isinstance(subtitle, AssFile):
-        return ass_element_generator(subtitle)
-    return srt_element_generator(subtitle)
+        return AssFileFacade(subtitle)
+    elif isinstance(subtitle, SubRipFile):
+        return SubripFileFacade(subtitle)
+    raise NotImplementedError(subtitle.__class__)

@@ -18,7 +18,7 @@ from typing import Tuple, Union
 
 import pysrt
 from ass_parser import read_ass, write_ass, AssFile, AssEventList, CorruptAssLineError
-from numpy import loadtxt
+from numpy import loadtxt, average
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from thefuzz import fuzz
 from thefuzz import process as fuzzprocess
@@ -1356,6 +1356,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     word_count_fuzz_pct = 0.40
     unclaimed_word_capture_duration_max_ms = 1800
 
+    subtitle_facade = subtitle.new_subtitle_file_facade(subtitle_inout)
+
     words_filtered = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
     print("Removed %i suspicious words from transcription" % (len(words) - len(words_filtered)))
     words_claimed = [False for i in range(len(words_filtered))]
@@ -1372,10 +1374,12 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
     # target ranges that have been found, matches event index, (start from words, end from words) or None
     events = []
+    original_range_ms = []
     found_range_ms = []
     original_duration_ms = []
-    for event_idx, event in subtitle.subtitle_element_generator(subtitle_inout):
+    for event_idx, event in subtitle_facade.events():
         events.append(event)
+        original_range_ms.append((event.start(), event.end()))
         found_range_ms.append(None)
         original_duration_ms.append(event.duration())
 
@@ -1550,18 +1554,34 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 unclaimed_words = new_event[1]
 
                 for sentence in srt_words_to_sentences(unclaimed_words):
-                    event = events[0].new_event()
+                    event = subtitle_facade.insert(insert_idx)
                     event.set_start(sentence.start.ordinal)
                     event.set_end(sentence.end.ordinal)
                     event.set_text(sentence.text)
                     events.insert(insert_idx, event)
+                    print("inserted new event at %i %s" % (insert_idx, str(event)))
                     found_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
+                    original_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
                     original_duration_ms.insert(insert_idx, sentence.end.ordinal - sentence.start.ordinal)
                     insert_idx += 1
 
             # ensure monotonically increasing indicies
             for event_idx, event in enumerate(events):
                 event.set_index(event_idx + 1)
+
+        # check stats for material changes
+        unmatched_count = 0
+        adjustments = []
+        for event_idx, event in enumerate(events):
+            if found_range_ms[event_idx] is None:
+                unmatched_count += 1
+            adjustments.append((abs(original_range_ms[event_idx][0] - event.start()), abs(original_range_ms[event_idx][1] - event.end())))
+        max_start_adjustment = max(list(map(lambda e: e[0], adjustments)))
+        ave_start_adjustment = average(list(map(lambda e: e[0], adjustments)))
+        max_end_adjustment = max(list(map(lambda e: e[1], adjustments)))
+        ave_end_adjustment = average(list(map(lambda e: e[1], adjustments)))
+        # TODO: use these stats to determine if we adjusted enough to make a difference and return False if not
+        print("max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, unmatched_count %i, new events %i" % (max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, unmatched_count, len(new_events)))
 
         # report
         last_word_idx = -1
