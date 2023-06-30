@@ -192,6 +192,8 @@ some \w+ tail
 piece of tail
 whore[\s-]?houses?
 brothel
+trade sex
+swap sex
 the clap
 cleavage
 g[eo]t laid

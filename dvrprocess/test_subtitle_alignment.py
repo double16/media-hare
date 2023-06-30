@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pysrt
 from pysrt import SubRipFile
-from ass_parser import read_ass, AssFile
+from ass_parser import read_ass, write_ass, AssFile
 from common import s_to_ts
 
 import profanity_filter
@@ -38,6 +38,8 @@ class SubtitleAlignmentTest(unittest.TestCase):
         os.close(original_fd)
         aligned_subtitle = read_ass(Path(filtered_aligned_path))
         original_subtitle = read_ass(Path(filtered_original_path))
+        os.remove(filtered_aligned_path)
+        os.remove(filtered_original_path)
         return aligned_subtitle, original_subtitle
 
     def _read_words_srt(self, filename: str) -> SubRipFile:
@@ -84,3 +86,12 @@ class SubtitleAlignmentTest(unittest.TestCase):
 
     def test_house_s03e07(self):
         self._assert_alignment('house-s03e07-aligned.ssa', 'house-s03e07-original.ssa', 'house-s03e07-words.srt')
+
+    def test_house_s03e07_output(self):
+        original = read_ass(Path('../fixtures/house-s03e07-original.ssa'))
+        words = self._read_words_srt('house-s03e07-words.srt')
+        profanity_filter.fix_subtitle_audio_alignment(original, words, 'house-s03e07-original.ssa')
+        aligned_fd, aligned_path = tempfile.mkstemp(prefix='house-s03e07-aligned', suffix='.ssa')
+        os.close(aligned_fd)
+        write_ass(original, Path(aligned_path))
+        print(f'house-s03e07 alignment in {aligned_path}')
