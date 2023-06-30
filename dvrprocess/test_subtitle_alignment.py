@@ -50,7 +50,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
         expected_alignment, original = self._read_aligned_and_original_ass(aligned_filename,
                                                                            original_filename)
         words = self._read_words_srt(words_filename)
-        changed = profanity_filter.fix_subtitle_audio_alignment(original, words, original_filename)
+        changed = profanity_filter.fix_subtitle_audio_alignment(original, words)
         failed = []
         for idx, actual_event in enumerate(original.events):
             expected_event = expected_alignment.events[idx]
@@ -79,8 +79,8 @@ class SubtitleAlignmentTest(unittest.TestCase):
     def test_idempotent(self):
         expected_alignment, original = self._read_aligned_and_original_ass('bones-s02e11-aligned.ssa', 'bones-s02e11-original.ssa')
         words = self._read_words_srt('bones-s02e11-words.srt')
-        changed1 = profanity_filter.fix_subtitle_audio_alignment(original, words, 'bones-s02e11-original.ssa')
-        changed2 = profanity_filter.fix_subtitle_audio_alignment(original, words, 'bones-s02e11-original.ssa')
+        changed1 = profanity_filter.fix_subtitle_audio_alignment(original, words)
+        changed2 = profanity_filter.fix_subtitle_audio_alignment(original, words)
         self.assertEqual(True, changed1, 'fix_subtitle_audio_alignment should have returned changed for first run')
         self.assertEqual(False, changed2, 'fix_subtitle_audio_alignment should have returned unchanged for second run')
 
@@ -90,8 +90,17 @@ class SubtitleAlignmentTest(unittest.TestCase):
     def test_house_s03e07_output(self):
         original = read_ass(Path('../fixtures/house-s03e07-original.ssa'))
         words = self._read_words_srt('house-s03e07-words.srt')
-        profanity_filter.fix_subtitle_audio_alignment(original, words, 'house-s03e07-original.ssa')
+        profanity_filter.fix_subtitle_audio_alignment(original, words)
         aligned_fd, aligned_path = tempfile.mkstemp(prefix='house-s03e07-aligned', suffix='.ssa')
         os.close(aligned_fd)
         write_ass(original, Path(aligned_path))
         print(f'house-s03e07 alignment in {aligned_path}')
+
+    def test_bones_s02e11_output(self):
+        original = read_ass(Path('../fixtures/bones-s02e11-original.ssa'))
+        words = self._read_words_srt('bones-s02e11-words.srt')
+        profanity_filter.fix_subtitle_audio_alignment(original, words)
+        aligned_fd, aligned_path = tempfile.mkstemp(prefix='bones-s02e11-aligned', suffix='.ssa')
+        os.close(aligned_fd)
+        write_ass(original, Path(aligned_path))
+        print(f'bones-s02e11 alignment in {aligned_path}')
