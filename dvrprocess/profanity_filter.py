@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -116,6 +117,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
     # Temporary File Name for transcoding, we want to keep on the same filesystem as the input
     temp_base = os.path.join(workdir, f".~{'.'.join(base_filename.split('.')[0:-1])}")
+    debug_base = os.path.join(dir_filename, f"{'.'.join(base_filename.split('.')[0:-1])}")
     common.TEMPFILENAME = os.path.join(dir_filename,
                                        f".~{'.'.join(base_filename.split('.')[0:-1])}.transcoded.{input_type}")
     # Hides filename from user UI and Dropbox
@@ -433,8 +435,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data = read_ass(Path(subtitle_original_filename))
             if subtitle_words_filename:
                 fix_subtitle_audio_alignment(ass_data, pysrt.open(subtitle_words_filename))
+                if debug:
+                    write_ass(ass_data, Path(f"{debug_base}.aligned.{subtitle_codec}"))
+                    shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
             else:
-                raise NotImplementedError("no words file")
+                logger.info("No words file, subtitle alignment skipped")
             ass_data_forced = copy.copy(ass_data)
             ass_data_forced.events = AssEventList()
             filter_progress = progress.progress(f"{base_filename} filtering", 0, len(list(ass_data.events)))
@@ -455,8 +460,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             srt_data = pysrt.open(subtitle_original_filename)
             if subtitle_words_filename:
                 fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename))
+                if debug:
+                    srt_data.save(Path(f"{debug_base}.aligned.{subtitle_codec}"), 'utf-8')
+                    shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
             else:
-                raise NotImplementedError("no words file")
+                logger.info("No words file, subtitle alignment skipped")
             srt_data_forced = copy.copy(srt_data)
             srt_data_forced.data = []
             filter_progress = progress.progress(f"{base_filename} filtering", 0, len(list(srt_data)))
@@ -1271,7 +1279,7 @@ def find_subtitle_element_idx_ge(time_ordinals: list[int], start: float) -> int:
 
 
 SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(.*?\)|\{.*?}")
-SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!\"-]|[\u007F-\uFFFF]")
+SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&\"-]|[\u007F-\uFFFF]")
 SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
 SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:[\d.,]+\d)?)")
 SUBTITLE_TEXT_TO_PLAIN_ORDINALS = re.compile(r"(\d+)(?:st|nd|rd|th)")
