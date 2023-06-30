@@ -380,7 +380,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             file_path = video_info[constants.K_FORMAT]['filename']
             try:
                 framearray_results.append(
-                    pool.apply_async(ensure_framearray, (
+                    pool.apply_async(common.pool_apply_wrapper(ensure_framearray), (
                         file_path, os.path.basename(file_path) + CSV_SUFFIX_BLACKFRAME, comskip_starter_ini, workdir,
                         dry_run,
                         True)))
@@ -451,7 +451,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             csvfile = common.replace_extension(
                 os.path.join(workdir, common.remove_extension(os.path.basename(file_path)) + csv_suffix),
                 'csv')
-            results.append(pool.apply_async(csv_and_comchap_generate, (),
+            results.append(pool.apply_async(common.pool_apply_wrapper(csv_and_comchap_generate), (),
                                             {
                                                 'file_path': file_path,
                                                 'comskip_ini_path': comskip_ini_path,
@@ -747,7 +747,7 @@ def comtune_cli(argv):
         elif not common.is_from_dvr(common.find_input_info(f)):
             logger.info("Skipping %s because it does not look like a DVR", f)
         else:
-            pool.apply_async(comtune, (f,),
+            pool.apply_async(common.pool_apply_wrapper(comtune), (f,),
                              {'verbose': verbose,
                               'workdir': workdir,
                               'force': force,

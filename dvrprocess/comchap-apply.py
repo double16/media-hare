@@ -104,13 +104,16 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                     for filepath in filepath_group:
                         logger.info(f"{filepath}: Looking for commercials")
                         if not dry_run:
-                            results.append([filepath, pool.apply_async(comchap, (filepath, filepath),
-                                                                       {'verbose': dry_run, 'delete_edl': False,
-                                                                        'modify_video': not dry_run,
-                                                                        'delete_log': delete_log,
-                                                                        'delete_txt': delete_log,
-                                                                        'workdir': workdir,
-                                                                        'comskipini': comskip_ini})])
+                            results.append([filepath, pool.apply_async(
+                                common.pool_apply_wrapper(comchap),
+                                (filepath, filepath),
+                                {'verbose': dry_run, 'delete_edl': False,
+                                 'modify_video': not dry_run,
+                                 'delete_log': delete_log,
+                                 'delete_txt': delete_log,
+                                 'workdir': workdir,
+                                 'comskipini': comskip_ini})]
+                                           )
 
                     for result in results:
                         result[1].wait()

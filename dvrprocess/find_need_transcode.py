@@ -252,8 +252,6 @@ def need_transcode_generator(
         desired_video_codecs = config.get_global_config_option('video', 'codecs').split(',')
         desired_audio_codecs = config.get_global_config_option('audio', 'codecs').split(',')
         desired_frame_rate = config.get_global_config_frame_rate('post_process', 'frame_rate', None)
-    if host_home is None:
-        host_home = common.get_media_base()
 
     if media_paths:
         yield from _os_walk_media_generator(media_paths, desired_video_codecs=desired_video_codecs,
@@ -264,6 +262,9 @@ def need_transcode_generator(
         return
     if not plex_url:
         raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
+
+    if host_home is None:
+        host_home = common.get_media_base()
 
     file_names = set()
 

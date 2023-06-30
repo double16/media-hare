@@ -122,7 +122,8 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
         for i in range(processes):
             try:
                 tfi = next(generator)
-                results.append([tfi, pool.apply_async(profanity_filter, (tfi.host_file_path,),
+                results.append([tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter),
+                                                      (tfi.host_file_path,),
                                                       {'dry_run': dry_run, 'workdir': workdir})])
             except StopIteration:
                 break
@@ -191,8 +192,9 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
                 try:
                     tfi = next(generator)
-                    results.append([tfi, pool.apply_async(profanity_filter, (tfi.host_file_path,),
-                                                          {'dry_run': dry_run, 'workdir': workdir})])
+                    results.append(
+                        [tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter), (tfi.host_file_path,),
+                                               {'dry_run': dry_run, 'workdir': workdir})])
                 except StopIteration:
                     pass
 

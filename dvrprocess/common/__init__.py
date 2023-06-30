@@ -52,17 +52,24 @@ def get_media_base():
     return MEDIA_BASE
 
 
-def find_media_base():
-    paths = config.get_global_config_option('media', 'paths').split(',')
-    if len(paths) > 0:
-        for p in psutil.disk_partitions(all=True):
-            if os.path.isdir(os.path.join(p.mountpoint, paths[0])):
-                return p.mountpoint
-    for root in config.get_global_config_option('media', 'root').split(','):
-        root = root.replace('$HOME', os.environ['HOME'])
-        if os.path.isdir(root):
-            return root
-    raise FileNotFoundError('No media.root in config')
+def find_media_base() -> str:
+    try:
+        paths = config.get_global_config_option('media', 'paths').split(',')
+        if len(paths) > 0:
+            for p in psutil.disk_partitions(all=True):
+                if os.path.isdir(os.path.join(p.mountpoint, paths[0])):
+                    return p.mountpoint
+    except KeyError:
+        logger.debug('No media.paths in config')
+    try:
+        for root in config.get_global_config_option('media', 'root').split(','):
+            root = root.replace('$HOME', os.environ['HOME'])
+            if os.path.isdir(root):
+                return root
+    except KeyError:
+        logger.debug('No media.root in config')
+    logger.info('No valid media.root found, returning user home')
+    return os.environ['HOME']
 
 
 def get_media_paths(base=None):
@@ -921,13 +928,33 @@ def setup_debugging():
 
 
 def setup_logging():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
-    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s', level=logging.INFO)
 
 
 def setup_cli():
     setup_logging()
     setup_debugging()
+
+
+class PoolApplyWrapper:
+
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        setup_logging()
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        return self.func(*args, **kwargs)
+
+
+def pool_apply_wrapper(func):
+    """
+    On MacOS Python 3.8+, fork isn't used to create multi-processes, so configuration such as
+    logging isn't present.
+    :param func: the function to wrap
+    :return: func result
+    """
+    return PoolApplyWrapper(func)
 
 
 def remove_extension(path):
