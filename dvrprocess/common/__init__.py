@@ -940,9 +940,11 @@ class PoolApplyWrapper:
 
     def __init__(self, func):
         self.func = func
+        self.rootLogLevel = logging.getLogger().level
 
     def __call__(self, *args, **kwargs):
         setup_logging()
+        logging.getLogger().setLevel(self.rootLogLevel)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         return self.func(*args, **kwargs)
 
