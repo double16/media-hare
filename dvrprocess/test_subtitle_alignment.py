@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import tempfile
@@ -5,9 +6,10 @@ import unittest
 from pathlib import Path
 
 import pysrt
+import pytest
 from pysrt import SubRipFile
 from ass_parser import read_ass, write_ass, AssFile
-from common import s_to_ts
+from common import s_to_ts, subtitle
 
 import profanity_filter
 
@@ -19,28 +21,41 @@ class SubtitleAlignmentTest(unittest.TestCase):
         self.event_re = re.compile(r'Dialogue: \d,')
         self.alignment_re = re.compile(r',\d\d:\d\d:\d\d[.]\d\d\d,\d\d:\d\d:\d\d[.]\d\d\d,')
 
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+
     def _read_aligned_and_original_ass(self, aligned_filename: str, original_filename: str) -> (AssFile, AssFile):
         """
         Read the expected alignment. This is special because only event with start and end that have an SRT like
         timestamp will be used.
         :return: aligned, original
         """
-        aligned_fd, filtered_aligned_path = tempfile.mkstemp(suffix='.ssa')
-        original_fd, filtered_original_path = tempfile.mkstemp(suffix='.ssa')
-        with open(f"../fixtures/{aligned_filename}", "rt") as aligned_source:
-            with open(f"../fixtures/{original_filename}", "rt") as original_source:
-                original_lines = original_source.readlines()
-                for idx, line in enumerate(aligned_source.readlines()):
-                    if not self.event_re.search(line) or self.alignment_re.search(line):
-                        os.write(aligned_fd, bytes(line, 'utf8'))
-                        os.write(original_fd, bytes(original_lines[idx], 'utf8'))
+        suffix = original_filename.split('.')[-1]
+        aligned_fd, filtered_aligned_path = tempfile.mkstemp(suffix=suffix)
         os.close(aligned_fd)
+        original_fd, filtered_original_path = tempfile.mkstemp(suffix=suffix)
         os.close(original_fd)
+
+        aligned = subtitle.open_subtitle_file_facade(Path(aligned_filename))
+        aligned_dict = dict()
+        for event_idx, event in aligned.events():
+            aligned_dict[event.text().__hash__()] = event
+        aligned.write(Path(filtered_aligned_path))
+
+        original = subtitle.open_subtitle_file_facade(Path(original_filename))
+        original_dict = dict()
+        for event_idx, event in reversed(list(original.events())):
+            if event.text().__hash__() not in aligned_dict:
+
+                original_dict[event.text().__hash__()] = event
+        original.write(Path(filtered_original_path))
+
         aligned_subtitle = read_ass(Path(filtered_aligned_path))
         original_subtitle = read_ass(Path(filtered_original_path))
         os.remove(filtered_aligned_path)
         os.remove(filtered_original_path)
-        return aligned_subtitle, original_subtitle
+        return aligned, original_subtitle
 
     def _read_words_srt(self, filename: str) -> SubRipFile:
         subtitle = pysrt.open(f"../fixtures/{filename}")
@@ -87,6 +102,10 @@ class SubtitleAlignmentTest(unittest.TestCase):
     def test_house_s03e07(self):
         self._assert_alignment('house-s03e07-aligned.ssa', 'house-s03e07-original.ssa', 'house-s03e07-words.srt')
 
+    def test_meninblack(self):
+        self._caplog.set_level(logging.DEBUG)
+        self._assert_alignment('men-in-black-aligned.srt', 'men-in-black-original.srt', 'men-in-black-words.srt')
+
     def test_house_s03e07_output(self):
         original = read_ass(Path('../fixtures/house-s03e07-original.ssa'))
         words = self._read_words_srt('house-s03e07-words.srt')
@@ -104,3 +123,15 @@ class SubtitleAlignmentTest(unittest.TestCase):
         os.close(aligned_fd)
         write_ass(original, Path(aligned_path))
         print(f'bones-s02e11 alignment in {aligned_path}')
+
+    def test_meninblack_output(self):
+        self._caplog.set_level(logging.DEBUG)
+        original = pysrt.open(Path('../fixtures/men-in-black-original.srt'))
+        words = self._read_words_srt('men-in-black-words.srt')
+        profanity_filter.fix_subtitle_audio_alignment(original, words)
+        aligned_fd, aligned_path = tempfile.mkstemp(prefix='men-in-black-aligned', suffix='.srt')
+        os.close(aligned_fd)
+        original.save(Path(aligned_path), 'utf-8')
+        with open(aligned_path.replace('.srt', '.log'), 'w') as f:
+            f.write(self._caplog.text)
+        print(f'men-in-black alignment in {aligned_path}')
