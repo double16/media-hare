@@ -5,7 +5,7 @@ from typing import Union
 
 import pysrt
 from ass_parser import read_ass, write_ass, AssFile, AssEvent
-from pysrt import SubRipItem, SubRipFile
+from pysrt import SubRipItem, SubRipFile, SubRipTime
 
 from . import fatal, constants
 
@@ -197,13 +197,13 @@ class SubripElementFacade(SubtitleElementFacade):
         return self.event.start.ordinal
 
     def set_start(self, new_value: int):
-        self.event.start.from_ordinal(new_value)
+        self.event.start = SubRipTime.from_ordinal(new_value)
 
     def end(self) -> Union[int, None]:
         return self.event.end.ordinal
 
     def set_end(self, new_value: int):
-        self.event.end.from_ordinal(new_value)
+        self.event.end = SubRipTime.from_ordinal(new_value)
 
     def index(self) -> int:
         return self.event.index
@@ -232,6 +232,10 @@ class SubtitleFileFacade(ABC):
         """
         raise NotImplementedError()
 
+    @abstractmethod
+    def write(self, file: Path):
+        raise NotImplementedError()
+
 
 class AssFileFacade(SubtitleFileFacade):
 
@@ -247,6 +251,9 @@ class AssFileFacade(SubtitleFileFacade):
         event = AssEvent()
         self.file.events.insert(index, event)
         return AssElementFacade(event)
+
+    def write(self, file: Path):
+        write_ass(self.file, file)
 
 
 class SubripFileFacade(SubtitleFileFacade):
@@ -264,6 +271,9 @@ class SubripFileFacade(SubtitleFileFacade):
         self.file.insert(index, event)
         return SubripElementFacade(event)
 
+    def write(self, file: Path):
+        self.file.save(file, "utf-8")
+
 
 def new_subtitle_file_facade(subtitle: Union[AssFile, SubRipFile]) -> SubtitleFileFacade:
     if isinstance(subtitle, AssFile):
@@ -271,3 +281,12 @@ def new_subtitle_file_facade(subtitle: Union[AssFile, SubRipFile]) -> SubtitleFi
     elif isinstance(subtitle, SubRipFile):
         return SubripFileFacade(subtitle)
     raise NotImplementedError(subtitle.__class__)
+
+
+def open_subtitle_file_facade(file: Path) -> SubtitleFileFacade:
+    if file.match("*.srt"):
+        return new_subtitle_file_facade(pysrt.open(file))
+    elif file.match(".ass") or file.match("*.ssa"):
+        return new_subtitle_file_facade(read_ass(file))
+    else:
+        raise NotImplementedError("Unsupported subtitle %s" % file)
