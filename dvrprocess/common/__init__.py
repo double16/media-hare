@@ -909,7 +909,7 @@ def setup_debugging():
 
 
 def setup_logging():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s', level=logging.INFO)
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=logging.INFO)
 
 
 def setup_cli():
