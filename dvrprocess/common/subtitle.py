@@ -153,6 +153,8 @@ class SubtitleElementFacade(ABC):
         pass
 
     def move(self, new_start: int):
+        if new_start == self.start():
+            return
         d = self.duration()
         self.set_start(new_start)
         self.set_end(new_start + d)
@@ -249,6 +251,7 @@ class AssFileFacade(SubtitleFileFacade):
 
     def insert(self, index: int) -> SubtitleElementFacade:
         event = AssEvent()
+        event.style_name = 'Default'
         self.file.events.insert(index, event)
         return AssElementFacade(event)
 

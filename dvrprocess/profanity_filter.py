@@ -1282,7 +1282,7 @@ def find_subtitle_element_idx_ge(time_ordinals: list[int], start: float) -> int:
     raise ValueError
 
 
-SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(.*?\)|\{.*?}")
+SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(.*?\)|\{.*?}|<.*?>")
 SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&\"-]|[\u007F-\uFFFF]")
 SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
 SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:[\d.,]+\d)?)")
@@ -1394,12 +1394,28 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     words_start_end_ms = list(map(lambda e: (e.start.ordinal, e.end.ordinal), words_filtered))
 
     def get_transcription_info(event: subtitle.SubtitleElementFacade) -> Tuple[int, int, str]:
+        """
+        Get the transcription words and text for an event.
+        :param event:
+        :return: start word index (inclusive), end word index (inclusive), text assembled from the words
+        """
         start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
         end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
         while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
             end_word_idx -= 1
         return start_word_idx, end_word_idx, ' '.join(
             list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
+
+    def get_adjustment_stats():
+        adjustments = []
+        for event_idx, event in enumerate(events):
+            adjustments.append((abs(original_range_ms[event_idx][0] - event.start()),
+                                abs(original_range_ms[event_idx][1] - event.end())))
+        max_start_adjustment = max(list(map(lambda e: e[0], adjustments)))
+        ave_start_adjustment = average(list(map(lambda e: e[0], adjustments)))
+        max_end_adjustment = max(list(map(lambda e: e[1], adjustments)))
+        ave_end_adjustment = average(list(map(lambda e: e[1], adjustments)))
+        return adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment
 
     # target ranges that have been found, matches event index, (start from words, end from words) or None
     events = []
@@ -1416,9 +1432,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
     align_progress = progress.progress("subtitle alignment", 0, (len(min_fuzz_ratios) + 4) * passes)
 
-    changed = False
-
     for pass_num in range(1, passes + 1):
+        changed = False
         found_range_ms: list[Union[None, Tuple[int, int]]] = [None for _ in subtitle_facade.events()]
         words_claimed = [False for _ in range(len(words_filtered))]
         progress_base = (pass_num - 1) * (len(min_fuzz_ratios) + 4)
@@ -1431,6 +1446,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     if found_range_ms[event_idx] is not None:
                         continue
 
+                    # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
                     event_text = _subtitle_text_to_plain(event.text())
                     word_count = len(event_text.split())
                     if word_count < word_count_min:
@@ -1476,6 +1492,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                                      min_fuzz_ratio, event_text, start_search_ms, end_search_ms)
                         continue
                     else:
+                        # TODO: look for equal matches and pick earliest
                         match = fuzzprocess.extractOne(event_text, candidates, scorer=fuzz.ratio,
                                                        score_cutoff=min_fuzz_ratio)
                     if match:
@@ -1493,9 +1510,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         #     end_new_idx = current_end_idx + 1
                         #     logger.debug("keeping original range")
 
-                        logger.debug("match offset (%i, %i) r%i for '%s' is %s",
-                                     start_new_ms - event.start(), end_new_ms - event.end(), min_fuzz_ratio,
-                                     event.text(), match)
+                        logger.debug("match at (%i %+i, %i %+i) r%i for '%s' is %s",
+                                     start_new_ms, start_new_ms - event.start(), end_new_ms, end_new_ms - event.end(),
+                                     min_fuzz_ratio, event.text(), match)
                         found_range_ms[event_idx] = (start_new_ms, end_new_ms)
                         for word_idx in range(start_new_idx, end_new_idx):
                             words_claimed[word_idx] = True
@@ -1518,47 +1535,90 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             for word_idx, word in enumerate(words_filtered):
                 if not words_claimed[word_idx]:
                     unclaimed_word_events.append(word)
+            adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment = get_adjustment_stats()
 
-            # fix overlaps
             event_previous = None
             for event_idx, event in enumerate(events):
                 try:
                     matched = found_range_ms[event_idx] is not None
+                    previous_matched = found_range_ms[event_idx-1] is not None if event_idx > 0 else False
                     if event_previous is not None:
-                        if matched:
-                            if event_previous.start() > event.start():
-                                event_previous.set_start(event.start())
-                            if event_previous.end() > event.start():
-                                event_previous.set_end(event.start())
-                        elif len(_subtitle_text_to_plain(event.text())) == 0:
-                            # no text to match, make it relative to previous event
-                            start_new_ms = max(event_previous.end(), event.start() + (
-                                        event_previous.start() - original_range_ms[event_idx - 1][0]))
-                            logger.debug(
-                                "moving event %i %s relative to previous event, adjusted to %i", event_idx,
-                                event.text(),
-                                start_new_ms)
-                            event.move(start_new_ms)
-                        else:
-                            # try to start non-matches at the beginning of an unclaimed word
-                            unclaimed_word = next(filter(
-                                lambda e: e.start.ordinal >= event_previous.end(), unclaimed_word_events), None)
-                            logger.debug("event %i possible unclaimed word %s", event_idx, unclaimed_word)
-                            if unclaimed_word is not None:
-                                if event_idx + 1 < len(events):
-                                    end_limit_ms = events[event_idx + 1].start()
-                                else:
-                                    end_limit_ms = words_filtered[-1].end.ordinal
-                                capture_unclaimed_start = max(event_previous.end(),
-                                                              unclaimed_word.start.ordinal - max(0,
-                                                                                                 event.duration() - (
-                                                                                                         end_limit_ms - unclaimed_word.start.ordinal)))
-                                logger.debug(
-                                    "moving event %i %s to claim word %i, adjusted to %i", event_idx, event.text(),
-                                    unclaimed_word.start.ordinal, capture_unclaimed_start)
-                                event.move(capture_unclaimed_start)
-                            else:
+                        if not matched:
+                            event_moved = False
+                            if len(_subtitle_text_to_plain(event.text())) > 0:
+                                # try to start non-matches at the beginning of an unclaimed word
+                                # TODO: do not match short words
+                                unclaimed_word = next(filter(
+                                    lambda e: e.start.ordinal >= event_previous.end(), unclaimed_word_events), None)
+                                logger.debug("event %i possible unclaimed word %s", event_idx, unclaimed_word)
+                                if unclaimed_word is not None:
+                                    if event_idx + 1 < len(events):
+                                        end_limit_ms = events[event_idx + 1].start()
+                                    else:
+                                        end_limit_ms = words_filtered[-1].end.ordinal
+                                    capture_unclaimed_start = max(event_previous.end(),
+                                                                  unclaimed_word.start.ordinal - max(0,
+                                                                                                     event.duration() - (
+                                                                                                             end_limit_ms - unclaimed_word.start.ordinal)))
+                                    if abs(capture_unclaimed_start - event.start()) < ave_start_adjustment:
+                                        logger.debug(
+                                            "moving event %i '%s' to claim word %i, adjusted to %i %i", event_idx, event.text(),
+                                            unclaimed_word.start.ordinal, capture_unclaimed_start,
+                                            capture_unclaimed_start - event.start())
+                                        event.move(capture_unclaimed_start)
+                                        event_moved = True
+
+                            if not event_moved:
+                                # no text to match, make it relative to previous event
+                                event_previous_adj = event_previous.start() - original_range_ms[event_idx - 1][0]
+                                if abs(event_previous_adj) < ave_start_adjustment:
+                                    start_new_ms = max(event_previous.end(), event.start() + event_previous_adj)
+                                    if start_new_ms == event_previous.end():
+                                        logger.debug(
+                                            "moving event %i '%s' immediately after previous event (limited relative move), adjusted to %i %i",
+                                            event_idx,
+                                            event.text(),
+                                            event_previous.end(), event_previous.end() - event.start())
+                                    elif start_new_ms != event.start():
+                                        logger.debug(
+                                            "moving event %i '%s' relative to previous event, adjusted to %i %i",
+                                            event_idx,
+                                            event.text(),
+                                            start_new_ms, start_new_ms - event.start())
+                                    event.move(start_new_ms)
+
+                        # fix overlaps
+                        if event_previous.start() > event.start():
+                            logger.debug("event %i start overlaps %i start, %i > %i, matched? %r, previous matched? %r",
+                                         event_idx-1, event_idx, event_previous.start(), event.start(),
+                                         matched, previous_matched)
+                            if previous_matched:
                                 event.move(event_previous.end())
+                            elif event_idx > 1:
+                                event_previous.set_start(events[event_idx-2].end())
+                        if event_previous.end() > event.start():
+                            logger.debug("event %i end overlaps %i start, %i > %i, matched? %r, previous matched? %r",
+                                         event_idx-1, event_idx, event_previous.end(), event.start(),
+                                         matched, previous_matched)
+                            if previous_matched:
+                                event.move(event_previous.end())
+                            else:
+                                event_previous.set_end(event.start())
+
+                        # ensure words are marked as claimed
+                        try:
+                            start_word_idx, end_word_idx, _ = get_transcription_info(event)
+                            for word_idx in range(start_word_idx, end_word_idx + 1):
+                                words_claimed[word_idx] = True
+                                try:
+                                    unclaimed_word_events.remove(words_filtered[word_idx])
+                                    logger.debug("removed unclaimed word %s", words_filtered[word_idx])
+                                except ValueError:
+                                    # may have previously been removed
+                                    logger.debug("already removed unclaimed word %s", words_filtered[word_idx])
+                        except ValueError as ve:
+                            # may not have associated words
+                            logger.info("get_transcription_info failed for event %i '%s'", event_idx, event.text())
 
                 finally:
                     event_previous = event
@@ -1602,11 +1662,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                                 pass
 
                         if previous_ratio < current_ratio and previous_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                            logger.debug("appending to event %i to include %s, duration +%i ms", event_idx - 1,
+                            logger.debug("appending to event %i to include %s, duration %+i ms", event_idx - 1,
                                          unclaimed_text, previous_extended_duration)
                             previous_event.set_end(unclaimed_words[-1].end.ordinal)
                         elif current_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                            logger.debug("prepending to event %i to include %s, duration +%i ms", event_idx,
+                            logger.debug("prepending to event %i to include %s, duration %+i ms", event_idx,
                                          unclaimed_text, current_extended_duration)
                             event.set_start(unclaimed_words[0].start.ordinal)
                         else:
@@ -1661,49 +1721,45 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             align_progress.progress(progress_base + len(min_fuzz_ratios) + 4)
 
         # report
-        if logger.isEnabledFor(logging.DEBUG):
-            last_word_idx = -1
-            for event_idx, event in enumerate(events):
-                try:
-                    start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
-                    end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
-                except ValueError:
-                    continue
-                while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
-                    end_word_idx -= 1
+        last_word_idx = -1
+        for event_idx, event in enumerate(events):
+            try:
+                start_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.start())
+                end_word_idx = find_subtitle_element_idx_ge(words_start_ms, event.end())
+            except ValueError:
+                continue
+            while end_word_idx >= start_word_idx and words_start_end_ms[end_word_idx][1] > event.end():
+                end_word_idx -= 1
 
-                if 0 <= last_word_idx < (start_word_idx - 1):
-                    unclaimed_words = []
-                    unclaimed_start = sys.maxsize
-                    unclaimed_end = 0
-                    for i in range(last_word_idx, start_word_idx):
-                        if not words_claimed[i]:
-                            unclaimed_words.append(words_filtered[i].text)
-                            unclaimed_start = min(unclaimed_start, words_filtered[i].start.ordinal)
-                            unclaimed_end = max(unclaimed_end, words_filtered[i].end.ordinal)
-                    unclaimed_text = ' '.join(unclaimed_words)
+            if 0 <= last_word_idx < (start_word_idx - 1):
+                unclaimed_words = []
+                unclaimed_start = sys.maxsize
+                unclaimed_end = 0
+                for i in range(last_word_idx, start_word_idx):
+                    if not words_claimed[i]:
+                        unclaimed_words.append(words_filtered[i].text)
+                        unclaimed_start = min(unclaimed_start, words_filtered[i].start.ordinal)
+                        unclaimed_end = max(unclaimed_end, words_filtered[i].end.ordinal)
+                unclaimed_text = ' '.join(unclaimed_words)
+                if unclaimed_start < unclaimed_end:
                     logger.debug("unclaimed words (%i,%i) '%s'", unclaimed_start, unclaimed_end, unclaimed_text)
-                last_word_idx = end_word_idx
+            last_word_idx = end_word_idx
 
-                transcribed_text = ' '.join(
-                    list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
-                ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
-                matches = "matches" if found_range_ms[event_idx] is not None else "claims"
-                logger.debug("event %i (%i-%i %i ms was %i ms) '%s' %s words '%s' with ratio %i",
-                             event_idx,
-                             event.start(), event.end(), event.duration(), original_duration_ms[event_idx],
-                             event.text(), matches, transcribed_text, ratio)
+            transcribed_text = ' '.join(
+                list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
+            ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
+            matches = "matches" if found_range_ms[event_idx] is not None else "claims"
+            logger.log(logging.WARNING if ratio < 50 else logging.DEBUG,
+                       "event %i (%i%+i-%i%+i %i ms was %i ms) '%s' %s words '%s' with ratio %i",
+                       event_idx,
+                       event.start(), event.start() - original_range_ms[event_idx][0],
+                       event.end(), event.end() - original_range_ms[event_idx][1],
+                       event.duration(), original_duration_ms[event_idx],
+                       event.text(), matches, transcribed_text, ratio)
 
     # check stats for material changes
     # use these stats to determine if we adjusted enough to make a difference and return False if not
-    adjustments = []
-    for event_idx, event in enumerate(events):
-        adjustments.append((abs(original_range_ms[event_idx][0] - event.start()),
-                            abs(original_range_ms[event_idx][1] - event.end())))
-    max_start_adjustment = max(list(map(lambda e: e[0], adjustments)))
-    ave_start_adjustment = average(list(map(lambda e: e[0], adjustments)))
-    max_end_adjustment = max(list(map(lambda e: e[1], adjustments)))
-    ave_end_adjustment = average(list(map(lambda e: e[1], adjustments)))
+    adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment = get_adjustment_stats()
     logger.info(
         "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
         max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, len(new_events))
@@ -1711,7 +1767,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         if adjustment[0] > max_start_adjustment / 2 or adjustment[1] > max_end_adjustment / 2:
             logger.info("subtitle alignment stats: event %i adjustment (%i,%i) '%s'",
                         event_idx, adjustment[0], adjustment[1], events[event_idx].text())
-    if ave_start_adjustment == 0 and ave_end_adjustment == 0:
+    if ave_start_adjustment < 100 and ave_end_adjustment < 100:
         changed = False
 
     align_progress.stop()
