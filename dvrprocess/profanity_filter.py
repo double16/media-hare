@@ -1437,9 +1437,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         for event_idx, event in enumerate(events):
             adjustments.append((abs(original_range_ms[event_idx][0] - event.start()),
                                 abs(original_range_ms[event_idx][1] - event.end())))
-        max_start_adjustment = max(list(map(lambda e: e[0], adjustments)))
+        max_start_adjustment = max(map(lambda e: e[0], adjustments))
         ave_start_adjustment = average(list(map(lambda e: e[0], adjustments)))
-        max_end_adjustment = max(list(map(lambda e: e[1], adjustments)))
+        max_end_adjustment = max(map(lambda e: e[1], adjustments))
         ave_end_adjustment = average(list(map(lambda e: e[1], adjustments)))
         return adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment
 
@@ -1469,30 +1469,31 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
         # run through each ratio and iteratively find matches, using existing matches to narrow the search
         for min_fuzz_ratio_idx, min_fuzz_ratio in enumerate(min_fuzz_ratios):
+            # check if current ranges are good fits
+            for event_idx, event in enumerate(events):
+                if found_range_ms[event_idx] is not None:
+                    continue
+                try:
+                    current_start_idx, current_end_idx, current_text = get_transcription_info(event)
+                    event_text = _subtitle_text_to_plain(event.text())
+                    if len(event_text) > 3 and fuzz.ratio(event_text, current_text) >= 96:
+                        if not any(words_claimed[current_start_idx:current_end_idx + 1]):
+                            logger.debug("current match at (%i, %i) r%i for '%s' is '%s'",
+                                         event.start(), event.end(),
+                                         min_fuzz_ratio, event.text(), current_text)
+                            found_range_ms[event_idx] = (event.start(), event.end())
+                            for word_idx in range(current_start_idx, current_end_idx + 1):
+                                words_claimed[word_idx] = True
+                            continue
+                        else:
+                            logger.warn("current NOT matched, claimed otherwise at (%i, %i) r%i for '%s' is '%s'",
+                                        event.start(), event.end(),
+                                        min_fuzz_ratio, event.text(), current_text)
+                except ValueError:
+                    pass
+
             # single words match more things erroneously than longer strings of words
             for word_count_min in [8, 5, 3, 2, 1]:
-                # check if current ranges are good fits
-                for event_idx, event in enumerate(events):
-                    if found_range_ms[event_idx] is not None:
-                        continue
-                    try:
-                        current_start_idx, current_end_idx, current_text = get_transcription_info(event)
-                        event_text = _subtitle_text_to_plain(event.text())
-                        if len(event_text) > 3 and fuzz.ratio(event_text, current_text) >= 96:
-                            if not any(words_claimed[current_start_idx:current_end_idx + 1]):
-                                logger.debug("current match at (%i, %i) r%i for '%s' is '%s'",
-                                             event.start(), event.end(),
-                                             min_fuzz_ratio, event.text(), current_text)
-                                found_range_ms[event_idx] = (event.start(), event.end())
-                                for word_idx in range(current_start_idx, current_end_idx + 1):
-                                    words_claimed[word_idx] = True
-                                continue
-                            else:
-                                logger.warn("current NOT matched, claimed otherwise at (%i, %i) r%i for '%s' is '%s'",
-                                            event.start(), event.end(),
-                                            min_fuzz_ratio, event.text(), current_text)
-                    except ValueError:
-                        pass
 
                 for event_idx, event in enumerate(events):
                     if found_range_ms[event_idx] is not None:
@@ -1577,205 +1578,204 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         logger.debug("matched count %i/%i", len(list(filter(lambda e: e is not None, found_range_ms))),
                      len(found_range_ms))
 
-        if changed:
-            unclaimed_word_events = []
-            for word_idx, word in enumerate(words_filtered):
-                if not words_claimed[word_idx]:
-                    unclaimed_word_events.append((word_idx, word))
-            adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment = get_adjustment_stats()
+        unclaimed_word_events = []
+        for word_idx, word in enumerate(words_filtered):
+            if not words_claimed[word_idx]:
+                unclaimed_word_events.append((word_idx, word))
+        adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment = get_adjustment_stats()
 
-            event_previous = None
-            for event_idx, event in enumerate(events):
-                try:
-                    matched = found_range_ms[event_idx] is not None
-                    previous_matched = found_range_ms[event_idx - 1] is not None if event_idx > 0 else False
-                    if event_previous is not None:
-                        if not matched:
-                            event_moved = False
-                            if len(_subtitle_text_to_plain(event.text())) > 0:
-                                # try to start non-matches at the beginning of an unclaimed word
-                                # TODO: do not match short words
-                                unclaimed_word = next(filter(
-                                    lambda e: e[1].start.ordinal >= event_previous.end(), unclaimed_word_events), None)
-                                if unclaimed_word is not None and len(unclaimed_word[1].text) > 3:
-                                    logger.debug("event %i possible unclaimed word %s", event_idx, unclaimed_word[1])
-                                    if event_idx + 1 < len(events):
-                                        end_limit_ms = events[event_idx + 1].start()
-                                    else:
-                                        end_limit_ms = words_filtered[-1].end.ordinal
-                                    capture_unclaimed_start = max(event_previous.end(),
-                                                                  unclaimed_word[1].start.ordinal - max(0,
-                                                                                                        event.duration() - (
-                                                                                                                end_limit_ms -
-                                                                                                                unclaimed_word[
-                                                                                                                    1].start.ordinal)))
-                                    if abs(capture_unclaimed_start - event.start()) < ave_start_adjustment:
-                                        logger.debug(
-                                            "moving event %i '%s' to claim word %i, adjusted to %s %+i", event_idx,
-                                            event.text(),
-                                            unclaimed_word[1].start.ordinal, common.ms_to_ts(capture_unclaimed_start),
-                                            capture_unclaimed_start - event.start())
-                                        event.move(capture_unclaimed_start)
-                                        words_claimed[unclaimed_word[0]] = True
-                                        event_moved = True
+        event_previous = None
+        for event_idx, event in enumerate(events):
+            try:
+                matched = found_range_ms[event_idx] is not None
+                previous_matched = found_range_ms[event_idx - 1] is not None if event_idx > 0 else False
+                if event_previous is not None:
+                    if not matched:
+                        event_moved = False
+                        if len(_subtitle_text_to_plain(event.text())) > 0:
+                            # try to start non-matches at the beginning of an unclaimed word
+                            # TODO: do not match short words
+                            unclaimed_word = next(filter(
+                                lambda e: e[1].start.ordinal >= event_previous.end(), unclaimed_word_events), None)
+                            if unclaimed_word is not None and len(unclaimed_word[1].text) > 3:
+                                logger.debug("event %i possible unclaimed word %s", event_idx, unclaimed_word[1])
+                                if event_idx + 1 < len(events):
+                                    end_limit_ms = events[event_idx + 1].start()
+                                else:
+                                    end_limit_ms = words_filtered[-1].end.ordinal
+                                capture_unclaimed_start = max(event_previous.end(),
+                                                              unclaimed_word[1].start.ordinal - max(0,
+                                                                                                    event.duration() - (
+                                                                                                            end_limit_ms -
+                                                                                                            unclaimed_word[
+                                                                                                                1].start.ordinal)))
+                                if abs(capture_unclaimed_start - event.start()) < ave_start_adjustment:
+                                    logger.debug(
+                                        "moving event %i '%s' to claim word %i, adjusted to %s %+i", event_idx,
+                                        event.text(),
+                                        unclaimed_word[1].start.ordinal, common.ms_to_ts(capture_unclaimed_start),
+                                        capture_unclaimed_start - event.start())
+                                    event.move(capture_unclaimed_start)
+                                    words_claimed[unclaimed_word[0]] = True
+                                    event_moved = True
 
-                            if not event_moved:
-                                # no text to match, make it relative to previous event
-                                event_previous_adj = event_previous.start() - original_range_ms[event_idx - 1][0]
-                                if abs(event_previous_adj) < ave_start_adjustment:
-                                    start_new_ms = max(event_previous.end(), event.start() + event_previous_adj)
-                                    if start_new_ms == event_previous.end():
-                                        logger.debug(
-                                            "moving event %i '%s' immediately after previous event (limited relative move), adjusted to %s %+i",
-                                            event_idx,
-                                            event.text(),
-                                            common.ms_to_ts(event_previous.end()), event_previous.end() - event.start())
-                                    elif start_new_ms != event.start():
-                                        logger.debug(
-                                            "moving event %i '%s' relative to previous event, adjusted to %s %+i",
-                                            event_idx,
-                                            event.text(),
-                                            common.ms_to_ts(start_new_ms), start_new_ms - event.start())
-                                    event.move(start_new_ms)
+                        if not event_moved:
+                            # no text to match, make it relative to previous event
+                            event_previous_adj = event_previous.start() - original_range_ms[event_idx - 1][0]
+                            if abs(event_previous_adj) < ave_start_adjustment:
+                                start_new_ms = max(event_previous.end(), event.start() + event_previous_adj)
+                                if start_new_ms == event_previous.end():
+                                    logger.debug(
+                                        "moving event %i '%s' immediately after previous event (limited relative move), adjusted to %s %+i",
+                                        event_idx,
+                                        event.text(),
+                                        common.ms_to_ts(event_previous.end()), event_previous.end() - event.start())
+                                elif start_new_ms != event.start():
+                                    logger.debug(
+                                        "moving event %i '%s' relative to previous event, adjusted to %s %+i",
+                                        event_idx,
+                                        event.text(),
+                                        common.ms_to_ts(start_new_ms), start_new_ms - event.start())
+                                event.move(start_new_ms)
 
-                        # fix overlaps
-                        if event_previous.start() > event.start():
-                            logger.debug("event %i start overlaps %i start, %i > %i, matched? %r, previous matched? %r",
-                                         event_idx - 1, event_idx, event_previous.start(), event.start(),
-                                         matched, previous_matched)
-                            if previous_matched:
-                                event.move(event_previous.end())
-                            elif event_idx > 1:
-                                event_previous.set_start(events[event_idx - 2].end())
-                        if event_previous.end() > event.start():
-                            logger.debug("event %i end overlaps %i start, %i > %i, matched? %r, previous matched? %r",
-                                         event_idx - 1, event_idx, event_previous.end(), event.start(),
-                                         matched, previous_matched)
-                            if previous_matched:
-                                event.move(event_previous.end())
-                            else:
-                                event_previous.set_end(event.start())
-
-                        # ensure words are marked as claimed
-                        try:
-                            start_word_idx, end_word_idx, _ = get_transcription_info(event)
-                            for word_idx in range(start_word_idx, end_word_idx + 1):
-                                words_claimed[word_idx] = True
-                                try:
-                                    unclaimed_word_events.remove((word_idx, words_filtered[word_idx]))
-                                    logger.debug("removed unclaimed word %s", words_filtered[word_idx])
-                                except ValueError:
-                                    # may have previously been removed
-                                    logger.debug("already removed unclaimed word %s", words_filtered[word_idx])
-                        except ValueError as ve:
-                            # may not have associated words
-                            logger.info("get_transcription_info failed for event %i '%s'", event_idx, event.text())
-
-                finally:
-                    event_previous = event
-
-            align_progress.progress(progress_base + len(min_fuzz_ratios) + 1)
-
-            # collect stray words into existing events
-            # collect large missing events, but insert later so we don't have to fix up arrays containing info
-            new_events = []
-            last_word_idx = -1
-            for event_idx, event in enumerate(events):
-                try:
-                    start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
-                except ValueError:
-                    continue
-                previous_event = None
-                if event_idx > 0:
-                    previous_event = events[event_idx - 1]
-
-                if 0 <= last_word_idx < (start_word_idx - 1):
-                    unclaimed_words = []
-                    for i in range(last_word_idx, start_word_idx):
-                        if not words_claimed[i]:
-                            unclaimed_words.append(words_filtered[i])
-                    if len(unclaimed_words) > 0:
-                        unclaimed_text = ' '.join(map(lambda e: e.text, unclaimed_words))
-
-                        current_ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
-                        current_extended_duration = event.start() - unclaimed_words[0].start.ordinal
-
-                        previous_ratio = 101
-                        previous_extended_duration = None
-                        if event_idx > 0:
-                            try:
-                                previous_start_word_idx, previous_end_word_idx, previous_transcribed_text = get_transcription_info(
-                                    previous_event)
-                                previous_ratio = fuzz.ratio(_subtitle_text_to_plain(previous_event.text()),
-                                                            previous_transcribed_text)
-                                previous_extended_duration = unclaimed_words[-1].end.ordinal - previous_event.end()
-                            except ValueError:
-                                pass
-
-                        if previous_ratio < current_ratio and previous_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                            logger.debug("appending to event %i to include %s, duration %+i ms", event_idx - 1,
-                                         unclaimed_text, previous_extended_duration)
-                            previous_event.set_end(unclaimed_words[-1].end.ordinal)
-                        elif current_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                            logger.debug("prepending to event %i to include %s, duration %+i ms", event_idx,
-                                         unclaimed_text, current_extended_duration)
-                            event.set_start(unclaimed_words[0].start.ordinal)
+                    # fix overlaps
+                    if event_previous.start() > event.start():
+                        logger.debug("event %i start overlaps %i start, %i > %i, matched? %r, previous matched? %r",
+                                     event_idx - 1, event_idx, event_previous.start(), event.start(),
+                                     matched, previous_matched)
+                        if previous_matched:
+                            event.move(event_previous.end())
+                        elif event_idx > 1:
+                            event_previous.set_start(events[event_idx - 2].end())
+                    if event_previous.end() > event.start():
+                        logger.debug("event %i end overlaps %i start, %i > %i, matched? %r, previous matched? %r",
+                                     event_idx - 1, event_idx, event_previous.end(), event.start(),
+                                     matched, previous_matched)
+                        if previous_matched:
+                            event.move(event_previous.end())
                         else:
-                            new_events.insert(0, (event_idx, unclaimed_words))
+                            event_previous.set_end(event.start())
 
-                last_word_idx = end_word_idx
+                    # ensure words are marked as claimed
+                    try:
+                        start_word_idx, end_word_idx, _ = get_transcription_info(event)
+                        for word_idx in range(start_word_idx, end_word_idx + 1):
+                            words_claimed[word_idx] = True
+                            try:
+                                unclaimed_word_events.remove((word_idx, words_filtered[word_idx]))
+                                logger.debug("removed unclaimed word %s", words_filtered[word_idx])
+                            except ValueError:
+                                # may have previously been removed
+                                logger.debug("already removed unclaimed word %s", words_filtered[word_idx])
+                    except ValueError as ve:
+                        # may not have associated words
+                        logger.info("get_transcription_info failed for event %i '%s'", event_idx, event.text())
 
-            align_progress.progress(progress_base + len(min_fuzz_ratios) + 2)
+            finally:
+                event_previous = event
 
-            if len(new_events) > 0:
-                for new_event in new_events:
-                    insert_idx = new_event[0]
-                    unclaimed_words = new_event[1]
+        align_progress.progress(progress_base + len(min_fuzz_ratios) + 1)
 
-                    for sentence in srt_words_to_sentences(unclaimed_words):
-                        event = subtitle_facade.insert(insert_idx)
-                        event.set_start(sentence.start.ordinal)
-                        event.set_end(sentence.end.ordinal)
-                        event.set_text(sentence.text)
-                        events.insert(insert_idx, event)
-                        logger.debug("inserted new event at %i %s", insert_idx, str(event))
-                        new_events_count += 1
-                        found_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
-                        original_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
-                        original_duration_ms.insert(insert_idx, sentence.end.ordinal - sentence.start.ordinal)
-                        inserted_event.insert(insert_idx, True)
-                        insert_idx += 1
+        # collect stray words into existing events
+        # collect large missing events, but insert later so we don't have to fix up arrays containing info
+        new_events = []
+        last_word_idx = -1
+        for event_idx, event in enumerate(events):
+            try:
+                start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
+            except ValueError:
+                continue
+            previous_event = None
+            if event_idx > 0:
+                previous_event = events[event_idx - 1]
 
-                # ensure monotonically increasing indicies
-                for event_idx, event in enumerate(events):
-                    event.set_index(event_idx + 1)
+            if 0 <= last_word_idx < (start_word_idx - 1):
+                unclaimed_words = []
+                for i in range(last_word_idx, start_word_idx):
+                    if not words_claimed[i]:
+                        unclaimed_words.append(words_filtered[i])
+                if len(unclaimed_words) > 0:
+                    unclaimed_text = ' '.join(map(lambda e: e.text, unclaimed_words))
 
-            align_progress.progress(progress_base + len(min_fuzz_ratios) + 3)
+                    current_ratio = fuzz.ratio(_subtitle_text_to_plain(event.text()), transcribed_text)
+                    current_extended_duration = event.start() - unclaimed_words[0].start.ordinal
 
-            # extend durations based on original, not to overlap
-            for event_idx, event in enumerate(events[:-1]):
-                if inserted_event[event_idx]:
-                    continue
-                missing_duration = original_duration_ms[event_idx] - event.duration()
-                if missing_duration > 0:
-                    # we've already tried to capture words, now fill in space at end and then beginning
-                    end_space = events[event_idx + 1].start() - event.end()
+                    previous_ratio = 101
+                    previous_extended_duration = None
                     if event_idx > 0:
-                        start_space = event.start() - events[event_idx - 1].end()
+                        try:
+                            previous_start_word_idx, previous_end_word_idx, previous_transcribed_text = get_transcription_info(
+                                previous_event)
+                            previous_ratio = fuzz.ratio(_subtitle_text_to_plain(previous_event.text()),
+                                                        previous_transcribed_text)
+                            previous_extended_duration = unclaimed_words[-1].end.ordinal - previous_event.end()
+                        except ValueError:
+                            pass
+
+                    if previous_ratio < current_ratio and previous_extended_duration <= unclaimed_word_capture_duration_max_ms:
+                        logger.debug("appending to event %i to include %s, duration %+i ms", event_idx - 1,
+                                     unclaimed_text, previous_extended_duration)
+                        previous_event.set_end(unclaimed_words[-1].end.ordinal)
+                    elif current_extended_duration <= unclaimed_word_capture_duration_max_ms:
+                        logger.debug("prepending to event %i to include %s, duration %+i ms", event_idx,
+                                     unclaimed_text, current_extended_duration)
+                        event.set_start(unclaimed_words[0].start.ordinal)
                     else:
-                        start_space = 0
+                        new_events.insert(0, (event_idx, unclaimed_words))
 
-                    if end_space > 0:
-                        end_pad = min(missing_duration, end_space)
-                        event.set_end(event.end() + end_pad)
-                        missing_duration -= end_pad
-                        logger.debug("event %i '%s' padded end %+i", event_idx, event.text(), end_pad)
-                    if missing_duration > 0 and start_space > 0:
-                        start_pad = min(missing_duration, start_space)
-                        event.set_start(event.start() - start_pad)
-                        logger.debug("event %i '%s' padded start %+i", event_idx, event.text(), start_pad)
+            last_word_idx = end_word_idx
 
-            align_progress.progress(progress_base + len(min_fuzz_ratios) + 4)
+        align_progress.progress(progress_base + len(min_fuzz_ratios) + 2)
+
+        if len(new_events) > 0:
+            for new_event in new_events:
+                insert_idx = new_event[0]
+                unclaimed_words = new_event[1]
+
+                for sentence in srt_words_to_sentences(unclaimed_words):
+                    event = subtitle_facade.insert(insert_idx)
+                    event.set_start(sentence.start.ordinal)
+                    event.set_end(sentence.end.ordinal)
+                    event.set_text(sentence.text)
+                    events.insert(insert_idx, event)
+                    logger.debug("inserted new event at %i %s", insert_idx, str(event))
+                    new_events_count += 1
+                    found_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
+                    original_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
+                    original_duration_ms.insert(insert_idx, sentence.end.ordinal - sentence.start.ordinal)
+                    inserted_event.insert(insert_idx, True)
+                    insert_idx += 1
+
+            # ensure monotonically increasing indicies
+            for event_idx, event in enumerate(events):
+                event.set_index(event_idx + 1)
+
+        align_progress.progress(progress_base + len(min_fuzz_ratios) + 3)
+
+        # extend durations based on original, not to overlap
+        for event_idx, event in enumerate(events[:-1]):
+            if inserted_event[event_idx]:
+                continue
+            missing_duration = original_duration_ms[event_idx] - event.duration()
+            if missing_duration > 0:
+                # we've already tried to capture words, now fill in space at end and then beginning
+                end_space = events[event_idx + 1].start() - event.end()
+                if event_idx > 0:
+                    start_space = event.start() - events[event_idx - 1].end()
+                else:
+                    start_space = 0
+
+                if end_space > 0:
+                    end_pad = min(missing_duration, end_space)
+                    event.set_end(event.end() + end_pad)
+                    missing_duration -= end_pad
+                    logger.debug("event %i '%s' padded end %+i", event_idx, event.text(), end_pad)
+                if missing_duration > 0 and start_space > 0:
+                    start_pad = min(missing_duration, start_space)
+                    event.set_start(event.start() - start_pad)
+                    logger.debug("event %i '%s' padded start %+i", event_idx, event.text(), start_pad)
+
+        align_progress.progress(progress_base + len(min_fuzz_ratios) + 4)
 
         # report
         last_word_idx = -1
@@ -1819,7 +1819,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment = get_adjustment_stats()
     logger.info(
         "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
-        max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, len(new_events))
+        max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, new_events_count)
     for event_idx, adjustment in enumerate(adjustments):
         if adjustment[0] > max_start_adjustment / 2 or adjustment[1] > max_end_adjustment / 2:
             logger.warning("subtitle alignment stats: event %i adjustment (%i,%i) '%s'",
