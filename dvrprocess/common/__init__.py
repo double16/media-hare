@@ -780,6 +780,10 @@ def s_to_ts(t: float) -> str:
     return f"{hour:02d}:{minute:02d}:{second:06.3f}"
 
 
+def ms_to_ts(t: float) -> str:
+    return s_to_ts(t / 1000.0)
+
+
 def write_mkv_tags(tags, filepath) -> None:
     """
     Writes the dictionary to an XML file for use my mkvpropedit.
