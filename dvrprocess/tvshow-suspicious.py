@@ -26,6 +26,8 @@ Usage: {sys.argv[0]} -u http://127.0.0.1:32400 -o episodes-suspicious.csv
 
 def read_from_api(plex_url, limit=None):
     result = {}
+    # set of tuple of (title, season, episode)
+    episodes_by_show = set() 
     sections_response = requests.get(f'{plex_url}/library/sections')
     sections = list(
         filter(lambda el: el.tag == 'Directory' and el.attrib['type'] == 'show',
@@ -51,16 +53,29 @@ def read_from_api(plex_url, limit=None):
             for episode in episodes:
                 episode_num = int(episode.attrib["index"])
                 season = int(episode.attrib["parentIndex"])
+
+                # season 0 are specials, hard to tell what's suspicious
                 if season == 0:
                     continue
+
                 duration = episode.attrib.get("duration")
                 if duration is None:
                     continue
 
+                # check for suspicious duration
                 duration = int(int(duration) / 60000)
-                if duration >= 18 and duration < 180:
+                if duration >= 119:
+                    # episodes over 120 are usually specials, hard to tell what's suspicious
                     continue
 
+                if duration >= 18:
+                    continue
+
+                key = (show.attrib["title"], season, episode_num)
+                if key in episodes_by_show:
+                    continue
+                episodes_by_show.add(key)
+    
                 video_codec = "?"
                 audio_codec = "?"
                 video_resolution = "?"
