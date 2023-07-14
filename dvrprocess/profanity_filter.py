@@ -1358,6 +1358,7 @@ def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
     """
     Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
     sentences a collection of words.
+    # TODO: Add capitalization and punctuation.
     """
     chars_per_sentence = 40
     linebreaks_per_sentence = 2
@@ -1457,6 +1458,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
     align_progress = progress.progress("subtitle alignment", 0, (len(min_fuzz_ratios) + 4) * passes)
 
+    # TODO: original event that is too quiet to be picked up by transcribing
+    # TODO: omitted event that transcribing picked up that should be combined with existing event
     for pass_num in range(1, passes + 1):
         changed = False
         found_range_ms: list[Union[None, Tuple[int, int]]] = [None for _ in subtitle_facade.events()]
@@ -1474,38 +1477,39 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     event_text = _subtitle_text_to_plain(event.text())
                     if len(event_text) > 3 and fuzz.ratio(event_text, current_text) >= 96:
                         if not any(words_claimed[current_start_idx:current_end_idx + 1]):
-                            logger.debug("current match at (%i, %i) r%i for '%s' is '%s'",
-                                         event.start(), event.end(),
+                            logger.debug("current match %i at (%s, %s) r%i for '%s' is '%s'",
+                                         event_idx, common.ms_to_ts(event.start()), common.ms_to_ts(event.end()),
                                          min_fuzz_ratio, event.text(), current_text)
                             found_range_ms[event_idx] = (event.start(), event.end())
                             for word_idx in range(current_start_idx, current_end_idx + 1):
                                 words_claimed[word_idx] = True
-                            continue
                         else:
-                            logger.warn("current NOT matched, claimed otherwise at (%i, %i) r%i for '%s' is '%s'",
-                                        event.start(), event.end(),
-                                        min_fuzz_ratio, event.text(), current_text)
+                            logger.warning("current NOT matched %i, claimed otherwise at (%s, %s) r%i for '%s' is '%s'",
+                                           event_idx, common.ms_to_ts(event.start()), common.ms_to_ts(event.end()),
+                                           min_fuzz_ratio, event.text(), current_text)
                 except ValueError:
                     pass
 
             # single words match more things erroneously than longer strings of words
+            match_attempt = [False for _ in range(0, len(events))]
             for word_count_min in [8, 5, 3, 2, 1]:
-
                 for event_idx, event in enumerate(events):
-                    if found_range_ms[event_idx] is not None:
+                    if match_attempt[event_idx] or found_range_ms[event_idx] is not None:
                         continue
 
                     # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
+                    # TODO: permutations for slang short hand, i.e. "outta" for "out of"
                     event_text = _subtitle_text_to_plain(event.text())
                     word_count = len(event_text.split())
                     if word_count < word_count_min:
                         continue
 
+                    match_attempt[event_idx] = True
                     word_counts = range(floor(word_count * (1.0 - word_count_fuzz_pct)),
                                         ceil(word_count * (1.0 + word_count_fuzz_pct)) + 1)
-                    logger.debug("Matching sentence from event %s '%s', (%i,%i) words", event_idx, event_text,
-                                 word_counts.start,
-                                 word_counts.stop)
+                    logger.debug("Matching sentence from event %i (%s,%s) '%s', (%i,%i) words",
+                                 event_idx, common.ms_to_ts(event.start()), common.ms_to_ts(event.end()), event_text,
+                                 word_counts.start, word_counts.stop)
                     # ignore ranges that have already been matched
                     start_search_ms = max(event.start() - max_offset_ms,
                                           max(map(lambda e: e[1],
@@ -1522,7 +1526,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         continue
                     candidates = dict()
                     for idx in range(start_idx, end_idx + 1):
-                        logger.debug("Enumerating candidate sentences from word %s", idx)
+                        logger.debug("Enumerating candidate sentences from word %i %s %s", idx,
+                                     common.ms_to_ts(words_filtered[idx].start.ordinal), words_filtered[idx].text)
                         for c in word_counts:
                             key = (idx, idx + c)
                             if key[1] > len(words_filtered):
@@ -1547,6 +1552,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         matches = fuzzprocess.extractBests(event_text, candidates, scorer=fuzz.ratio,
                                                            score_cutoff=min_fuzz_ratio)
                     if matches:
+                        # TODO: fix: similar sentences in which the later matches better with the former transcription
                         matches.sort(reverse=True, key=lambda e: [e[1], e[2][0]])
                         logger.debug("Sorted matches: %s", matches)
                         match = matches[0]
@@ -1734,7 +1740,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     event.set_end(sentence.end.ordinal)
                     event.set_text(sentence.text)
                     events.insert(insert_idx, event)
-                    logger.debug("inserted new event at %i %s", insert_idx, str(event))
+                    logger.debug("inserted new event at %i (%s,%s) '%s'", insert_idx,
+                                 common.ms_to_ts(event.start()), common.ms_to_ts(event.end()), event.text())
                     new_events_count += 1
                     found_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
                     original_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
