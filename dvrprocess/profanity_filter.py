@@ -1781,6 +1781,21 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     start_pad = min(missing_duration, start_space)
                     event.set_start(event.start() - start_pad)
                     logger.debug("event %i '%s' padded start %+i", event_idx, event.text(), start_pad)
+            # expand based on original range
+            if original_range_ms[event_idx][0] < event.start():
+                if event_idx == 0:
+                    event.set_start(original_range_ms[event_idx][0])
+                    logger.debug("event %i '%s' extended up to original start %s",
+                                 event_idx, event.text(), common.ms_to_ts(event.start()))
+                elif events[event_idx-1].end() < original_range_ms[event_idx][0]:
+                    event.set_start(max(events[event_idx-1].end(), original_range_ms[event_idx][0]))
+                    logger.debug("event %i '%s' extended up to original start %s",
+                                 event_idx, event.text(), common.ms_to_ts(event.start()))
+            if original_range_ms[event_idx][1] > event.end():
+                if events[event_idx+1].start() > original_range_ms[event_idx][1]:
+                    event.set_end(min(events[event_idx+1].start(), original_range_ms[event_idx][1]))
+                    logger.debug("event %i '%s' extended up to original end %s",
+                                 event_idx, event.text(), common.ms_to_ts(event.end()))
 
         align_progress.progress(progress_base + len(min_fuzz_ratios) + 4)
 
