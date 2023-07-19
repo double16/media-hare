@@ -79,6 +79,7 @@ def _ffprobe_version_parser(path):
 
 ffprobe = SubprocessProcInvoker('ffprobe', _ffprobe_version_parser, ffmpeg.version_target)
 
+# TODO: add progress, see ffmpeg for example
 ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
     re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[
         1]))
@@ -126,6 +127,7 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
 subtitle_edit = SubtitleEditProcInvoker()
 
 
+# TODO: add progress, see ffmpeg for example
 class ComskipProcInvoker(SubprocessProcInvoker):
     def __init__(self):
         super().__init__('comskip')
