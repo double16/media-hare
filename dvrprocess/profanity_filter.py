@@ -111,10 +111,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
 
     # Temporary File Name for transcoding, we want to keep on the same filesystem as the input
     temp_base = os.path.join(workdir, f".~{'.'.join(base_filename.split('.')[0:-1])}")
-    common.TEMPFILENAME = os.path.join(dir_filename,
+    temp_filename = os.path.join(dir_filename,
                                        f".~{'.'.join(base_filename.split('.')[0:-1])}.transcoded.{input_type}")
     # Hides filename from user UI and Dropbox
-    common.HIDDEN_FILENAME = f"{dir_filename}/.~{base_filename}"
+    hidden_filename = f"{dir_filename}/.~{base_filename}"
     if debug:
         output_filename = os.path.join(dir_filename,
                                        f"{'.'.join(base_filename.split('.')[0:-1])}.filtered.{input_type}")
@@ -624,7 +624,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     # http://stackoverflow.com/questions/49686244/ddg#50262835
     arguments.extend(['-max_muxing_queue_size', '1024'])
 
-    arguments.append(common.TEMPFILENAME)
+    arguments.append(temp_filename)
 
     if dry_run:
         logger.info(tools.ffmpeg.array_as_command(arguments))
@@ -634,38 +634,38 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     if common.assert_not_transcoding(input_file, exit=False) != 0:
         return CMD_RESULT_ERROR
     try:
-        Path(common.TEMPFILENAME).touch(mode=0o664, exist_ok=False)
+        Path(temp_filename).touch(mode=0o664, exist_ok=False)
     except FileExistsError:
         return CMD_RESULT_ERROR
 
-    logger.info(f"Starting filtering of {filename} to {common.TEMPFILENAME}")
+    logger.info(f"Starting filtering of {filename} to {temp_filename}")
     logger.info(tools.ffmpeg.array_as_command(arguments))
     tools.ffmpeg.run(arguments, check=True)
 
-    if os.stat(common.TEMPFILENAME).st_size == 0:
-        logger.fatal(f"Output at {common.TEMPFILENAME} is zero length")
+    if os.stat(temp_filename).st_size == 0:
+        logger.fatal(f"Output at {temp_filename} is zero length")
         return CMD_RESULT_ERROR
 
     #
     # Encode Done. Performing Cleanup
     #
-    logger.info(f"Finished filtering of {filename} to {common.TEMPFILENAME}")
+    logger.info(f"Finished filtering of {filename} to {temp_filename}")
 
-    common.match_owner_and_perm(target_path=common.TEMPFILENAME, source_path=filename)
+    common.match_owner_and_perm(target_path=temp_filename, source_path=filename)
 
     # Hide original file in case OUTPUT_TYPE is the same as input
     if not debug:
-        os.replace(filename, common.HIDDEN_FILENAME)
+        os.replace(filename, hidden_filename)
     try:
-        os.replace(common.TEMPFILENAME, output_filename)
+        os.replace(temp_filename, output_filename)
     except OSError:
         # Put original file back as fall back
-        os.replace(common.HIDDEN_FILENAME, filename)
-        logger.fatal(f"Failed to move converted file: {common.TEMPFILENAME}")
+        os.replace(hidden_filename, filename)
+        logger.fatal(f"Failed to move converted file: {temp_filename}")
         return CMD_RESULT_ERROR
 
     if not keep and not debug:
-        os.remove(common.HIDDEN_FILENAME)
+        os.remove(hidden_filename)
 
     logger.info("Filtering done")
 

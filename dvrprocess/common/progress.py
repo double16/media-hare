@@ -25,6 +25,9 @@ class Progress(object):
         """ The last time we logged, used to keep the noise down. """
         self._last_report_time: Union[None, float] = None
 
+    def get_last_progress_time(self) -> Union[None, float]:
+        return self._last_report_time
+
     def update_reporting(self) -> bool:
         """
         Updates internal stats before reporting. Always call this and check the return
@@ -52,6 +55,9 @@ class Progress(object):
         if self.eta is None:
             return "??:??"
         return self.human_duration(max(0.0, self.eta - time.time()))
+
+    def elapsed_human_duration(self) -> str:
+        return self.human_duration(max(0.0, time.time() - self._start_time))
 
     def start(self, start: int, end: int, msg: Union[None, str] = None) -> None:
         self._start = start
@@ -96,10 +102,9 @@ class ProgressLog(Progress):
 
     def stop(self, msg: Union[str, None] = None) -> None:
         super().stop(msg)
-        duration = self.human_duration(max(0.0, time.time() - self._start_time))
         if msg is None:
             msg = "stopped"
-        _logger.info("%s: %s, elapsed %s", self.task, msg, duration)
+        _logger.info("%s: %s, elapsed %s", self.task, msg, self.elapsed_human_duration())
 
     def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None, end: Union[int, None] = None) -> None:
         super().progress(position, msg, start, end)
@@ -124,6 +129,11 @@ class ProgressReporter(object):
 
 
 _progress_reporter = ProgressReporter()
+
+
+def set_progress_reporter(new_reporter: ProgressReporter):
+    global _progress_reporter
+    _progress_reporter = new_reporter
 
 
 def progress(task: str, start: int, end: int, msg: Union[None, str] = None) -> Progress:

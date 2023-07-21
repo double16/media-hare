@@ -298,5 +298,4 @@ def profanity_filter_apply_cli(argv):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
-    sys.exit(profanity_filter_apply_cli(sys.argv[1:]))
+    common.cli_wrapper(profanity_filter_apply_cli)

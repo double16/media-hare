@@ -20,19 +20,14 @@ import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants
+from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
 _once_lock = _allocate_lock()
 
 logger = logging.getLogger(__name__)
 
-# Temporary File Name for transcoding, we want to keep on the same filesystem as the input
-TEMPFILENAME = None
 TEMPFILENAMES = []
-# We need this because shell escaping is hard for some ffmpeg options, specifically the lavfi filter
-FILENAME_CLEAN_LINK = None
-# Hides filename from user UI and Dropbox and used to de-conflict when source and target name are equal
-HIDDEN_FILENAME = None
 
 ANALYZE_DURATION = '20000000'
 PROBE_SIZE = '20000000'
@@ -93,18 +88,7 @@ sys.excepthook = exception_hook
 
 
 def finish():
-    global TEMPFILENAME
-    global FILENAME_CLEAN_LINK
-    if TEMPFILENAME and os.path.isfile(TEMPFILENAME):
-        try:
-            os.remove(TEMPFILENAME)
-        except FileNotFoundError:
-            pass
-    if FILENAME_CLEAN_LINK and os.path.islink(FILENAME_CLEAN_LINK):
-        try:
-            os.remove(FILENAME_CLEAN_LINK)
-        except FileNotFoundError:
-            pass
+    global TEMPFILENAMES
     for FN in TEMPFILENAMES:
         if os.path.isfile(FN):
             try:
@@ -355,9 +339,7 @@ def find_streams_by_codec_and_language(input_info, codec_type, codec_names=None,
 
 
 def assert_not_transcoding(input_file, tempfilename=None, exit=True):
-    global TEMPFILENAME, FILENAME_CLEAN_LINK, TEMPFILENAMES
-    if tempfilename is None:
-        tempfilename = TEMPFILENAME
+    global TEMPFILENAMES
     if tempfilename is None:
         dir = os.path.dirname(os.path.abspath(input_file))
         base = os.path.basename(input_file)
@@ -366,8 +348,6 @@ def assert_not_transcoding(input_file, tempfilename=None, exit=True):
     if os.path.isfile(tempfilename) and (time.time() - os.path.getmtime(tempfilename)) < 172800:
         logger.info(f"Already transcoding, skipping {input_file} ({tempfilename})")
         # We don't want clean up to remove these files and mess up other processes
-        TEMPFILENAME = None
-        FILENAME_CLEAN_LINK = None
         TEMPFILENAMES.clear()
         if exit:
             sys.exit(0)
@@ -936,6 +916,16 @@ def setup_cli():
     setup_debugging()
 
 
+def cli_wrapper(func):
+    argv = list(filter(lambda e: e != '--no-curses', sys.argv[1:]))
+    use_curses = len(argv) == (len(sys.argv)-1) and sys.stdout.isatty()
+    if use_curses:
+        sys.exit(terminalui_wrapper(func, argv))
+    else:
+        setup_cli()
+        sys.exit(func(argv))
+
+
 class PoolApplyWrapper:
 
     def __init__(self, func):
@@ -943,6 +933,7 @@ class PoolApplyWrapper:
         self.rootLogLevel = logging.getLogger().level
 
     def __call__(self, *args, **kwargs):
+        # TODO: figure out how to send to curses log handler
         setup_logging()
         logging.getLogger().setLevel(self.rootLogLevel)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
