@@ -1462,6 +1462,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
     # TODO: original event that is too quiet to be picked up by transcribing
     # TODO: omitted event that transcribing picked up that should be combined with existing event
+    last_fuzz_ratio = min_fuzz_ratios[-1]
     for pass_num in range(1, passes + 1):
         changed = False
         found_range_ms: list[Union[None, Tuple[int, int]]] = [None for _ in subtitle_facade.events()]
@@ -1552,9 +1553,18 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         continue
                     else:
                         matches = fuzzprocess.extractBests(event_text, candidates, scorer=fuzz.ratio,
-                                                           score_cutoff=min_fuzz_ratio)
+                                                           score_cutoff=last_fuzz_ratio)
+                        # similar sentences in which the later matches better with the former transcription
+                        last_fuzz_ratio_count = len(matches)
+                        if last_fuzz_ratio_count > 1 and min_fuzz_ratio != last_fuzz_ratio:
+                            matches_min_fuzz_ratio = min(filter(lambda e: e[1], matches))[1]
+                            if matches_min_fuzz_ratio < min_fuzz_ratio:
+                                logger.debug("event %i multiple transcriptions may match, skipping", event_idx)
+                                # TODO: continue
+
+                        matches = list(filter(lambda e: e[1] >= min_fuzz_ratio, matches))
+
                     if matches:
-                        # TODO: fix: similar sentences in which the later matches better with the former transcription
                         # TODO: too greedy with ambiguous words: 'the', 'the the', etc. causing
                         #       action events, i.e. "[ Sighs ]", get clobbered by text events. Keep duration if ending
                         #       word(s) do not match original event and are ambiguous words (the, to, ...)
