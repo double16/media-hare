@@ -204,6 +204,23 @@ class ProgressStopMessage(object):
             pass
 
 
+class LogMessage(object):
+    def __init__(self, record: logging.LogRecord):
+        self.record = record
+
+    def apply(self):
+        logging.root.callHandlers(self.record)
+
+
+class SubprocessLogHandler(logging.Handler):
+    def __init__(self, queue: Queue):
+        super().__init__(logging.DEBUG)
+        self.queue = queue
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.queue.put_nowait(LogMessage(record))
+
+
 class SubprocessProgress(Progress):
     """
     Sends messages to the queue.
@@ -267,3 +284,5 @@ def setup_subprocess_progress(progress_queue: Queue):
     Setup this process to send progress to the parent process.
     """
     set_progress_reporter(SubprocessProgressReporter(progress_queue))
+    logging.root.addHandler(SubprocessLogHandler(progress_queue))
+    logging.root.setLevel(logging.DEBUG)

@@ -6,6 +6,7 @@
 import curses
 import logging
 import re
+import time
 from math import ceil
 from typing import Union, Dict
 
@@ -37,10 +38,8 @@ class CursesLogHandler(logging.Handler):
         win_bottom = win_top + win_height - 3
         win_right = win_left + win_width - 3
 
-        try:
-            msg = LOG_MSG_CLEAN.sub("", record.msg % record.args)
-        except:
-            msg = LOG_MSG_CLEAN.sub("", record.msg)
+        created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
+        msg = f"{created_str} {record.levelname:<5} {record.filename:<10}  {record.getMessage()}"
 
         self.pad.insnstr(self.y, 0, msg, maxx-1)
         self.pad.refresh(max(0, self.y - win_height), 0, win_top, win_left, win_bottom, win_right)

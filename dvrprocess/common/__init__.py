@@ -19,7 +19,7 @@ from xml.etree import ElementTree as ET
 import psutil
 from psutil import AccessDenied, NoSuchProcess
 
-efrom . import hwaccel, tools, config, constants, progress
+from . import hwaccel, tools, config, constants, progress
 from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
@@ -934,8 +934,6 @@ class PoolApplyWrapper:
         self.progress_queue = progress.setup_parent_progress()
 
     def __call__(self, *args, **kwargs):
-        # FIXME: setup_logging(), send logs through queue
-        # FIXME:logging.getLogger().setLevel(self.rootLogLevel)
         progress.setup_subprocess_progress(self.progress_queue)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         return self.func(*args, **kwargs)
@@ -943,8 +941,7 @@ class PoolApplyWrapper:
 
 def pool_apply_wrapper(func):
     """
-    On MacOS Python 3.8+, fork isn't used to create multi-processes, so configuration such as
-    logging isn't present.
+    This wrapper forwards subprocess logging and progress to the parent process.
     :param func: the function to wrap
     :return: func result
     """
