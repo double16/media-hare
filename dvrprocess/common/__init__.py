@@ -19,7 +19,7 @@ from xml.etree import ElementTree as ET
 import psutil
 from psutil import AccessDenied, NoSuchProcess
 
-from . import hwaccel, tools, config, constants
+efrom . import hwaccel, tools, config, constants, progress
 from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
@@ -931,11 +931,12 @@ class PoolApplyWrapper:
     def __init__(self, func):
         self.func = func
         self.rootLogLevel = logging.getLogger().level
+        self.progress_queue = progress.setup_parent_progress()
 
     def __call__(self, *args, **kwargs):
-        # TODO: figure out how to send to curses log handler
-        setup_logging()
-        logging.getLogger().setLevel(self.rootLogLevel)
+        # FIXME: setup_logging(), send logs through queue
+        # FIXME:logging.getLogger().setLevel(self.rootLogLevel)
+        progress.setup_subprocess_progress(self.progress_queue)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         return self.func(*args, **kwargs)
 

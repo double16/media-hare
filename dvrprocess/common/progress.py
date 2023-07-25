@@ -1,7 +1,10 @@
 import logging
+import multiprocessing
+import threading
 import time
 from math import ceil
-from typing import Union
+from multiprocessing import Queue
+from typing import Union, Dict
 
 _logger = logging.getLogger(__name__)
 
@@ -147,3 +150,120 @@ def progress(task: str, start: int, end: int, msg: Union[None, str] = None) -> P
     :return: Progress object
     """
     return _progress_reporter.start(task, start, end, msg)
+
+
+_PROGRESS_BY_TASK: Dict[str, Progress] = dict()
+
+
+class ProgressStartMessage(object):
+    """
+    Object intended to be placed on the queue.
+    """
+    def __init__(self, task: str, start: int, end: int, msg: Union[None, str] = None):
+        self.task = task
+        self.start = start
+        self.end = end
+        self.msg = msg
+
+    def apply(self):
+        _PROGRESS_BY_TASK[self.task] = progress(self.task, self.start, self.end, self.msg)
+
+
+class ProgressProgressMessage(object):
+    """
+    Object intended to be placed on the queue.
+    """
+    def __init__(self, task: str, position: int, msg: Union[None, str] = None, start: Union[None, int] = None,
+                 end: Union[None, int] = None):
+        self.task = task
+        self.position = position
+        self.msg = msg
+        self.start = start
+        self.end = end
+
+    def apply(self):
+        try:
+            _PROGRESS_BY_TASK.get(self.task).progress(self.position, self.msg, self.start, self.end)
+        except KeyError:
+            pass
+
+
+class ProgressStopMessage(object):
+    """
+    Object intended to be placed on the queue.
+    """
+    def __init__(self, task: str, msg: Union[str, None] = None):
+        self.task = task
+        self.msg = msg
+
+    def apply(self):
+        try:
+            _PROGRESS_BY_TASK.get(self.task).stop(self.msg)
+            _PROGRESS_BY_TASK.pop(self.task)
+        except KeyError:
+            pass
+
+
+class SubprocessProgress(Progress):
+    """
+    Sends messages to the queue.
+    """
+    def __init__(self, task: str, queue: Queue):
+        super().__init__(task)
+        self.queue = queue
+
+    def start(self, start: int, end: int, msg: Union[None, str] = None) -> None:
+        self.queue.put_nowait(ProgressStartMessage(self.task, start, end, msg))
+
+    def progress(self, position: int, msg: Union[None, str] = None, start: Union[None, int] = None,
+                 end: Union[None, int] = None) -> None:
+        self.queue.put_nowait(ProgressProgressMessage(self.task, position, msg, start, end))
+
+    def stop(self, msg: Union[None, str] = None) -> None:
+        self.queue.put_nowait(ProgressStopMessage(self.task, msg))
+
+
+class SubprocessProgressReporter(ProgressReporter):
+
+    def __init__(self, progress_queue: Queue):
+        super().__init__()
+        self.queue = progress_queue
+
+    def _create_progress(self, task: str) -> Progress:
+        return SubprocessProgress(task, self.queue)
+
+
+_PROGRESS_QUEUE = None
+
+
+def _progress_queue_feed(q: Queue):
+    """
+    Processes progress events from the queue.
+    """
+    try:
+        while True:
+            q.get(True).apply()
+    except ValueError:
+        # queue is closed
+        pass
+
+
+def setup_parent_progress() -> Queue:
+    """
+    Setup this process to receive progress from subprocesses.
+    """
+    global _PROGRESS_QUEUE
+    if _PROGRESS_QUEUE is not None:
+        return _PROGRESS_QUEUE
+    _PROGRESS_QUEUE = multiprocessing.Manager().Queue()
+    thread = threading.Thread(target=_progress_queue_feed, args=(_PROGRESS_QUEUE,), name="Progress Processor")
+    thread.daemon = True
+    thread.start()
+    return _PROGRESS_QUEUE
+
+
+def setup_subprocess_progress(progress_queue: Queue):
+    """
+    Setup this process to send progress to the parent process.
+    """
+    set_progress_reporter(SubprocessProgressReporter(progress_queue))
