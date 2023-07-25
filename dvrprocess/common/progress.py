@@ -82,7 +82,7 @@ class Progress(object):
             self.eta = None
         else:
             self.pct = ceil(100 * (position / (self._end - self._start)))
-            if 10 <= self.pct <= 100:
+            if self.pct <= 100 and (self.pct >= 10 or (time.time() - self._start_time) > 60):
                 remaining_s = (time.time() - self._start_time) / self.pct * (100.0 - self.pct)
                 self.eta = time.time() + remaining_s
             else:
@@ -257,12 +257,16 @@ def _progress_queue_feed(q: Queue):
     """
     Processes progress events from the queue.
     """
-    try:
-        while True:
-            q.get(True).apply()
-    except ValueError:
-        # queue is closed
-        pass
+    while True:
+        try:
+            m = q.get(True)
+        except ValueError:
+            # queue is closed
+            return
+        try:
+            m.apply()
+        except Exception as e:
+            _logger.error("processing progress", e)
 
 
 def setup_parent_progress() -> Queue:

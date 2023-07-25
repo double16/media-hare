@@ -26,24 +26,28 @@ class CursesLogHandler(logging.Handler):
         self.y = 0
 
     def emit(self, record: logging.LogRecord) -> None:
-        maxy, maxx = self.pad.getmaxyx()
-        if self.y >= maxy:
-            self.pad.move(self.y, 0)
-            self.pad.insdelln(-1)
-            self.y = maxy
-        win_top, win_left = self.window.getbegyx()
-        win_top += 1
-        win_left += 1
-        win_height, win_width = self.window.getmaxyx()
-        win_bottom = win_top + win_height - 3
-        win_right = win_left + win_width - 3
+        try:
+            maxy, maxx = self.pad.getmaxyx()
+            if self.y >= maxy:
+                self.pad.move(self.y, 0)
+                self.pad.insdelln(-1)
+                self.y = maxy
+            win_top, win_left = self.window.getbegyx()
+            win_top += 1
+            win_left += 1
+            win_height, win_width = self.window.getmaxyx()
+            win_bottom = win_top + win_height - 3
+            win_right = win_left + win_width - 3
 
-        created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
-        msg = f"{created_str} {record.levelname:<5} {record.filename:<10}  {record.getMessage()}"
+            created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
+            msg = f"{created_str} {record.levelname:<5} {record.filename:<10}  {record.getMessage()}"
 
-        self.pad.insnstr(self.y, 0, msg, maxx-1)
-        self.pad.refresh(max(0, self.y - win_height), 0, win_top, win_left, win_bottom, win_right)
-        self.y = min(self.y+1, maxy)
+            self.pad.insnstr(self.y, 0, msg, maxx-1)
+            self.pad.refresh(max(0, self.y - win_height), 0, win_top, win_left, win_bottom, win_right)
+            self.y = min(self.y+1, maxy)
+        except:
+            # don't break the application because of a logging error
+            pass
 
 
 class CursesProgressListener(object):
@@ -137,9 +141,9 @@ class ProgressWindow(CursesProgressListener):
                 bar_right = bar_left + 5
                 bar = f"{bar[0:bar_left]} {task.pct:<2}% {bar[bar_right:]}"
 
-            output = str(f"{label:>{msg_width}} {bar:<{bar_width}}")
-            if eta_width > 0:
-                output = f"{output} {task.elapsed_human_duration():>{eta_width-1}}"
+            output = str(f"{label[0:msg_width+1]:>{msg_width}} {bar:<{bar_width}}")
+            if eta_width > 0 and task.eta is not None:
+                output = f"{output} {task.remaining_human_duration():>{eta_width-1}}"
         else:
             output = ""
         self.window.move(task.relative_row, 0)
