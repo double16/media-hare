@@ -7,7 +7,7 @@ import curses
 import logging
 import re
 import time
-from math import ceil
+from math import ceil, floor
 from typing import Union, Dict
 
 from . import progress
@@ -111,11 +111,37 @@ class ProgressWindow(CursesProgressListener):
     def _draw(self, task: ProgressCurses, position: int = 0, msg: str = None):
         if task.relative_row < 0:
             return
-        pct = "??" if task.pct is None else task.pct
-        if msg:
-            output = "%s %s%% %s - %s" % (task.task, pct, task.remaining_human_duration(), msg)
+        cols = self.window.getmaxyx()[1]
+        if cols > 12:
+            if cols > 20:
+                eta_width = 9
+            else:
+                eta_width = 0
+            bar_width = max(8, ceil(cols * 0.3))
+            msg_width = cols - bar_width - eta_width - 2
+
+            if msg:
+                label = "%s - %s" % (task.task, msg)
+            else:
+                label = task.task
+
+            if task.pct is None:
+                bar_complete = ""
+            else:
+                bar_complete = "=" * ceil((bar_width-2)*(task.pct/100))
+            bar_incomplete = " " * (bar_width - 2 - len(bar_complete))
+            bar = f"[{bar_complete}{bar_incomplete}]"
+
+            if task.pct is not None and task.pct < 100:
+                bar_left = floor(bar_width/2) - 2
+                bar_right = bar_left + 5
+                bar = f"{bar[0:bar_left]} {task.pct:<2}% {bar[bar_right:]}"
+
+            output = str(f"{label:>{msg_width}} {bar:<{bar_width}}")
+            if eta_width > 0:
+                output = f"{output} {task.elapsed_human_duration():>{eta_width-1}}"
         else:
-            output = "%s %s%% %s" % (task.task, pct, task.remaining_human_duration())
+            output = ""
         self.window.move(task.relative_row, 0)
         self.window.addstr(output)
         self.window.clrtoeol()
