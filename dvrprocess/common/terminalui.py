@@ -6,6 +6,7 @@
 import curses
 import logging
 import re
+import sys
 import time
 from math import ceil, floor
 from typing import Union, Dict
@@ -18,6 +19,15 @@ logger = logging.getLogger(__name__)
 LOG_MSG_CLEAN = re.compile("[\r\n]+")
 
 
+_CURSESUI = None
+
+
+def _check_resize():
+    c = _CURSESUI.screen.getch()
+    if c == curses.KEY_RESIZE:
+        _CURSESUI.resize()
+
+
 class CursesLogHandler(logging.Handler):
     def __init__(self, pad, window, level=logging.INFO):
         super().__init__(level)
@@ -26,28 +36,39 @@ class CursesLogHandler(logging.Handler):
         self.y = 0
 
     def emit(self, record: logging.LogRecord) -> None:
+        _check_resize()
         try:
             maxy, maxx = self.pad.getmaxyx()
             if self.y >= maxy:
-                self.pad.move(self.y, 0)
+                self.pad.move(0, 0)
                 self.pad.insdelln(-1)
-                self.y = maxy
-            win_top, win_left = self.window.getbegyx()
-            win_top += 1
-            win_left += 1
-            win_height, win_width = self.window.getmaxyx()
-            win_bottom = win_top + win_height - 3
-            win_right = win_left + win_width - 3
+                self.y = maxy - 1
 
             created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
             msg = f"{created_str} {record.levelname:<5} {record.filename:<10}  {record.getMessage()}"
 
             self.pad.insnstr(self.y, 0, msg, maxx-1)
-            self.pad.refresh(max(0, self.y - win_height), 0, win_top, win_left, win_bottom, win_right)
             self.y = min(self.y+1, maxy)
+
+            self.refresh()
         except:
             # don't break the application because of a logging error
             pass
+
+    def refresh(self):
+        win_top, win_left = self.window.getbegyx()
+        win_top += 1
+        win_left += 1
+        win_height, win_width = self.window.getmaxyx()
+        win_bottom = win_top + win_height - 3
+        win_right = win_left + win_width - 3
+        self.pad.refresh(max(0, self.y - win_height + 2), 0, win_top, win_left, win_bottom, win_right)
+
+    def resize(self):
+        self.window.clear()
+        self.window.border()
+        self.window.refresh()
+        self.refresh()
 
 
 class CursesProgressListener(object):
@@ -93,6 +114,14 @@ class ProgressWindow(CursesProgressListener):
     def refresh(self):
         self.window.refresh()
 
+    def resize(self):
+        lines, cols = self.window.getmaxyx()
+        for task in list(self.tasks.values()):
+            if task.relative_row >= lines:
+                task.relative_row = -1
+            else:
+                self._draw(task)
+
     def _allocate_row(self, task: ProgressCurses):
         if task.relative_row >= 0:
             return
@@ -115,7 +144,11 @@ class ProgressWindow(CursesProgressListener):
     def _draw(self, task: ProgressCurses, position: int = 0, msg: str = None):
         if task.relative_row < 0:
             return
-        cols = self.window.getmaxyx()[1]
+        lines, cols = self.window.getmaxyx()
+        if task.relative_row >= lines:
+            # resize event occurred
+            task.relative_row = -1
+            return
         if cols > 12:
             if cols > 20:
                 eta_width = 9
@@ -151,6 +184,7 @@ class ProgressWindow(CursesProgressListener):
         self.window.clrtoeol()
 
     def start(self, task: ProgressCurses):
+        _check_resize()
         existing_task = self.tasks.get(task.task, None)
         if existing_task:
             task.relative_row = existing_task.relative_row
@@ -162,6 +196,7 @@ class ProgressWindow(CursesProgressListener):
             self.refresh()
 
     def progress(self, task: ProgressCurses, position: int, msg: str):
+        _check_resize()
         if task.relative_row < 0:
             self._allocate_row(task)
             if task.relative_row < 0:
@@ -170,6 +205,7 @@ class ProgressWindow(CursesProgressListener):
         self.refresh()
 
     def stop(self, task: ProgressCurses):
+        _check_resize()
         self.tasks.pop(task.task, None)
         if task.relative_row >= 0:
             self.window.move(task.relative_row, 0)
@@ -186,11 +222,20 @@ class CursesProgressReporter(progress.ProgressReporter):
         return ProgressCurses(task, self.progress_win)
 
 
+class GaugeWindow(object):
+    def __init__(self, window):
+        self.window = window
+        self.window.addstr("CPU %  GPU %  MEM %")
+        self.window.refresh()
+
+    def resize(self):
+        self.window.refresh()
+
+
 class CursesUI(object):
-    stat_win = None
-    progress_win = None
-    log_win = None
-    log_pad = None
+    stat_win: GaugeWindow = None
+    progress_win: ProgressWindow = None
+    log_handler: CursesLogHandler = None
 
     def __init__(self, screen):
         # hide the cursor
@@ -200,22 +245,23 @@ class CursesUI(object):
             pass
 
         self.screen = screen
-        self.log_pad = curses.newpad(1000, 500)
+        self.screen.nodelay(True)
         window_dims = self._compute_window_dims()
-        self.stat_win = curses.newwin(*window_dims[0])
-        self.progress_win = ProgressWindow(curses.newwin(*window_dims[1]))
-        self.log_win = curses.newwin(*window_dims[2])
+        self.stat_win = GaugeWindow(curses.newwin(*window_dims[0]))
 
-        logging.root.addHandler(CursesLogHandler(self.log_pad, self.log_win))
+        log_pad = curses.newpad(1000, 500)
+        log_win = curses.newwin(*window_dims[2])
+        self.log_handler = CursesLogHandler(log_pad, log_win)
+        logging.root.addHandler(self.log_handler)
         logging.root.setLevel(logging.INFO)
+
+        self.progress_win = ProgressWindow(curses.newwin(*window_dims[1]))
         progress.set_progress_reporter(CursesProgressReporter(self.progress_win))
 
-        self.stat_win.addstr("CPU %  GPU %  MEM %")
-        self.stat_win.refresh()
-        self.log_win.border()
-        self.log_win.refresh()
+        self.stat_win.resize()
+        self.log_handler.resize()
 
-    def _compute_window_dims(self):
+    def _compute_window_dims(self) -> list[tuple[int, int, int, int]]:
         """
         :return: tuples of (lines, columns, y, x): [ status, progress, log ]
         """
@@ -224,6 +270,42 @@ class CursesUI(object):
         progress_win = (ceil(lines/2), cols, 1, 0)
         log_win = (lines - 1 - progress_win[0], cols, progress_win[0] + progress_win[2], 0)
         return [status_win, progress_win, log_win]
+
+    def resize(self):
+        self.screen.refresh()
+        window_dims = self._compute_window_dims()
+        self._resize_window(self.stat_win.window, window_dims[0])
+        self.stat_win.resize()
+        self._resize_window(self.progress_win.window, window_dims[1])
+        self.progress_win.resize()
+        self._resize_window(self.log_handler.window, window_dims[2])
+        self.log_handler.resize()
+
+    def _resize_window(self, window, dims: tuple[int, int, int, int]):
+        window.resize(dims[0], dims[1])
+        window.mvwin(dims[2], dims[3])
+
+
+class StreamCapture(object):
+    def __init__(self, name: str):
+        self.name = name
+        self.captured = []
+        self.save = getattr(sys, name)
+        setattr(sys, name, self)
+
+    def write(self, data):
+        self.captured.append(data)
+
+    def flush(self):
+        pass
+
+    def finish(self, output=True):
+        setattr(sys, self.name, self.save)
+        if output:
+            target = getattr(sys, self.name)
+            for line in self.captured:
+                target.write(line)
+            target.flush()
 
 
 def terminalui_wrapper(func, *args, **kwargs) -> int:
@@ -234,9 +316,16 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
     :return: return code for sys.exit
     """
     def main(screen) -> int:
+        global _CURSESUI
         screen.refresh()
-        CursesUI(screen)
+        _CURSESUI = CursesUI(screen)
 
         return func(*args, **kwargs)
 
-    return curses.wrapper(main)
+    stderr_capture = StreamCapture('stderr')
+    stdout_capture = StreamCapture('stdout')
+    try:
+        return curses.wrapper(main)
+    finally:
+        stderr_capture.finish()
+        stdout_capture.finish(output=False)

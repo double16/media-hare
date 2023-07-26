@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 def _example(argv: list[str]) -> int:
+    if '--help' in argv:
+        print(f"Usage: {__file__} --help", file=sys.stderr)
+        return 255
+
     logger.debug("debug message")
     logger.info("info message")
     logger.error("error message 1")
@@ -30,7 +34,7 @@ def _example(argv: list[str]) -> int:
                 p.progress(value)
         sleep(0.75)
     logger.error("progress done")
-    for i in range(0, 100):
+    for i in range(0, 2000):
         logger.error("message %i", i)
     for p in p_list:
         p.stop()

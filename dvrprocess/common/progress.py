@@ -11,6 +11,7 @@ _logger = logging.getLogger(__name__)
 
 class Progress(object):
 
+    # TODO: add position renderer function: pct, time, bytes, etc.
     def __init__(self, task: str):
         self.task: str = task
         self._start: int = 0
@@ -84,6 +85,7 @@ class Progress(object):
             self.pct = ceil(100 * (position / (self._end - self._start)))
             if self.pct <= 100 and (self.pct >= 10 or (time.time() - self._start_time) > 60):
                 remaining_s = (time.time() - self._start_time) / self.pct * (100.0 - self.pct)
+                # TODO: save time for each 10% and use weighed calculation
                 self.eta = time.time() + remaining_s
             else:
                 self.eta = None
@@ -283,10 +285,17 @@ def setup_parent_progress() -> Queue:
     return _PROGRESS_QUEUE
 
 
+_subprocess_progress_configured = False
+
+
 def setup_subprocess_progress(progress_queue: Queue):
     """
     Setup this process to send progress to the parent process.
     """
+    global _subprocess_progress_configured
+    if _subprocess_progress_configured:
+        return
     set_progress_reporter(SubprocessProgressReporter(progress_queue))
     logging.root.addHandler(SubprocessLogHandler(progress_queue))
     logging.root.setLevel(logging.DEBUG)
+    _subprocess_progress_configured = True
