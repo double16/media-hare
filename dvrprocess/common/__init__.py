@@ -21,6 +21,7 @@ from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants, progress
 from .terminalui import terminalui_wrapper
+from .proc_invoker import StreamCapture
 
 _allocate_lock = _thread.allocate_lock
 _once_lock = _allocate_lock()
@@ -936,7 +937,13 @@ class PoolApplyWrapper:
     def __call__(self, *args, **kwargs):
         progress.setup_subprocess_progress(self.progress_queue)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        return self.func(*args, **kwargs)
+        stdout = StreamCapture('stdout', logger, logging.INFO)
+        stderr = StreamCapture('stderr', logger, logging.ERROR)
+        try:
+            return self.func(*args, **kwargs)
+        finally:
+            stdout.finish()
+            stderr.finish()
 
 
 def pool_apply_wrapper(func):

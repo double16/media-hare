@@ -265,3 +265,31 @@ def pre_flight_check():
                 logger.fatal("%s: not found", invoker.command_basename)
     if failed:
         sys.exit(255)
+
+
+class StreamCapture(object):
+    def __init__(self, name: str, logger=None, level=logging.INFO):
+        self.name = name
+        self.logger = logger
+        self.level = level
+        self.captured = []
+        self.save = getattr(sys, name)
+        setattr(sys, name, self)
+
+    def write(self, data):
+        if self.logger:
+            self.logger.log(self.level, data)
+        else:
+            self.captured.append(data)
+
+    def flush(self):
+        pass
+
+    def finish(self, output=True):
+        setattr(sys, self.name, self.save)
+        if self.logger is None and output:
+            target = getattr(sys, self.name)
+            for line in self.captured:
+                target.write(line)
+            target.flush()
+

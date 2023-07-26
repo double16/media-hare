@@ -6,12 +6,12 @@
 import curses
 import logging
 import re
-import sys
 import time
 from math import ceil, floor
 from typing import Union, Dict
 
 from . import progress
+from .proc_invoker import StreamCapture
 
 logger = logging.getLogger(__name__)
 
@@ -290,28 +290,6 @@ class CursesUI(object):
     def _resize_window(self, window, dims: tuple[int, int, int, int]):
         window.resize(dims[0], dims[1])
         window.mvwin(dims[2], dims[3])
-
-
-class StreamCapture(object):
-    def __init__(self, name: str):
-        self.name = name
-        self.captured = []
-        self.save = getattr(sys, name)
-        setattr(sys, name, self)
-
-    def write(self, data):
-        self.captured.append(data)
-
-    def flush(self):
-        pass
-
-    def finish(self, output=True):
-        setattr(sys, self.name, self.save)
-        if output:
-            target = getattr(sys, self.name)
-            for line in self.captured:
-                target.write(line)
-            target.flush()
 
 
 def terminalui_wrapper(func, *args, **kwargs) -> int:
