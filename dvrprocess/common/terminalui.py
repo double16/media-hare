@@ -106,10 +106,10 @@ class ProgressCurses(progress.Progress):
 
 
 class ProgressWindow(CursesProgressListener):
-    tasks: Dict[str, ProgressCurses] = dict()
 
     def __init__(self, window):
         self.window = window
+        self.tasks: Dict[str, ProgressCurses] = dict()
 
     def refresh(self):
         self.window.refresh()
@@ -120,7 +120,7 @@ class ProgressWindow(CursesProgressListener):
             if task.relative_row >= lines:
                 task.relative_row = -1
             else:
-                self._draw(task)
+                self._draw(task, task.last_position)
 
     def _allocate_row(self, task: ProgressCurses):
         if task.relative_row >= 0:
@@ -135,7 +135,7 @@ class ProgressWindow(CursesProgressListener):
             return
         # replace older task
         if tasks:
-            tasks.sort(key=lambda e: e.get_last_progress_time(), reverse=True)
+            tasks.sort(key=lambda e: e.get_last_progress_time() or 0, reverse=True)
             oldest_task = tasks[0]
             self.tasks.pop(oldest_task.task, None)
             task.relative_row = oldest_task.relative_row
@@ -163,16 +163,23 @@ class ProgressWindow(CursesProgressListener):
                 label = task.task
 
             if task.pct is None:
+                position_str = task.position_str(position)
+            elif task.pct < 100:
+                position_str = f"{task.pct:<2}%"
+            else:
+                position_str = ""
+
+            if task.pct is None:
                 bar_complete = ""
             else:
                 bar_complete = "=" * ceil((bar_width-2)*(task.pct/100))
             bar_incomplete = " " * (bar_width - 2 - len(bar_complete))
             bar = f"[{bar_complete}{bar_incomplete}]"
 
-            if task.pct is not None and task.pct < 100:
-                bar_left = floor(bar_width/2) - 2
-                bar_right = bar_left + 5
-                bar = f"{bar[0:bar_left]} {task.pct:<2}% {bar[bar_right:]}"
+            if position_str:
+                bar_left = floor((bar_width - len(position_str))/2)
+                bar_right = bar_left + 2 + len(position_str)
+                bar = f"{bar[0:bar_left]} {position_str} {bar[bar_right:]}"
 
             output = str(f"{label[0:msg_width+1]:>{msg_width}} {bar:<{bar_width}}")
             if eta_width > 0 and task.eta is not None:
@@ -233,10 +240,6 @@ class GaugeWindow(object):
 
 
 class CursesUI(object):
-    stat_win: GaugeWindow = None
-    progress_win: ProgressWindow = None
-    log_handler: CursesLogHandler = None
-
     def __init__(self, screen):
         # hide the cursor
         try:
@@ -244,6 +247,9 @@ class CursesUI(object):
         except:
             pass
 
+        self.stat_win: GaugeWindow = None
+        self.progress_win: ProgressWindow = None
+        self.log_handler: CursesLogHandler = None
         self.screen = screen
         self.screen.nodelay(True)
         window_dims = self._compute_window_dims()

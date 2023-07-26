@@ -11,11 +11,11 @@ _logger = logging.getLogger(__name__)
 
 class Progress(object):
 
-    # TODO: add position renderer function: pct, time, bytes, etc.
     def __init__(self, task: str):
         self.task: str = task
         self._start: int = 0
         self._end: int = 0
+        self.last_position: int = 0
         """ Current progress by percentage (whole number), updated by progress(...), may be None """
         self.pct: Union[None, int] = None
         """ Updated by progress(...), may be None """
@@ -28,6 +28,8 @@ class Progress(object):
         self._last_pct: int = -1
         """ The last time we logged, used to keep the noise down. """
         self._last_report_time: Union[None, float] = None
+        """ Function to render progress position as string """
+        self.renderer = None
 
     def get_last_progress_time(self) -> Union[None, float]:
         return self._last_report_time
@@ -39,7 +41,7 @@ class Progress(object):
         down. Reporting too often may also be a performance hit.
         :return: True to report to user.
         """
-        if self.pct is not None and self.pct != self._last_pct:
+        if (self.pct is not None and self.pct != self._last_pct) or self.renderer is not None:
             if self._last_report_time is None or time.time() > self._last_report_time + 1 or self.pct == 100:
                 self._last_pct = self.pct
                 self._last_report_time = time.time()
@@ -74,6 +76,7 @@ class Progress(object):
     def progress(self, position: int, msg: Union[None, str] = None, start: Union[None, int] = None,
                  end: Union[None, int] = None) -> None:
         self._last_progress_time = time.time()
+        self.last_position = position
         if start is not None:
             self._start = start
         if end is not None:
@@ -89,6 +92,11 @@ class Progress(object):
                 self.eta = time.time() + remaining_s
             else:
                 self.eta = None
+
+    def position_str(self, position: int) -> str:
+        if self.renderer is None:
+            return ""
+        return self.renderer(position)
 
 
 class ProgressLog(Progress):

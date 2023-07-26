@@ -105,8 +105,10 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
     bytes_processed = 0
     bytes_progress = progress.progress("byte limit", 0, size_limit)
+    bytes_progress.renderer = config.bytes_to_human_str
     time_start = time.time()
     time_progress = progress.progress("time limit", 0, time_limit)
+    time_progress.renderer = common.s_to_ts
 
     generator = need_transcode_generator(plex_url=plex_url, media_paths=media_paths,
                                          # get everything

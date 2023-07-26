@@ -1,4 +1,5 @@
 import traceback
+from math import ceil
 
 #
 # User interface for terminal (curses).
@@ -8,6 +9,7 @@ from common import terminalui, progress
 import logging
 import sys
 from time import sleep, time
+import common
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,9 @@ def _example(argv: list[str]) -> int:
     logger.info("info message")
     logger.error("error message 1")
     logger.error("error message 2")
+    time_progress = progress.progress("time limit", 0, 0)
+    time_progress.renderer = common.s_to_ts
+    time_start = time()
     p_list = []
     for i in range(1, 30):
         p_list.append(progress.progress(f"p{i}", 0, 100))
@@ -32,6 +37,7 @@ def _example(argv: list[str]) -> int:
                     p.stop()
             else:
                 p.progress(value)
+        time_progress.progress(ceil(time() - time_start))
         sleep(0.75)
     logger.error("progress done")
     for i in range(0, 2000):
