@@ -163,19 +163,13 @@ class ProgressWindow(CursesProgressListener):
                 label = task.task
 
             if task.pct is None:
-                position_str = task.position_str(position)
-            elif task.pct < 100:
-                position_str = f"{task.pct:<2}%"
-            else:
-                position_str = ""
-
-            if task.pct is None:
                 bar_complete = ""
             else:
                 bar_complete = "=" * ceil((bar_width-2)*(task.pct/100))
             bar_incomplete = " " * (bar_width - 2 - len(bar_complete))
             bar = f"[{bar_complete}{bar_incomplete}]"
 
+            position_str = task.position_str(position)
             if position_str:
                 bar_left = max(1, floor((bar_width - len(position_str))/2))
                 bar_right = min(len(bar)-1, bar_left + 2 + len(position_str))

@@ -95,6 +95,8 @@ class Progress(object):
 
     def position_str(self, position: int) -> str:
         if self.renderer is None:
+            if self.pct is not None and 0 < self.pct <= 100:
+                return f"{self.pct:>3}%"
             return ""
         return self.renderer(position)
 
