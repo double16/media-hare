@@ -177,8 +177,8 @@ class ProgressWindow(CursesProgressListener):
             bar = f"[{bar_complete}{bar_incomplete}]"
 
             if position_str:
-                bar_left = floor((bar_width - len(position_str))/2)
-                bar_right = bar_left + 2 + len(position_str)
+                bar_left = max(1, floor((bar_width - len(position_str))/2))
+                bar_right = min(len(bar)-1, bar_left + 2 + len(position_str))
                 bar = f"{bar[0:bar_left]} {position_str} {bar[bar_right:]}"
 
             output = str(f"{label[0:msg_width+1]:>{msg_width}} {bar:<{bar_width}}")
