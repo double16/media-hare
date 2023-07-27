@@ -168,5 +168,4 @@ def transcode_apply_cli(argv):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
-    sys.exit(transcode_apply_cli(sys.argv[1:]))
+    common.cli_wrapper(transcode_apply_cli)

@@ -399,5 +399,4 @@ def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
 
 if __name__ == '__main__':
     os.nice(12)
-    common.setup_cli()
-    sys.exit(smart_comcut(sys.argv[1:]))
+    common.cli_wrapper(smart_comcut)

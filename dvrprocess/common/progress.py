@@ -1,10 +1,13 @@
 import logging
 import multiprocessing
+import os
 import threading
 import time
 from math import ceil
 from multiprocessing import Queue
 from typing import Union, Dict
+
+import psutil
 
 _logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ class Progress(object):
         self._last_progress_time: Union[None, float] = None
         """ The last percent we logged, used to keep the noise down. """
         self._last_pct: int = -1
-        """ The last time we logged, used to keep the noise down. """
+        """ The last time we reported, used to keep the noise down. """
         self._last_report_time: Union[None, float] = None
         """ Function to render progress position as string """
         self.renderer = None
@@ -130,6 +133,91 @@ class ProgressLog(Progress):
                 _logger.info("%s %s%% %s", self.task, self.pct, self.remaining_human_duration())
 
 
+class Gauge(object):
+    """
+    A gauge is a point in time float measurement.
+    """
+
+    def __init__(self, name: str, low: float = None, high: float = None, renderer=None):
+        self.name = name
+        self.low: float = low
+        self.high: float = high
+        self.normal_range: tuple[float, float] = None
+        self.warning_range: tuple[float, float] = None
+        self.critical_range: tuple[float, float] = None
+        self.last_value: float = None
+        """ The last time a value was received. """
+        self._last_value_time: Union[None, float] = None
+        """ The last time we reported, used to keep the noise down. """
+        self._last_report_time: Union[None, float] = None
+        """ Function to render the value as string """
+        self.renderer = renderer
+
+    def value(self, value: float):
+        self.last_value = value
+        self._last_value_time = time.time()
+
+    def update_reporting(self) -> bool:
+        """
+        Always call this and check the return to determine if reporting to the user is recommended. The
+        intent is to keep noise down. Reporting too often may also be a performance hit.
+        :return: True to report to user.
+        """
+        if self.last_value is not None:
+            if self._last_report_time is None or time.time() > self._last_report_time + 1:
+                self._last_report_time = time.time()
+                return True
+        return False
+
+    def value_str(self, value: float) -> str:
+        if value is None:
+            return ""
+        if self.renderer is None:
+            return str(value)
+        return self.renderer(value)
+
+    def is_normal(self, value: float = None) -> bool:
+        if value is None:
+            value = self.last_value
+        if value is None:
+            return False
+        if self.normal_range is None:
+            return True
+        return self.normal_range[0] <= value <= self.normal_range[1]
+
+    def is_warning(self, value: float) -> bool:
+        if value is None:
+            value = self.last_value
+        if value is None:
+            return False
+        if self.warning_range is None:
+            return False
+        return self.warning_range[0] <= value <= self.warning_range[1]
+
+    def is_critical(self, value: float) -> bool:
+        if value is None:
+            value = self.last_value
+        if value is None:
+            return False
+        if self.critical_range is None:
+            return False
+        return self.critical_range[0] <= value <= self.critical_range[1]
+
+
+class GaugeLog(Gauge):
+    """
+    Gauge that logs the value.
+    """
+
+    def __init__(self, name: str, low: float = None, high: float = None):
+        super().__init__(name, low, high)
+
+    def value(self, value: float):
+        super().value(value)
+        if self.update_reporting():
+            _logger.info("%s %s", self.name, self.value_str(value))
+
+
 class ProgressReporter(object):
     def __init__(self):
         pass
@@ -141,6 +229,12 @@ class ProgressReporter(object):
         p = self._create_progress(task)
         p.start(start, end, msg)
         return p
+
+    def _create_gauge(self, name: str, low: float = None, high: float = None) -> Gauge:
+        return GaugeLog(name, low, high)
+
+    def gauge(self, name: str, low: float = None, high: float = None) -> Gauge:
+        return self._create_gauge(name, low, high)
 
 
 _progress_reporter = ProgressReporter()
@@ -164,7 +258,17 @@ def progress(task: str, start: int, end: int, msg: Union[None, str] = None) -> P
     return _progress_reporter.start(task, start, end, msg)
 
 
+def gauge(name: str, low: float = None, high: float = None) -> Gauge:
+    """
+    Create a gauge object for reporting. This delegates to the progress reporter to create the
+    configured type of reporting.
+    :return: Gauge object
+    """
+    return _progress_reporter.gauge(name, low, high)
+
+
 _PROGRESS_BY_TASK: Dict[str, Progress] = dict()
+_GAUGE_BY_NAME: Dict[str, Gauge] = dict()
 
 
 class ProgressStartMessage(object):
@@ -216,6 +320,39 @@ class ProgressStopMessage(object):
             pass
 
 
+class GaugeCreateMessage(object):
+    """
+    Object intended to be placed on the queue.
+    """
+
+    def __init__(self, name: str, low: float, high: float):
+        self.name = name
+        self.low = low
+        self.high = high
+
+    def apply(self):
+        try:
+            _GAUGE_BY_NAME[self.name] = gauge(self.name, self.low, self.high)
+        except KeyError:
+            pass
+
+
+class GaugeValueMessage(object):
+    """
+    Object intended to be placed on the queue.
+    """
+
+    def __init__(self, name: str, value: float):
+        self.name = name
+        self.value = value
+
+    def apply(self):
+        try:
+            _GAUGE_BY_NAME.get(self.name).value(self.value)
+        except KeyError:
+            pass
+
+
 class LogMessage(object):
     def __init__(self, record: logging.LogRecord):
         self.record = record
@@ -252,6 +389,16 @@ class SubprocessProgress(Progress):
         self.queue.put_nowait(ProgressStopMessage(self.task, msg))
 
 
+class SubprocessGauge(Gauge):
+    def __init__(self, name: str, low: float, high: float, queue: Queue):
+        super().__init__(name, low, high)
+        self.queue = queue
+        self.queue.put_nowait(GaugeCreateMessage(name, low, high))
+
+    def value(self, value: float):
+        self.queue.put_nowait(GaugeValueMessage(self.name, value))
+
+
 class SubprocessProgressReporter(ProgressReporter):
 
     def __init__(self, progress_queue: Queue):
@@ -260,6 +407,9 @@ class SubprocessProgressReporter(ProgressReporter):
 
     def _create_progress(self, task: str) -> Progress:
         return SubprocessProgress(task, self.queue)
+
+    def _create_gauge(self, name: str, low: float = None, high: float = None) -> Gauge:
+        return SubprocessGauge(name, low, high, self.queue)
 
 
 _PROGRESS_QUEUE = None
@@ -309,3 +459,42 @@ def setup_subprocess_progress(progress_queue: Queue):
     logging.root.addHandler(SubprocessLogHandler(progress_queue))
     logging.root.setLevel(logging.DEBUG)
     _subprocess_progress_configured = True
+
+
+def _percent_renderer(value: float) -> str:
+    return f"{value: 3.1f}%"
+
+
+class ComputeGauges(object):
+    def __init__(self):
+        self.cpu_percent = gauge('CPU', 0, 100)
+        self.cpu_percent.renderer = _percent_renderer
+
+        loadavg_renderer = lambda v: f"{v: 2.2f}"
+        self.loadavg1 = gauge('load1')
+        self.loadavg1.renderer = loadavg_renderer
+        # self.loadavg5 = gauge('load5')
+        # self.loadavg5.renderer = loadavg_renderer
+        # self.loadavg15 = gauge('load15')
+        # self.loadavg15.renderer = loadavg_renderer
+
+        self.mem = gauge('MEM', 0, 100)
+        self.mem.renderer = _percent_renderer
+
+    def update(self):
+        loadavg = os.getloadavg()
+        self.loadavg1.value(loadavg[0])
+        # self.loadavg5.value(loadavg[1])
+        # self.loadavg15.value(loadavg[2])
+        self.cpu_percent.value(psutil.cpu_percent(interval=None))
+        self.mem.value(psutil.virtual_memory().percent)
+
+
+def start_compute_gauges(interval=30):
+    gauges = ComputeGauges()
+
+    def update():
+        gauges.update()
+        threading.Timer(interval, update).start()
+
+    update()

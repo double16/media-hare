@@ -818,5 +818,4 @@ def comtune_cli(argv):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
-    sys.exit(comtune_cli(sys.argv[1:]))
+    common.cli_wrapper(comtune_cli)

@@ -915,6 +915,7 @@ def setup_logging():
 def setup_cli():
     setup_logging()
     setup_debugging()
+    progress.start_compute_gauges()
 
 
 def cli_wrapper(func):

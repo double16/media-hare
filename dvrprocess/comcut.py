@@ -622,5 +622,4 @@ def comcut_cli(argv):
 
 if __name__ == '__main__':
     os.nice(12)
-    common.setup_cli()
-    sys.exit(comcut_cli(sys.argv[1:]))
+    common.cli_wrapper(comcut_cli)

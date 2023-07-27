@@ -1276,10 +1276,7 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
     return CMD_RESULT_MARKED
 
 
-if __name__ == '__main__':
-    common.setup_cli()
-    argv = sys.argv[1:]
-
+def profanity_filter_cli(argv):
     dry_run = False
     keep = False
     force = False
@@ -1334,4 +1331,8 @@ if __name__ == '__main__':
     sys.exit(
         profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
                          mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
-                         mute_channels=mute_channels))
+                         mute_channels=mute_channels, language=language))
+
+
+if __name__ == '__main__':
+    common.cli_wrapper(profanity_filter_cli)

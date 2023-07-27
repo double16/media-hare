@@ -646,5 +646,4 @@ def comchap_cli(argv):
 
 if __name__ == '__main__':
     os.nice(12)
-    common.setup_cli()
-    sys.exit(comchap_cli(sys.argv[1:]))
+    common.cli_wrapper(comchap_cli)

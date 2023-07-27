@@ -214,23 +214,60 @@ class ProgressWindow(CursesProgressListener):
             self.refresh()
 
 
-class CursesProgressReporter(progress.ProgressReporter):
-    def __init__(self, window: ProgressWindow):
-        super().__init__()
-        self.progress_win = window
+class CursesGaugeListener(object):
+    def create(self, gauge):
+        pass
 
-    def _create_progress(self, task: str) -> progress.Progress:
-        return ProgressCurses(task, self.progress_win)
+    def value(self, gauge, value: float):
+        pass
 
 
-class GaugeWindow(object):
+class GaugeCurses(progress.Gauge):
+    def __init__(self, name: str, low: float, high: float, listener: CursesGaugeListener):
+        super().__init__(name, low, high)
+        self.listener = listener
+        self.listener.create(self)
+
+    def value(self, value: float):
+        super().value(value)
+        if self.update_reporting():
+            self.listener.value(self, value)
+
+
+class GaugeWindow(CursesGaugeListener):
     def __init__(self, window):
         self.window = window
-        self.window.addstr("CPU %  GPU %  MEM %")
-        self.window.refresh()
+        self.gauges: Dict[str, GaugeCurses] = dict()
 
     def resize(self):
+        self.window.clear()
+        line = ""
+        for gauge in self.gauges.values():
+            if line:
+                line += " | "
+            line += f"{gauge.name} {gauge.value_str(gauge.last_value)}"
+        self.window.addstr(line)
         self.window.refresh()
+
+    def create(self, gauge):
+        self.gauges[gauge.name] = gauge
+        self.resize()
+
+    def value(self, gauge, value: float):
+        self.resize()
+
+
+class CursesProgressReporter(progress.ProgressReporter):
+    def __init__(self, progress_window: ProgressWindow, gauge_window: GaugeWindow):
+        super().__init__()
+        self.progress_window = progress_window
+        self.gauge_window = gauge_window
+
+    def _create_progress(self, task: str) -> progress.Progress:
+        return ProgressCurses(task, self.progress_window)
+
+    def _create_gauge(self, name: str, low: float = None, high: float = None) -> progress.Gauge:
+        return GaugeCurses(name, low, high, self.gauge_window)
 
 
 class CursesUI(object):
@@ -241,13 +278,13 @@ class CursesUI(object):
         except:
             pass
 
-        self.stat_win: GaugeWindow = None
+        self.gauge_win: GaugeWindow = None
         self.progress_win: ProgressWindow = None
         self.log_handler: CursesLogHandler = None
         self.screen = screen
         self.screen.nodelay(True)
         window_dims = self._compute_window_dims()
-        self.stat_win = GaugeWindow(curses.newwin(*window_dims[0]))
+        self.gauge_win = GaugeWindow(curses.newwin(*window_dims[0]))
 
         log_pad = curses.newpad(1000, 500)
         log_win = curses.newwin(*window_dims[2])
@@ -256,9 +293,9 @@ class CursesUI(object):
         logging.root.setLevel(logging.INFO)
 
         self.progress_win = ProgressWindow(curses.newwin(*window_dims[1]))
-        progress.set_progress_reporter(CursesProgressReporter(self.progress_win))
+        progress.set_progress_reporter(CursesProgressReporter(self.progress_win, self.gauge_win))
 
-        self.stat_win.resize()
+        self.gauge_win.resize()
         self.log_handler.resize()
 
     def _compute_window_dims(self) -> list[tuple[int, int, int, int]]:
@@ -274,8 +311,8 @@ class CursesUI(object):
     def resize(self):
         self.screen.refresh()
         window_dims = self._compute_window_dims()
-        self._resize_window(self.stat_win.window, window_dims[0])
-        self.stat_win.resize()
+        self._resize_window(self.gauge_win.window, window_dims[0])
+        self.gauge_win.resize()
         self._resize_window(self.progress_win.window, window_dims[1])
         self.progress_win.resize()
         self._resize_window(self.log_handler.window, window_dims[2])
@@ -297,6 +334,7 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
         global _CURSESUI
         screen.refresh()
         _CURSESUI = CursesUI(screen)
+        progress.start_compute_gauges(2)
 
         return func(*args, **kwargs)
 

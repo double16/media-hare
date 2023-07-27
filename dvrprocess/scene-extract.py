@@ -151,5 +151,4 @@ def scene_extract_cli(argv):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
-    sys.exit(scene_extract_cli(sys.argv[1:]))
+    common.cli_wrapper(scene_extract_cli)
