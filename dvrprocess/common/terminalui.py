@@ -316,7 +316,7 @@ class CursesUI(object):
         """
         lines, cols = self.screen.getmaxyx()
         status_win = (1, cols, 0, 0)
-        progress_win = (ceil(lines/2), cols, 1, 0)
+        progress_win = (ceil(lines/3), cols, 1, 0)
         log_win = (lines - 1 - progress_win[0], cols, progress_win[0] + progress_win[2], 0)
         return [status_win, progress_win, log_win]
 
