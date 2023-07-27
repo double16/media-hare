@@ -469,6 +469,7 @@ class ComputeGauges(object):
     def __init__(self):
         self.cpu_percent = gauge('CPU', 0, 100)
         self.cpu_percent.renderer = _percent_renderer
+        self.cpu_percent.critical_range = (90, 101)
 
         loadavg_renderer = lambda v: f"{v: 2.2f}"
         self.loadavg1 = gauge('load1')
@@ -480,6 +481,7 @@ class ComputeGauges(object):
 
         self.mem = gauge('MEM', 0, 100)
         self.mem.renderer = _percent_renderer
+        self.mem.critical_range = (90, 101)
 
     def update(self):
         loadavg = os.getloadavg()
@@ -495,6 +497,8 @@ def start_compute_gauges(interval=30):
 
     def update():
         gauges.update()
-        threading.Timer(interval, update).start()
+        t = threading.Timer(interval, update)
+        t.daemon = True
+        t.start()
 
     update()

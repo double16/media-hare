@@ -47,7 +47,10 @@ class CursesLogHandler(logging.Handler):
             created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
             msg = f"{created_str} {record.levelname:<5} {record.filename:<10}  {record.getMessage()}"
 
-            self.pad.insnstr(self.y, 0, msg, maxx-1)
+            attr = curses.A_NORMAL
+            if record.levelno >= logging.ERROR:
+                attr = curses.A_STANDOUT
+            self.pad.insnstr(self.y, 0, msg, maxx-1, attr)
             self.y = min(self.y+1, maxy)
 
             self.refresh()
@@ -241,12 +244,21 @@ class GaugeWindow(CursesGaugeListener):
 
     def resize(self):
         self.window.clear()
-        line = ""
-        for gauge in self.gauges.values():
-            if line:
-                line += " | "
-            line += f"{gauge.name} {gauge.value_str(gauge.last_value)}"
-        self.window.addstr(line)
+        self.window.move(self.window.getbegyx()[0], self.window.getbegyx()[1])
+        try:
+            for idx, gauge in enumerate(self.gauges.values()):
+                if idx > 0:
+                    self.window.addstr(" | ")
+                self.window.addstr(gauge.name)
+                self.window.addstr(" ")
+                attr = curses.A_NORMAL
+                if gauge.is_critical(gauge.last_value):
+                    attr = curses.A_STANDOUT
+                self.window.addstr(gauge.value_str(gauge.last_value), attr)
+        except curses.error:
+            # outside the window
+            pass
+
         self.window.refresh()
 
     def create(self, gauge):
