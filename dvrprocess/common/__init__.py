@@ -244,6 +244,10 @@ def get_video_height(video_info) -> [None, int]:
         return None
     if height == 'sd':
         height = 480
+    elif height == '4k':
+        height = 2160
+    elif height == '8k':
+        height = 4320
     return height
 
 
