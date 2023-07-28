@@ -215,7 +215,12 @@ class GaugeLog(Gauge):
     def value(self, value: float):
         super().value(value)
         if self.update_reporting():
-            _logger.info("%s %s", self.name, self.value_str(value))
+            level = logging.INFO
+            if self.is_critical(value):
+                level = logging.CRITICAL
+            elif self.is_warning(value):
+                level = logging.WARNING
+            _logger.log(level, "%s %s", self.name, self.value_str(value))
 
 
 class ProgressReporter(object):

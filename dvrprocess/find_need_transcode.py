@@ -328,6 +328,11 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
 
             if video_resolution == 'sd':
                 video_resolution = '480'
+            elif video_resolution == '4k':
+                video_resolution = '2160'
+            elif video_resolution == '8k':
+                video_resolution = '4320'
+
             for part in list(filter(lambda el: el.tag == 'Part', media)):
                 file_name = part.attrib.get("file", "?")
                 file_size = int(part.attrib.get("size", "0"))
