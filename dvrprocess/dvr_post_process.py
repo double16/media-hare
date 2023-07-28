@@ -261,11 +261,13 @@ def do_dvr_post_process(input_file,
     dir_filename = os.path.dirname(filename)
 
     # Temporary File Name for transcoding, we want to keep on the same filesystem as the input
-    common.TEMPFILENAME = os.path.join(dir_filename,
+    temp_filename = os.path.join(dir_filename,
                                        f".~{'.'.join(base_filename.split('.')[0:-1])}.transcoded.{output_type}")
     # Hides filename from user UI and Dropbox
-    common.HIDDEN_FILENAME = os.path.join(dir_filename, f".~{base_filename}")
+    hidden_filename = os.path.join(dir_filename, f".~{base_filename}")
     output_filename = os.path.join(dir_filename, f"{'.'.join(base_filename.split('.')[0:-1])}.{output_type}")
+
+    filename_clean_link = None
 
     if common.assert_not_transcoding(input_file, exit=False) != 0:
         return 255
@@ -432,21 +434,21 @@ def do_dvr_post_process(input_file,
                 mount_point = dir_filename
             for tempdir in mount_point, tempfile.tempdir:
                 try:
-                    (filename_clean_link_fd, common.FILENAME_CLEAN_LINK) = mkstemp(dir=tempdir, prefix=".~tmplnk.",
+                    (filename_clean_link_fd, filename_clean_link) = mkstemp(dir=tempdir, prefix=".~tmplnk.",
                                                                                    suffix='.' + output_type)
                     os.close(filename_clean_link_fd)
-                    os.remove(common.FILENAME_CLEAN_LINK)
-                    os.symlink(os.path.realpath(filename), common.FILENAME_CLEAN_LINK)
+                    os.remove(filename_clean_link)
+                    os.symlink(os.path.realpath(filename), filename_clean_link)
                 except OSError:
                     # Some filesystems don't like the temp names? zfs?
                     pass
 
-            if not os.path.isfile(common.FILENAME_CLEAN_LINK):
+            if not filename_clean_link or not os.path.isfile(filename_clean_link):
                 logger.error(f"Could not create temp file link in {mount_point} or {dir_filename}")
                 return 255
 
             # The lavfi filter extracts closed caption subtitles
-            arguments.extend(['-f', 'lavfi', '-i', f"movie={common.FILENAME_CLEAN_LINK}[out+subcc]"])
+            arguments.extend(['-f', 'lavfi', '-i', f"movie={filename_clean_link}[out+subcc]"])
 
         # The file reference holding the closed captions
         closed_caption_file = 0
@@ -521,7 +523,6 @@ def do_dvr_post_process(input_file,
                                                                      target_bitrate=bitrate)
         video_encoder_options_tag_value.extend(encoding_options)
 
-        filter_complex = ""
         filter_stage = 0
         filter_complex = f"[{video_input_stream}]yadif"
         if not forgiving:
@@ -611,7 +612,7 @@ def do_dvr_post_process(input_file,
     if output_type == 'mov':
         arguments.extend(["-c:d", "copy", "-map", f"{streams_file}:d?"])
 
-    arguments.append(common.TEMPFILENAME)
+    arguments.append(temp_filename)
 
     if not transcoding and input_type == output_type:
         logger.info(f"Stream is already in desired format: {input_file}")
@@ -629,25 +630,31 @@ def do_dvr_post_process(input_file,
     if common.assert_not_transcoding(input_file, exit=False) != 0:
         return 255
     try:
-        Path(common.TEMPFILENAME).touch(mode=0o664, exist_ok=False)
+        Path(temp_filename).touch(mode=0o664, exist_ok=False)
     except FileExistsError:
         return 255
 
-    logger.info(f"Starting transcode of {filename} to {common.TEMPFILENAME}")
+    logger.info(f"Starting transcode of {filename} to {temp_filename}")
     logger.info(f"{tools.ffmpeg.array_as_command(arguments)}")
     tools.ffmpeg.run(arguments, check=True)
 
-    if os.stat(common.TEMPFILENAME).st_size == 0:
-        logger.error(f"Output at {common.TEMPFILENAME} is zero length")
+    if filename_clean_link and os.path.exists(filename_clean_link):
+        try:
+            os.remove(filename_clean_link)
+        except OSError:
+            logger.warning("Could not remove clean link %s", filename_clean_link)
+
+    if os.stat(temp_filename).st_size == 0:
+        logger.error(f"Output at {temp_filename} is zero length")
         return 255
 
     #
     # Encode Done. Performing Cleanup
     #
-    logger.info(f"Finished transcode of {filename} to {common.TEMPFILENAME}")
+    logger.info(f"Finished transcode of {filename} to {temp_filename}")
 
     filename_stat = os.stat(filename)
-    tempfilename_stat = os.stat(common.TEMPFILENAME)
+    tempfilename_stat = os.stat(temp_filename)
 
     if prevent_larger_file and filename_stat.st_size < tempfilename_stat.st_size:
         # TODO: need a way to mark as creating a larger file to prevent processing again
@@ -655,26 +662,26 @@ def do_dvr_post_process(input_file,
                     f", keeping the original")
         return 0
 
-    common.match_owner_and_perm(target_path=common.TEMPFILENAME, source_path=filename)
+    common.match_owner_and_perm(target_path=temp_filename, source_path=filename)
 
     # Hide original file in case OUTPUT_TYPE is the same as input
-    os.replace(filename, common.HIDDEN_FILENAME)
+    os.replace(filename, hidden_filename)
     try:
-        os.replace(common.TEMPFILENAME, output_filename)
+        os.replace(temp_filename, output_filename)
     except OSError:
         # Put original file back as fall back
-        os.replace(common.HIDDEN_FILENAME, filename)
-        logger.error(f"Failed to move converted file: {common.TEMPFILENAME}")
+        os.replace(hidden_filename, filename)
+        logger.error(f"Failed to move converted file: {temp_filename}")
         return 255
 
     # If we're in the .grab folder, remove original
     grab_folder = ".grab" in os.getcwd() or ".grab" in filename
     if grab_folder or not keep:
-        os.remove(common.HIDDEN_FILENAME)
+        os.remove(hidden_filename)
 
     logger.info("encode done")
 
-    # TODO: It'd be best to run this on the temp file, but we're using a shared common.TEMPFILENAME so it doesn't work
+    # TODO: It'd be best to run this on the temp file, but we're using a shared temp_filename so it doesn't work
     if profanity_filter:
         if output_type == "mkv":
             try:
@@ -718,5 +725,4 @@ def dvr_post_process_cli(argv):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
-    sys.exit(dvr_post_process_cli(sys.argv[1:]))
+    common.cli_wrapper(dvr_post_process_cli)
