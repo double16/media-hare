@@ -444,7 +444,7 @@ def hwaccel_gpustat() -> tuple[Union[float, None], Union[float, None]]:
     :return: (compute 0-100, memory 0-100)
     """
     global hwaccel_requested
-    if hwaccel_requested == HWAccelRequest.NVENC:
+    if tools.nvidia_gpustat.present():
         return _nvenc_gpustat()
     return None, None
 
@@ -466,6 +466,5 @@ def _nvenc_gpustat() -> tuple[Union[float, None], Union[float, None]]:
         return numpy.average(compute), numpy.average(memory)
     except Exception as e:
         logger.warning("Could not parse gpustat result", e)
-        pass
 
     return None, None
