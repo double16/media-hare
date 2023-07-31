@@ -12,11 +12,14 @@ cmd.extend(hwaccel_encoding(output_stream='1', codec='h264', output_type='mkv', 
 
 """
 import _thread
+import json
 import logging
 import re
 import subprocess
 from enum import Enum
 from typing import Union
+
+import numpy
 
 from . import tools
 
@@ -434,3 +437,34 @@ def _sw_encoding(output_stream: str, codec: str, output_type: str, tune: str, pr
         options.extend([f'-tag:{output_stream}', 'hvc1'])
     return options
 
+
+def hwaccel_gpustat() -> tuple[Union[float, None], Union[float, None]]:
+    """
+    Get the GPU compute % and memory % usage
+    :return: (compute 0-100, memory 0-100)
+    """
+    global hwaccel_requested
+    if tools.nvidia_gpustat.present():
+        return _nvenc_gpustat()
+    return None, None
+
+
+def _nvenc_gpustat() -> tuple[Union[float, None], Union[float, None]]:
+    if not tools.nvidia_gpustat.present():
+        return None, None
+
+    try:
+        stat = json.loads(tools.nvidia_gpustat.check_output(["--json"], text=True))
+        compute = []
+        memory = []
+        for gpu in stat["gpus"]:
+            compute.append(float(gpu["utilization.gpu"]))
+            memory.append(float(gpu["memory.used"])*100.0/float(gpu["memory.total"]))
+        if len(compute) == 0:
+            # no gpus
+            return None, None
+        return numpy.average(compute), numpy.average(memory)
+    except Exception as e:
+        logger.warning("Could not parse gpustat result", e)
+
+    return None, None

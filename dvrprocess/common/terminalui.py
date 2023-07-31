@@ -243,7 +243,7 @@ class GaugeWindow(CursesGaugeListener):
         self.gauges: Dict[str, GaugeCurses] = dict()
 
     def resize(self):
-        self.window.clear()
+        self.window.erase()
         self.window.move(self.window.getbegyx()[0], self.window.getbegyx()[1])
         try:
             for idx, gauge in enumerate(self.gauges.values()):

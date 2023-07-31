@@ -161,6 +161,9 @@ vainfo.install = lambda: False
 nvidia_smi = SubprocessProcInvoker('nvidia-smi', required=False)
 nvidia_smi.install = lambda: False
 
+nvidia_gpustat = SubprocessProcInvoker('gpustat', required=False)
+nvidia_gpustat.install = lambda: False
+
 
 def mock_all():
     global ffmpeg, ffprobe, comskip, comskip_gui, mkvpropedit, ccextractor, subtitle_edit, _ffmpeg_audio_layouts

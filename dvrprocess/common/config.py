@@ -151,7 +151,10 @@ def get_global_config_bytes(section: str, option: str, fallback: int = None):
 
 
 def get_work_dir() -> str:
-    return get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
+    work_dir = get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
+    if not os.path.exists(work_dir):
+        os.mkdir(work_dir)
+    return work_dir
 
 
 def get_global_config_frame_rate(section: str, option: str, fallback: [None, str] = _UNSET) -> [None, str]:

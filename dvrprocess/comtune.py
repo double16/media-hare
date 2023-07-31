@@ -686,6 +686,8 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
 
 
 def comtune_cli(argv):
+    # TODO: Use Plex API to get candidates to improve performance
+
     verbose = False
     workdir = config.get_work_dir()
     force = 0

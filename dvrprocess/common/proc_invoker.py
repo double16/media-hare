@@ -93,6 +93,9 @@ class SubprocessProcInvoker(BaseProcInvoker):
                 except:
                     pass
 
+        if result.returncode == 130:
+            raise KeyboardInterrupt()
+
         return result.returncode
 
     def run(self, arguments: list[str], **kwargs) -> int:
