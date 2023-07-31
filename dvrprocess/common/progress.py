@@ -9,6 +9,8 @@ from typing import Union, Dict
 
 import psutil
 
+from . import hwaccel
+
 _logger = logging.getLogger(__name__)
 
 
@@ -488,6 +490,23 @@ class ComputeGauges(object):
         self.mem.renderer = _percent_renderer
         self.mem.critical_range = (90, 101)
 
+        gpu_pct, gmem_pct = hwaccel.hwaccel_gpustat()
+        if gpu_pct is None:
+            self.gpu_percent = None
+        else:
+            self.gpu_percent = gauge('GPU', 0, 100)
+            self.gpu_percent.renderer = _percent_renderer
+            self.gpu_percent.critical_range = (90, 101)
+            self.gpu_percent.value(gpu_pct)
+
+        if gmem_pct is None:
+            self.gmem_percent = None
+        else:
+            self.gmem_percent = gauge('GPU MEM', 0, 100)
+            self.gmem_percent.renderer = _percent_renderer
+            self.gmem_percent.critical_range = (90, 101)
+            self.gmem_percent.value(gmem_pct)
+
     def update(self):
         loadavg = os.getloadavg()
         self.loadavg1.value(loadavg[0])
@@ -495,6 +514,13 @@ class ComputeGauges(object):
         # self.loadavg15.value(loadavg[2])
         self.cpu_percent.value(psutil.cpu_percent(interval=None))
         self.mem.value(psutil.virtual_memory().percent)
+
+        if self.gpu_percent is not None or self.gmem_percent is not None:
+            gpu_pct, gmem_pct = hwaccel.hwaccel_gpustat()
+            if gpu_pct is not None:
+                self.gpu_percent.value(gpu_pct)
+            if gmem_pct is not None:
+                self.gmem_percent.value(gmem_pct)
 
 
 def start_compute_gauges(interval=30):
