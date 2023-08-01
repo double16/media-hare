@@ -213,6 +213,7 @@ that mother[!.-]+
 you mother[!.-]+
 holy mother\w*
 holy mother of god
+bad[\s-]?ass mother
 freakin
 freaking
 friggin

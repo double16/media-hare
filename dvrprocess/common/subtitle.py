@@ -108,6 +108,7 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
 
 class SubtitleElementFacade(ABC):
     def __init__(self):
+        self._normalized_text: Union[str, None] = None
         pass
 
     def __repr__(self):
@@ -120,6 +121,14 @@ class SubtitleElementFacade(ABC):
     @abstractmethod
     def set_text(self, new_value: str):
         pass
+
+    def normalized_text(self) -> Union[str, None]:
+        if self.text() is not None and self._normalized_text is None:
+            raise ValueError("normalized text not set")
+        return self._normalized_text
+
+    def set_normalized_text(self, new_value: str):
+        self._normalized_text = new_value
 
     @abstractmethod
     def start(self) -> Union[int, None]:
