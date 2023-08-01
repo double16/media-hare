@@ -158,10 +158,12 @@ mkvpropedit = SubprocessProcInvoker('mkvpropedit')
 vainfo = SubprocessProcInvoker('vainfo', required=False)
 vainfo.install = lambda: False
 
-nvidia_smi = SubprocessProcInvoker('nvidia-smi', required=False)
+nvidia_semaphore = Semaphore(1)
+
+nvidia_smi = SubprocessProcInvoker('nvidia-smi', required=False, semaphore=nvidia_semaphore)
 nvidia_smi.install = lambda: False
 
-nvidia_gpustat = SubprocessProcInvoker('gpustat', required=False)
+nvidia_gpustat = SubprocessProcInvoker('gpustat', required=False, semaphore=nvidia_semaphore)
 nvidia_gpustat.install = lambda: False
 
 

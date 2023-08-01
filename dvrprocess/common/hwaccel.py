@@ -16,6 +16,7 @@ import json
 import logging
 import re
 import subprocess
+import time
 from enum import Enum
 from typing import Union
 
@@ -449,9 +450,18 @@ def hwaccel_gpustat() -> tuple[Union[float, None], Union[float, None]]:
     return None, None
 
 
+_nvenc_gpustat_cache: tuple[Union[float, None], Union[float, None]] = None, None
+_nvenc_gpustat_cache_expire: float = time.time() - 1
+
+
 def _nvenc_gpustat() -> tuple[Union[float, None], Union[float, None]]:
+    global _nvenc_gpustat_cache, _nvenc_gpustat_cache_expire
+
     if not tools.nvidia_gpustat.present():
         return None, None
+
+    if _nvenc_gpustat_cache_expire > time.time():
+        return _nvenc_gpustat_cache
 
     try:
         stat = json.loads(tools.nvidia_gpustat.check_output(["--json"], text=True))
@@ -462,8 +472,13 @@ def _nvenc_gpustat() -> tuple[Union[float, None], Union[float, None]]:
             memory.append(float(gpu["memory.used"])*100.0/float(gpu["memory.total"]))
         if len(compute) == 0:
             # no gpus
-            return None, None
-        return numpy.average(compute), numpy.average(memory)
+            _nvenc_gpustat_cache = None, None
+            _nvenc_gpustat_cache_expire = time.time() + 3600
+            return _nvenc_gpustat_cache
+
+        _nvenc_gpustat_cache = numpy.average(compute), numpy.average(memory)
+        _nvenc_gpustat_cache_expire = time.time() + 30
+        return _nvenc_gpustat_cache
     except Exception as e:
         logger.warning("Could not parse gpustat result", e)
 
