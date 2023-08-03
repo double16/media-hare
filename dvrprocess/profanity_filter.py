@@ -44,6 +44,9 @@ CMD_RESULT_ERROR = 255
 # When creating text from bitmaps or audio, what is the minimum percentage of dictionary words we require?
 WORD_FOUND_PCT_THRESHOLD = 93.0
 
+# Number of milliseconds between words to assume a new sentence.
+SILENCE_FOR_NEW_SENTENCE = 1200
+
 logger = logging.getLogger(__name__)
 
 debug = False
@@ -1368,14 +1371,13 @@ def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
     """
     chars_per_sentence = 40
     linebreaks_per_sentence = 2
-    silence_for_new_sentence = 1200
     newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
     result = []
     s = None
     for word in words:
         if s is not None:
-            if word.start.ordinal - s.end.ordinal > silence_for_new_sentence:
+            if word.start.ordinal - s.end.ordinal > SILENCE_FOR_NEW_SENTENCE:
                 s = None
             else:
                 split = (s.text + ' ' + word.text).split(newline)
@@ -1395,7 +1397,8 @@ def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
     return result
 
 
-def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en', should_add_new_events=True) -> bool:
+def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
+                                 should_add_new_events=False) -> bool:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
     :param subtitle_inout: the subtitle to align, srt or ssa
@@ -1532,6 +1535,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
                     # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
                     # TODO: permutations for slang short hand, i.e. "outta" for "out of"
+                    # TODO: permutations for ("know", "no"), etc.
                     event_text = event.normalized_text()
                     word_count = len(event_text.split())
                     if word_count < word_count_min:
@@ -1559,16 +1563,27 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         continue
                     candidates = dict()
                     for idx in range(start_idx, end_idx + 1):
-                        logger.debug("Enumerating candidate sentences from word %i %s %s", idx,
+                        # TODO: handle already masked text: "***", "@#$!", ...
+                        logger.debug("Enumerating candidate sentences from word %i %s '%s'", idx,
                                      common.ms_to_ts(words_filtered[idx].start.ordinal), words_filtered[idx].text)
                         for c in word_counts:
                             key = (idx, idx + c)
                             if key[1] > len(words_filtered):
                                 continue
+                            if key[0] >= key[1]:
+                                continue
                             if words_filtered[key[1] - 1].start.ordinal > (
                                     words_filtered[key[0]].start.ordinal + event.duration() + max_offset_ms):
                                 continue
-                            if key[0] >= key[1]:
+                            # check if a gap of silence is included
+                            silence_gap_included = False
+                            for j in range(key[0], key[1] - 1):
+                                if words_filtered[j + 1].start.ordinal - words_filtered[
+                                    j].end.ordinal > SILENCE_FOR_NEW_SENTENCE * 2:
+                                    logger.debug("Silence gap %i ms between words, skipping candidate",
+                                                 words_filtered[j + 1].start.ordinal - words_filtered[j].end.ordinal)
+                                    silence_gap_included = True
+                            if silence_gap_included:
                                 continue
                             try:
                                 # ignore ranges that have already been matched
@@ -1595,7 +1610,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         matches = list(filter(lambda e: e[1] >= min_fuzz_ratio, matches))
 
                     if matches:
-                        # TODO: handle already masked text: "***", "@#$!", ...
                         matches.sort(reverse=True, key=lambda e: [e[1], e[2][0]])
                         logger.debug("Sorted matches: %s", matches)
                         match = matches[0]
@@ -1654,10 +1668,12 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         event_moved = False
                         if len(event.normalized_text()) > 0:
                             # try to start non-matches at the beginning of an unclaimed word
+                            # TODO: unclaimed word could be part of previous match
                             unclaimed_word = next(filter(
                                 lambda e: e[1].start.ordinal >= event_previous.end(), unclaimed_word_events), None)
                             if unclaimed_word is not None and len(unclaimed_word[1].text) > 3:
-                                logger.debug("event %i possible unclaimed word %s", event_idx, unclaimed_word[1])
+                                logger.debug("event %i possible unclaimed word %i '%s'", event_idx,
+                                             unclaimed_word[1].index, unclaimed_word[1].text)
                                 if event_idx + 1 < len(events):
                                     end_limit_ms = events[event_idx + 1].start()
                                 else:
@@ -1773,11 +1789,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             pass
 
                     if previous_ratio < current_ratio and previous_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                        logger.debug("appending to event %i to include %s, duration %+i ms", event_idx - 1,
+                        logger.debug("appending to event %i to include '%s', duration %+i ms", event_idx - 1,
                                      unclaimed_text, previous_extended_duration)
                         previous_event.set_end(unclaimed_words[-1].end.ordinal)
                     elif current_extended_duration <= unclaimed_word_capture_duration_max_ms:
-                        logger.debug("prepending to event %i to include %s, duration %+i ms", event_idx,
+                        logger.debug("prepending to event %i to include '%s', duration %+i ms", event_idx,
                                      unclaimed_text, current_extended_duration)
                         event.set_start(unclaimed_words[0].start.ordinal)
                     else:
@@ -1898,13 +1914,19 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
         max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, new_events_count)
     for event_idx, adjustment in enumerate(adjustments):
+        adjustment_log_level = 0
         if adjustment[0] > max_start_adjustment / 2 or adjustment[1] > max_end_adjustment / 2:
-            logger.warning("subtitle alignment stats: event %i adjustment (%i,%i) (%s - %s) '%s'",
-                           event_idx,
-                           events[event_idx].start() - original_range_ms[event_idx][0],
-                           events[event_idx].end() - original_range_ms[event_idx][1],
-                           common.ms_to_ts(events[event_idx].start()), common.ms_to_ts(events[event_idx].end()),
-                           events[event_idx].text())
+            adjustment_log_level = logging.WARNING
+        if events[event_idx].start() >= events[event_idx].end():
+            adjustment_log_level = logging.ERROR
+        if adjustment_log_level > 0:
+            logger.log(adjustment_log_level,
+                       "subtitle alignment stats: event %i adjustment (%i,%i) (%s - %s) '%s'",
+                       event_idx,
+                       events[event_idx].start() - original_range_ms[event_idx][0],
+                       events[event_idx].end() - original_range_ms[event_idx][1],
+                       common.ms_to_ts(events[event_idx].start()), common.ms_to_ts(events[event_idx].end()),
+                       events[event_idx].text())
     if ave_start_adjustment < 100 and ave_end_adjustment < 100:
         changed = False
 
