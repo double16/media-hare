@@ -114,9 +114,6 @@ def transcode_apply_cli(argv):
     verbose = False
     limit = None
 
-    if common.core_count() < 9:
-        max_resolution = 480
-
     try:
         opts, args = getopt.getopt(list(argv),
                                    "hnu:v:a:f:",
@@ -143,6 +140,7 @@ def transcode_apply_cli(argv):
             max_resolution = int(arg)
         elif opt == '--verbose':
             verbose = True
+            logging.root.setLevel(logging.DEBUG)
         elif opt == '--ignore-compute':
             check_compute = False
         elif opt == '--limit':

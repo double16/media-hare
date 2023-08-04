@@ -157,7 +157,8 @@ def find_need_transcode_cli(argv):
 
 class TranscodeFileInfo(object):
 
-    def __init__(self, file_name: str, host_file_path: str, item_key: Union[str, None], video_resolution: int, runtime: int,
+    def __init__(self, file_name: str, host_file_path: str, item_key: Union[str, None], video_resolution: int,
+                 runtime: int,
                  framerate: Union[None, float] = None, library: Union[None, str] = None):
         self.file_name = file_name
         self.host_file_path = host_file_path
@@ -248,6 +249,12 @@ def need_transcode_generator(
         max_resolution: Union[None, int] = None,
         desired_frame_rate: Union[None, float] = None,
 ):
+    logger.debug(
+        "need_transcode_generator(plex_url=%s, media_paths=%s, host_home=%s, desired_video_codecs=%s, "
+        "desired_audio_codecs=%s, desired_subtitle_codecs=%s, max_resolution=%s, desired_frame_rate=%s)",
+        plex_url, media_paths, host_home, desired_video_codecs, desired_audio_codecs, desired_subtitle_codecs,
+        max_resolution, desired_frame_rate)
+
     if desired_video_codecs is None and desired_audio_codecs is None and desired_frame_rate is None:
         desired_video_codecs = config.get_global_config_option('video', 'codecs').split(',')
         desired_audio_codecs = config.get_global_config_option('audio', 'codecs').split(',')
