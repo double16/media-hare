@@ -101,5 +101,5 @@ def extract_pf_data(mkv):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
+    common.setup_cli(level=logging.ERROR)
     profanity_filter_report_cli(sys.argv[1:])

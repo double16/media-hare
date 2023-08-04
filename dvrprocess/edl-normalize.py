@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import re
 import sys
 
@@ -40,5 +41,5 @@ def edl_normalize_cli(args):
 
 
 if __name__ == '__main__':
-    common.setup_cli()
+    common.setup_cli(level=logging.ERROR)
     sys.exit(edl_normalize_cli(sys.argv[1:]))

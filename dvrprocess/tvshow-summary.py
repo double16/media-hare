@@ -4,6 +4,7 @@ import datetime
 import getopt
 import hashlib
 import json
+import logging
 import os
 import random
 import sys
@@ -380,5 +381,5 @@ def tvshow_summary_cli(argv) -> int:
 
 
 if __name__ == '__main__':
-    common.setup_cli()
+    common.setup_cli(level=logging.ERROR)
     sys.exit(tvshow_summary_cli(sys.argv[1:]))

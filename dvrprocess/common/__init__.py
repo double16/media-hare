@@ -919,12 +919,12 @@ def setup_debugging():
     logger.debug("__debug__ is %s", __debug__)
 
 
-def setup_logging():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s', level=logging.INFO)
+def setup_logging(level=logging.INFO):
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s', level=level)
 
 
-def setup_cli():
-    setup_logging()
+def setup_cli(level=logging.INFO):
+    setup_logging(level)
     setup_debugging()
     progress.start_compute_gauges()
 

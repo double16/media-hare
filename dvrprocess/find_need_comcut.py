@@ -129,5 +129,5 @@ def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[Co
 
 
 if __name__ == '__main__':
-    common.setup_cli()
+    common.setup_cli(level=logging.ERROR)
     sys.exit(find_need_comcut_cli(sys.argv[1:]))

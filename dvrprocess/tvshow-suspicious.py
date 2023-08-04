@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import getopt
+import logging
 import sys
 import xml.etree.ElementTree as ET
 import requests
@@ -165,5 +166,5 @@ def tvshow_suspicious_cli(argv) -> int:
 
 
 if __name__ == '__main__':
-    common.setup_cli()
+    common.setup_cli(level=logging.ERROR)
     sys.exit(tvshow_suspicious_cli(sys.argv[1:]))
