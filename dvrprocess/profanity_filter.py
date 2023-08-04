@@ -308,7 +308,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     subtitle_filtered_filename = f"{temp_base}.filtered.{subtitle_codec}"
     subtitle_filtered_forced_filename = f"{temp_base}.filtered-forced.{subtitle_codec}"
     subtitle_filtered_previous_filename = f"{temp_base}.filtered.previous.{subtitle_codec}"
-    subtitle_words_filename = f"{temp_base}.words.{subtitle_codec}"
+    subtitle_words_filename = f"{temp_base}.words.srt"
     if not debug:
         common.TEMPFILENAMES.append(subtitle_original_filename)
         common.TEMPFILENAMES.append(subtitle_filtered_filename)

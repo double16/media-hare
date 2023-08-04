@@ -139,7 +139,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             self.assertEqual(1, len(list(filter(lambda e: e == '-i', arguments))),
                              '1 inputs expected: ' + str(arguments))
             self.assertEqual(3, len(list(filter(lambda e: e == '-map', arguments))),
-                             '2 mapped stream expected: ' + str(arguments))
+                             '3 mapped stream expected: ' + str(arguments))
             original_output = list(filter(lambda e: '.original.' in e, arguments))[0]
             filtered_output = list(filter(lambda e: '.filtered.' in e, arguments))[0]
             words_output = list(filter(lambda e: '.words.' in e, arguments))[0]
@@ -611,9 +611,10 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                             constants.K_FILTER_HASH: ''})
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_audio_for_transcribing(None),
-            self._mock_ffmpeg_extract_subtitle_original_filtered('needs_filtered.ssa.txt',
-                                                                 'needs_filtered.ssa.txt'),
-            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
+            self._mock_ffmpeg_extract_subtitle_original_filtered_words('needs_filtered.ssa.txt',
+                                                                       'needs_filtered.ssa.txt',
+                                                                       'needs_filtered.srt.txt'),
+            self._mock_ffmpeg_create_with_filtered_streams(3, mapped_stream_count=8),
         ])
         self.assertEqual(profanity_filter.CMD_RESULT_FILTERED,
                          profanity_filter.do_profanity_filter(mkv_path, force=True), "return code")
