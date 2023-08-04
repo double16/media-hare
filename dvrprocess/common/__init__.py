@@ -76,12 +76,19 @@ def get_media_paths(base=None):
 
 
 def fatal(message):
-    logger.fatal(message)
+    logger.critical(message)
     sys.exit(255)
 
 
 def exception_hook(exctype, value, traceback_obj):
-    logger.fatal("Uncaught exception", exc_info=(exctype, value, traceback_obj))
+    if isinstance(value, subprocess.CalledProcessError):
+        logger.critical("subprocess error", exc_info=(exctype, value, traceback_obj))
+        if value.stdout:
+            logger.critical("stdout: %s", value.stdout)
+        if value.stderr:
+            logger.critical("stderr: %s", value.stderr)
+    else:
+        logger.critical("Uncaught exception", exc_info=(exctype, value, traceback_obj))
     sys.exit(255)
 
 

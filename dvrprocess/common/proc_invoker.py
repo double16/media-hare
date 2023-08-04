@@ -279,6 +279,19 @@ class StreamCapture(object):
         self.save = getattr(sys, name)
         setattr(sys, name, self)
 
+    def __getstate__(self):
+        return self.name, self.logger.name, self.level, self.captured
+
+    def __setstate__(self, state):
+        if self.save:
+            setattr(sys, self.name, self.save)
+        self.name = state[0]
+        self.save = getattr(sys, self.name)
+        setattr(sys, self.name, self)
+        self.logger = logging.getLogger(state[1])
+        self.level = state[2]
+        self.captured = state[3]
+
     def write(self, data):
         if self.logger:
             self.logger.log(self.level, data)

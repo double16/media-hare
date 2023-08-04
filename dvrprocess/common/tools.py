@@ -46,10 +46,12 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         kwargs2['stderr'] = subprocess.PIPE
         kwargs2['encoding'] = 'ascii'
         kwargs2['bufsize'] = 1
+        stderr = []
         proc = subprocess.Popen(arguments, **kwargs2)
         duration = None
         ffmpeg_progress = None
         for l in proc.stderr:
+            stderr.append(l)
             duration_match = self.duration_matcher.search(l)
             if duration_match:
                 duration = ceil(edl_util.parse_edl_ts(duration_match.group(1)))
@@ -62,8 +64,10 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         if ffmpeg_progress:
             ffmpeg_progress.stop()
         if check and proc.returncode:
-            raise subprocess.CalledProcessError(proc.returncode, proc.args, proc.stdout,
-                                                proc.stderr)
+            raise subprocess.CalledProcessError(proc.returncode, proc.args,
+                                                None if proc.stdout is None else proc.stdout.read(),
+                                                ''.join(stderr)
+                                                )
         return proc.returncode
 
 
@@ -107,9 +111,11 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         kwargs2['stdout'] = subprocess.PIPE
         kwargs2['encoding'] = 'ascii'
         kwargs2['bufsize'] = 1
+        stdout = []
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
         for l in proc.stdout:
+            stdout.append(l)
             pct_match = self.pct_matcher.search(l)
             if pct_match:
                 if se_progress is None:
@@ -119,8 +125,10 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         if se_progress:
             se_progress.stop()
         if check and proc.returncode:
-            raise subprocess.CalledProcessError(proc.returncode, proc.args, proc.stdout,
-                                                proc.stderr)
+            raise subprocess.CalledProcessError(proc.returncode, proc.args,
+                                                ''.join(stdout),
+                                                None if proc.stderr is None else proc.stderr.read()
+                                                )
         return proc.returncode
 
 

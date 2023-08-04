@@ -995,6 +995,10 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
                            text=' '.join([l['word'] for l in line]))
             subs_text.append(s)
 
+    if len(subs_words) == 0:
+        logger.warning("audio-to-text transcription empty")
+        return None, None
+
     srt_words = SubRipFile(items=subs_words, path=words_filename)
     srt_words.save(Path(words_filename), 'utf-8')
 

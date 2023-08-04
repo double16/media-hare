@@ -29,6 +29,8 @@ def _check_resize():
 
 
 class CursesLogHandler(logging.Handler):
+    log_msg_cleaner = re.compile(r'[\x00-\x19\u007F-\uFFFF]+')
+
     def __init__(self, pad, window, level=logging.INFO):
         super().__init__(level)
         self.pad = pad
@@ -38,20 +40,21 @@ class CursesLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         _check_resize()
         try:
-            maxy, maxx = self.pad.getmaxyx()
-            if self.y >= maxy:
+            max_y, max_x = self.pad.getmaxyx()
+            if self.y >= max_y:
                 self.pad.move(0, 0)
                 self.pad.insdelln(-1)
-                self.y = maxy - 1
+                self.y = max_y - 1
 
             created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
-            msg = f"{created_str} {record.levelname:<5} {record.filename:<10}  {record.getMessage()}"
+            log_msg = self.log_msg_cleaner.sub(" ", record.getMessage())
+            msg = f"{created_str} {record.levelname:<7} {record.filename[:20]:<20}  {log_msg}"
 
             attr = curses.A_NORMAL
             if record.levelno >= logging.ERROR:
                 attr = curses.A_STANDOUT
-            self.pad.insnstr(self.y, 0, msg, maxx-1, attr)
-            self.y = min(self.y+1, maxy)
+            self.pad.insnstr(self.y, 0, msg, max_x-1, attr)
+            self.y = min(self.y+1, max_y)
 
             self.refresh()
         except:

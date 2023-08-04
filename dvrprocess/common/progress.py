@@ -429,7 +429,7 @@ def _progress_queue_feed(q: Queue):
     while True:
         try:
             m = q.get(True)
-        except ValueError:
+        except (ValueError, EOFError):
             # queue is closed
             return
         try:
