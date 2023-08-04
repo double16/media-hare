@@ -249,6 +249,13 @@ class AudioLayout(object):
                 else:
                     result[target_channel] = list(filter(lambda e: 'C' in e, source_remaining))
 
+        for sc_list in result.values():
+            for sc in sc_list:
+                try:
+                    source_remaining.remove(sc)
+                except ValueError:
+                    pass
+
         if len(source_remaining) > 0:
             logger.warning("Unmapped source channels: %s, mapping from %s, to %s", ",".join(source_remaining),
                            self.name, target.name)
