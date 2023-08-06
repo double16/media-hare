@@ -11,6 +11,7 @@ import requests
 import common
 from common import config, constants
 from dvr_post_process import dvr_post_process
+from dvrprocess.common import hwaccel
 from find_need_transcode import need_transcode_generator
 
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
 
 
 def should_transcode_run():
-    if common.core_count() < 4:
+    if common.core_count() < 4 and hwaccel.find_hwaccel_method() == hwaccel.HWAccelMethod.NONE:
         return False
     return common.should_start_processing()
 

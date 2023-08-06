@@ -29,7 +29,7 @@ def _check_resize():
 
 
 class CursesLogHandler(logging.Handler):
-    log_msg_cleaner = re.compile(r'[\x00-\x19\u007F-\uFFFF]+')
+    log_msg_cleaner = re.compile(r'[\u0000-\u001F\u007F-\uFFFF]+')
 
     def __init__(self, pad, window, level=logging.INFO):
         super().__init__(level)
