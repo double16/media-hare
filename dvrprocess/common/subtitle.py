@@ -1,4 +1,5 @@
 import logging
+import re
 from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Union
@@ -107,6 +108,10 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
 
 
 class SubtitleElementFacade(ABC):
+    _sound_effect_re = re.compile(r"\s*\[.*?]\s*")
+    _sound_effect_beginning_re = re.compile(r"\s*\[.*?]\b.*")
+    _sound_effect_ending_re = re.compile(r".*\b\[.*?]\s*")
+
     def __init__(self):
         self._normalized_text: Union[str, None] = None
         pass
@@ -129,6 +134,15 @@ class SubtitleElementFacade(ABC):
 
     def set_normalized_text(self, new_value: str):
         self._normalized_text = new_value
+
+    def is_sound_effect(self) -> bool:
+        return self._sound_effect_re.fullmatch(self.text()) is not None
+
+    def has_beginning_sound_effect(self) -> bool:
+        return self._sound_effect_beginning_re.fullmatch(self.text()) is not None
+
+    def has_ending_sound_effect(self) -> bool:
+        return self._sound_effect_ending_re.fullmatch(self.text()) is not None
 
     @abstractmethod
     def start(self) -> Union[int, None]:
