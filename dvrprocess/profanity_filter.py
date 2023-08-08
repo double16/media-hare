@@ -1398,7 +1398,7 @@ def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
 
 
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
-                                 should_add_new_events=False) -> bool:
+                                 should_add_new_events=True) -> bool:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
     :param subtitle_inout: the subtitle to align, srt or ssa
@@ -1473,7 +1473,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             return False
         return _is_transcribed_word_ambiguous(first_word.text, lang)
 
-    def mark_claimed_words(event: subtitle.SubtitleElementFacade, unclaimed_word_events: list):
+    def mark_claimed_words(event: subtitle.SubtitleElementFacade, words_claimed: list[bool], unclaimed_word_events: list):
         try:
             start_word_idx, end_word_idx, _ = get_transcription_info(event)
             for word_idx in range(start_word_idx, end_word_idx + 1):
@@ -1505,7 +1505,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     if len(events) == 0 or len(words_filtered) == 0:
         return False
 
-    align_progress = progress.progress("subtitle alignment", 0, (len(min_fuzz_ratios) + 4) * passes)
+    align_progress = progress.progress("subtitle alignment", 0, (len(min_fuzz_ratios) + 3) * passes)
 
     # TODO: original event that is too quiet to be picked up by transcribing
     # TODO: omitted event that transcribing picked up that should be combined with existing event
@@ -1513,7 +1513,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     for pass_num in range(1, passes + 1):
         changed = False
         found_range_ms: list[Union[None, Tuple[int, int]]] = [None] * len(events)
-        words_claimed = [False for _ in range(len(words_filtered))]
+        words_claimed = [False] * len(words_filtered)
         progress_base = (pass_num - 1) * (len(min_fuzz_ratios) + 4)
 
         # check if current ranges are good fits
@@ -1541,9 +1541,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         # TODO: need to keep sound effects, perhaps match empty space in transcription to similar length of effect
         # single words match more things erroneously than longer strings of words
         for word_count_min in [8, 5, 3, 2, 1]:
-            match_attempt = [False for _ in range(0, len(events))]
             # run through each ratio and iteratively find matches, using existing matches to narrow the search
             for min_fuzz_ratio_idx, min_fuzz_ratio in enumerate(min_fuzz_ratios):
+                match_attempt = [False for _ in range(0, len(events))]
                 for event_idx, event in enumerate(events):
                     if match_attempt[event_idx] or found_range_ms[event_idx] is not None:
                         continue
@@ -1777,7 +1777,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         words_claimed[end_word_idx] = True
                         transcribed_word_count += 1
 
-        # 3. events with only sound effects, find gap roughly matching duration
+        align_progress.progress(progress_base + len(min_fuzz_ratios) + 1)
+
+        # 3. TODO: events with only sound effects, find gap roughly matching duration
         # 4. move unmatched events based on unclaimed words
         # 5. with no transcription help, move event based on average adjustment
 
@@ -1857,59 +1859,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     else:
                         event_previous.set_end(event.start())
 
-                mark_claimed_words(event, unclaimed_word_events)
+                mark_claimed_words(event, words_claimed, unclaimed_word_events)
             finally:
                 event_previous = event
 
-        align_progress.progress(progress_base + len(min_fuzz_ratios) + 1)
-
-        # collect large missing events, but insert later so we don't have to fix up arrays containing info
-        new_events = []
-        last_word_idx = -1
-        for event_idx, event in enumerate(events):
-            try:
-                start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
-            except ValueError:
-                continue
-
-            if 0 <= last_word_idx < (start_word_idx - 1):
-                unclaimed_words = []
-                for i in range(last_word_idx, start_word_idx):
-                    if not words_claimed[i]:
-                        unclaimed_words.append(words_filtered[i])
-                if len(unclaimed_words) > 0:
-                    new_events.insert(0, (event_idx, unclaimed_words))
-
-            last_word_idx = end_word_idx
-
         align_progress.progress(progress_base + len(min_fuzz_ratios) + 2)
-
-        if should_add_new_events and len(new_events) > 0:
-            for new_event in new_events:
-                insert_idx = new_event[0]
-                unclaimed_words = new_event[1]
-
-                for sentence in srt_words_to_sentences(unclaimed_words):
-                    event = subtitle_facade.insert(insert_idx)
-                    event.set_start(sentence.start.ordinal)
-                    event.set_end(sentence.end.ordinal)
-                    event.set_text(sentence.text)
-                    event.set_normalized_text(_subtitle_text_to_plain(sentence.text))
-                    events.insert(insert_idx, event)
-                    logger.debug("inserted new event at %i (%s,%s) '%s'", insert_idx,
-                                 common.ms_to_ts(event.start()), common.ms_to_ts(event.end()), event.log_text())
-                    new_events_count += 1
-                    found_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
-                    original_range_ms.insert(insert_idx, (sentence.start.ordinal, sentence.end.ordinal))
-                    original_duration_ms.insert(insert_idx, sentence.end.ordinal - sentence.start.ordinal)
-                    inserted_event.insert(insert_idx, True)
-                    insert_idx += 1
-
-            # ensure monotonically increasing indicies
-            for event_idx, event in enumerate(events):
-                event.set_index(event_idx + 1)
-
-        align_progress.progress(progress_base + len(min_fuzz_ratios) + 3)
 
         # extend durations based on original, not to overlap
         # TODO: consider sound effects in subtitles
@@ -1951,7 +1905,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     logger.debug("event %i '%s' extended up to original end %s",
                                  event_idx, event.log_text(), common.ms_to_ts(event.end()))
 
-        align_progress.progress(progress_base + len(min_fuzz_ratios) + 4)
+        align_progress.progress(progress_base + len(min_fuzz_ratios) + 3)
 
         # report
         last_word_idx = -1
@@ -1989,6 +1943,46 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                        common.ms_to_ts(event.end()), event.end() - original_range_ms[event_idx][1],
                        event.duration(), original_duration_ms[event_idx],
                        event.log_text(), matches, transcribed_text, ratio)
+
+    if should_add_new_events:
+        # collect large missing events, but insert later so we don't have to fix up arrays containing info
+        last_word_idx = -1
+        event_idx = 0
+        while event_idx < len(events):
+            event = events[event_idx]
+            try:
+                start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
+            except ValueError:
+                continue
+
+            if 0 <= last_word_idx < (start_word_idx - 1):
+                unclaimed_words = []
+                for i in range(last_word_idx, start_word_idx):
+                    word = words_filtered[i]
+                    if word.start.ordinal > events[event_idx - 1].end() and word.end.ordinal < event.start():
+                        unclaimed_words.append(word)
+                if len(unclaimed_words) > 0:
+                    for sentence in srt_words_to_sentences(unclaimed_words):
+                        event = subtitle_facade.insert(event_idx)
+                        event.set_start(sentence.start.ordinal)
+                        event.set_end(sentence.end.ordinal)
+                        event.set_text(sentence.text)
+                        event.set_normalized_text(_subtitle_text_to_plain(sentence.text))
+                        events.insert(event_idx, event)
+                        logger.debug("inserted new event at %i (%s,%s) '%s'", event_idx,
+                                     common.ms_to_ts(event.start()), common.ms_to_ts(event.end()), event.log_text())
+                        new_events_count += 1
+                        original_range_ms.insert(event_idx, (sentence.start.ordinal, sentence.end.ordinal))
+                        original_duration_ms.insert(event_idx, sentence.end.ordinal - sentence.start.ordinal)
+                        inserted_event.insert(event_idx, True)
+                        event_idx += 1
+
+            event_idx += 1
+            last_word_idx = end_word_idx + 1
+
+        # ensure monotonically increasing indicies
+        for event_idx, event in enumerate(events):
+            event.set_index(event_idx + 1)
 
     # check stats for material changes
     # use these stats to determine if we adjusted enough to make a difference and return False if not
