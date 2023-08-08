@@ -108,9 +108,10 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
 
 
 class SubtitleElementFacade(ABC):
-    _sound_effect_re = re.compile(r"\s*\[.*?]\s*")
-    _sound_effect_beginning_re = re.compile(r"\s*\[.*?]\b.*")
-    _sound_effect_ending_re = re.compile(r".*\b\[.*?]\s*")
+    _sound_effect_re = re.compile(r"\s*(?:<.*?>\s*)?\[.*?]\s*(?:<.*?>\s*)?")
+    _sound_effect_beginning_re = re.compile(r"\s*(?:<.*?>\s*)?\[.*?]\b.*")
+    _sound_effect_ending_re = re.compile(r".*\b\[.*?]\s*(?:<.*?>\s*)?")
+    _log_text_clean = re.compile(r"[\r\n]+")
 
     def __init__(self):
         self._normalized_text: Union[str, None] = None
@@ -126,6 +127,15 @@ class SubtitleElementFacade(ABC):
     @abstractmethod
     def set_text(self, new_value: str):
         pass
+
+    def log_text(self) -> Union[str, None]:
+        """
+        Event text suitable for a log message.
+        """
+        original = self.text()
+        if original is None:
+            return original
+        return self._log_text_clean.sub(" ", original)
 
     def normalized_text(self) -> Union[str, None]:
         if self.text() is not None and self._normalized_text is None:

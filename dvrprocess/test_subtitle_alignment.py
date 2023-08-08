@@ -83,7 +83,8 @@ class SubtitleAlignmentTest(unittest.TestCase):
                                                   suffix='.actual-aligned.' + aligned_filename.split('aligned.')[1])
         os.close(actual_fd)
         original.write(Path(actual_path))
-        log_path = actual_path.replace('.ssa', '.log').replace('.srt', '.log')
+        log_path = os.path.join(os.path.dirname(actual_path), aligned_filename.split('-aligned.')[0]+'.log')
+        # log_path = actual_path.replace('.ssa', '.log').replace('.srt', '.log')
         with open(log_path, 'w') as f:
             f.write(self._caplog.text)
         print(f"Wrote actual aligned file to {actual_path}, log to {log_path}")
