@@ -1014,7 +1014,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     srt_words = SubRipFile(items=subs_words, path=words_filename)
     srt_words.save(Path(words_filename), 'utf-8')
 
-    subs_text = srt_words_to_sentences(subs_words)
+    subs_text = srt_words_to_sentences(subs_words, language)
     srt = SubRipFile(items=subs_text, path=subtitle_srt_filename)
     srt.save(Path(subtitle_srt_filename), 'utf-8')
 
@@ -1030,10 +1030,7 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
     return subtitle_srt_filename, words_filename
 
 
-PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
-
-
-def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
+def get_spell_checker(language: str):
     try:
         import hunspell
 
@@ -1043,23 +1040,34 @@ def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: floa
         else:
             hobj = hunspell.HunSpell(f'/usr/share/hunspell/{language[0:2]}.dic',
                                      f'/usr/share/hunspell/{language[0:2]}.aff')
-        word_count = 0
-        word_found_count = 0
-        srt_data = pysrt.open(subtitle_srt_filename)
-        for event in list(srt_data):
-            for word in PATTERN_WORDS_IN_DICT_SPLIT.sub(' ', event.text).split():
-                word_count += 1
-                if hobj.spell(word):
-                    word_found_count += 1
-        if word_count < 100 and duration > 630:
-            logger.warning(f"word count less than 100 for duration {duration}, returning 0%")
-            return 0.0
-        word_found_pct = 100.0 * float(word_found_count) / (float(word_count) + 0.001)
-        logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
-        return word_found_pct
-    except (ImportError, ModuleNotFoundError) as e:
+        return hobj
+    except (ImportError, ModuleNotFoundError):
+        return None
+
+
+PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
+
+
+def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
+    spellchecker = get_spell_checker(language)
+    if spellchecker is None:
         logger.warning("hunspell not found, skipping dictionary check")
         return 100.0
+
+    word_count = 0
+    word_found_count = 0
+    srt_data = pysrt.open(subtitle_srt_filename)
+    for event in list(srt_data):
+        for word in PATTERN_WORDS_IN_DICT_SPLIT.sub(' ', event.text).split():
+            word_count += 1
+            if spellchecker.spell(word):
+                word_found_count += 1
+    if word_count < 100 and duration > 630:
+        logger.warning(f"word count less than 100 for duration {duration}, returning 0%")
+        return 0.0
+    word_found_pct = 100.0 * float(word_found_count) / (float(word_count) + 0.001)
+    logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
+    return word_found_pct
 
 
 def find_subtitle_dvdsub(input_info, language=None):
@@ -1359,7 +1367,25 @@ def _is_transcribed_word_ambiguous(word: str, lang: str = 'eng') -> bool:
     return word in ['the', 'in', 'is', 'an', 'yeah', 'that', 'hm', 'hmm', 'to']
 
 
-def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
+def _capitalize(text: str, language: str, spellchecker) -> str:
+    if text in ['i', 'dr', 'dr.', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.']:
+        return text.capitalize()
+    if text.startswith("i'"):
+        return text.capitalize()
+    if len(text) == 1 and text not in ['a']:
+        return text.capitalize()
+    if text.count('.') > 1:
+        return text.capitalize()
+    if spellchecker is None:
+        return text
+    if language is None:
+        return text
+    if spellchecker.spell(text):
+        return text
+    return text.capitalize()
+
+
+def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRipItem]:
     """
     Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
     sentences a collection of words.
@@ -1370,11 +1396,15 @@ def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
     newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
     result = []
+    spellchecker = get_spell_checker(language)
     s = None
+    new_s = True
     for word in words:
         if s is not None:
             if word.start.ordinal - s.end.ordinal > SILENCE_FOR_NEW_SENTENCE:
+                s.text = s.text + '.'
                 s = None
+                new_s = True
             else:
                 split = (s.text + ' ' + word.text).split(newline)
                 if len(split[-1]) > chars_per_sentence:
@@ -1384,11 +1414,20 @@ def srt_words_to_sentences(words: list[SubRipItem]) -> list[SubRipItem]:
                         s.text = s.text + newline
 
         if s is None:
-            s = SubRipItem(index=len(result), start=word.start, end=word.end, text=word.text)
+            if new_s:
+                text = word.text.capitalize()
+            else:
+                text = _capitalize(word.text, language, spellchecker)
+            new_s = False
+
+            s = SubRipItem(index=len(result), start=word.start, end=word.end, text=text)
             result.append(s)
         else:
             s.end = word.end
-            s.text = s.text + ' ' + word.text
+            s.text = s.text + ' ' + _capitalize(word.text, language, spellchecker)
+
+    if s is not None:
+        s.text = s.text + '.'
 
     return result
 
@@ -1967,7 +2006,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         unclaimed_words.append(word)
                         end_word_idx = i
                 if len(unclaimed_words) > 0:
-                    for sentence in srt_words_to_sentences(unclaimed_words):
+                    for sentence in srt_words_to_sentences(unclaimed_words, lang):
                         event = subtitle_facade.insert(event_idx)
                         event.set_start(sentence.start.ordinal)
                         event.set_end(sentence.end.ordinal)
