@@ -1442,9 +1442,12 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
     def get_adjustment_stats():
         adjustments = []
+        sane_adjustment_max = 60000
         for event_idx, event in enumerate(events):
-            adjustments.append((abs(original_range_ms[event_idx][0] - event.start()),
-                                abs(original_range_ms[event_idx][1] - event.end())))
+            start_adjustment = abs(original_range_ms[event_idx][0] - event.start())
+            end_adjustment = abs(original_range_ms[event_idx][1] - event.end())
+            if start_adjustment < sane_adjustment_max and end_adjustment < sane_adjustment_max:
+                adjustments.append((start_adjustment, end_adjustment))
         max_start_adjustment = max(map(lambda e: e[0], adjustments))
         ave_start_adjustment = average(list(map(lambda e: e[0], adjustments)))
         max_end_adjustment = max(map(lambda e: e[1], adjustments))
@@ -1618,7 +1621,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         # remove overlapping matches with lesser ratio
                         if matches:
                             matches.sort(reverse=True, key=lambda e: [e[1], -1*e[2][0]])
-                            logger.debug("event %i matches before removing overlaps: %s", event_idx, matches)
+                            # logger.debug("event %i matches before removing overlaps: %s", event_idx, matches)
                             for matches_idx, match in enumerate(matches.copy()):
                                 matches_idx2 = matches_idx + 1
                                 while matches_idx2 < len(matches):
@@ -1628,7 +1631,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                                         matches.pop(matches_idx2)
                                     else:
                                         matches_idx2 += 1
-                            logger.debug("event %i matches after removing overlaps: %s", event_idx, matches)
+                            # logger.debug("event %i matches after removing overlaps: %s", event_idx, matches)
 
                         # check for similar sentences in which the later matches better with the former transcription
                         last_fuzz_ratio_count = len(matches)
@@ -1696,6 +1699,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             if found_range_ms[event_idx] is None:
                 continue
             missing_duration = original_duration_ms[event_idx] - event.duration()
+            if missing_duration > 600000:
+                raise "missing_duration > 600000"
             if missing_duration <= 0:
                 continue
             if event.is_sound_effect():
@@ -1708,7 +1713,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             transcribed_word_count = len(transcribed_text.split())
 
             event_moved = True
-            while event_moved:
+            while event_moved and missing_duration > 0:
                 event_moved = False
 
                 new_start_word_idx = None
@@ -1730,7 +1735,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             new_start_ordinal = missing_duration - beginning_duration
                     else:
                         beginning_duration = words_filtered[start_word_idx].start.ordinal - words_filtered[start_word_idx-1].end.ordinal
-                        if beginning_duration <= missing_duration:
+                        if 0 < beginning_duration <= missing_duration:
                             new_start_ordinal = words_filtered[start_word_idx-1].end.ordinal + (missing_duration - beginning_duration)
 
                 new_end_word_idx = None
@@ -1748,11 +1753,12 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 if new_end_word_idx is None and event.has_ending_sound_effect():
                     if end_word_idx < len(words_claimed) - 1:
                         ending_duration = words_filtered[end_word_idx+1].start.ordinal - words_filtered[end_word_idx].end.ordinal
-                        if ending_duration <= missing_duration:
+                        if 0 < ending_duration <= missing_duration:
                             new_end_ordinal = words_filtered[end_word_idx+1].start.ordinal - (missing_duration - ending_duration)
 
                 # capture the largest missing duration at either beginning or end
-                if new_start_ordinal is not None and ((new_end_ordinal is not None and beginning_duration >= ending_duration) or new_end_ordinal is None):
+                if (new_start_ordinal is not None and 0 <= new_start_ordinal < event.start()
+                        and ((new_end_ordinal is not None and beginning_duration >= ending_duration) or new_end_ordinal is None)):
                     missing_duration -= event.start() - new_start_ordinal
                     event.set_start(new_start_ordinal)
                     event_moved = True
@@ -1764,7 +1770,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         start_word_idx = new_start_word_idx
                         words_claimed[start_word_idx] = True
                         transcribed_word_count += 1
-                elif new_end_ordinal is not None and ((new_start_ordinal is not None and beginning_duration < ending_duration) or new_start_ordinal is None):
+                elif (new_end_ordinal is not None and new_end_ordinal > event.end()
+                      and ((new_start_ordinal is not None and beginning_duration < ending_duration) or new_start_ordinal is None)):
                     missing_duration -= new_end_ordinal - event.end()
                     event.set_end(new_end_ordinal)
                     event_moved = True
@@ -1953,6 +1960,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             try:
                 start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
             except ValueError:
+                event_idx += 1
                 continue
 
             if 0 <= last_word_idx < (start_word_idx - 1):
@@ -1961,6 +1969,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     word = words_filtered[i]
                     if word.start.ordinal > events[event_idx - 1].end() and word.end.ordinal < event.start():
                         unclaimed_words.append(word)
+                        end_word_idx = i
                 if len(unclaimed_words) > 0:
                     for sentence in srt_words_to_sentences(unclaimed_words):
                         event = subtitle_facade.insert(event_idx)
