@@ -192,6 +192,13 @@ class SubtitleElementFacade(ABC):
         self.set_start(new_start)
         self.set_end(new_start + d)
 
+    def move_end(self, new_end: int):
+        if new_end == self.end():
+            return
+        d = self.duration()
+        self.set_end(new_end)
+        self.set_start(new_end - d)
+
 
 class AssElementFacade(SubtitleElementFacade):
     def __init__(self, event: AssEvent):

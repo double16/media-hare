@@ -1442,12 +1442,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         for event_idx, event in enumerate(events):
             start_adjustment = abs(original_range_ms[event_idx][0] - event.start())
             end_adjustment = abs(original_range_ms[event_idx][1] - event.end())
-            if start_adjustment < sane_adjustment_max and end_adjustment < sane_adjustment_max:
-                adjustments.append((start_adjustment, end_adjustment))
-        max_start_adjustment = max(map(lambda e: e[0], adjustments))
-        ave_start_adjustment = average(list(map(lambda e: e[0], adjustments)))
-        max_end_adjustment = max(map(lambda e: e[1], adjustments))
-        ave_end_adjustment = average(list(map(lambda e: e[1], adjustments)))
+            adjustments.append((start_adjustment, end_adjustment))
+        max_start_adjustment = max(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[0], adjustments)))
+        ave_start_adjustment = average(list(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[0], adjustments))))
+        max_end_adjustment = max(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[1], adjustments)))
+        ave_end_adjustment = average(list(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[1], adjustments))))
         return adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment
 
     def suspicious_last_word(event_idx: int, start_word_idx: int, end_word_idx: int) -> bool:
@@ -1605,7 +1604,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             except ValueError:
                                 value = ' '.join(map(lambda e: e.text, words_filtered[key[0]:key[1]]))
                                 candidates[key] = value
-                    logger.debug("candidates are %s", candidates)
+                    logger.debug("event %i candidates are %s", event_idx, candidates)
                     if not candidates:
                         logger.debug("no candidates for min_fuzz_ratio %i '%s' (%i,%i)",
                                      min_fuzz_ratio, event_text, start_search_ms, end_search_ms)
@@ -1849,20 +1848,21 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                                  common.ms_to_ts(event_previous.start()), common.ms_to_ts(event.start()),
                                  matched, previous_matched)
                     if previous_matched:
-                        event.move(event_previous.end())
+                        event.move(event_previous.end() + 1)
                     elif event_idx > 1:
-                        event_previous.set_start(events[event_idx - 2].end())
+                        event_previous.move_end(event.start() - 1)
                 if event_previous.end() > event.start():
                     logger.debug("event %i end overlaps %i start, %s > %s, matched? %r, previous matched? %r",
                                  event_idx - 1, event_idx,
                                  common.ms_to_ts(event_previous.end()), common.ms_to_ts(event.start()),
                                  matched, previous_matched)
                     if previous_matched:
-                        event.move(event_previous.end())
+                        event.move(event_previous.end() + 1)
                     else:
-                        event_previous.set_end(event.start())
+                        event_previous.set_end(event.start() - 1)
 
                 mark_claimed_words(event, words_claimed, unclaimed_word_events)
+                mark_claimed_words(event_previous, words_claimed, unclaimed_word_events)
             finally:
                 event_previous = event
 
