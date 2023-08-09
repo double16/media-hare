@@ -1,34 +1,22 @@
-genital
-genitals
+genitals?
 penis
 penises
-vagina
-vaginas
+vaginas?
 pussy
 pussies
-cunt
-cunts
-twat
-twats
-nutsack
-nutsacks
-nut sack
-nut sacks
-nut-sack
-nut-sacks
-ball[\s-]sack
-ball[\s-]sacks
+cunts?
+twats?
+nut[\s-]?sacks?
+ball[\s-]?sacks?
 testicles?
 gonads?
 scheiße
 fondle
 tryst
 skimpy
-thong
-orgasm
-orgasms
-orgi
-orgis
+thongs?
+orgasms?
+orgis?
 orgies
 semen
 ejaculate
@@ -39,16 +27,12 @@ butt[\s-]sex
 booty[\s-]sex
 ass[\s-]sex
 gay[\s-]sex
-cock
-cocks
+cocks?
 cock's
 cock’s
-cocksucker
-cocksuckers
 cocksucker's
 cocksucker’s
-cock[\s-]sucker
-cock[\s-]suckers
+cock[\s-]?suckers?
 a dick
 real dick
 stupid dick
@@ -78,18 +62,17 @@ tittys
 titty's
 tities
 titties
-boob
-boobs
+boobs?
 boob's
 boob’s
 boobies
 breasts
 kinky
 horny
-butt[\s-]fuck
-butt[\s-]fuckers?
-ass[\s-]fuck
-ass[\s-]fuckers?
+butt[\s-]?fuck
+butt[\s-]?fuckers?
+ass[\s-]?fuck
+ass[\s-]?fuckers?
 masturbate
 masturbates
 masturbated
@@ -151,11 +134,11 @@ slept with
 slept together
 boner
 nude
-hooker
+hookers?
 hooking
 wear a rubber
 use a rubber
-condom
+condoms?
 conjugal
 fluffer
 cherry popped
@@ -171,18 +154,18 @@ skinny[-\s]dip\w*
 sucking the sack
 junk in \w+ trunk
 hook[\s-]?up site
-pimp
+pimps?
 pimping
 scrotums?
 canoodling
 canoodle
-stripper pole
+stripper poles?
 she .* stripper
 he .* stripper
 tongue bath
 camel[\s-]?toe
 camel[\s-]?knuckle
-dildo
+dildos?
 cajones?
 fore[\s-]?play
 nice tail
