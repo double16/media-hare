@@ -437,10 +437,15 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
             ass_data = read_ass(Path(subtitle_original_filename))
             if subtitle_words_filename:
-                fix_subtitle_audio_alignment(ass_data, pysrt.open(subtitle_words_filename), lang=language)
+                ass_data_aligned = copy.deepcopy(ass_data)
+                aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned, pysrt.open(subtitle_words_filename), lang=language)
                 if debug:
                     write_ass(ass_data, Path(f"{debug_base}.aligned.{subtitle_codec}"))
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
+                if aligned:
+                    logger.info("Using aligned subtitle: %s", aligned_stats)
+                    ass_data = ass_data_aligned
+                    tags[constants.K_SUB_ALIGNMENT_STATS] = aligned_stats
             else:
                 logger.info("No words file, subtitle alignment skipped")
             ass_data_forced = copy.copy(ass_data)
@@ -462,10 +467,15 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
             if subtitle_words_filename:
-                fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename), lang=language)
+                srt_data_aligned = copy.deepcopy(srt_data)
+                aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename), lang=language)
                 if debug:
                     srt_data.save(Path(f"{debug_base}.aligned.{subtitle_codec}"), 'utf-8')
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
+                if aligned:
+                    logger.info("Using aligned subtitle: %s", aligned_stats)
+                    srt_data = srt_data_aligned
+                    tags[constants.K_SUB_ALIGNMENT_STATS] = aligned_stats
             else:
                 logger.info("No words file, subtitle alignment skipped")
             srt_data_forced = copy.copy(srt_data)
@@ -530,6 +540,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             arguments.extend(
                 ['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
         arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
+        if constants.K_SUB_ALIGNMENT_STATS in tags:
+            arguments.extend(["-metadata", f"{constants.K_SUB_ALIGNMENT_STATS}={tags[constants.K_SUB_ALIGNMENT_STATS]}"])
         arguments.extend(["-c:s", "copy"])
 
         # Filtered audio stream
@@ -1371,21 +1383,31 @@ def _is_transcribed_word_ambiguous(word: str, lang: str = 'eng') -> bool:
     return word in ['the', 'in', 'is', 'an', 'yeah', 'that', 'hm', 'hmm', 'to']
 
 
+ENG_VOWELS=['a','e','i','o','u','y']
+
+
 def _capitalize(text: str, language: str, spellchecker) -> str:
     if text in ['i', 'dr', 'dr.', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.']:
         return text.capitalize()
     if text.startswith("i'"):
         return text.capitalize()
+
+    # single letters, probably abbreviation
     if len(text) == 1 and text not in ['a']:
         return text.capitalize()
+    # multiple periods, probably abbreviation
     if text.count('.') > 1:
-        return text.capitalize()
+        return text.upper()
+
     if spellchecker is None:
         return text
     if language is None:
         return text
     if spellchecker.spell(text):
         return text
+    # short with adjacent constants, probably abbreviation
+    if 2 <= len(text) <= 3 and text[0] not in ENG_VOWELS and text[1] not in ENG_VOWELS:
+        return text.upper()
     return text.capitalize()
 
 
@@ -1437,14 +1459,14 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
 
 
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
-                                 should_add_new_events=True) -> bool:
+                                 should_add_new_events=True) -> tuple[bool, str]:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
     :param subtitle_inout: the subtitle to align, srt or ssa
     :param words: the transcribed words, srt
     :param lang: language
     :param should_add_new_events: True to add new events from unmatched text
-    :return: True if changes were made
+    :return: (True if changes were made, alignment metadata value)
     """
 
     # an offset is defined as the number of seconds between the input subtitle and the matched sentence in 'words'
@@ -1533,18 +1555,15 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     events = []
     original_range_ms = []
     original_duration_ms = []
-    inserted_event = []
     for event_idx, event in subtitle_facade.events():
         event.set_normalized_text(_subtitle_text_to_plain(event.text()))
         events.append(event)
         original_range_ms.append((event.start(), event.end()))
         original_duration_ms.append(event.duration())
-        inserted_event.append(False)
     new_events_count = 0
-    changed = False
 
     if len(events) == 0 or len(words_filtered) == 0:
-        return False
+        return False, ""
 
     align_progress = progress.progress("subtitle alignment", 0, (len(min_fuzz_ratios) + 3) * passes)
 
@@ -1552,7 +1571,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     # TODO: omitted event that transcribing picked up that should be combined with existing event
     last_fuzz_ratio = min_fuzz_ratios[-1]
     for pass_num in range(1, passes + 1):
-        changed = False
         found_range_ms: list[Union[None, Tuple[int, int]]] = [None] * len(events)
         words_claimed = [False] * len(words_filtered)
         progress_base = (pass_num - 1) * (len(min_fuzz_ratios) + 4)
@@ -1581,12 +1599,14 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
         # TODO: need to keep sound effects, perhaps match empty space in transcription to similar length of effect
         # single words match more things erroneously than longer strings of words
+        match_attempt: list[list[bool]] = [[]] * len(min_fuzz_ratios)
+        for min_fuzz_ratio_idx in range(len(min_fuzz_ratios)):
+            match_attempt[min_fuzz_ratio_idx] = [False] * len(events)
         for word_count_min in [8, 5, 3, 2, 1]:
             # run through each ratio and iteratively find matches, using existing matches to narrow the search
             for min_fuzz_ratio_idx, min_fuzz_ratio in enumerate(min_fuzz_ratios):
-                match_attempt = [False for _ in range(0, len(events))]
                 for event_idx, event in enumerate(events):
-                    if match_attempt[event_idx] or found_range_ms[event_idx] is not None:
+                    if match_attempt[min_fuzz_ratio_idx][event_idx] or found_range_ms[event_idx] is not None:
                         continue
 
                     # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
@@ -1597,7 +1617,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     if word_count < word_count_min:
                         continue
 
-                    match_attempt[event_idx] = True
+                    match_attempt[min_fuzz_ratio_idx][event_idx] = True
                     word_counts = range(floor(word_count * (1.0 - word_count_fuzz_pct)),
                                         ceil(word_count * (1.0 + word_count_fuzz_pct)) + 1)
                     logger.debug("Matching sentence from event %i (%s,%s) '%s', (%i,%i) words",
@@ -1672,15 +1692,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             # logger.debug("event %i matches after removing overlaps: %s", event_idx, matches)
 
                         # check for similar sentences in which the later matches better with the former transcription
-                        last_fuzz_ratio_count = len(matches)
-                        if last_fuzz_ratio_count > 1 and min_fuzz_ratio != last_fuzz_ratio:
-                            matches_min_fuzz_ratio = min(filter(lambda e: e[1], matches))[1]
-                            if matches_min_fuzz_ratio < min_fuzz_ratio:
-                                logger.debug("event %i multiple transcriptions may match %s, skipping", event_idx,
-                                             list(map(lambda e: e[1], matches)))
-                                continue
-
-                        matches = list(filter(lambda e: e[1] >= min_fuzz_ratio, matches))
+                        # matches = list(filter(lambda e: e[1] >= min_fuzz_ratio, matches))
+                        if len(matches) > 1:
+                            logger.debug("event %i multiple transcriptions may match %s, choosing earlier", event_idx,
+                                         list(map(lambda e: e[1], matches)))
+                            matches.sort(key=lambda e: e[2][0])
 
                     if matches:
                         logger.debug("event %i sorted matches: %s", event_idx, matches)
@@ -1715,7 +1731,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         # move event time
                         event.set_start(start_new_ms)
                         event.set_end(end_new_ms)
-                        changed = True
                     else:
                         logger.debug("not matched r%i for '%s', candidates are %s",
                                      min_fuzz_ratio, event_text, str(candidates)[:200])
@@ -1914,8 +1929,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         # extend durations based on original, not to overlap
         # TODO: consider sound effects in subtitles
         for event_idx, event in enumerate(events[:-1]):
-            if inserted_event[event_idx]:
-                continue
             missing_duration = original_duration_ms[event_idx] - event.duration()
             if missing_duration > 0:
                 # we've already tried to capture words, now fill in space at end and then beginning
@@ -2022,7 +2035,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         new_events_count += 1
                         original_range_ms.insert(event_idx, (sentence.start.ordinal, sentence.end.ordinal))
                         original_duration_ms.insert(event_idx, sentence.end.ordinal - sentence.start.ordinal)
-                        inserted_event.insert(event_idx, True)
                         event_idx += 1
 
             event_idx += 1
@@ -2038,6 +2050,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     logger.info(
         "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
         max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, new_events_count)
+    stats_str = f"max_start_adj {max_start_adjustment}ms, max_end_adj {max_end_adjustment}ms, ave_start_adj {ave_start_adjustment}ms, ave_end_adj {ave_end_adjustment}ms, new_events {new_events_count}"
     for event_idx, adjustment in enumerate(adjustments):
         adjustment_log_level = 0
         if adjustment[0] > max_start_adjustment / 2 or adjustment[1] > max_end_adjustment / 2:
@@ -2052,15 +2065,17 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                        events[event_idx].end() - original_range_ms[event_idx][1],
                        common.ms_to_ts(events[event_idx].start()), common.ms_to_ts(events[event_idx].end()),
                        events[event_idx].log_text())
-    if ave_start_adjustment < 100 and ave_end_adjustment < 100:
-        changed = False
+
+    changed = ave_start_adjustment > 100 or ave_end_adjustment > 100 or new_events_count > 0
 
     align_progress.stop()
 
-    return changed
+    return changed, stats_str
 
 
 def profanity_filter_cli(argv):
+    global debug
+
     dry_run = False
     keep = False
     force = False

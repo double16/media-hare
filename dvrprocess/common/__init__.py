@@ -923,8 +923,8 @@ def setup_debugging():
     logger.debug("__debug__ is %s", __debug__)
 
 
-def setup_logging():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=logging.INFO)
+def setup_logging(level=logging.INFO):
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=level)
 
 
 def setup_cli(level=logging.INFO):

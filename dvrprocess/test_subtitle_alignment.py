@@ -43,7 +43,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
         expected_alignment_events = list(map(lambda e: e[1], expected_alignment.events()))
         original = subtitle.open_subtitle_file_facade(Path(f"../fixtures/{original_filename}"))
         words = self._read_words_srt(words_filename)
-        changed = profanity_filter.fix_subtitle_audio_alignment(original.file, words)
+        changed, _ = profanity_filter.fix_subtitle_audio_alignment(original.file, words)
         failed = []
         original_count = 0
         for idx, actual_event in original.events():
@@ -96,8 +96,8 @@ class SubtitleAlignmentTest(unittest.TestCase):
     def _assert_idempotent(self, original_filename: str, words_filename: str):
         original = self._read_subtitle(original_filename)
         words = self._read_words_srt(words_filename)
-        changed1 = profanity_filter.fix_subtitle_audio_alignment(original, words)
-        changed2 = profanity_filter.fix_subtitle_audio_alignment(original, words)
+        changed1, _ = profanity_filter.fix_subtitle_audio_alignment(original, words)
+        changed2, _ = profanity_filter.fix_subtitle_audio_alignment(original, words)
         log_fd, log_path = tempfile.mkstemp(prefix=original_filename.split('-original.')[0]+'-aligned.', suffix='.log')
         os.write(log_fd, self._caplog.text.encode('utf-8'))
         os.close(log_fd)
