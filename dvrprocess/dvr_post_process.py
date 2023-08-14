@@ -322,6 +322,8 @@ def do_dvr_post_process(input_file,
 
     if forgiving:
         crop_frame_filter = None
+        if crop_frame_op != crop_frame.CropFrameOperation.NONE:
+            logger.warning("Disabling crop frame due to forgiving mode")
     else:
         crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, frame_rate)
 
