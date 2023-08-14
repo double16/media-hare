@@ -392,8 +392,7 @@ def do_dvr_post_process(input_file,
 
     has_text_subtitle_stream = common.has_stream_with_language(input_info,
                                                                constants.CODEC_SUBTITLE,
-                                                               [constants.CODEC_SUBTITLE_ASS,
-                                                                constants.CODEC_SUBTITLE_SRT],
+                                                               constants.CODEC_SUBTITLE_TEXT_BASED,
                                                                constants.LANGUAGE_ENGLISH)
     has_closed_captions = video_info.get('closed_captions', 0) > 0
     extract_closed_captions = has_closed_captions and not has_text_subtitle_stream

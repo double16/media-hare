@@ -84,6 +84,8 @@ def _ffprobe_version_parser(path):
 ffprobe = SubprocessProcInvoker('ffprobe', _ffprobe_version_parser, ffmpeg.version_target)
 
 # TODO: add progress, see ffmpeg for example
+#  99%  |  21:42
+# 100%  |  21:42
 ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
     re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[
         1]))
