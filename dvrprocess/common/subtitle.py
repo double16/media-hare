@@ -108,9 +108,10 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
 
 
 class SubtitleElementFacade(ABC):
-    _sound_effect_re = re.compile(r"\s*(?:<.*?>\s*)?\[.*?]\s*(?:<.*?>\s*)?")
-    _sound_effect_beginning_re = re.compile(r"\s*(?:<.*?>\s*)?\[.*?]\b.*")
-    _sound_effect_ending_re = re.compile(r".*\b\[.*?]\s*(?:<.*?>\s*)?")
+    _markup = re.compile(r"<[^>]+>")
+    _sound_effect_re = re.compile(r"\s*\[.*?]\s*?")
+    _sound_effect_beginning_re = re.compile(r"\s*\[.*?]\s*\S+.*")
+    _sound_effect_ending_re = re.compile(r".*\S+\s*\[.*?]\s*")
     _log_text_clean = re.compile(r"[\r\n]+")
 
     def __init__(self):
@@ -146,13 +147,13 @@ class SubtitleElementFacade(ABC):
         self._normalized_text = new_value
 
     def is_sound_effect(self) -> bool:
-        return self._sound_effect_re.fullmatch(self.text()) is not None
+        return self._sound_effect_re.fullmatch(self._markup.sub("", self.text())) is not None
 
     def has_beginning_sound_effect(self) -> bool:
-        return self._sound_effect_beginning_re.fullmatch(self.text()) is not None
+        return self._sound_effect_beginning_re.fullmatch(self._markup.sub("", self.text())) is not None
 
     def has_ending_sound_effect(self) -> bool:
-        return self._sound_effect_ending_re.fullmatch(self.text()) is not None
+        return self._sound_effect_ending_re.fullmatch(self._markup.sub("", self.text())) is not None
 
     @abstractmethod
     def start(self) -> Union[int, None]:

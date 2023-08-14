@@ -126,8 +126,8 @@ dang you
 oh dang
 oh dang it
 bitch
-bitchs
-bitches
+bitchy
+bitche?s
 bitched
 son[\s-]of[\s-]a[\s-]bitch
 sons[\s-]of[\s-]bitches
@@ -450,6 +450,7 @@ g[ia]ve [\w\s]* the finger
 sexy on
 skank
 slut
+slutt?y
 mo[\s-]?fos?
 douche[\w-]*
 dick[\s-]?heads?

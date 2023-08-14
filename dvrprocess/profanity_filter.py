@@ -46,6 +46,8 @@ WORD_FOUND_PCT_THRESHOLD = 93.0
 
 # Number of milliseconds between words to assume a new sentence.
 SILENCE_FOR_NEW_SENTENCE = 1200
+# Number of milliseconds between words that may fit a sound effect.
+SILENCE_FOR_SOUND_EFFECT = 500
 
 logger = logging.getLogger(__name__)
 
@@ -438,7 +440,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data = read_ass(Path(subtitle_original_filename))
             if subtitle_words_filename:
                 ass_data_aligned = copy.deepcopy(ass_data)
-                aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned, pysrt.open(subtitle_words_filename), lang=language)
+                aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
+                                                                      pysrt.open(subtitle_words_filename),
+                                                                      lang=language)
                 if debug:
                     write_ass(ass_data, Path(f"{debug_base}.aligned.{subtitle_codec}"))
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
@@ -468,7 +472,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             srt_data = pysrt.open(subtitle_original_filename)
             if subtitle_words_filename:
                 srt_data_aligned = copy.deepcopy(srt_data)
-                aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename), lang=language)
+                aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
+                                                                      lang=language)
                 if debug:
                     srt_data.save(Path(f"{debug_base}.aligned.{subtitle_codec}"), 'utf-8')
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
@@ -541,7 +546,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 ['-metadata', f"{constants.K_MEDIA_TITLE}={common.get_media_title_from_filename(input_info)}"])
         arguments.extend(['-metadata', f"{constants.K_MEDIA_PROCESSOR}={constants.V_MEDIA_PROCESSOR}"])
         if constants.K_SUB_ALIGNMENT_STATS in tags:
-            arguments.extend(["-metadata", f"{constants.K_SUB_ALIGNMENT_STATS}={tags[constants.K_SUB_ALIGNMENT_STATS]}"])
+            arguments.extend(
+                ["-metadata", f"{constants.K_SUB_ALIGNMENT_STATS}={tags[constants.K_SUB_ALIGNMENT_STATS]}"])
         arguments.extend(["-c:s", "copy"])
 
         # Filtered audio stream
@@ -1383,7 +1389,7 @@ def _is_transcribed_word_ambiguous(word: str, lang: str = 'eng') -> bool:
     return word in ['the', 'in', 'is', 'an', 'yeah', 'that', 'hm', 'hmm', 'to']
 
 
-ENG_VOWELS=['a','e','i','o','u','y']
+ENG_VOWELS = ['a', 'e', 'i', 'o', 'u', 'y']
 
 
 def _capitalize(text: str, language: str, spellchecker) -> str:
@@ -1488,6 +1494,18 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     words_start_ms = list(map(lambda e: e.start.ordinal, words_filtered))
     words_start_end_ms = list(map(lambda e: (e.start.ordinal, e.end.ordinal), words_filtered))
 
+    words_silence_start_ms: list[int] = []
+    words_silence_start_end_ms: list[tuple[int, int]] = []
+    if words_filtered[0].start.ordinal > SILENCE_FOR_SOUND_EFFECT:
+        words_silence_start_end_ms.append((0, words_filtered[0].start.ordinal))
+        words_silence_start_ms.append(0)
+    for words_idx in range(1, len(words_filtered)):
+        if words_filtered[words_idx].start.ordinal - words_filtered[
+            words_idx - 1].end.ordinal > SILENCE_FOR_SOUND_EFFECT:
+            words_silence_start_end_ms.append(
+                (words_filtered[words_idx - 1].end.ordinal, words_filtered[words_idx].start.ordinal))
+            words_silence_start_ms.append(words_filtered[words_idx - 1].end.ordinal)
+
     def get_transcription_info(event: subtitle.SubtitleElementFacade) -> Tuple[int, int, str]:
         """
         Get the transcription words and text for an event.
@@ -1501,15 +1519,19 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         return start_word_idx, end_word_idx, ' '.join(
             list(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx + 1])))
 
-    def get_adjustment_stats():
+    def get_adjustment_stats(use_abs=True):
         adjustments = []
         sane_adjustment_max = 60000
         for event_idx, event in enumerate(events):
-            start_adjustment = abs(original_range_ms[event_idx][0] - event.start())
-            end_adjustment = abs(original_range_ms[event_idx][1] - event.end())
+            start_adjustment = original_range_ms[event_idx][0] - event.start()
+            end_adjustment = original_range_ms[event_idx][1] - event.end()
+            if use_abs:
+                start_adjustment = abs(start_adjustment)
+                end_adjustment = abs(end_adjustment)
             adjustments.append((start_adjustment, end_adjustment))
         max_start_adjustment = max(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[0], adjustments)))
-        ave_start_adjustment = average(list(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[0], adjustments))))
+        ave_start_adjustment = average(
+            list(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[0], adjustments))))
         max_end_adjustment = max(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[1], adjustments)))
         ave_end_adjustment = average(list(filter(lambda e: e < sane_adjustment_max, map(lambda e: e[1], adjustments))))
         return adjustments, max_start_adjustment, ave_start_adjustment, max_end_adjustment, ave_end_adjustment
@@ -1536,7 +1558,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             return False
         return _is_transcribed_word_ambiguous(first_word.text, lang)
 
-    def mark_claimed_words(event: subtitle.SubtitleElementFacade, words_claimed: list[bool], unclaimed_word_events: list):
+    def mark_claimed_words(event: subtitle.SubtitleElementFacade, words_claimed: list[bool],
+                           unclaimed_word_events: list):
         try:
             start_word_idx, end_word_idx, _ = get_transcription_info(event)
             for word_idx in range(start_word_idx, end_word_idx + 1):
@@ -1597,7 +1620,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             except ValueError:
                 pass
 
-        # TODO: need to keep sound effects, perhaps match empty space in transcription to similar length of effect
         # single words match more things erroneously than longer strings of words
         match_attempt: list[list[bool]] = [[]] * len(min_fuzz_ratios)
         for min_fuzz_ratio_idx in range(len(min_fuzz_ratios)):
@@ -1605,8 +1627,85 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         for word_count_min in [8, 5, 3, 2, 1]:
             # run through each ratio and iteratively find matches, using existing matches to narrow the search
             for min_fuzz_ratio_idx, min_fuzz_ratio in enumerate(min_fuzz_ratios):
+                _, _, ave_start_adjustment, _, ave_end_adjustment = get_adjustment_stats(use_abs=False)
                 for event_idx, event in enumerate(events):
                     if match_attempt[min_fuzz_ratio_idx][event_idx] or found_range_ms[event_idx] is not None:
+                        continue
+
+                    if event.is_sound_effect():
+                        # let some text matches be made before working with sound effects
+                        if word_count_min >= 3 and min_fuzz_ratio_idx < 2:
+                            continue
+                        # search for gaps in transcription similar to event duration
+                        match_attempt[min_fuzz_ratio_idx][event_idx] = True
+                        start_search_ms = max(event.start() - max_offset_ms,
+                                              max(map(lambda e: e[1],
+                                                      filter(lambda f: f is not None, found_range_ms[:event_idx])),
+                                                  default=0))
+                        end_search_ms = min(event.end() + max_offset_ms,
+                                            min(map(lambda e: e[0],
+                                                    filter(lambda f: f is not None, found_range_ms[event_idx + 1:])),
+                                                default=sys.maxsize))
+                        try:
+                            start_idx = find_subtitle_element_idx_le(words_silence_start_ms, start_search_ms)
+                            end_idx = find_subtitle_element_idx_ge(words_silence_start_ms, end_search_ms)
+                        except ValueError:
+                            continue
+                        silence_candidates: list[tuple[int, int]] = words_silence_start_end_ms[start_idx:end_idx + 1]
+                        silence_candidates.sort(key=lambda e: abs(e[0] - (event.start() + ave_start_adjustment)))
+                        logger.debug("Matching sound effect from event %i (%s,%s) '%s' in range (%s,%s)",
+                                     event_idx, common.ms_to_ts(event.start()), common.ms_to_ts(event.end()),
+                                     event.log_text(),
+                                     common.ms_to_ts(words_silence_start_ms[start_idx]),
+                                     common.ms_to_ts(words_silence_start_ms[end_idx]))
+                        if logger.isEnabledFor(logging.DEBUG):
+                            logger.debug("event %i '%s' sound effect candidates %s", event_idx, event.log_text(),
+                                         list(map(lambda e: f"({common.ms_to_ts(e[0])},{common.ms_to_ts(e[1])})",
+                                                  silence_candidates)))
+                        if not silence_candidates:
+                            continue
+
+                        if event_idx == 0:
+                            silence_start_bound = 0
+                        elif found_range_ms[event_idx - 1]:
+                            silence_start_bound = found_range_ms[event_idx - 1][1]
+                        else:
+                            silence_start_bound = event.start() - min(max_offset_ms, abs(ave_start_adjustment) * 1.5)
+
+                        if event_idx == len(events):
+                            silence_end_bound = sys.maxsize
+                        elif found_range_ms[event_idx + 1]:
+                            silence_end_bound = found_range_ms[event_idx + 1][0]
+                        else:
+                            silence_end_bound = event.end() + min(max_offset_ms, abs(ave_end_adjustment) * 1.5)
+
+                        for silence_candidate in silence_candidates:
+                            start_new_ms = max(silence_candidate[0], silence_start_bound)
+                            end_new_ms = min(silence_candidate[1], silence_end_bound)
+                            silence_duration_pct = (end_new_ms - start_new_ms) / event.duration()
+                            if silence_duration_pct < 0.5:
+                                continue
+                            if silence_duration_pct > 1.0:
+                                if start_new_ms == event.start():
+                                    end_new_ms = min(end_new_ms, start_new_ms + event.duration())
+                                elif end_new_ms == event.end():
+                                    start_new_ms = max(start_new_ms, end_new_ms - event.duration())
+                                else:
+                                    start_new_ms = max(start_new_ms, event.start() + ave_start_adjustment)
+                                    end_new_ms = min(end_new_ms, event.end() + ave_end_adjustment)
+                                    if start_new_ms >= end_new_ms:
+                                        continue
+
+                            logger.debug("event %i sound effect match at (%s %+i, %s %+i) for '%s'", event_idx,
+                                         common.ms_to_ts(start_new_ms), start_new_ms - event.start(),
+                                         common.ms_to_ts(end_new_ms), end_new_ms - event.end(),
+                                         event.log_text())
+
+                            found_range_ms[event_idx] = (start_new_ms, end_new_ms)
+                            event.set_start(start_new_ms)
+                            event.set_end(end_new_ms)
+                            break
+
                         continue
 
                     # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
@@ -1667,7 +1766,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             except ValueError:
                                 value = ' '.join(map(lambda e: e.text, words_filtered[key[0]:key[1]]))
                                 candidates[key] = value
-                    logger.debug("event %i candidates are %s", event_idx, candidates)
+                    logger.debug("event %i candidates in range (%s,%s) are %s", event_idx,
+                                 common.ms_to_ts(start_search_ms), common.ms_to_ts(end_search_ms),
+                                 candidates)
                     if not candidates:
                         logger.debug("no candidates for min_fuzz_ratio %i '%s' (%i,%i)",
                                      min_fuzz_ratio, event_text, start_search_ms, end_search_ms)
@@ -1678,7 +1779,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
                         # remove overlapping matches with lesser ratio
                         if matches:
-                            matches.sort(reverse=True, key=lambda e: [e[1], -1*e[2][0]])
+                            matches.sort(reverse=True, key=lambda e: [e[1], -1 * e[2][0]])
                             # logger.debug("event %i matches before removing overlaps: %s", event_idx, matches)
                             for matches_idx, match in enumerate(matches.copy()):
                                 matches_idx2 = matches_idx + 1
@@ -1692,11 +1793,19 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             # logger.debug("event %i matches after removing overlaps: %s", event_idx, matches)
 
                         # check for similar sentences in which the later matches better with the former transcription
-                        # matches = list(filter(lambda e: e[1] >= min_fuzz_ratio, matches))
                         if len(matches) > 1:
-                            logger.debug("event %i multiple transcriptions may match %s, choosing earlier", event_idx,
-                                         list(map(lambda e: e[1], matches)))
                             matches.sort(key=lambda e: e[2][0])
+                            if event_idx > 0 and not found_range_ms[event_idx - 1]:
+                                matches.pop(0)
+                                logger.debug("event %i multiple transcriptions may match %s, choosing second",
+                                             event_idx,
+                                             list(map(lambda e: e[1], matches)))
+                            else:
+                                logger.debug("event %i multiple transcriptions may match %s, choosing earlier",
+                                             event_idx,
+                                             list(map(lambda e: e[1], matches)))
+                        else:
+                            matches = list(filter(lambda e: e[1] >= min_fuzz_ratio, matches))
 
                     if matches:
                         logger.debug("event %i sorted matches: %s", event_idx, matches)
@@ -1775,8 +1884,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 # capture possible missing words
                 if (transcribed_word_count < word_count
                         and start_word_idx > 0
-                        and not words_claimed[start_word_idx-1]):
-                    beginning_duration = words_filtered[start_word_idx].start.ordinal - words_filtered[start_word_idx-1].start.ordinal
+                        and not words_claimed[start_word_idx - 1]):
+                    beginning_duration = words_filtered[start_word_idx].start.ordinal - words_filtered[
+                        start_word_idx - 1].start.ordinal
                     if beginning_duration <= missing_duration:
                         new_start_word_idx = start_word_idx - 1
                         new_start_ordinal = words_filtered[start_word_idx].start.ordinal
@@ -1787,9 +1897,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         if beginning_duration <= missing_duration:
                             new_start_ordinal = missing_duration - beginning_duration
                     else:
-                        beginning_duration = words_filtered[start_word_idx].start.ordinal - words_filtered[start_word_idx-1].end.ordinal
+                        beginning_duration = words_filtered[start_word_idx].start.ordinal - words_filtered[
+                            start_word_idx - 1].end.ordinal
                         if 0 < beginning_duration <= missing_duration:
-                            new_start_ordinal = words_filtered[start_word_idx-1].end.ordinal + (missing_duration - beginning_duration)
+                            new_start_ordinal = words_filtered[start_word_idx - 1].end.ordinal + (
+                                        missing_duration - beginning_duration)
 
                 new_end_word_idx = None
                 new_end_ordinal = None
@@ -1797,21 +1909,25 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 # capture possible missing words
                 if (transcribed_word_count < word_count
                         and end_word_idx < len(words_claimed) - 1
-                        and not words_claimed[end_word_idx+1]):
-                    ending_duration = words_filtered[end_word_idx+1].end.ordinal - words_filtered[end_word_idx].end.ordinal
+                        and not words_claimed[end_word_idx + 1]):
+                    ending_duration = words_filtered[end_word_idx + 1].end.ordinal - words_filtered[
+                        end_word_idx].end.ordinal
                     if ending_duration <= missing_duration:
                         new_end_word_idx = end_word_idx - 1
                         new_end_ordinal = words_filtered[end_word_idx].end.ordinal
                 # capture empty space for sound effects
                 if new_end_word_idx is None and event.has_ending_sound_effect():
                     if end_word_idx < len(words_claimed) - 1:
-                        ending_duration = words_filtered[end_word_idx+1].start.ordinal - words_filtered[end_word_idx].end.ordinal
+                        ending_duration = words_filtered[end_word_idx + 1].start.ordinal - words_filtered[
+                            end_word_idx].end.ordinal
                         if 0 < ending_duration <= missing_duration:
-                            new_end_ordinal = words_filtered[end_word_idx+1].start.ordinal - (missing_duration - ending_duration)
+                            new_end_ordinal = words_filtered[end_word_idx + 1].start.ordinal - (
+                                        missing_duration - ending_duration)
 
                 # capture the largest missing duration at either beginning or end
                 if (new_start_ordinal is not None and 0 <= new_start_ordinal < event.start()
-                        and ((new_end_ordinal is not None and beginning_duration >= ending_duration) or new_end_ordinal is None)):
+                        and ((
+                                     new_end_ordinal is not None and beginning_duration >= ending_duration) or new_end_ordinal is None)):
                     missing_duration -= event.start() - new_start_ordinal
                     event.set_start(new_start_ordinal)
                     event_moved = True
@@ -1824,7 +1940,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         words_claimed[start_word_idx] = True
                         transcribed_word_count += 1
                 elif (new_end_ordinal is not None and new_end_ordinal > event.end()
-                      and ((new_start_ordinal is not None and beginning_duration < ending_duration) or new_start_ordinal is None)):
+                      and ((
+                                   new_start_ordinal is not None and beginning_duration < ending_duration) or new_start_ordinal is None)):
                     missing_duration -= new_end_ordinal - event.end()
                     event.set_end(new_end_ordinal)
                     event_moved = True
@@ -1839,9 +1956,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
         align_progress.progress(progress_base + len(min_fuzz_ratios) + 1)
 
-        # 3. TODO: events with only sound effects, find gap roughly matching duration
-        # 4. move unmatched events based on unclaimed words
-        # 5. with no transcription help, move event based on average adjustment
+        # 3. move unmatched events based on unclaimed words
+        # 4. with no transcription help, move event based on average adjustment
 
         for event_idx, event in enumerate(events):
             try:
@@ -1948,7 +2064,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     event.set_start(event.start() - start_pad)
                     missing_duration -= start_pad
                     logger.debug("event %i '%s' padded start %+i", event_idx, event.log_text(), start_pad)
-            # expand based on original range
+            # expand based on original range, TODO: this may not be good based on how much subtitles are moved
             if original_range_ms[event_idx][0] < event.start():
                 if event_idx == 0:
                     event.set_start(original_range_ms[event_idx][0])

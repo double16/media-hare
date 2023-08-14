@@ -1,7 +1,34 @@
 import logging
 import unittest
+from typing import Union
 
 from common import subtitle, edl_util, constants
+
+
+class MockSubtitleElement(subtitle.SubtitleElementFacade):
+    def __init__(self, text: str, start: int = 0, end: int = 1000):
+        super().__init__()
+        self._text = text
+        self._start = start
+        self._end = end
+
+    def text(self) -> Union[str, None]:
+        return self._text
+
+    def set_text(self, new_value: str):
+        self._text = new_value
+
+    def start(self) -> Union[int, None]:
+        return self._start
+
+    def set_start(self, new_value: int):
+        self._start = new_value
+
+    def end(self) -> Union[int, None]:
+        return self._end
+
+    def set_end(self, new_value: int):
+        self._end = new_value
 
 
 class SubtitleOperationsTest(unittest.TestCase):
@@ -250,6 +277,50 @@ Dialogue: 0,0:00:11.21,0:00:13.58,Default,,0,0,0,,{TIME:11210,13580}The lazy bro
 Dialogue: 0,0:00:13.68,0:00:16.31,Default,,0,0,0,,{TIME:13680,16310}The lazy brown fox the the
 Dialogue: 0,0:00:30.16,0:00:32.65,Default,,0,0,0,,{TIME:30160,32650}The the
 """)
+
+    def test_is_sound_effect(self):
+        se = MockSubtitleElement('[ whirring ]')
+        self.assertTrue(se.is_sound_effect())
+        se = MockSubtitleElement('<i>[ whirring ]</i>')
+        self.assertTrue(se.is_sound_effect())
+        se = MockSubtitleElement('<i> [ whirring ] </i>')
+        self.assertTrue(se.is_sound_effect())
+        se = MockSubtitleElement(' <i> [ whirring ] </i> ')
+        self.assertTrue(se.is_sound_effect())
+        se = MockSubtitleElement('hey there')
+        self.assertFalse(se.is_sound_effect())
+        se = MockSubtitleElement('hey there [ whirring ]')
+        self.assertFalse(se.is_sound_effect())
+        se = MockSubtitleElement('[ whirring ] hey there')
+        self.assertFalse(se.is_sound_effect())
+
+    def test_has_beginning_sound_effect(self):
+        se = MockSubtitleElement('[ whirring ] hey there')
+        self.assertTrue(se.has_beginning_sound_effect())
+        se = MockSubtitleElement('[ whirring ]')
+        self.assertFalse(se.has_beginning_sound_effect())
+        se = MockSubtitleElement('<i>[ whirring ]</i>')
+        self.assertFalse(se.has_beginning_sound_effect())
+        se = MockSubtitleElement('<i> [ whirring ] </i>')
+        self.assertFalse(se.has_beginning_sound_effect())
+        se = MockSubtitleElement(' <i> [ whirring ] </i> ')
+        self.assertFalse(se.has_beginning_sound_effect())
+        se = MockSubtitleElement('hey there')
+        self.assertFalse(se.has_beginning_sound_effect())
+
+    def test_has_ending_sound_effect(self):
+        se = MockSubtitleElement('hey there [ whirring ]')
+        self.assertTrue(se.has_ending_sound_effect())
+        se = MockSubtitleElement('[ whirring ]')
+        self.assertFalse(se.has_ending_sound_effect())
+        se = MockSubtitleElement('<i>[ whirring ]</i>')
+        self.assertFalse(se.has_ending_sound_effect())
+        se = MockSubtitleElement('<i> [ whirring ] </i>')
+        self.assertFalse(se.has_ending_sound_effect())
+        se = MockSubtitleElement(' <i> [ whirring ] </i> ')
+        self.assertFalse(se.has_ending_sound_effect())
+        se = MockSubtitleElement('hey there')
+        self.assertFalse(se.has_ending_sound_effect())
 
 
 if __name__ == '__main__':
