@@ -115,7 +115,7 @@ class SubtitleElementFacade(ABC):
     _log_text_clean = re.compile(r"[\r\n]+")
 
     def __init__(self):
-        self._normalized_text: Union[str, None] = None
+        self._normalized_texts: Union[list[str], None] = None
         pass
 
     def __repr__(self):
@@ -138,13 +138,32 @@ class SubtitleElementFacade(ABC):
             return original
         return self._log_text_clean.sub(" ", original)
 
-    def normalized_text(self) -> Union[str, None]:
-        if self.text() is not None and self._normalized_text is None:
+    def _check_normalized_texts(self):
+        if self.text() is not None and self._normalized_texts is None:
             raise ValueError("normalized text not set")
-        return self._normalized_text
 
-    def set_normalized_text(self, new_value: str):
-        self._normalized_text = new_value
+    def normalized_texts(self) -> list[str]:
+        self._check_normalized_texts()
+        return self._normalized_texts
+
+    def set_normalized_texts(self, new_values: list[str]):
+        self._normalized_texts = new_values
+
+    def get_normalized_word_count(self) -> int:
+        self._check_normalized_texts()
+        return max(map(lambda e: len(e.split()), self._normalized_texts))
+
+    def is_normalized_text_blank(self) -> bool:
+        self._check_normalized_texts()
+        return max(map(lambda e: len(e.strip()), self._normalized_texts), default=0) == 0
+
+    def normalized_texts_startswith(self, value: str) -> bool:
+        self._check_normalized_texts()
+        return any(map(lambda e: e.startswith(value), self._normalized_texts))
+
+    def normalized_texts_endswith(self, value: str) -> bool:
+        self._check_normalized_texts()
+        return any(map(lambda e: e.endswith(value), self._normalized_texts))
 
     def is_sound_effect(self) -> bool:
         return self._sound_effect_re.fullmatch(self._markup.sub("", self.text())) is not None
