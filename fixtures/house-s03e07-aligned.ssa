@@ -29,7 +29,7 @@ Dialogue: 0,0:00:29.82,0:00:31.39,Default,,0,0,0,,{TIME:29823,31393}{\an7}{\pos(
 Dialogue: 0,0:00:31.39,0:00:33.07,Default,,0,0,0,,{TIME:31393,33073}{\an7}{\pos(86,228)}\h\h\h\hthose Sherpas\N{\an7}{\pos(86,243)}you dropped acid with
 Dialogue: 0,0:00:33.07,0:00:34.51,Default,,0,0,0,,{TIME:33073,34513}{\an7}{\pos(57,243)}in St. Patrick’s Cathedral.
 Dialogue: 0,0:00:34.51,0:00:36.49,Default,,0,0,0,,{TIME:34513,36493}{\an7}{\pos(38,243)}You stole my prescription pad,
-Dialogue: 0,0:00:36.73,0:00:37.30,Default,,0,0,0,,{TIME:36733,37303}Euphoric.
+Dialogue: 0,0:00:36.49,0:00:37.30,Default,,0,0,0,,{TIME:36493,37303}And euphoric.
 Dialogue: 0,0:00:37.41,0:00:39.35,Default,,0,0,0,,{TIME:37416,39356}{\an7}{\pos(38,243)}and you forged my name.
 Dialogue: 0,0:00:40.63,0:00:41.80,Default,,0,0,0,,{TIME:40633,41803}{\an7}{\pos(67,243)}What did you tell the cop?
 Dialogue: 0,0:00:41.80,0:00:41.92,Default,,0,0,0,,{TIME:41803,41923}{\an7}{\pos(48,243)}{\i1}I lied.
@@ -433,9 +433,9 @@ Dialogue: 0,0:15:20.55,0:15:22.32,Default,,0,0,0,,{TIME:920558,922328}{\an7}{\po
 Dialogue: 0,0:15:22.68,0:15:24.62,Default,,0,0,0,,{TIME:922688,924628}{\an7}{\pos(67,243)}You have one day to live.
 Dialogue: 0,0:15:24.62,0:15:26.16,Default,,0,0,0,,{TIME:924628,926168}{\an7}{\pos(76,243)}And you want a sandwich?
 Dialogue: 0,0:15:26.16,0:15:28.20,Default,,0,0,0,,{TIME:926168,928208}{\an7}{\pos(38,228)}People on Death Row\N{\an7}{\pos(38,243)}get a last meal.
-Dialogue: 0,0:15:28.29,0:15:29.89,Default,,0,0,0,,{TIME:928298,929898}{\an7}{\pos(172,243)}State provides it.
-Dialogue: 0,0:15:30.15,0:15:32.99,Default,,0,0,0,,{TIME:930158,932998}{\an7}{\pos(115,243)}Who’s providing for you?
-Dialogue: 0,0:15:32.99,0:15:34.95,Default,,0,0,0,,{TIME:932998,934950}{\an7}{\pos(211,228)}You got a car?\N{\an7}{\pos(211,243)}\h\h\h\h\h\h\h\hMoney?
+Dialogue: 0,0:15:28.20,0:15:29.19,Default,,0,0,0,,{TIME:928208,929198}{\an7}{\pos(172,243)}State provides it.
+Dialogue: 0,0:15:29.19,0:15:30.93,Default,,0,0,0,,{TIME:929198,930938}{\an7}{\pos(115,243)}Who’s providing for you?
+Dialogue: 0,0:15:30.93,0:15:34.92,Default,,0,0,0,,{TIME:930938,934920}{\an7}{\pos(211,228)}You got a car?\N{\an7}{\pos(211,243)}\h\h\h\h\h\h\h\hMoney?
 Dialogue: 0,0:15:34.95,0:15:38.45,Default,,0,0,0,,{TIME:934950,938450}{\an7}{\pos(38,243)}You’re negotiating with me.
 Dialogue: 0,0:15:38.49,0:15:40.43,Default,,0,0,0,,{TIME:938490,940430}{\an7}{\pos(134,243)}[ATM whirs]
 Dialogue: 0,0:15:42.96,0:15:46.59,Default,,0,0,0,,{TIME:942960,946598}{\an7}{\pos(38,243)}Take out another hundred for me.
@@ -558,9 +558,9 @@ Dialogue: 0,0:19:49.34,0:19:51.48,Default,,0,0,0,,{TIME:1189341,1191481}{\an7}{\
 Dialogue: 0,0:19:51.48,0:19:52.59,Default,,0,0,0,,{TIME:1191481,1192598}{\an7}{\pos(153,243)}my turn.
 Dialogue: 0,0:19:52.59,0:19:54.12,Default,,0,0,0,,{TIME:1192598,1194128}{\an7}{\pos(105,228)}What did you make\N{\an7}{\pos(105,243)}\hin your factory?
 Dialogue: 0,0:19:54.51,0:19:56.41,Default,,0,0,0,,{TIME:1194518,1196418}{\an7}{\pos(124,243)}Luxury boats.
-Dialogue: 0,0:19:56.41,0:19:58.29,Default,,0,0,0,,{TIME:1196418,1198298}{\an7}{\pos(57,243)}Have you ever been in love?
-Dialogue: 0,0:19:58.29,0:19:59.46,Default,,0,0,0,,{TIME:1198298,1199468}{\an7}{\pos(172,243)}Wow.
-Dialogue: 0,0:19:59.46,0:20:01.84,Default,,0,0,0,,{TIME:1199468,1201849}{\an7}{\pos(57,228)}Going right for the closets\N{\an7}{\pos(57,243)}with the embarrassing stuff.
+Dialogue: 0,0:19:56.41,0:19:58.23,Default,,0,0,0,,{TIME:1196418,1198239}{\an7}{\pos(57,243)}Have you ever been in love?
+Dialogue: 0,0:19:58.23,0:19:59.40,Default,,0,0,0,,{TIME:1198239,1199409}{\an7}{\pos(172,243)}Wow.
+Dialogue: 0,0:19:59.40,0:20:01.84,Default,,0,0,0,,{TIME:1199409,1201849}{\an7}{\pos(57,228)}Going right for the closets\N{\an7}{\pos(57,243)}with the embarrassing stuff.
 Dialogue: 0,0:20:01.84,0:20:03.21,Default,,0,0,0,,{TIME:1201849,1203219}{\an7}{\pos(144,228)}Good move.\N{\an7}{\pos(144,243)}\h\h\hYes.
 Dialogue: 0,0:20:03.50,0:20:04.50,Default,,0,0,0,,{TIME:1203508,1204508}{\an7}{\pos(96,243)}Describe the boats.
 Dialogue: 0,0:20:04.50,0:20:06.37,Default,,0,0,0,,{TIME:1204508,1206371}{\an7}{\pos(144,243)}35- to 65-foot hulls.
@@ -968,8 +968,8 @@ Dialogue: 0,0:36:52.86,0:36:54.97,Default,,0,0,0,,{TIME:2212860,2214978}{\an7}{\
 Dialogue: 0,0:37:03.41,0:37:06.75,Default,,0,0,0,,{TIME:2223410,2226750}{\an7}{\pos(105,228)}\h\h\hI don’t know\N{\an7}{\pos(105,243)}what to tell him.
 Dialogue: 0,0:37:09.85,0:37:11.89,Default,,0,0,0,,{TIME:2229850,2231890}{\an7}{\pos(38,243)}[sighs]
 Dialogue: 0,0:37:11.92,0:37:13.86,Default,,0,0,0,,{TIME:2231920,2233860}{\an7}{\pos(38,228)}Think it’s my turn\N{\an7}{\pos(38,243)}to ask a question, isn’t it?
-Dialogue: 0,0:37:13.88,0:37:17.91,Default,,0,0,0,,{TIME:2233880,2237916}{\an7}{\pos(182,243)}I don’t think so.
-Dialogue: 0,0:37:17.91,0:37:18.75,Default,,0,0,0,,{TIME:2237916,2238758}{\an7}{\pos(115,228)}’Cause you just asked me\N{\an7}{\pos(115,243)}\h\h\h\h\h\h\h\h\h\h\h\h\h\hthat thing
+Dialogue: 0,0:37:13.86,0:37:16.38,Default,,0,0,0,,{TIME:2233860,2236388}{\an7}{\pos(182,243)}I don’t think so.
+Dialogue: 0,0:37:16.38,0:37:18.75,Default,,0,0,0,,{TIME:2236388,2238758}{\an7}{\pos(115,228)}’Cause you just asked me\N{\an7}{\pos(115,243)}\h\h\h\h\h\h\h\h\h\h\h\h\h\hthat thing
 Dialogue: 0,0:37:18.75,0:37:21.99,Default,,0,0,0,,{TIME:2238758,2241998}{\an7}{\pos(134,243)}about the speed limit.
 Dialogue: 0,0:37:22.76,0:37:25.06,Default,,0,0,0,,{TIME:2242760,2245060}{\an7}{\pos(124,243)}What do you wanna know?
 Dialogue: 0,0:37:25.06,0:37:28.00,Default,,0,0,0,,{TIME:2245060,2248000}{\an7}{\pos(57,228)}If you could hear one thing\N{\an7}{\pos(57,243)}\h\h\h\h\hfrom your father,

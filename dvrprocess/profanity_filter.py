@@ -1327,7 +1327,7 @@ def find_subtitle_element_idx_le(time_ordinals: list[int], start: float) -> int:
 
 
 SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(.*?\)|\{.*?}|<.*?>")
-SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&\"-]|\b'|'\b|[\u007F-\uFFFF]")
+SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&\"-]|\W'|'\W|[\u007F-\uFFFF]")
 SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
 SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:[\d.,]+\d)?)")
 SUBTITLE_TEXT_TO_PLAIN_ORDINALS = re.compile(r"(\d+)(?:st|nd|rd|th)")
@@ -1421,7 +1421,6 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     """
     Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
     sentences a collection of words.
-    # TODO: Add capitalization and punctuation. Use hunspell to identify possible proper names.
     """
     chars_per_sentence = 40
     linebreaks_per_sentence = 2
@@ -2043,7 +2042,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         align_progress.progress(progress_base + len(min_fuzz_ratios) + 2)
 
         # extend durations based on original, not to overlap
-        # TODO: consider sound effects in subtitles
         for event_idx, event in enumerate(events[:-1]):
             missing_duration = original_duration_ms[event_idx] - event.duration()
             if missing_duration > 0:
@@ -2064,7 +2062,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     event.set_start(event.start() - start_pad)
                     missing_duration -= start_pad
                     logger.debug("event %i '%s' padded start %+i", event_idx, event.log_text(), start_pad)
-            # expand based on original range, TODO: this may not be good based on how much subtitles are moved
+            # expand based on original range
             if original_range_ms[event_idx][0] < event.start():
                 if event_idx == 0:
                     event.set_start(original_range_ms[event_idx][0])
@@ -2120,13 +2118,12 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                        event.log_text(), matches, transcribed_text, ratio)
 
     if should_add_new_events:
-        # collect large missing events, but insert later so we don't have to fix up arrays containing info
         last_word_idx = -1
         event_idx = 0
         while event_idx < len(events):
             event = events[event_idx]
             try:
-                start_word_idx, end_word_idx, transcribed_text = get_transcription_info(event)
+                start_word_idx, end_word_idx, _ = get_transcription_info(event)
             except ValueError:
                 event_idx += 1
                 continue
@@ -2135,10 +2132,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 unclaimed_words = []
                 for i in range(last_word_idx, start_word_idx):
                     word = words_filtered[i]
-                    if word.start.ordinal > events[event_idx - 1].end() and word.end.ordinal < event.start():
+                    if word.start.ordinal >= events[event_idx - 1].end() and word.end.ordinal <= event.start():
                         unclaimed_words.append(word)
                         end_word_idx = i
                 if len(unclaimed_words) > 0:
+                    logger.debug("creating events for unclaimed words '%s'", list(map(lambda e: e.text, unclaimed_words)))
                     for sentence in srt_words_to_sentences(unclaimed_words, lang):
                         event = subtitle_facade.insert(event_idx)
                         event.set_start(sentence.start.ordinal)
