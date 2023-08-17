@@ -122,3 +122,13 @@ class SubtitleAlignmentTest(unittest.TestCase):
 
     def test_idempotent_meninblack(self):
         self._assert_idempotent('men-in-black-original.srt', 'men-in-black-words.srt')
+
+    def test_subtitle_text_to_plain(self):
+        self.assertEqual(
+            ['worked there for fifteen years'],
+            profanity_filter._subtitle_text_to_plain('Worked there for 15 years.'),
+        )
+        self.assertEqual(
+            ['it costs twenty three dollar zero cents'],
+            profanity_filter._subtitle_text_to_plain('It costs $23'),
+        )

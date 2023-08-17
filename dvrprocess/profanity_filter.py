@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 from bisect import bisect_left, bisect_right
+from itertools import product
 from math import ceil, floor
 from pathlib import Path
 from typing import Tuple, Union
@@ -1343,13 +1344,81 @@ SUBTITLE_TEXT_TO_PLAIN_ABBREV_PATTERN = re.compile(
     flags=re.IGNORECASE)
 
 
-def _num2words_cardinal(numbers: str, lang: str) -> str:
-    if numbers.isdigit() and len(numbers) > 3:
-        # use a word per digit, such as a spoken account number
-        digits = [num2words(ch, lang=lang) for ch in numbers]
-        return ' '.join(digits)
+class TextToTranscribed(object):
 
-    return num2words(numbers.replace(',', ''), lang=lang)
+    def __init__(self, pattern: re.Pattern, lang: str):
+        self.pattern = pattern
+        self.lang = lang
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        return [match[0]]
+
+
+class ConstantReplacementTranscribed(TextToTranscribed):
+
+    def __init__(self, pattern: re.Pattern, lang: str, replacement: str):
+        super().__init__(pattern, lang)
+        self.replacement = [replacement]
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        return self.replacement
+
+
+class Num2WordsTranscribed(TextToTranscribed):
+
+    def __init__(self, pattern: re.Pattern, lang: str, to: str):
+        super().__init__(pattern, lang)
+        self.to = to
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        return [num2words(match.group(1), to=self.to, lang=self.lang)]
+
+
+class CardinalNumTranscribed(TextToTranscribed):
+
+    def __init__(self, lang: str):
+        super().__init__(SUBTITLE_TEXT_TO_PLAIN_NUMBERS, lang)
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        numbers = match.group(1)
+        if numbers.isdigit() and len(numbers) > 3:
+            # use a word per digit, such as a spoken account number
+            digits = [num2words(ch, lang=self.lang) for ch in numbers]
+            return [' '.join(digits)]
+
+        return [num2words(numbers.replace(',', ''), lang=self.lang)]
+
+
+class CurrencyTranscribed(TextToTranscribed):
+
+    def __init__(self, lang: str):
+        super().__init__(SUBTITLE_TEXT_TO_PLAIN_CURRENCY, lang)
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        result = num2words(match.group(1), to='currency', lang=self.lang)
+        if '$' in match.group(0):
+            result = result.replace('euro', 'dollar')
+        return [result]
+
+
+class AbbreviationsTranscribed(TextToTranscribed):
+    def __init__(self, lang: str):
+        super().__init__(SUBTITLE_TEXT_TO_PLAIN_ABBREV_PATTERN, lang)
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        return [SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT[match.group(1).lower()]]
+
+
+TEXT_TO_TRANSCRIBED = [
+    CurrencyTranscribed('en'),
+    Num2WordsTranscribed(SUBTITLE_TEXT_TO_PLAIN_ORDINALS, 'en', 'ordinal'),
+    Num2WordsTranscribed(SUBTITLE_TEXT_TO_PLAIN_YEAR, 'en', 'year'),
+    CardinalNumTranscribed('en'),
+    AbbreviationsTranscribed('en'),
+    ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_REMOVE, 'en', ""),
+    ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_WS, 'en', " "),
+    ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS, 'en', " "),
+]
 
 
 def _subtitle_text_to_plain(text: str, lang='en') -> list[str]:
@@ -1364,21 +1433,32 @@ def _subtitle_text_to_plain(text: str, lang='en') -> list[str]:
     squeeze whitespace to match closer to transcription
     numbers to text?
     """
-    # TODO: Some USD like $12.99 is being represented as euros
     # TODO: Handle strings like phone numbers: (800) 555-1212
     # TODO: Match numbers like "622" = "six twenty two"
-    text = SUBTITLE_TEXT_TO_PLAIN_CURRENCY.sub(lambda n: num2words(n.group(1), to='currency', lang=lang), text)
-    text = SUBTITLE_TEXT_TO_PLAIN_ORDINALS.sub(lambda n: num2words(n.group(1), to='ordinal', lang=lang), text)
-    text = SUBTITLE_TEXT_TO_PLAIN_YEAR.sub(lambda n: num2words(n.group(1), to='year', lang=lang), text)
-    text = SUBTITLE_TEXT_TO_PLAIN_NUMBERS.sub(lambda n: _num2words_cardinal(n.group(1), lang), text)
-    text = SUBTITLE_TEXT_TO_PLAIN_ABBREV_PATTERN.sub(lambda m: SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT[m.group(1).lower()],
-                                                     text)
+    # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
+    # TODO: permutations for slang short hand, i.e. "outta" for "out of"
+    # TODO: permutations for ("know", "no"), etc.
+    results = [text]
 
-    text = SUBTITLE_TEXT_TO_PLAIN_REMOVE.sub("", text)
-    text = SUBTITLE_TEXT_TO_PLAIN_WS.sub(" ", text)
-    text = SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS.sub(" ", text)
-    text = text.lower().strip()
-    return [text]
+    for transform in TEXT_TO_TRANSCRIBED:
+        processing: list[tuple[str, int]] = [(result, 0) for result in results]
+        processed = []
+        while processing:
+            current = processing.pop(0)
+            match = transform.pattern.search(current[0], current[1])
+            if match:
+                replacements = transform.replacements(match)
+                if replacements:
+                    for replacement in replacements:
+                        replaced = current[0][0:match.start(0)] + replacement + current[0][match.end(0):]
+                        processing.append((replaced, match.start(0) + len(replacement)))
+                else:
+                    processed.append(current[0])
+            else:
+                processed.append(current[0])
+        results = processed
+
+    return [result.lower().strip() for result in results]
 
 
 def _is_transcribed_word_suspicious(event: SubRipItem, lang: str = 'eng') -> bool:
@@ -1421,6 +1501,7 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     """
     Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
     sentences a collection of words.
+    # TODO: use https://pypi.org/project/language-tool-python/ to correct assembled sentences.
     """
     chars_per_sentence = 40
     linebreaks_per_sentence = 2
@@ -1710,9 +1791,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 
                         continue
 
-                    # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
-                    # TODO: permutations for slang short hand, i.e. "outta" for "out of"
-                    # TODO: permutations for ("know", "no"), etc.
                     word_count = event.get_normalized_word_count()
                     if word_count < word_count_min:
                         continue
@@ -1905,7 +1983,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             start_word_idx - 1].end.ordinal
                         if 0 < beginning_duration <= missing_duration:
                             new_start_ordinal = words_filtered[start_word_idx - 1].end.ordinal + (
-                                        missing_duration - beginning_duration)
+                                    missing_duration - beginning_duration)
 
                 new_end_word_idx = None
                 new_end_ordinal = None
@@ -1926,7 +2004,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             end_word_idx].end.ordinal
                         if 0 < ending_duration <= missing_duration:
                             new_end_ordinal = words_filtered[end_word_idx + 1].start.ordinal - (
-                                        missing_duration - ending_duration)
+                                    missing_duration - ending_duration)
 
                 # capture the largest missing duration at either beginning or end
                 if (new_start_ordinal is not None and 0 <= new_start_ordinal < event.start()
@@ -2141,7 +2219,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         unclaimed_words.append(word)
                         end_word_idx = i
                 if len(unclaimed_words) > 0:
-                    logger.debug("creating events for unclaimed words '%s'", list(map(lambda e: e.text, unclaimed_words)))
+                    logger.debug("creating events for unclaimed words '%s'",
+                                 list(map(lambda e: e.text, unclaimed_words)))
                     for sentence in srt_words_to_sentences(unclaimed_words, lang):
                         event = subtitle_facade.insert(event_idx)
                         event.set_start(sentence.start.ordinal)

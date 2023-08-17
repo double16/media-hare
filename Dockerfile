@@ -41,7 +41,7 @@ COPY requirements.txt /tmp/
 # vosk doesn't install libatomic1 dep on aarch64
 RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
-    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less \
+    apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat59 libsdl1.2-compat libatomic1 &&\
     pip --no-input install --compile --ignore-installed -r /tmp/requirements.txt && \
@@ -55,6 +55,7 @@ RUN apt-get -q update && \
     unzip -d /root/.cache/vosk /tmp/vosk-model-en-us-0.22-lgraph.zip &&\
     curl -o /tmp/vosk-model-small-es-0.22.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-small-es-0.22.zip &&\
     unzip -d /root/.cache/vosk /tmp/vosk-model-small-es-0.22.zip &&\
+    python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')" &&\
     rm -rf /tmp/*
 
 # It appears Ubuntu does not include tesseract models for all OCR engines
