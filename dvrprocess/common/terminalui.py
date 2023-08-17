@@ -20,11 +20,13 @@ LOG_MSG_CLEAN = re.compile("[\r\n]+")
 
 
 _CURSESUI = None
-
+_CURSESUI_LAST_RESIZE = 0
 
 def _check_resize():
+    global _CURSESUI, _CURSESUI_LAST_RESIZE
     c = _CURSESUI.screen.getch()
-    if c == curses.KEY_RESIZE:
+    if c == curses.KEY_RESIZE or (time.time() - _CURSESUI_LAST_RESIZE > 300):
+        _CURSESUI_LAST_RESIZE = time.time()
         _CURSESUI.resize()
 
 
@@ -46,7 +48,7 @@ class CursesLogHandler(logging.Handler):
                 self.pad.insdelln(-1)
                 self.y = max_y - 1
 
-            created_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record.created))
+            created_str = time.strftime('%H:%M:%S', time.localtime(record.created))
             log_msg = self.log_msg_cleaner.sub(" ", record.getMessage())
             msg = f"{created_str} {record.levelname:<7} {record.filename[:20]:<20}  {log_msg}"
 
@@ -346,9 +348,10 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
     :return: return code for sys.exit
     """
     def main(screen) -> int:
-        global _CURSESUI
+        global _CURSESUI, _CURSESUI_LAST_RESIZE
         screen.refresh()
         _CURSESUI = CursesUI(screen)
+        _CURSESUI_LAST_RESIZE = time.time()
         progress.start_compute_gauges(2)
 
         return func(*args, **kwargs)
