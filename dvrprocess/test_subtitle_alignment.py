@@ -132,3 +132,36 @@ class SubtitleAlignmentTest(unittest.TestCase):
             ['it costs twenty three dollar zero cents'],
             profanity_filter._subtitle_text_to_plain('It costs $23'),
         )
+        self.assertEqual(
+            ['call eight hundred five fifty five one thousand two hundred and twelve',
+             'call eight hundred five fifty five one two one two',
+             'call eight hundred five fifty five twelve twelve',
+             'call eight hundred five five five one thousand two hundred and twelve',
+             'call eight hundred five five five one two one two',
+             'call eight hundred five five five twelve twelve',
+             'call eight hundred five hundred and fifty five one thousand two hundred and '
+             'twelve',
+             'call eight hundred five hundred and fifty five one two one two',
+             'call eight hundred five hundred and fifty five twelve twelve',
+             'call eight zero five fifty five one thousand two hundred and twelve',
+             'call eight zero five fifty five one two one two',
+             'call eight zero five fifty five twelve twelve',
+             'call eight zero five five five one thousand two hundred and twelve',
+             'call eight zero five five five one two one two',
+             'call eight zero five five five twelve twelve',
+             'call eight zero five hundred and fifty five one thousand two hundred and '
+             'twelve',
+             'call eight zero five hundred and fifty five one two one two',
+             'call eight zero five hundred and fifty five twelve twelve',
+             'call eight zero zero five fifty five one thousand two hundred and twelve',
+             'call eight zero zero five fifty five one two one two',
+             'call eight zero zero five fifty five twelve twelve',
+             'call eight zero zero five five five one thousand two hundred and twelve',
+             'call eight zero zero five five five one two one two',
+             'call eight zero zero five five five twelve twelve',
+             'call eight zero zero five hundred and fifty five one thousand two hundred '
+             'and twelve',
+             'call eight zero zero five hundred and fifty five one two one two',
+             'call eight zero zero five hundred and fifty five twelve twelve'],
+            profanity_filter._subtitle_text_to_plain('Call (800) 555-1212'),
+        )

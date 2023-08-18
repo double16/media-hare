@@ -993,14 +993,14 @@ Dialogue: 0,0:38:21.76,0:38:24.36,Default,,0,0,0,,{TIME:2301767,2304365}{\an7}{\
 Dialogue: 0,0:38:24.36,0:38:25.83,Default,,0,0,0,,{TIME:2304365,2305835}{\an7}{\pos(86,243)}live in Philadelphia.
 Dialogue: 0,0:38:27.83,0:38:30.83,Default,,0,0,0,,{TIME:2307830,2310830}{\an7}{\pos(259,243)}So, uh...
 Dialogue: 0,0:38:30.86,0:38:33.96,Default,,0,0,0,,{TIME:2310860,2313960}{\an7}{\pos(144,243)}do you like to swing?
-Dialogue: 0,0:38:34.00,0:38:36.00,Default,,0,0,0,,{TIME:2314000,2316009}{\an7}{\pos(172,243)}No.
-Dialogue: 0,0:38:36.00,0:38:39.03,Default,,0,0,0,,{TIME:2316009,2319038}{\an7}{\pos(57,243)}Well, if you change your mind,
+Dialogue: 0,0:38:34.00,0:38:35.94,Default,,0,0,0,,{TIME:2314000,2315940}{\an7}{\pos(172,243)}No.
+Dialogue: 0,0:38:35.97,0:38:39.03,Default,,0,0,0,,{TIME:2315970,2319038}{\an7}{\pos(57,243)}Well, if you change your mind,
 Dialogue: 0,0:38:39.21,0:38:43.08,Default,,0,0,0,,{TIME:2319218,2323088}{\an7}{\pos(268,243)}I’m in--
 Dialogue: 0,0:38:43.08,0:38:45.25,Default,,0,0,0,,{TIME:2323088,2325258}{\an7}{\pos(220,243)}House. House!
-Dialogue: 0,0:38:45.39,0:38:48.06,Default,,0,0,0,,{TIME:2325398,2328068}{\an7}{\pos(201,228)}Is it room 622?\N{\an7}{\pos(201,243)}\h\h\h\h\h\h\h\h\h\h\h642?
-Dialogue: 0,0:38:48.13,0:38:49.03,Default,,0,0,0,,{TIME:2328132,2329032}{\an7}{\pos(172,243)}622.
-Dialogue: 0,0:38:49.03,0:38:50.67,Default,,0,0,0,,{TIME:2329032,2330679}{\an7}{\pos(230,243)}622.
-Dialogue: 0,0:38:50.67,0:38:52.84,Default,,0,0,0,,{TIME:2330679,2332849}{\an7}{\pos(38,243)}Yeah.
+Dialogue: 0,0:38:45.25,0:38:47.22,Default,,0,0,0,,{TIME:2325258,2327229}{\an7}{\pos(201,228)}Is it room 622?\N{\an7}{\pos(201,243)}\h\h\h\h\h\h\h\h\h\h\h642?
+Dialogue: 0,0:38:47.22,0:38:47.85,Default,,0,0,0,,{TIME:2327229,2327850}{\an7}{\pos(172,243)}622.
+Dialogue: 0,0:38:47.85,0:38:49.89,Default,,0,0,0,,{TIME:2327850,2329890}{\an7}{\pos(230,243)}622.
+Dialogue: 0,0:38:49.91,0:38:52.08,Default,,0,0,0,,{TIME:2329910,2332080}{\an7}{\pos(38,243)}Yeah.
 Dialogue: 0,0:39:06.36,0:39:10.32,Default,,0,0,0,,{TIME:2346360,2350328}{\an7}{\pos(38,243)}Alibi.
 Dialogue: 0,0:39:10.32,0:39:13.32,Default,,0,0,0,,{TIME:2350328,2353328}{\an7}{\pos(144,243)}I figured.
 Dialogue: 0,0:39:21.18,0:39:23.82,Default,,0,0,0,,{TIME:2361180,2363820}{\an7}{\pos(124,243)}[heavy thump]

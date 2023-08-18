@@ -929,8 +929,6 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         logger.error(f"OCR text appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None
 
-    # TODO: Add "[ OCR by media-hare+SubtitleEdit ]" at beginning and end
-
     return subtitle_srt_filename
 
 
@@ -1047,8 +1045,6 @@ def audio_to_srt(input_info: dict, audio_original: dict, workdir, audio_filter: 
         logger.error(
             f"audio-to-text transcription appears to be incorrect, {word_found_pct}% words found in {language} dictionary")
         return None, None
-
-    # TODO: Add "[ transcribed by media-hare+Vosk ]" at beginning and end
 
     return subtitle_srt_filename, words_filename
 
@@ -1327,12 +1323,11 @@ def find_subtitle_element_idx_le(time_ordinals: list[int], start: float) -> int:
     raise ValueError
 
 
-SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(.*?\)|\{.*?}|<.*?>")
-SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&\"-]|\W'|'\W|[\u007F-\uFFFF]")
+SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(\D.*?\)|\{.*?}|<.*?>")
+SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&()\"-]|\W'|'\W|[\u007F-\uFFFF]")
 SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
 SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:[\d.,]+\d)?)")
 SUBTITLE_TEXT_TO_PLAIN_ORDINALS = re.compile(r"(\d+)(?:st|nd|rd|th)")
-SUBTITLE_TEXT_TO_PLAIN_YEAR = re.compile(r"(\d+\d+\d+\d+)s?")
 SUBTITLE_TEXT_TO_PLAIN_CURRENCY = re.compile(r"\$(\d+(?:[\d.,]+\d)?)")
 SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT = {
     'dr.': 'doctor',
@@ -1380,13 +1375,23 @@ class CardinalNumTranscribed(TextToTranscribed):
         super().__init__(SUBTITLE_TEXT_TO_PLAIN_NUMBERS, lang)
 
     def replacements(self, match: re.Match[str]) -> list[str]:
-        numbers = match.group(1)
-        if numbers.isdigit() and len(numbers) > 3:
-            # use a word per digit, such as a spoken account number
-            digits = [num2words(ch, lang=self.lang) for ch in numbers]
-            return [' '.join(digits)]
+        numbers = match.group(1).replace(',', '')
+        results = [num2words(numbers, lang=self.lang)]
+        if numbers.isdigit():
+            if len(numbers) > 2:
+                # use a word per digit, such as a spoken account number
+                digits = [num2words(ch, lang=self.lang) for ch in numbers]
+                results.append(' '.join(digits))
+            if len(numbers) == 3:
+                # Match numbers like "622" = "six twenty two"
+                results.append(num2words(numbers[0], lang=self.lang)+" "+num2words(numbers[1:], lang=self.lang))
+            if len(numbers) == 4:
+                # Match numbers like "1822" = "eighteen twenty two"
+                # results.append(num2words(numbers[0:1], lang=self.lang))
+                # results.append(num2words(numbers[2:], lang=self.lang))
+                results.append(num2words(numbers, to='year', lang=self.lang))
 
-        return [num2words(numbers.replace(',', ''), lang=self.lang)]
+        return results
 
 
 class CurrencyTranscribed(TextToTranscribed):
@@ -1396,7 +1401,7 @@ class CurrencyTranscribed(TextToTranscribed):
 
     def replacements(self, match: re.Match[str]) -> list[str]:
         result = num2words(match.group(1), to='currency', lang=self.lang)
-        if '$' in match.group(0):
+        if '$' in match.group(0) and (self.lang in ['en', 'eng'] or self.lang.endswith('_US')):
             result = result.replace('euro', 'dollar')
         return [result]
 
@@ -1406,16 +1411,16 @@ class AbbreviationsTranscribed(TextToTranscribed):
         super().__init__(SUBTITLE_TEXT_TO_PLAIN_ABBREV_PATTERN, lang)
 
     def replacements(self, match: re.Match[str]) -> list[str]:
-        return [SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT[match.group(1).lower()]]
+        abbrev = match.group(1).lower()
+        return [abbrev, SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT[abbrev]]
 
 
 TEXT_TO_TRANSCRIBED = [
+    ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_REMOVE, 'en', ""),
     CurrencyTranscribed('en'),
     Num2WordsTranscribed(SUBTITLE_TEXT_TO_PLAIN_ORDINALS, 'en', 'ordinal'),
-    Num2WordsTranscribed(SUBTITLE_TEXT_TO_PLAIN_YEAR, 'en', 'year'),
     CardinalNumTranscribed('en'),
     AbbreviationsTranscribed('en'),
-    ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_REMOVE, 'en', ""),
     ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_WS, 'en', " "),
     ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS, 'en', " "),
 ]
@@ -1433,9 +1438,6 @@ def _subtitle_text_to_plain(text: str, lang='en') -> list[str]:
     squeeze whitespace to match closer to transcription
     numbers to text?
     """
-    # TODO: Handle strings like phone numbers: (800) 555-1212
-    # TODO: Match numbers like "622" = "six twenty two"
-    # TODO: match permutations of text for differing numbers (digits vs. proper spoken), abbreviations, etc.
     # TODO: permutations for slang short hand, i.e. "outta" for "out of"
     # TODO: permutations for ("know", "no"), etc.
     results = [text]
@@ -1446,19 +1448,21 @@ def _subtitle_text_to_plain(text: str, lang='en') -> list[str]:
         while processing:
             current = processing.pop(0)
             match = transform.pattern.search(current[0], current[1])
-            if match:
+            if match is None:
+                processed.append(current[0])
+            else:
                 replacements = transform.replacements(match)
-                if replacements:
+                if len(replacements) > 0:
                     for replacement in replacements:
                         replaced = current[0][0:match.start(0)] + replacement + current[0][match.end(0):]
                         processing.append((replaced, match.start(0) + len(replacement)))
                 else:
-                    processed.append(current[0])
-            else:
-                processed.append(current[0])
+                    processing.append((current[0], match.end(0)))
         results = processed
 
-    return [result.lower().strip() for result in results]
+    results = list(set([result.lower().strip() for result in results]))
+    results.sort()
+    return results
 
 
 def _is_transcribed_word_suspicious(event: SubRipItem, lang: str = 'eng') -> bool:

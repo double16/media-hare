@@ -300,11 +300,11 @@ Dialogue: 0,0:16:50.71,0:16:55.61,Default,,0,0,0,,{TIME:1010719,1015619}♪♪
 Dialogue: 0,0:16:56.44,0:16:58.63,Default,,0,0,0,,{TIME:1016448,1018638}I'm not leaving\Nwithout these diamonds!
 Dialogue: 0,0:16:58.66,0:16:59.65,Default,,0,0,0,,{TIME:1018668,1019658}Diamonds?
 Dialogue: 0,0:16:59.65,0:17:01.03,Default,,0,0,0,,{TIME:1019658,1021038}I'm just here for the stains.
-Dialogue: 0,0:17:01.03,0:17:02.92,Default,,0,0,0,,{TIME:1021038,1022927}With Persil ProClean.
-Dialogue: 0,0:17:02.92,0:17:03.75,Default,,0,0,0,,{TIME:1022927,1023757}BOOM.
-Dialogue: 0,0:17:03.75,0:17:04.75,Default,,0,0,0,,{TIME:1023757,1024757}It's more than Clean.
-Dialogue: 0,0:17:04.75,0:17:05.74,Default,,0,0,0,,{TIME:1024757,1025747}It's Persil ProClean.
-Dialogue: 0,0:17:05.74,0:17:06.76,Default,,0,0,0,,{TIME:1025746,1026768}(inspiring music)
+Dialogue: 0,0:17:01.03,0:17:02.92,Default,,0,0,0,,{TIME:1021038,1022928}With Persil ProClean.
+Dialogue: 0,0:17:02.92,0:17:03.75,Default,,0,0,0,,{TIME:1022928,1023758}BOOM.
+Dialogue: 0,0:17:03.75,0:17:04.75,Default,,0,0,0,,{TIME:1023758,1024758}It's more than Clean.
+Dialogue: 0,0:17:04.75,0:17:05.74,Default,,0,0,0,,{TIME:1024758,1025748}It's Persil ProClean.
+Dialogue: 0,0:17:05.74,0:17:06.76,Default,,0,0,0,,{TIME:1025748,1026768}(inspiring music)
 Dialogue: 0,0:17:06.76,0:17:10.87,Default,,0,0,0,,{TIME:1026768,1030878}- [Graduate] I got my degree\Nat SNHU for my family.
 Dialogue: 0,0:17:11.31,0:17:12.88,Default,,0,0,0,,{TIME:1031318,1032888}- [Graduate 1] This\Ndegree is for me.
 Dialogue: 0,0:17:12.88,0:17:15.22,Default,,0,0,0,,{TIME:1032888,1035228}- [Graduate 2] I did\Nthis for my partner.
@@ -414,7 +414,7 @@ Dialogue: 0,0:23:00.97,0:23:05.20,Default,,0,0,0,,{TIME:1380978,1385208}But if h
 Dialogue: 0,0:23:05.20,0:23:09.90,Default,,0,0,0,,{TIME:1385208,1389908}Dr. Grayson went like this,\Nnot like this.
 Dialogue: 0,0:23:10.76,0:23:12.63,Default,,0,0,0,,{TIME:1390760,1392630}Like this.
 Dialogue: 0,0:23:13.69,0:23:16.76,Default,,0,0,0,,{TIME:1393690,1396765}Not like this.
-Dialogue: 0,0:23:16.87,0:23:20.62,Default,,0,0,0,,{TIME:1396878,1400621}Dr. Grayson is elderly\Nand arthritic.
+Dialogue: 0,0:23:17.03,0:23:20.65,Default,,0,0,0,,{TIME:1397030,1400658}Dr. Grayson is elderly\Nand arthritic.
 Dialogue: 0,0:23:20.65,0:23:23.95,Default,,0,0,0,,{TIME:1400658,1403958}Perhaps he simply needed help\Ngetting to his feet like this.
 Dialogue: 0,0:23:24.97,0:23:29.21,Default,,0,0,0,,{TIME:1404978,1409218}Dr. Brennan,\Nvisitors in your office.
 Dialogue: 0,0:23:29.23,0:23:35.83,Default,,0,0,0,,{TIME:1409236,1415838}Tempe, this is a friend\Nof Dad's.
@@ -543,8 +543,8 @@ Dialogue: 0,0:29:56.68,0:30:00.78,Default,,0,0,0,,{TIME:1796688,1800788}You tell
 Dialogue: 0,0:30:00.78,0:30:03.46,Default,,0,0,0,,{TIME:1800788,1803468}You got this sick little girl\Ndepending on you. I get that.
 Dialogue: 0,0:30:03.46,0:30:08.52,Default,,0,0,0,,{TIME:1803468,1808527}But you go back inside\Nand you cross that line,\Nyou're not helping anyone out.
 Dialogue: 0,0:30:08.52,0:30:10.76,Default,,0,0,0,,{TIME:1808527,1810763}[ Gunshot ]\N[ Woman Screams ]
-Dialogue: 0,0:30:10.76,0:30:11.08,Default,,0,0,0,,{TIME:1810763,1811082}Everybody down!
-Dialogue: 0,0:30:11.08,0:30:14.65,Default,,0,0,0,,{TIME:1811082,1814650}[ People Shouting,\NGasping ]
+Dialogue: 0,0:30:10.76,0:30:11.08,Default,,0,0,0,,{TIME:1810763,1811083}Everybody down!
+Dialogue: 0,0:30:11.08,0:30:14.65,Default,,0,0,0,,{TIME:1811083,1814650}[ People Shouting,\NGasping ]
 Dialogue: 0,0:30:24.16,0:30:29.20,Default,,0,0,0,,{TIME:1824163,1829203}Where R P proof then period proof and\Nsweatproof their leak-proof underwear
 Dialogue: 0,0:30:29.20,0:30:34.39,Default,,0,0,0,,{TIME:1829203,1834393}from next comfy and confident protection\Nthat field just like normal for so many
 Dialogue: 0,0:30:34.39,0:30:37.69,Default,,0,0,0,,{TIME:1834393,1837693}styles and colors to choose from\Nswitching is easy at next dot.
@@ -626,10 +626,10 @@ Dialogue: 0,0:34:59.50,0:35:05.74,Default,,0,0,0,,{TIME:2099503,2105742}Total ro
 Dialogue: 0,0:35:05.74,0:35:07.99,Default,,0,0,0,,{TIME:2105745,2107993}alone up to fifty thousand dollars on\Ncredit karma.
 Dialogue: 0,0:35:08.84,0:35:12.67,Default,,0,0,0,,{TIME:2108840,2112673}[ Woman On TV ] Civil rights\Nactivist and convicted\Nmurderer Marvin Beckett...
 Dialogue: 0,0:35:12.67,0:35:15.13,Default,,0,0,0,,{TIME:2112673,2115133}was released today\Nwhen a second autopsy...
-Dialogue: 0,0:35:15.13,0:35:17.97,Default,,0,0,0,,{TIME:2115133,2117973}on his alleged victim,\NF.B.I. Agent Gus Harper,
-Dialogue: 0,0:35:17.97,0:35:23.29,Default,,0,0,0,,{TIME:2117973,2123293}revealed inconsistencies\Nwith details of Mr. Beckett's\Ntrial back in 1979.
-Dialogue: 0,0:35:23.29,0:35:24.89,Default,,0,0,0,,{TIME:2123293,2124893}[ Coulter ]\NWhat kind\Nof inconsistencies?
-Dialogue: 0,0:35:25.00,0:35:25.36,Default,,0,0,0,,{TIME:2125005,2125362}All you know.
+Dialogue: 0,0:35:15.13,0:35:17.92,Default,,0,0,0,,{TIME:2115133,2117924}on his alleged victim,\NF.B.I. Agent Gus Harper,
+Dialogue: 0,0:35:17.92,0:35:23.59,Default,,0,0,0,,{TIME:2117924,2123594}revealed inconsistencies\Nwith details of Mr. Beckett's\Ntrial back in 1979.
+Dialogue: 0,0:35:23.59,0:35:25.19,Default,,0,0,0,,{TIME:2123595,2125195}[ Coulter ]\NWhat kind\Nof inconsistencies?
+Dialogue: 0,0:35:25.24,0:35:25.36,Default,,0,0,0,,{TIME:2125243,2125362}Know.
 Dialogue: 0,0:35:25.36,0:35:28.23,Default,,0,0,0,,{TIME:2125362,2128232}You have your confidences\Nto keep, Father.\NI have mine.
 Dialogue: 0,0:35:28.23,0:35:29.56,Default,,0,0,0,,{TIME:2128232,2129564}Well, it's over, right?
 Dialogue: 0,0:35:29.56,0:35:33.16,Default,,0,0,0,,{TIME:2129564,2133163}I mean, now that it's out,\Nthere's no reason to kill Russ.
@@ -691,7 +691,7 @@ Dialogue: 0,0:38:32.34,0:38:36.07,Default,,0,0,0,,{TIME:2312343,2316073}Task for
 Dialogue: 0,0:38:36.07,0:38:39.80,Default,,0,0,0,,{TIME:2316073,2319803}I figured out a way to solve\Nthe case and get your job back.\NWow. That'd be great.
 Dialogue: 0,0:38:39.80,0:38:43.42,Default,,0,0,0,,{TIME:2319803,2323423}We need my father to give us the\Nrest of the evidence he stole\Nfrom that safety-deposit box.
 Dialogue: 0,0:38:43.42,0:38:44.99,Default,,0,0,0,,{TIME:2323423,2324993}Great.\NI'll drive.
-Dialogue: 0,0:38:45.64,0:38:50.94,Default,,0,0,0,,{TIME:2325643,2330943}Dr. Saroyan,\Nwhen I get my doctorate,\NI'd like to work here.
+Dialogue: 0,0:38:45.94,0:38:51.24,Default,,0,0,0,,{TIME:2325943,2331243}Dr. Saroyan,\Nwhen I get my doctorate,\NI'd like to work here.
 Dialogue: 0,0:38:51.67,0:38:54.70,Default,,0,0,0,,{TIME:2331670,2334703}Zack, you are\Nan excellent scientist.
 Dialogue: 0,0:38:54.73,0:38:58.33,Default,,0,0,0,,{TIME:2334733,2338333}But an important part\Nof the job is appearing\Nas an expert witness in court.
 Dialogue: 0,0:38:58.48,0:39:00.85,Default,,0,0,0,,{TIME:2338483,2340853}- Ooh.\N- "Ooh," what?
@@ -916,8 +916,8 @@ Dialogue: 0,0:51:33.19,0:51:35.69,Default,,0,0,0,,{TIME:3093193,3095690}She's ju
 Dialogue: 0,0:51:38.63,0:51:45.80,Default,,0,0,0,,{TIME:3098630,3105803}Hair color, plastic surgery,
 Dialogue: 0,0:51:45.82,0:51:48.55,Default,,0,0,0,,{TIME:3105823,3108553}colored contact lenses,\Nchin and cheek implants,
 Dialogue: 0,0:51:48.91,0:51:51.84,Default,,0,0,0,,{TIME:3108913,3111843}15 years older.
-Dialogue: 0,0:51:52.28,0:51:57.75,Default,,0,0,0,,{TIME:3112280,3117752}Still,\NI should have seen it.
-Dialogue: 0,0:51:57.75,0:52:01.99,Default,,0,0,0,,{TIME:3117752,3121990}[ Tires Screech ]\N[ Horn Honks ]
+Dialogue: 0,0:51:52.28,0:51:56.71,Default,,0,0,0,,{TIME:3112280,3116710}Still,\NI should have seen it.
+Dialogue: 0,0:51:57.75,0:52:01.99,Default,,0,0,0,,{TIME:3117753,3121990}[ Tires Screech ]\N[ Horn Honks ]
 Dialogue: 0,0:52:03.56,0:52:06.76,Default,,0,0,0,,{TIME:3123560,3126760}[ Line Ringing ]\NCome on, Bones.\NPick up. Pick up!
 Dialogue: 0,0:52:06.79,0:52:10.19,Default,,0,0,0,,{TIME:3126790,3130190}This is Dr. Temperance Brennan.\NLeave a message.\NDamn it.
 Dialogue: 0,0:52:10.22,0:52:12.66,Default,,0,0,0,,{TIME:3130220,3132660}Russ knew it was you\Nall along?
@@ -995,8 +995,8 @@ Dialogue: 0,0:57:24.33,0:57:26.71,Default,,0,0,0,,{TIME:3444333,3446718}Hey, do 
 Dialogue: 0,0:57:26.71,0:57:29.51,Default,,0,0,0,,{TIME:3446718,3449518}Need a little time\Nto adjust to\Nyour fascist haircut.
 Dialogue: 0,0:57:31.05,0:57:34.13,Default,,0,0,0,,{TIME:3451050,3454136}Let's go.
 Dialogue: 0,0:57:38.22,0:57:42.20,Default,,0,0,0,,{TIME:3458220,3462203}Congratulations,\NDr. Addy.
-Dialogue: 0,0:57:43.30,0:57:46.11,Default,,0,0,0,,{TIME:3463300,3466110}Thank you, Dr. Brennan.
-Dialogue: 0,0:57:46.11,0:57:48.61,Default,,0,0,0,,{TIME:3466110,3468610}[ Angela ]\NZack, congratulations.
+Dialogue: 0,0:57:43.30,0:57:46.00,Default,,0,0,0,,{TIME:3463300,3466000}Thank you, Dr. Brennan.
+Dialogue: 0,0:57:46.03,0:57:48.61,Default,,0,0,0,,{TIME:3466030,3468610}[ Angela ]\NZack, congratulations.
 Dialogue: 0,0:57:48.65,0:57:50.21,Default,,0,0,0,,{TIME:3468650,3470210}[ Hodgins ]\NCongratulations.\NHear, hear!
 Dialogue: 0,0:57:50.29,0:57:53.62,Default,,0,0,0,,{TIME:3470290,3473620}[ Hodgins ]\NIt's about time, man.\NCongratulations.
 Dialogue: 0,0:57:54.77,0:57:57.53,Default,,0,0,0,,{TIME:3474770,3477530}[ Saroyan ]\NYou should be proud\Nof yourself.
