@@ -13,14 +13,13 @@ import subprocess
 import sys
 import tempfile
 from bisect import bisect_left, bisect_right
-from itertools import product
 from math import ceil, floor
 from pathlib import Path
 from typing import Tuple, Union
 
 import pysrt
 from ass_parser import read_ass, write_ass, AssFile, AssEventList, CorruptAssLineError
-from numpy import loadtxt, average
+from numpy import loadtxt, average, concatenate
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from thefuzz import fuzz
 from thefuzz import process as fuzzprocess
@@ -735,6 +734,8 @@ def load_stop_list() -> list[re.Pattern]:
     # TODO: allow multiple lists based on 'levels' (R, PG, G ?) and allow selection at runtime
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'stop_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
+    sort_sub = re.compile('[^A-Za-z]+')
+    result.sort(key=lambda e: len(sort_sub.sub('', e)), reverse=True)
     result = list(map(lambda e: phrase_to_pattern(e), result))
     result = list(map(lambda e: re.compile(e, flags=re.IGNORECASE), result))
     return result
@@ -743,6 +744,8 @@ def load_stop_list() -> list[re.Pattern]:
 def load_allow_list() -> list[re.Pattern]:
     result = loadtxt(os.path.join(os.path.dirname(common.__file__), 'allow_list.txt'), dtype='str', delimiter='\xFF')
     result = list(filter(phrase_list_accept_condition, result))
+    sort_sub = re.compile('[^A-Za-z]+')
+    result.sort(key=lambda e: len(sort_sub.sub('', e)), reverse=True)
     result = list(map(lambda e: phrase_to_pattern(e), result))
     result = list(map(lambda e: re.compile(e, flags=re.IGNORECASE), result))
     return result
@@ -1384,7 +1387,7 @@ class CardinalNumTranscribed(TextToTranscribed):
                 results.append(' '.join(digits))
             if len(numbers) == 3:
                 # Match numbers like "622" = "six twenty two"
-                results.append(num2words(numbers[0], lang=self.lang)+" "+num2words(numbers[1:], lang=self.lang))
+                results.append(num2words(numbers[0], lang=self.lang) + " " + num2words(numbers[1:], lang=self.lang))
             if len(numbers) == 4:
                 # Match numbers like "1822" = "eighteen twenty two"
                 # results.append(num2words(numbers[0:1], lang=self.lang))
@@ -1415,8 +1418,42 @@ class AbbreviationsTranscribed(TextToTranscribed):
         return [abbrev, SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT[abbrev]]
 
 
+class HomonymsTranscribed(TextToTranscribed):
+
+    def __init__(self, lang: str):
+        self._homonyms: dict[str, set[str]] = {}
+        self.load_homonyms(lang)
+        pattern = r"|".join(map(lambda e: r"\b" + e + r"\b", self._homonyms.keys()))
+        super().__init__(re.compile(pattern), lang)
+
+    def load_homonyms(self, lang: str):
+        homonyms = loadtxt(os.path.join(os.path.dirname(common.__file__), f'../resources/homonyms-{lang}.txt'), dtype='str',
+                    delimiter='\xFF', ndmin=1)
+        slang = loadtxt(os.path.join(os.path.dirname(common.__file__), f'../resources/slang-{lang}.txt'), dtype='str',
+                    delimiter='\xFF', ndmin=1)
+        lines = concatenate((homonyms, slang))
+        for line in filter(phrase_list_accept_condition, lines):
+            words = set(filter(lambda e: len(e) > 0, map(lambda e: e.strip(), line.split(','))))
+            if len(words) < 2:
+                continue
+            for word in words:
+                if word in self._homonyms:
+                    self._homonyms[word] = self._homonyms[word].union(words)
+                else:
+                    self._homonyms[word] = words
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        word = match.group(0).lower()
+        if word in self._homonyms:
+            logger.debug("Found homonym %s : %s", word, self._homonyms[word])
+            return list(self._homonyms[word])
+        else:
+            return [word]
+
+
 TEXT_TO_TRANSCRIBED = [
     ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_REMOVE, 'en', ""),
+    HomonymsTranscribed('en'),
     CurrencyTranscribed('en'),
     Num2WordsTranscribed(SUBTITLE_TEXT_TO_PLAIN_ORDINALS, 'en', 'ordinal'),
     CardinalNumTranscribed('en'),
@@ -1436,10 +1473,8 @@ def _subtitle_text_to_plain(text: str, lang='en') -> list[str]:
     remove '.' from abbreviations
     all lowercase to match closer to transcription
     squeeze whitespace to match closer to transcription
-    numbers to text?
+    numbers to text
     """
-    # TODO: permutations for slang short hand, i.e. "outta" for "out of"
-    # TODO: permutations for ("know", "no"), etc.
     results = [text]
 
     for transform in TEXT_TO_TRANSCRIBED:

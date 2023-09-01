@@ -125,7 +125,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
 
     def test_subtitle_text_to_plain(self):
         self.assertEqual(
-            ['worked there for fifteen years'],
+            ['worked there for fifteen years', 'worked there four fifteen years'],
             profanity_filter._subtitle_text_to_plain('Worked there for 15 years.'),
         )
         self.assertEqual(

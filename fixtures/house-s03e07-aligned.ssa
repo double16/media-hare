@@ -282,9 +282,8 @@ Dialogue: 0,0:09:37.60,0:09:39.16,Default,,0,0,0,,{TIME:577603,579163}{\an7}{\po
 Dialogue: 0,0:09:39.16,0:09:40.66,Default,,0,0,0,,{TIME:579163,580663}{\an7}{\pos(182,228)}Or that the new\N{\an7}{\pos(182,243)}{\i1}\hStar Wars{\i0} movies
 Dialogue: 0,0:09:40.66,0:09:41.71,Default,,0,0,0,,{TIME:580663,581714}{\an7}{\pos(134,243)}were a disappointment?
 Dialogue: 0,0:09:41.71,0:09:42.84,Default,,0,0,0,,{TIME:581714,582844}{\an7}{\pos(153,243)}[scoffs]
-Dialogue: 0,0:09:45.01,0:09:48.91,Default,,0,0,0,,{TIME:585010,588910}{\an7}{\pos(38,243)}I know my wife is dead.
-Dialogue: 0,0:09:50.38,0:09:52.68,Default,,0,0,0,,{TIME:590380,592680}{\an7}{\pos(38,228)}I don’t know how long\N{\an7}{\pos(38,243)}it’s been.
-Dialogue: 0,0:09:52.78,0:09:53.08,Default,,0,0,0,,{TIME:592783,593083}Bad.
+Dialogue: 0,0:09:44.46,0:09:48.36,Default,,0,0,0,,{TIME:584465,588365}{\an7}{\pos(38,243)}I know my wife is dead.
+Dialogue: 0,0:09:48.36,0:09:53.08,Default,,0,0,0,,{TIME:588365,593083}{\an7}{\pos(38,228)}I don’t know how long\N{\an7}{\pos(38,243)}it’s been.
 Dialogue: 0,0:09:56.32,0:09:59.21,Default,,0,0,0,,{TIME:596320,599213}{\an7}{\pos(249,243)}Ten years.
 Dialogue: 0,0:10:03.22,0:10:06.39,Default,,0,0,0,,{TIME:603220,606392}{\an7}{\pos(144,228)}What’s the last thing\N{\an7}{\pos(144,243)}\h\h\h\h\h\h\h\hyou remember?
 Dialogue: 0,0:10:06.74,0:10:08.68,Default,,0,0,0,,{TIME:606746,608686}{\an7}{\pos(38,243)}The fire.
@@ -376,7 +375,7 @@ Dialogue: 0,0:13:14.73,0:13:16.27,Default,,0,0,0,,{TIME:794738,796278}{\an7}{\po
 Dialogue: 0,0:13:16.52,0:13:18.36,Default,,0,0,0,,{TIME:796528,798368}{\an7}{\pos(115,243)}I told him six.
 Dialogue: 0,0:13:18.36,0:13:19.53,Default,,0,0,0,,{TIME:798368,799538}{\an7}{\pos(105,228)}\h\h\h\h\h\hA day,\N{\an7}{\pos(105,243)}or in a mouthful?
 Dialogue: 0,0:13:19.53,0:13:21.51,Default,,0,0,0,,{TIME:799538,801518}{\an7}{\pos(57,228)}\hI was just hoping you guys\N{\an7}{\pos(57,243)}would stay consistent with--
-Dialogue: 0,0:13:21.51,0:13:22.34,Default,,0,0,0,,{TIME:801518,802348}{\an7}{\pos(115,228)}He wants to talk\N{\an7}{\pos(115,243)}\h\hto us, too?
+Dialogue: 0,0:13:21.51,0:13:22.47,Default,,0,0,0,,{TIME:801518,802478}{\an7}{\pos(115,228)}He wants to talk\N{\an7}{\pos(115,243)}\h\hto us, too?
 Dialogue: 0,0:13:23.22,0:13:24.92,Default,,0,0,0,,{TIME:803228,804928}{\an7}{\pos(134,243)}You’re next.
 Dialogue: 0,0:13:25.02,0:13:25.95,Default,,0,0,0,,{TIME:805020,805950}{\an7}{\pos(86,243)}We’ve gotta tell House
 Dialogue: 0,0:13:25.99,0:13:28.23,Default,,0,0,0,,{TIME:805990,808238}{\an7}{\pos(48,243)}{\i1}what’s going on.
@@ -409,8 +408,8 @@ Dialogue: 0,0:14:28.54,0:14:31.38,Default,,0,0,0,,{TIME:868548,871388}{\an7}{\po
 Dialogue: 0,0:14:31.38,0:14:33.21,Default,,0,0,0,,{TIME:871388,873218}{\an7}{\pos(38,228)}Do you remember if he had it\N{\an7}{\pos(38,243)}and what type it was?
 Dialogue: 0,0:14:33.21,0:14:34.23,Default,,0,0,0,,{TIME:873218,874239}{\an7}{\pos(76,228)}Man, you’re a piece of work,\N{\an7}{\pos(76,243)}\h\h\h\h\h\h\h\h\h\h\h\h\h\hyou know that?
 Dialogue: 0,0:14:34.23,0:14:35.70,Default,,0,0,0,,{TIME:874239,875709}{\an7}{\pos(38,243)}[sighs]
-Dialogue: 0,0:14:36.38,0:14:38.25,Default,,0,0,0,,{TIME:876388,878258}{\an7}{\pos(96,228)}You weren’t gonna tell me,\N{\an7}{\pos(96,243)}\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\hwere you?
-Dialogue: 0,0:14:38.25,0:14:40.32,Default,,0,0,0,,{TIME:878258,880328}{\an7}{\pos(105,243)}I don’t need new clothes.
+Dialogue: 0,0:14:37.48,0:14:39.35,Default,,0,0,0,,{TIME:877487,879357}{\an7}{\pos(96,228)}You weren’t gonna tell me,\N{\an7}{\pos(96,243)}\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\hwere you?
+Dialogue: 0,0:14:39.35,0:14:40.32,Default,,0,0,0,,{TIME:879357,880328}{\an7}{\pos(105,243)}I don’t need new clothes.
 Dialogue: 0,0:14:40.32,0:14:43.17,Default,,0,0,0,,{TIME:880328,883177}{\an7}{\pos(105,228)}\h\h\hDr. Cuddy says my body\N{\an7}{\pos(105,243)}will adjust to the drugs.
 Dialogue: 0,0:14:43.17,0:14:45.19,Default,,0,0,0,,{TIME:883177,885192}{\an7}{\pos(57,228)}That I’ll be a vegetable again\N{\an7}{\pos(57,243)}\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\h\hby tomorrow.
 Dialogue: 0,0:14:45.19,0:14:47.37,Default,,0,0,0,,{TIME:885192,887378}{\an7}{\pos(153,228)}If I’m really lucky,\N{\an7}{\pos(153,243)}\h\h\h\h\h\hthe day after.
@@ -558,9 +557,9 @@ Dialogue: 0,0:19:49.34,0:19:51.48,Default,,0,0,0,,{TIME:1189341,1191481}{\an7}{\
 Dialogue: 0,0:19:51.48,0:19:52.59,Default,,0,0,0,,{TIME:1191481,1192598}{\an7}{\pos(153,243)}my turn.
 Dialogue: 0,0:19:52.59,0:19:54.12,Default,,0,0,0,,{TIME:1192598,1194128}{\an7}{\pos(105,228)}What did you make\N{\an7}{\pos(105,243)}\hin your factory?
 Dialogue: 0,0:19:54.51,0:19:56.41,Default,,0,0,0,,{TIME:1194518,1196418}{\an7}{\pos(124,243)}Luxury boats.
-Dialogue: 0,0:19:56.41,0:19:58.23,Default,,0,0,0,,{TIME:1196418,1198239}{\an7}{\pos(57,243)}Have you ever been in love?
-Dialogue: 0,0:19:58.23,0:19:59.40,Default,,0,0,0,,{TIME:1198239,1199409}{\an7}{\pos(172,243)}Wow.
-Dialogue: 0,0:19:59.40,0:20:01.84,Default,,0,0,0,,{TIME:1199409,1201849}{\an7}{\pos(57,228)}Going right for the closets\N{\an7}{\pos(57,243)}with the embarrassing stuff.
+Dialogue: 0,0:19:56.41,0:19:58.29,Default,,0,0,0,,{TIME:1196418,1198298}{\an7}{\pos(57,243)}Have you ever been in love?
+Dialogue: 0,0:19:58.29,0:19:59.46,Default,,0,0,0,,{TIME:1198298,1199468}{\an7}{\pos(172,243)}Wow.
+Dialogue: 0,0:19:59.46,0:20:01.84,Default,,0,0,0,,{TIME:1199468,1201849}{\an7}{\pos(57,228)}Going right for the closets\N{\an7}{\pos(57,243)}with the embarrassing stuff.
 Dialogue: 0,0:20:01.84,0:20:03.21,Default,,0,0,0,,{TIME:1201849,1203219}{\an7}{\pos(144,228)}Good move.\N{\an7}{\pos(144,243)}\h\h\hYes.
 Dialogue: 0,0:20:03.50,0:20:04.50,Default,,0,0,0,,{TIME:1203508,1204508}{\an7}{\pos(96,243)}Describe the boats.
 Dialogue: 0,0:20:04.50,0:20:06.37,Default,,0,0,0,,{TIME:1204508,1206371}{\an7}{\pos(144,243)}35- to 65-foot hulls.
@@ -690,8 +689,8 @@ Dialogue: 0,0:24:36.90,0:24:38.80,Default,,0,0,0,,{TIME:1476903,1478803}{\an7}{\
 Dialogue: 0,0:24:39.23,0:24:42.69,Default,,0,0,0,,{TIME:1479230,1482693}{\an7}{\pos(48,228)}{\i1}No, can you just send\N{\an7}{\pos(48,243)}the ingredients up here?
 Dialogue: 0,0:24:42.69,0:24:44.86,Default,,0,0,0,,{TIME:1482693,1484863}{\an7}{\pos(38,243)}And I’ll make it myself.
 Dialogue: 0,0:24:45.08,0:24:47.58,Default,,0,0,0,,{TIME:1485083,1487583}{\an7}{\pos(201,243)}Last ten years.
-Dialogue: 0,0:24:47.58,0:24:48.54,Default,,0,0,0,,{TIME:1487583,1488542}{\an7}{\pos(172,228)}How much awareness\N{\an7}{\pos(172,243)}\h\h\h\h\hdid you have?
-Dialogue: 0,0:24:48.54,0:24:50.40,Default,,0,0,0,,{TIME:1488542,1490403}{\an7}{\pos(38,243)}I don’t know.
+Dialogue: 0,0:24:47.58,0:24:48.88,Default,,0,0,0,,{TIME:1487583,1488883}{\an7}{\pos(172,228)}How much awareness\N{\an7}{\pos(172,243)}\h\h\h\h\hdid you have?
+Dialogue: 0,0:24:48.88,0:24:50.40,Default,,0,0,0,,{TIME:1488883,1490403}{\an7}{\pos(38,243)}I don’t know.
 Dialogue: 0,0:24:50.40,0:24:51.66,Default,,0,0,0,,{TIME:1490403,1491663}{\an7}{\pos(38,228)}I knew it wasn’t\N{\an7}{\pos(38,243)}the next day.
 Dialogue: 0,0:24:52.47,0:24:54.44,Default,,0,0,0,,{TIME:1492473,1494443}{\an7}{\pos(38,243)}I--I knew that--
 Dialogue: 0,0:24:54.51,0:24:57.51,Default,,0,0,0,,{TIME:1494513,1497513}{\an7}{\pos(38,243)}I recognized your voice.
@@ -912,8 +911,8 @@ Dialogue: 0,0:33:21.63,0:33:22.86,Default,,0,0,0,,{TIME:2001638,2002868}{\an7}{\
 Dialogue: 0,0:33:22.86,0:33:25.03,Default,,0,0,0,,{TIME:2002868,2005038}{\an7}{\pos(86,228)}and turned his father\N{\an7}{\pos(86,243)}\h\hinto a vegetable.
 Dialogue: 0,0:33:25.29,0:33:27.83,Default,,0,0,0,,{TIME:2005298,2007838}{\an7}{\pos(96,228)}\h\h\h\hI might have\N{\an7}{\pos(96,243)}a few shots myself.
 Dialogue: 0,0:33:28.50,0:33:29.30,Default,,0,0,0,,{TIME:2008508,2009308}{\an7}{\pos(163,243)}{\i1}Foreman.
-Dialogue: 0,0:33:29.30,0:33:32.31,Default,,0,0,0,,{TIME:2009308,2012319}{\an7}{\pos(86,228)}\h\h\h\h\hTest his DNA\N{\an7}{\pos(86,243)}for ragged red fiber.
-Dialogue: 0,0:33:32.31,0:33:34.25,Default,,0,0,0,,{TIME:2012319,2014259}{\an7}{\pos(115,213)}It’s not gonna--\N{\an7}{\pos(115,243)}{\i1}Here’s a thought.
+Dialogue: 0,0:33:29.30,0:33:32.82,Default,,0,0,0,,{TIME:2009308,2012828}{\an7}{\pos(86,228)}\h\h\h\h\hTest his DNA\N{\an7}{\pos(86,243)}for ragged red fiber.
+Dialogue: 0,0:33:32.82,0:33:34.38,Default,,0,0,0,,{TIME:2012828,2014388}{\an7}{\pos(115,213)}It’s not gonna--\N{\an7}{\pos(115,243)}{\i1}Here’s a thought.
 Dialogue: 0,0:33:34.38,0:33:36.27,Default,,0,0,0,,{TIME:2014388,2016277}{\an7}{\pos(38,228)}Why don’t we not assume\N{\an7}{\pos(38,243)}that the test is negative
 Dialogue: 0,0:33:36.30,0:33:38.17,Default,,0,0,0,,{TIME:2016308,2018178}{\an7}{\pos(76,213)}{\i1}until we actually do it?\N{\an7}{\pos(76,243)}{\i0}\h\h\h\h\h\h\h\h\hHouse.
 Dialogue: 0,0:33:38.91,0:33:41.35,Default,,0,0,0,,{TIME:2018918,2021358}{\an7}{\pos(115,228)}{\i1}The kid has severe\N{\an7}{\pos(115,243)}\hcardiomyopathy.
@@ -931,9 +930,9 @@ Dialogue: 0,0:34:26.32,0:34:28.14,Default,,0,0,0,,{TIME:2066320,2068148}{\an7}{\
 Dialogue: 0,0:34:28.29,0:34:29.22,Default,,0,0,0,,{TIME:2068299,2069229}{\an7}{\pos(115,243)}My heart’s fine.
 Dialogue: 0,0:34:29.30,0:34:31.50,Default,,0,0,0,,{TIME:2069308,2071508}{\an7}{\pos(48,243)}{\i1}And it could go on being fine
 Dialogue: 0,0:34:31.50,0:34:33.03,Default,,0,0,0,,{TIME:2071508,2073039}{\an7}{\pos(67,243)}for the rest of your life.
-Dialogue: 0,0:34:33.03,0:34:33.99,Default,,0,0,0,,{TIME:2073039,2073998}{\an7}{\pos(163,228)}{\i1}(House)\N{\an7}{\pos(163,243)}\hYeah.
-Dialogue: 0,0:34:33.99,0:34:35.64,Default,,0,0,0,,{TIME:2073998,2075648}{\an7}{\pos(86,228)}It’s not like he’s gonna do\N{\an7}{\pos(86,243)}\h\h\h\h\h\h\h\h\h\hanything with it.
-Dialogue: 0,0:34:35.79,0:34:37.53,Default,,0,0,0,,{TIME:2075798,2077538}{\an7}{\pos(57,243)}Well, you woke him up once.
+Dialogue: 0,0:34:33.03,0:34:34.38,Default,,0,0,0,,{TIME:2073039,2074381}{\an7}{\pos(163,228)}{\i1}(House)\N{\an7}{\pos(163,243)}\hYeah.
+Dialogue: 0,0:34:34.38,0:34:35.95,Default,,0,0,0,,{TIME:2074381,2075951}{\an7}{\pos(86,228)}It’s not like he’s gonna do\N{\an7}{\pos(86,243)}\h\h\h\h\h\h\h\h\h\hanything with it.
+Dialogue: 0,0:34:35.95,0:34:37.53,Default,,0,0,0,,{TIME:2075951,2077538}{\an7}{\pos(57,243)}Well, you woke him up once.
 Dialogue: 0,0:34:37.53,0:34:40.09,Default,,0,0,0,,{TIME:2077538,2080090}{\an7}{\pos(96,228)}Maybe someone will come up\N{\an7}{\pos(96,243)}\h\h\hwith some other answer.
 Dialogue: 0,0:34:40.09,0:34:42.48,Default,,0,0,0,,{TIME:2080090,2082488}{\an7}{\pos(67,228)}We’ve both seen breakthroughs\N{\an7}{\pos(67,243)}\h\h\h\h\h\h\h\h\h\h\h\h\hno one expected.
 Dialogue: 0,0:34:43.73,0:34:46.71,Default,,0,0,0,,{TIME:2083738,2086718}{\an7}{\pos(38,228)}And ragged red fiber’s\N{\an7}{\pos(38,243)}treatable,

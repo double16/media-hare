@@ -1,0 +1,9 @@
+dunno,don't know
+gimme,give me
+gotta,got to
+gonna,going to
+hafta,have to
+kinda,kind of
+lemme,let me
+outta,out of,ought to
+wanna,want to
