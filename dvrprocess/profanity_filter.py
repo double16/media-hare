@@ -17,6 +17,7 @@ from math import ceil, floor
 from pathlib import Path
 from typing import Tuple, Union
 
+import language_tool_python
 import pysrt
 from ass_parser import read_ass, write_ass, AssFile, AssEventList, CorruptAssLineError
 from numpy import loadtxt, average, concatenate
@@ -1427,10 +1428,11 @@ class HomonymsTranscribed(TextToTranscribed):
         super().__init__(re.compile(pattern), lang)
 
     def load_homonyms(self, lang: str):
-        homonyms = loadtxt(os.path.join(os.path.dirname(common.__file__), f'../resources/homonyms-{lang}.txt'), dtype='str',
-                    delimiter='\xFF', ndmin=1)
+        homonyms = loadtxt(os.path.join(os.path.dirname(common.__file__), f'../resources/homonyms-{lang}.txt'),
+                           dtype='str',
+                           delimiter='\xFF', ndmin=1)
         slang = loadtxt(os.path.join(os.path.dirname(common.__file__), f'../resources/slang-{lang}.txt'), dtype='str',
-                    delimiter='\xFF', ndmin=1)
+                        delimiter='\xFF', ndmin=1)
         lines = concatenate((homonyms, slang))
         for line in filter(phrase_list_accept_condition, lines):
             words = set(filter(lambda e: len(e) > 0, map(lambda e: e.strip(), line.split(','))))
@@ -1536,33 +1538,71 @@ def _capitalize(text: str, language: str, spellchecker) -> str:
     return text.capitalize()
 
 
+def _is_question(sentence: str, lang: str) -> bool:
+    if not sentence:
+        return False
+    words = sentence.split()
+    if len(words) == 0:
+        return False
+    return words[0].lower() in ['who', 'what', 'when', 'where', 'why', 'how']
+
+
+def _add_punctuation(sentence: str, lang: str) -> str:
+    if not sentence:
+        return sentence
+    if _is_question(sentence, lang):
+        return sentence + '?'
+    else:
+        return sentence + '.'
+
+
+_LANG_TOOLS = {}
+
+
+def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
+    global _LANG_TOOLS
+    lang_tool_lang = 'en-US'
+    if language and not language.startswith('en'):
+        lang_tool_lang = language
+    if lang_tool_lang in _LANG_TOOLS:
+        return _LANG_TOOLS[lang_tool_lang]
+    try:
+        lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
+        _LANG_TOOLS[lang_tool_lang] = lang_tool
+        return lang_tool
+    except Exception as e:
+        logger.warning("language tool instantiation failure for %s", lang_tool_lang, e)
+        return None
+
+
 def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRipItem]:
     """
     Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
     sentences a collection of words.
-    # TODO: use https://pypi.org/project/language-tool-python/ to correct assembled sentences.
+    Use https://pypi.org/project/language-tool-python/ to correct assembled sentences.
     """
     chars_per_sentence = 40
     linebreaks_per_sentence = 2
     newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
-    result = []
+    sentences: list[SubRipItem] = []
     spellchecker = get_spell_checker(language)
     s = None
     new_s = True
     for word in words:
         if s is not None:
             if word.start.ordinal - s.end.ordinal > SILENCE_FOR_NEW_SENTENCE:
-                s.text = s.text + '.'
+                s.text = _add_punctuation(s.text, language)
                 s = None
                 new_s = True
-            else:
-                split = (s.text + ' ' + word.text).split(newline)
-                if len(split[-1]) > chars_per_sentence:
-                    if len(split) >= linebreaks_per_sentence:
-                        s = None
-                    else:
-                        s.text = s.text + newline
+            elif len(s.text) + 1 + len(word.text) > chars_per_sentence * linebreaks_per_sentence:
+                s = None
+                # split = (s.text + ' ' + word.text).split(newline)
+                # if len(split[-1]) > chars_per_sentence:
+                #     if len(split) >= linebreaks_per_sentence:
+                #         s = None
+                #     else:
+                #         s.text = s.text + newline
 
         if s is None:
             if new_s:
@@ -1571,8 +1611,8 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
                 text = _capitalize(word.text, language, spellchecker)
             new_s = False
 
-            s = SubRipItem(index=len(result), start=word.start, end=word.end, text=text)
-            result.append(s)
+            s = SubRipItem(index=len(sentences), start=word.start, end=word.end, text=text)
+            sentences.append(s)
         else:
             s.end = word.end
             if s.text.endswith(newline):
@@ -1581,9 +1621,35 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
                 s.text = s.text + ' ' + _capitalize(word.text, language, spellchecker)
 
     if s is not None:
-        s.text = s.text + '.'
+        s.text = _add_punctuation(s.text, language)
 
-    return result
+    lang_tool = _get_lang_tool(language)
+    try:
+        if lang_tool is not None:
+            for sentence in sentences:
+                sentence.text = lang_tool.correct(sentence.text)
+    except Exception as e:
+        logger.warning("language tool failure", e)
+
+    for sentence in sentences:
+        new_text = ""
+        new_text_last_line_count = 0
+        words = sentence.text.split()
+        for word_idx, word in enumerate(words):
+            is_last_word = word_idx == len(words) - 1
+            if (not is_last_word and new_text_last_line_count > 0
+                    and new_text_last_line_count + 1 + len(word) > chars_per_sentence):
+                new_text = new_text + newline + word
+                new_text_last_line_count = len(word)
+            elif new_text:
+                new_text = new_text + ' ' + word
+                new_text_last_line_count += 1 + len(word)
+            else:
+                new_text = word
+                new_text_last_line_count = len(word)
+        sentence.text = new_text
+
+    return sentences
 
 
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
@@ -2091,7 +2157,6 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                     event_moved = False
                     if not event.is_normalized_text_blank():
                         # try to start non-matches at the beginning of an unclaimed word
-                        # TODO: unclaimed word could be part of previous match
                         unclaimed_word = next(filter(
                             lambda e: e[1].start.ordinal >= event_previous.end(), unclaimed_word_events), None)
                         if unclaimed_word is not None and len(unclaimed_word[1].text) > 3:

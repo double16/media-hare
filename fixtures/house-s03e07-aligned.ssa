@@ -744,7 +744,7 @@ Dialogue: 0,0:26:24.00,0:26:26.34,Default,,0,0,0,,{TIME:1584003,1586343}{\an7}{\
 Dialogue: 0,0:26:26.34,0:26:28.62,Default,,0,0,0,,{TIME:1586343,1588628}{\an7}{\pos(48,228)}\h\h\h\h\h\hGimme the answers.\N{\an7}{\pos(48,243)}You get a big one at the end.
 Dialogue: 0,0:26:28.62,0:26:29.97,Default,,0,0,0,,{TIME:1588628,1589973}{\an7}{\pos(172,228)}\h\h\h{\i1}\hYou can go for\N{\an7}{\pos(172,243)}whatever you want.
 Dialogue: 0,0:26:29.97,0:26:32.31,Default,,0,0,0,,{TIME:1589973,1592313}{\an7}{\pos(96,228)}Destroy my privacy,\N{\an7}{\pos(96,243)}\h\h\h\hmy dignity.
-Dialogue: 0,0:26:34.29,0:26:36.15,Default,,0,0,0,,{TIME:1594293,1596153}Gaynor dot com now.
+Dialogue: 0,0:26:34.29,0:26:36.15,Default,,0,0,0,,{TIME:1594293,1596153}Gay nor dot com now.
 Dialogue: 0,0:26:39.35,0:26:40.72,Default,,0,0,0,,{TIME:1599350,1600720}{\an7}{\pos(38,243)}Your grandmother?
 Dialogue: 0,0:26:40.72,0:26:43.12,Default,,0,0,0,,{TIME:1600720,1603120}{\an7}{\pos(134,228)}\h\h\h\h\h\hHeat exhaustion.\N{\an7}{\pos(134,243)}Fourth of July picnic.
 Dialogue: 0,0:26:43.15,0:26:44.96,Default,,0,0,0,,{TIME:1603150,1604963}{\an7}{\pos(105,243)}The woman was 92.
