@@ -1,10 +1,6 @@
 import logging
-import os
 import re
-import tempfile
 import unittest
-
-import pysrt
 
 import profanity_filter
 

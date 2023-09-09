@@ -40,10 +40,27 @@ class SubtitleAlignmentTest(unittest.TestCase):
 
     def _assert_alignment(self, aligned_filename: str, original_filename: str, words_filename: str):
         expected_alignment = subtitle.open_subtitle_file_facade(Path(f"../fixtures/{aligned_filename}"))
-        expected_alignment_events = list(map(lambda e: e[1], expected_alignment.events()))
         original = subtitle.open_subtitle_file_facade(Path(f"../fixtures/{original_filename}"))
         words = self._read_words_srt(words_filename)
         changed, _ = profanity_filter.fix_subtitle_audio_alignment(original.file, words)
+        original_count, failed = self._compare_subtitles(expected_alignment, original)
+        actual_fd, actual_path = tempfile.mkstemp(prefix=aligned_filename.split('aligned.')[0],
+                                                  suffix='.actual-aligned.' + aligned_filename.split('aligned.')[1])
+        os.close(actual_fd)
+        original.write(Path(actual_path))
+        log_path = os.path.join(os.path.dirname(actual_path), aligned_filename.split('-aligned.')[0] + '.log')
+        # log_path = actual_path.replace('.ssa', '.log').replace('.srt', '.log')
+        with open(log_path, 'w') as f:
+            f.write(self._caplog.text)
+        print(f"Wrote actual aligned file to {actual_path}, log to {log_path}")
+
+        self.assertEqual(0, len(failed), str(failed) + "\n" + str(len(failed)) + "/" + str(original_count * 2))
+        # self.assertEqual(0, len(failed), str(len(failed)) + "/" + str(len(original.events)*2))
+        self.assertEqual(True, changed, 'fix_subtitle_audio_alignment should have returned changed')
+
+    def _compare_subtitles(self, expected_alignment: subtitle.SubtitleFileFacade,
+                           original: subtitle.SubtitleFileFacade) -> tuple[int, list]:
+        expected_alignment_events = list(map(lambda e: e[1], expected_alignment.events()))
         failed = []
         original_count = 0
         for idx, actual_event in original.events():
@@ -78,20 +95,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
                     actual_event.start(), f"Missing event {idx}: '{actual_event.text()}'")
                 )
         failed.sort(key=lambda e: e[2], reverse=True)
-
-        actual_fd, actual_path = tempfile.mkstemp(prefix=aligned_filename.split('aligned.')[0],
-                                                  suffix='.actual-aligned.' + aligned_filename.split('aligned.')[1])
-        os.close(actual_fd)
-        original.write(Path(actual_path))
-        log_path = os.path.join(os.path.dirname(actual_path), aligned_filename.split('-aligned.')[0]+'.log')
-        # log_path = actual_path.replace('.ssa', '.log').replace('.srt', '.log')
-        with open(log_path, 'w') as f:
-            f.write(self._caplog.text)
-        print(f"Wrote actual aligned file to {actual_path}, log to {log_path}")
-
-        self.assertEqual(0, len(failed), str(failed) + "\n" + str(len(failed)) + "/" + str(original_count * 2))
-        # self.assertEqual(0, len(failed), str(len(failed)) + "/" + str(len(original.events)*2))
-        self.assertEqual(True, changed, 'fix_subtitle_audio_alignment should have returned changed')
+        return original_count, failed
 
     def _assert_idempotent(self, original_filename: str, words_filename: str):
         original = self._read_subtitle(original_filename)
@@ -165,3 +169,15 @@ class SubtitleAlignmentTest(unittest.TestCase):
              'call eight zero zero five hundred and fifty five twelve twelve'],
             profanity_filter._subtitle_text_to_plain('Call (800) 555-1212'),
         )
+
+    def test_full_transcription1(self):
+        words_srt = self._read_words_srt("rp_s01e01.words.srt")
+        expected_subtitle = subtitle.open_subtitle_file_facade(Path("../fixtures/rp_s01e01.srt"))
+        subtitle_items = profanity_filter.srt_words_to_sentences(words_srt, 'eng')
+        subtitle_fd, subtitle_path = tempfile.mkstemp(prefix="rp_s01e01.", suffix='.srt')
+        os.close(subtitle_fd)
+        SubRipFile(items=subtitle_items, path=subtitle_path).save(subtitle_path, 'utf-8')
+        print(f"Wrote transcribed subtitle to {subtitle_path}")
+        original_count, failed = self._compare_subtitles(expected_subtitle,
+                                                         subtitle.open_subtitle_file_facade(Path(subtitle_path)))
+        self.assertEqual(0, len(failed), str(failed) + "\n" + str(len(failed)) + "/" + str(original_count * 2))
