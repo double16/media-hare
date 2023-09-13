@@ -143,12 +143,12 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                     continue
                 except UnicodeDecodeError as e:
                     # FIXME: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfe in position 1855: invalid start byte
-                    logger.error(e.__repr__())
+                    logger.error(e.__repr__(), exc_info=e)
                     return_code = 255
                 except CalledProcessError as e:
                     return_code = e.returncode
                 except Exception as e:
-                    logger.error(e.__repr__())
+                    logger.error(e.__repr__(), exc_info=e)
                     pool.terminate()
                     return 255
 

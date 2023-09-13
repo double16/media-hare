@@ -347,9 +347,9 @@ def new_subtitle_file_facade(subtitle: Union[AssFile, SubRipFile]) -> SubtitleFi
 
 
 def open_subtitle_file_facade(file: Path) -> SubtitleFileFacade:
-    if file.match("*.srt"):
+    if file.match("*.srt") or file.match("*.srt.txt"):
         return new_subtitle_file_facade(pysrt.open(file))
-    elif file.match(".ass") or file.match("*.ssa"):
+    elif file.match("*.ass") or file.match("*.ssa") or file.match("*.ass.txt") or file.match("*.ssa.txt"):
         return new_subtitle_file_facade(read_ass(file))
     else:
         raise NotImplementedError("Unsupported subtitle %s" % file)

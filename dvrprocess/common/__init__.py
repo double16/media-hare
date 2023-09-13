@@ -924,7 +924,7 @@ def setup_debugging():
 
 
 def setup_logging(level=logging.INFO):
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=level)
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=level, force=True)
 
 
 def setup_cli(level=logging.INFO):
@@ -951,8 +951,7 @@ class PoolApplyWrapper:
         self.progress_queue = progress.setup_parent_progress()
 
     def __call__(self, *args, **kwargs):
-        progress.setup_subprocess_progress(self.progress_queue)
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        progress.setup_subprocess_progress(self.progress_queue, self.rootLogLevel)
         stdout = StreamCapture('stdout', logger, logging.INFO)
         stderr = StreamCapture('stderr', logger, logging.ERROR)
         try:

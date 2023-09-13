@@ -137,6 +137,10 @@ class SubtitleAlignmentTest(unittest.TestCase):
             profanity_filter._subtitle_text_to_plain('It costs $23'),
         )
         self.assertEqual(
+            ["pet scan can't determine that with certainty"],
+            profanity_filter._subtitle_text_to_plain("pet scan can’t determine that with certainty"),
+        )
+        self.assertEqual(
             ['call eight hundred five fifty five one thousand two hundred and twelve',
              'call eight hundred five fifty five one two one two',
              'call eight hundred five fifty five twelve twelve',
@@ -171,8 +175,8 @@ class SubtitleAlignmentTest(unittest.TestCase):
         )
 
     def test_full_transcription1(self):
-        words_srt = self._read_words_srt("rp_s01e01.words.srt")
-        expected_subtitle = subtitle.open_subtitle_file_facade(Path("../fixtures/rp_s01e01.srt"))
+        words_srt = self._read_words_srt("rp_s01e01.words.srt.txt")
+        expected_subtitle = subtitle.open_subtitle_file_facade(Path("../fixtures/rp_s01e01.srt.txt"))
         subtitle_items = profanity_filter.srt_words_to_sentences(words_srt, 'eng')
         subtitle_fd, subtitle_path = tempfile.mkstemp(prefix="rp_s01e01.", suffix='.srt')
         os.close(subtitle_fd)

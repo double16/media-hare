@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+import signal
 import threading
 import time
 from math import ceil
@@ -306,7 +307,7 @@ class ProgressProgressMessage(object):
 
     def apply(self):
         try:
-            _PROGRESS_BY_TASK.get(self.task).progress(self.position, self.msg, self.start, self.end)
+            _PROGRESS_BY_TASK[self.task].progress(self.position, self.msg, self.start, self.end)
         except KeyError:
             pass
 
@@ -321,8 +322,9 @@ class ProgressStopMessage(object):
 
     def apply(self):
         try:
-            _PROGRESS_BY_TASK.get(self.task).stop(self.msg)
-            _PROGRESS_BY_TASK.pop(self.task)
+            p = _PROGRESS_BY_TASK.pop(self.task)
+            if p:
+                p.stop(self.msg)
         except KeyError:
             pass
 
@@ -355,7 +357,7 @@ class GaugeValueMessage(object):
 
     def apply(self):
         try:
-            _GAUGE_BY_NAME.get(self.name).value(self.value)
+            _GAUGE_BY_NAME[self.name].value(self.value)
         except KeyError:
             pass
 
@@ -429,7 +431,7 @@ def _progress_queue_feed(q: Queue):
     while True:
         try:
             m = q.get(True)
-        except (ValueError, EOFError):
+        except (ValueError, EOFError, BrokenPipeError):
             # queue is closed
             return
         try:
@@ -455,16 +457,20 @@ def setup_parent_progress() -> Queue:
 _subprocess_progress_configured = False
 
 
-def setup_subprocess_progress(progress_queue: Queue):
+def setup_subprocess_progress(progress_queue: Queue, level: int):
     """
     Setup this process to send progress to the parent process.
     """
     global _subprocess_progress_configured
     if _subprocess_progress_configured:
         return
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     set_progress_reporter(SubprocessProgressReporter(progress_queue))
+    for h in logging.root.handlers[:]:
+        logging.root.removeHandler(h)
+        h.close()
     logging.root.addHandler(SubprocessLogHandler(progress_queue))
-    logging.root.setLevel(logging.DEBUG)
+    logging.root.setLevel(level)
     _subprocess_progress_configured = True
 
 

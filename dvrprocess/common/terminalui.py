@@ -303,9 +303,12 @@ class CursesUI(object):
 
         log_pad = curses.newpad(1000, 500)
         log_win = curses.newwin(*window_dims[2])
+        for h in logging.root.handlers[:]:
+            logging.root.removeHandler(h)
+            h.close()
+        logging.root.setLevel(logging.INFO)
         self.log_handler = CursesLogHandler(log_pad, log_win)
         logging.root.addHandler(self.log_handler)
-        logging.root.setLevel(logging.INFO)
 
         self.progress_win = ProgressWindow(curses.newwin(*window_dims[1]))
         progress.set_progress_reporter(CursesProgressReporter(self.progress_win, self.gauge_win))
@@ -358,5 +361,10 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
     try:
         return curses.wrapper(main)
     finally:
+        # show the cursor
+        try:
+            curses.curs_set(1)
+        except:
+            pass
         stderr_capture.finish()
         stdout_capture.finish(output=False)

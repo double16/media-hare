@@ -51,6 +51,8 @@ SILENCE_FOR_NEW_SENTENCE = 1200
 # Number of milliseconds between words that may fit a sound effect.
 SILENCE_FOR_SOUND_EFFECT = 500
 
+ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
+
 logger = logging.getLogger(__name__)
 
 debug = False
@@ -472,11 +474,14 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         stopped_spans = []
         if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
             ass_data = read_ass(Path(subtitle_original_filename))
+            for event in ass_data.events:
+                event.text = ASSA_TYPEFACE_REMOVE.sub('', event.text)
             if subtitle_words_filename:
                 ass_data_aligned = copy.deepcopy(ass_data)
                 aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
                                                                       pysrt.open(subtitle_words_filename),
-                                                                      lang=language)
+                                                                      lang=language,
+                                                                      filename=base_filename)
                 if debug:
                     write_ass(ass_data, Path(f"{debug_base}.aligned.{subtitle_codec}"))
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
@@ -507,7 +512,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             if subtitle_words_filename:
                 srt_data_aligned = copy.deepcopy(srt_data)
                 aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
-                                                                      lang=language)
+                                                                      lang=language,
+                                                                      filename=base_filename)
                 if debug:
                     srt_data.save(Path(f"{debug_base}.aligned.{subtitle_codec}"), 'utf-8')
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
@@ -1379,7 +1385,7 @@ SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&()\"-]|\W'|'\W|[\u00
 SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
 SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:[\d.,]+\d)?)")
 SUBTITLE_TEXT_TO_PLAIN_ORDINALS = re.compile(r"(\d+)(?:st|nd|rd|th)")
-SUBTITLE_TEXT_TO_PLAIN_CURRENCY = re.compile(r"\$(\d+(?:[\d.,]+\d)?)")
+SUBTITLE_TEXT_TO_PLAIN_CURRENCY = re.compile(r"\$([0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]+)?)")
 SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT = {
     'dr.': 'doctor',
     'mr.': 'mister',
@@ -1398,6 +1404,22 @@ class TextToTranscribed(object):
 
     def replacements(self, match: re.Match[str]) -> list[str]:
         return [match[0]]
+
+
+class FancyQuotesTranscribed(TextToTranscribed):
+
+    fancy_pattern = re.compile(r"[\u0060\u00B4\u2018\u2019\u201C\u201D]")
+
+    def __init__(self, lang: str):
+        super().__init__(self.fancy_pattern, lang)
+
+    def replacements(self, match: re.Match[str]) -> list[str]:
+        quote = match.group(0)
+        if quote in "\u0060\u00B4\u2018\u2019":
+            return ["'"]
+        if quote in "\u201C\u201D":
+            return ['"']
+        return [quote]
 
 
 class ConstantReplacementTranscribed(TextToTranscribed):
@@ -1451,7 +1473,7 @@ class CurrencyTranscribed(TextToTranscribed):
         super().__init__(SUBTITLE_TEXT_TO_PLAIN_CURRENCY, lang)
 
     def replacements(self, match: re.Match[str]) -> list[str]:
-        result = num2words(match.group(1), to='currency', lang=self.lang)
+        result = num2words(match.group(1).replace(',', ''), to='currency', lang=self.lang)
         if '$' in match.group(0) and (self.lang in ['en', 'eng'] or self.lang.endswith('_US')):
             result = result.replace('euro', 'dollar')
         return [result]
@@ -1501,6 +1523,7 @@ class HomonymsTranscribed(TextToTranscribed):
 
 
 TEXT_TO_TRANSCRIBED = [
+    FancyQuotesTranscribed('en'),
     ConstantReplacementTranscribed(SUBTITLE_TEXT_TO_PLAIN_REMOVE, 'en', ""),
     HomonymsTranscribed('en'),
     CurrencyTranscribed('en'),
@@ -1702,7 +1725,7 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
 
 
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
-                                 should_add_new_events=True) -> tuple[bool, str]:
+                                 should_add_new_events=True, filename: str = None) -> tuple[bool, str]:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
     :param subtitle_inout: the subtitle to align, srt or ssa
@@ -1827,7 +1850,11 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     if len(events) == 0 or len(words_filtered) == 0:
         return False, ""
 
-    align_progress = progress.progress("subtitle alignment", 0, (len(min_fuzz_ratios) + 3) * passes)
+    if filename:
+        progress_task_name = filename + ' '
+    else:
+        progress_task_name = ''
+    align_progress = progress.progress(f"{progress_task_name}subtitle alignment", 0, (len(min_fuzz_ratios) + 3) * passes)
 
     # TODO: original event that is too quiet to be picked up by transcribing
     # TODO: omitted event that transcribing picked up that should be combined with existing event
@@ -2458,7 +2485,7 @@ def profanity_filter_cli(argv):
         elif opt in ("-d", "--debug"):
             debug = True
         elif opt == "--verbose":
-            logging.getLogger().setLevel(logging.DEBUG)
+            logging.root.setLevel(logging.DEBUG)
         elif opt in ("-r", "--remove"):
             filter_skip = True
         elif opt == "--mark-skip":

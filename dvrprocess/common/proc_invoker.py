@@ -173,7 +173,7 @@ class SubprocessProcInvoker(BaseProcInvoker):
         return self._required
 
     def install(self) -> bool:
-        logger.error('Install "%s" %s and try again.', self.command_basename, ' '.join(self.version_target))
+        logger.error('Install "%s" %s and try again.', self.command_basename, ' '.join(self.version_target or []))
         return False
 
     def present(self) -> bool:
