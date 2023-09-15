@@ -45,6 +45,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r dev_requirements.txt
+          python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')"
           cd dvrprocess
           pytest --cov . --cov-branch --cov-report term-missing
 
