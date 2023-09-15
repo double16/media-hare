@@ -1111,7 +1111,7 @@ def get_spell_checker(language: str):
         import hunspell
 
         # verify with spell checker (hunspell) that text looks like English
-        if language == constants.LANGUAGE_ENGLISH:
+        if language in [constants.LANGUAGE_ENGLISH, 'en']:
             hobj = hunspell.HunSpell('/usr/share/hunspell/en_US.dic', '/usr/share/hunspell/en_US.aff')
         else:
             hobj = hunspell.HunSpell(f'/usr/share/hunspell/{language[0:2]}.dic',

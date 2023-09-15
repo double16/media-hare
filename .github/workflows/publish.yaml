@@ -39,7 +39,7 @@ jobs:
           java-version: '11'
 
       - name: Install hunspell
-        run:  sudo apt-get install -y hunspell libhunspell-dev
+        run:  sudo apt-get install -y hunspell libhunspell-dev hunspell-en-us
 
       - name: test
         run: |

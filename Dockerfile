@@ -42,7 +42,7 @@ COPY requirements.txt /tmp/
 RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre \
-    mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
+    mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat59 libsdl1.2-compat libatomic1 &&\
     pip --no-input install --break-system-packages --compile --ignore-installed -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip software-properties-common &&\
