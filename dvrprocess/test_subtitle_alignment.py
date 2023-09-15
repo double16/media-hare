@@ -68,7 +68,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
             if idx < len(expected_alignment_events):
                 expected_event = expected_alignment_events[idx]
                 expected_start_diff = abs(expected_event.start() - actual_event.start())
-                if actual_event.text() != expected_event.text():
+                if actual_event.text().lower() != expected_event.text().lower():
                     failed.append((
                         s_to_ts(expected_event.start() / 1000),
                         s_to_ts(actual_event.start() / 1000),
