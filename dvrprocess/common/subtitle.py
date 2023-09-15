@@ -1,8 +1,12 @@
 import logging
+import re
+from abc import abstractmethod, ABC
 from pathlib import Path
+from typing import Union
 
 import pysrt
-from ass_parser import read_ass, write_ass
+from ass_parser import read_ass, write_ass, AssFile, AssEvent
+from pysrt import SubRipItem, SubRipFile, SubRipTime
 
 from . import fatal, constants
 
@@ -101,3 +105,257 @@ def subtitle_cut(subtitle_data, start_seconds: float, end_seconds: [None, float]
             event.index = idx + 1
         except AttributeError:
             pass
+
+
+class SubtitleElementFacade(ABC):
+    _markup = re.compile(r"<[^>]+>")
+    _sound_effect_re = re.compile(r"\s*\[.*?]\s*?")
+    _sound_effect_beginning_re = re.compile(r"\s*\[.*?]\s*\S+.*")
+    _sound_effect_ending_re = re.compile(r".*\S+\s*\[.*?]\s*")
+    _log_text_clean = re.compile(r"[\r\n]+")
+
+    def __init__(self):
+        self._normalized_texts: Union[list[str], None] = None
+        self._normalized_start_words: Union[set[str], None] = None
+
+    def __repr__(self):
+        return f"({self.start(), self.end()} \"{self.text()}\""
+
+    @abstractmethod
+    def text(self) -> Union[str, None]:
+        return None
+
+    @abstractmethod
+    def set_text(self, new_value: str):
+        pass
+
+    def log_text(self) -> Union[str, None]:
+        """
+        Event text suitable for a log message.
+        """
+        original = self.text()
+        if original is None:
+            return original
+        return self._log_text_clean.sub(" ", original)
+
+    def _check_normalized_texts(self):
+        if self.text() is not None and self._normalized_texts is None:
+            raise ValueError("normalized text not set")
+
+    def normalized_texts(self) -> list[str]:
+        self._check_normalized_texts()
+        return self._normalized_texts
+
+    def set_normalized_texts(self, new_values: list[str]):
+        self._normalized_texts = new_values
+        l = list(map(lambda e: e[0:2], map(lambda f: f.split(), self._normalized_texts)))
+        self._normalized_start_words = set([item for sublist in l for item in sublist])
+
+    def normalized_start_words(self) -> set[str]:
+        self._check_normalized_texts()
+        return self._normalized_start_words
+
+    def get_normalized_word_count(self) -> int:
+        self._check_normalized_texts()
+        return max(map(lambda e: len(e.split()), self._normalized_texts))
+
+    def is_normalized_text_blank(self) -> bool:
+        self._check_normalized_texts()
+        return max(map(lambda e: len(e.strip()), self._normalized_texts), default=0) == 0
+
+    def normalized_texts_startswith(self, value: str) -> bool:
+        self._check_normalized_texts()
+        return any(map(lambda e: e.startswith(value), self._normalized_texts))
+
+    def normalized_texts_endswith(self, value: str) -> bool:
+        self._check_normalized_texts()
+        return any(map(lambda e: e.endswith(value), self._normalized_texts))
+
+    def is_sound_effect(self) -> bool:
+        return self._sound_effect_re.fullmatch(self._markup.sub("", self.text())) is not None
+
+    def has_beginning_sound_effect(self) -> bool:
+        return self._sound_effect_beginning_re.fullmatch(self._markup.sub("", self.text())) is not None
+
+    def has_ending_sound_effect(self) -> bool:
+        return self._sound_effect_ending_re.fullmatch(self._markup.sub("", self.text())) is not None
+
+    @abstractmethod
+    def start(self) -> Union[int, None]:
+        return None
+
+    @abstractmethod
+    def set_start(self, new_value: int):
+        pass
+
+    @abstractmethod
+    def end(self) -> Union[int, None]:
+        return None
+
+    @abstractmethod
+    def set_end(self, new_value: int):
+        pass
+
+    def duration(self) -> int:
+        return max(self.end() - self.start(), 0)
+
+    def index(self) -> int:
+        """
+        Return index of event in the subtitle file.
+        """
+        return 0
+
+    def set_index(self, new_index: int):
+        """
+        Set the index of event in the subtitle file.
+        """
+        pass
+
+    def move(self, new_start: int):
+        if new_start == self.start():
+            return
+        d = self.duration()
+        self.set_start(new_start)
+        self.set_end(new_start + d)
+
+    def move_end(self, new_end: int):
+        if new_end == self.end():
+            return
+        d = self.duration()
+        self.set_end(new_end)
+        self.set_start(max(0, new_end - d))
+
+
+class AssElementFacade(SubtitleElementFacade):
+    def __init__(self, event: AssEvent):
+        super().__init__()
+        self.event = event
+
+    def text(self) -> Union[str, None]:
+        return self.event.text
+
+    def set_text(self, new_value: str):
+        self.event.text = new_value.replace('\n', '\\N')
+
+    def start(self) -> Union[int, None]:
+        return self.event.start
+
+    def set_start(self, new_value: int):
+        self.event.start = new_value
+
+    def end(self) -> Union[int, None]:
+        return self.event.end
+
+    def set_end(self, new_value: int):
+        self.event.end = new_value
+
+
+class SubripElementFacade(SubtitleElementFacade):
+    def __init__(self, event: SubRipItem):
+        super().__init__()
+        self.event = event
+
+    def text(self) -> Union[str, None]:
+        return self.event.text
+
+    def set_text(self, new_value: str):
+        self.event.text = new_value
+
+    def start(self) -> Union[int, None]:
+        return self.event.start.ordinal
+
+    def set_start(self, new_value: int):
+        self.event.start = SubRipTime.from_ordinal(new_value)
+
+    def end(self) -> Union[int, None]:
+        return self.event.end.ordinal
+
+    def set_end(self, new_value: int):
+        self.event.end = SubRipTime.from_ordinal(new_value)
+
+    def index(self) -> int:
+        return self.event.index
+
+    def set_index(self, new_index: int):
+        self.event.index = new_index
+
+
+class SubtitleFileFacade(ABC):
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def events(self):
+        """
+        Return a generator of SubtitleElementFacade
+        :return:
+        """
+        yield None
+
+    @abstractmethod
+    def insert(self, index: int) -> SubtitleElementFacade:
+        """
+        Create a new event if the same type.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write(self, file: Path):
+        raise NotImplementedError()
+
+
+class AssFileFacade(SubtitleFileFacade):
+
+    def __init__(self, file: AssFile):
+        super().__init__()
+        self.file = file
+
+    def events(self):
+        for event_idx, event in enumerate(self.file.events):
+            yield event_idx, AssElementFacade(event)
+
+    def insert(self, index: int) -> SubtitleElementFacade:
+        event = AssEvent()
+        event.style_name = 'Default'
+        self.file.events.insert(index, event)
+        return AssElementFacade(event)
+
+    def write(self, file: Path):
+        write_ass(self.file, file)
+
+
+class SubripFileFacade(SubtitleFileFacade):
+
+    def __init__(self, file: SubRipFile):
+        super().__init__()
+        self.file = file
+
+    def events(self):
+        for event_idx, event in enumerate(self.file):
+            yield event_idx, SubripElementFacade(event)
+
+    def insert(self, index: int) -> SubtitleElementFacade:
+        event = SubRipItem()
+        self.file.insert(index, event)
+        return SubripElementFacade(event)
+
+    def write(self, file: Path):
+        self.file.save(file, "utf-8")
+
+
+def new_subtitle_file_facade(subtitle: Union[AssFile, SubRipFile]) -> SubtitleFileFacade:
+    if isinstance(subtitle, AssFile):
+        return AssFileFacade(subtitle)
+    elif isinstance(subtitle, SubRipFile):
+        return SubripFileFacade(subtitle)
+    raise NotImplementedError(subtitle.__class__)
+
+
+def open_subtitle_file_facade(file: Path) -> SubtitleFileFacade:
+    if file.match("*.srt") or file.match("*.srt.txt"):
+        return new_subtitle_file_facade(pysrt.open(file))
+    elif file.match("*.ass") or file.match("*.ssa") or file.match("*.ass.txt") or file.match("*.ssa.txt"):
+        return new_subtitle_file_facade(read_ass(file))
+    else:
+        raise NotImplementedError("Unsupported subtitle %s" % file)

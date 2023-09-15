@@ -401,9 +401,9 @@ def do_dvr_post_process(input_file,
 
     if extract_closed_captions:
         # use ccextractor, sometimes lavfi corrupts the subtitles, and ccextractor cleans up the text better
-        cc_filename = os.path.join(dir_filename, f".~{base_filename}.cc.ass")
+        cc_filename = os.path.join(dir_filename, f".~{base_filename}.cc.srt")
         common.TEMPFILENAMES.append(cc_filename)
-        cc_command = ["-out=ass", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
+        cc_command = ["-out=srt", "-trim", "--norollup", "--nofontcolor", "--notypesetting"]
         # cc_command.append("--sentencecap")  # this will re-capitalize mixed case
         # cc_command.append("--videoedited")
         if not verbose:
@@ -416,7 +416,7 @@ def do_dvr_post_process(input_file,
             # ccextractor creates additional subtitle files that we don't use
             for cc_root, cc_dirs, cc_files in os.walk(dir_filename):
                 for file in cc_files:
-                    if file.startswith(f".~{base_filename}.cc.") and file.endswith(".ass") and not file.endswith('.cc.ass'):
+                    if file.startswith(f".~{base_filename}.cc.") and file.endswith(".srt") and not file.endswith('.cc.srt'):
                         os.remove(os.path.join(cc_root, file))
                     elif file.startswith(f".~{base_filename}.cc."):
                         common.match_owner_and_perm(target_path=os.path.join(cc_root, file), source_path=filename)
@@ -573,7 +573,7 @@ def do_dvr_post_process(input_file,
         if extract_closed_captions and streams_file > 0:
             # Closed captions
             arguments.extend(
-                ["-map", f"{closed_caption_file}:s?", "-c:s", constants.CODEC_SUBTITLE_ASS, "-metadata:s:s:0",
+                ["-map", f"{closed_caption_file}:s?", "-c:s", constants.CODEC_SUBTITLE_SRT, "-metadata:s:s:0",
                  f"language={constants.LANGUAGE_ENGLISH}"])
             transcoding = True
             remove_closed_captions = True

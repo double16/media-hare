@@ -150,6 +150,32 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
 
         return mock
 
+    def _mock_ffmpeg_extract_subtitle_original_words(self, words_basename):
+        def mock(method_name: str, arguments: list, **kwargs):
+            self.assertEqual(1, len(list(filter(lambda e: e == '-i', arguments))),
+                             '1 inputs expected: ' + str(arguments))
+            self.assertEqual(1, len(list(filter(lambda e: e == '-map', arguments))),
+                             '1 mapped stream expected: ' + str(arguments))
+            words_output = list(filter(lambda e: '.original.words.' in e, arguments))[0]
+            shutil.copy(f"../fixtures/{words_basename}", words_output)
+            return 0
+
+        return mock
+
+    def _mock_ffmpeg_extract_subtitle_filtered_words(self, filtered_basename, words_basename):
+        def mock(method_name: str, arguments: list, **kwargs):
+            self.assertEqual(1, len(list(filter(lambda e: e == '-i', arguments))),
+                             '1 inputs expected: ' + str(arguments))
+            self.assertEqual(2, len(list(filter(lambda e: e == '-map', arguments))),
+                             '2 mapped stream expected: ' + str(arguments))
+            filtered_output = list(filter(lambda e: '.filtered.' in e, arguments))[0]
+            words_output = list(filter(lambda e: '.words.' in e, arguments))[0]
+            shutil.copy(f"../fixtures/{filtered_basename}", filtered_output)
+            shutil.copy(f"../fixtures/{words_basename}", words_output)
+            return 0
+
+        return mock
+
     def _mock_ffmpeg_extract_audio_for_transcribing(self, raw_audio_basename: [None, str]):
         def mock(method_name: str, arguments: list, **kwargs):
             self.assertTrue('-map' in arguments and 's16le' in arguments, arguments)
@@ -221,7 +247,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
 
             if expected_args is not None:
                 for expected_arg in expected_args:
-                    self.assertTrue(expected_arg in arguments_str, 'expected: ' + expected_arg)
+                    self.assertTrue(expected_arg in arguments_str, 'expected: ' + expected_arg + ' in ' + arguments_str)
 
             output = arguments[-1]
             if output[0] == '/':
@@ -381,7 +407,10 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         self._mock_ffprobe('media_state_unfiltered_sub_orig_none.json')
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
-            self._mock_ffmpeg_create_with_filtered_streams(5, mapped_stream_count=8),
+            self._mock_ffmpeg_create_with_filtered_streams(
+                5, mapped_stream_count=8,
+                expected_args=[
+                    f"'-metadata:s:s:2', '{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={profanity_filter.AUDIO_TO_TEXT_SUBTITLE_VERSION}'"]),
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 
@@ -517,6 +546,25 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 
+    def test_apply_filtered_sub_transcribed_text_sub_filtered_sub_words_text__audio2text_subtitle_version_changed(self):
+        fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
+        os.close(fd)
+        self._mock_ffprobe('media_state_filtered_sub_transcribed_text_sub_filtered_sub_words_text.json',
+                           {constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION),
+                            constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
+                            constants.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
+        tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+            self._mock_ffmpeg_extract_subtitle_transcribe_check("transcribed.srt.txt"),
+            self._mock_ffmpeg_extract_subtitle_original_words('needs_filtered.srt.txt'),
+            self._mock_ffmpeg_extract_subtitle_filtered_words('needs_filtered.srt.txt',
+                                                              'needs_filtered.srt.txt'),
+            self._mock_ffmpeg_create_with_filtered_streams(
+                4, mapped_stream_count=9,
+                expected_args=[
+                    f"{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={profanity_filter.AUDIO_TO_TEXT_SUBTITLE_VERSION}"]),
+        ])
+        profanity_filter.do_profanity_filter(mkv_path)
+
     def test_apply_unfiltered_sub_orig_transcribed__filtered(self):
         fd, mkv_path = tempfile.mkstemp(suffix='.mkv')
         os.close(fd)
@@ -524,8 +572,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_subtitle_transcribe_check("transcribed.srt.txt"),
             self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
-            self._mock_ffmpeg_extract_subtitle_original('needs_filtered.srt.txt'),
-            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
+            self._mock_ffmpeg_create_with_filtered_streams(5, mapped_stream_count=8),
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 

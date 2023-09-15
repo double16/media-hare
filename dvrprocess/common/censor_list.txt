@@ -12,6 +12,7 @@ oh jesus
 oh gods
 oh god almighty
 oh god in heaven
+god in heaven
 oh my god
 oh my gad
 oh my gods
@@ -125,8 +126,8 @@ dang you
 oh dang
 oh dang it
 bitch
-bitchs
-bitches
+bitchy
+bitche?s
 bitched
 son[\s-]of[\s-]a[\s-]bitch
 sons[\s-]of[\s-]bitches
@@ -212,6 +213,7 @@ that mother[!.-]+
 you mother[!.-]+
 holy mother\w*
 holy mother of god
+bad[\s-]?ass mother
 freakin
 freaking
 friggin
@@ -448,6 +450,7 @@ g[ia]ve [\w\s]* the finger
 sexy on
 skank
 slut
+slutt?y
 mo[\s-]?fos?
 douche[\w-]*
 dick[\s-]?heads?
@@ -458,6 +461,8 @@ dicking
 dicked
 mean dick
 count for dick
+the dick
+private dick
 pecker
 his pecker
 my pecker

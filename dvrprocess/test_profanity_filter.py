@@ -1,10 +1,6 @@
 import logging
-import os
 import re
-import tempfile
 import unittest
-
-import pysrt
 
 import profanity_filter
 
@@ -623,29 +619,6 @@ class ProfanityFilterTest(unittest.TestCase):
         filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
         self.assertEqual(expected, filtered)
         self.assertFalse(stopped)
-
-    def test_audio_to_text_cleanup(self):
-        fd, path = tempfile.mkstemp(suffix='.srt')
-        os.close(fd)
-        srt = pysrt.open('../fixtures/audio_to_text.srt.txt')
-        profanity_filter.audio_to_text_cleanup(srt)
-        srt.save(path)
-        with open(path, "r") as file:
-            cleaned = ''.join(file.readlines())
-        self.assertEqual("""1
-00:00:00,500 --> 00:00:04,027
-Hey there
-
-3
-00:00:11,211 --> 00:00:13,578
-The lazy brown fox
-
-4
-00:00:13,680 --> 00:00:16,308
-The lazy brown fox
-
-""", cleaned)
-        os.remove(path)
 
 
 if __name__ == '__main__':
