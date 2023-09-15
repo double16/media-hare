@@ -109,6 +109,9 @@ class SubtitleAlignmentTest(unittest.TestCase):
         self.assertEqual(True, changed1, 'fix_subtitle_audio_alignment should have returned changed for first run')
         self.assertEqual(False, changed2, 'fix_subtitle_audio_alignment should have returned unchanged for second run')
 
+    def test_bones_s02e01(self):
+        self._assert_alignment('bones-s02e01-aligned.ssa', 'bones-s02e01-original.ssa', 'bones-s02e01-words.srt')
+
     def test_bones_s02e11(self):
         self._assert_alignment('bones-s02e11-aligned.ssa', 'bones-s02e11-original.ssa', 'bones-s02e11-words.srt')
 

@@ -1,0 +1,871 @@
+[Script Info]
+Title: Default file
+ScriptType: v4.00+
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,10,10,10,0
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:05.97,0:00:08.67,Default,,0000,0000,0000,,[ Siren Wailing ]
+Dialogue: 0,0:00:08.77,0:00:10.50,Default,,0000,0000,0000,,- [ Booth ]\NWhat'd you do?\N- I read,
+Dialogue: 0,0:00:10.60,0:00:12.47,Default,,0000,0000,0000,,walked on the beach,\Nchilled--
+Dialogue: 0,0:00:12.57,0:00:14.54,Default,,0000,0000,0000,,Oh, you chilled\Nin Darfur?
+Dialogue: 0,0:00:14.64,0:00:16.67,Default,,0000,0000,0000,,- You chilled in Darfur?\N- In North Carolina.
+Dialogue: 0,0:00:16.78,0:00:18.71,Default,,0000,0000,0000,,I changed my vacation plans\Nto spend time with my brother.
+Dialogue: 0,0:00:18.81,0:00:22.25,Default,,0000,0000,0000,,Russ and I talked about it,\Nand we really want to find Dad.
+Dialogue: 0,0:00:22.35,0:00:25.42,Default,,0000,0000,0000,,Just so you know,\Nthe F.B.I.'s gonna find your\Nfather no matter what you want.
+Dialogue: 0,0:00:25.52,0:00:28.95,Default,,0000,0000,0000,,My brother and I\Ndon't want the F.B.I.\Nto back-burner the search.
+Dialogue: 0,0:00:29.06,0:00:31.02,Default,,0000,0000,0000,,- [ Tires Screeching ]\N- [ Vehicle Thuds ]
+Dialogue: 0,0:00:31.12,0:00:33.12,Default,,0000,0000,0000,,Is it okay to go\Non two wheels like that?
+Dialogue: 0,0:00:33.23,0:00:35.29,Default,,0000,0000,0000,,Only when making\Nvery sharp turns\Nat high speeds.
+Dialogue: 0,0:00:35.39,0:00:38.60,Default,,0000,0000,0000,,Okay, Bones, why don't\Nyou have a little, uh,\Nyou know, faith in me, okay?
+Dialogue: 0,0:00:38.70,0:00:41.50,Default,,0000,0000,0000,,I'm not gonna\Nback-burner the case, all right?\NI'm gonna find your father.
+Dialogue: 0,0:00:41.60,0:00:44.94,Default,,0000,0000,0000,,-My brother said you'd say that.\N-You really keep saying\N"my brother" a lot.
+Dialogue: 0,0:00:45.04,0:00:49.41,Default,,0000,0000,0000,,Well, I lost Russ for 15 years.\NI like the sound of it.
+Dialogue: 0,0:00:49.51,0:00:52.01,Default,,0000,0000,0000,,- My brother.\N- [ Siren Continues ]
+Dialogue: 0,0:00:52.11,0:00:56.15,Default,,0000,0000,0000,,What's with the siren?\NWhy are you driving\Nlike a maniac?
+Dialogue: 0,0:00:56.25,0:00:58.35,Default,,0000,0000,0000,,[ Siren Stops ]
+Dialogue: 0,0:01:00.39,0:01:03.65,Default,,0000,0000,0000,,[ Men Shouting, Chattering ]
+Dialogue: 0,0:01:07.86,0:01:09.19,Default,,0000,0000,0000,,A little bit.
+Dialogue: 0,0:01:15.07,0:01:17.67,Default,,0000,0000,0000,,[ Booth ]\NTwo passenger cars\Noff the tracks, one on the side.
+Dialogue: 0,0:01:17.77,0:01:19.97,Default,,0000,0000,0000,,Gonna be fatalities.
+Dialogue: 0,0:01:20.07,0:01:22.44,Default,,0000,0000,0000,,Stan, I need some gauze.
+Dialogue: 0,0:01:22.54,0:01:23.94,Default,,0000,0000,0000,,Danny, if you don't find..
+Dialogue: 0,0:01:24.04,0:01:26.94,Default,,0000,0000,0000,,the owner of this\Nin the next 10 minutes,\Nhe'll bleed to death starting--
+Dialogue: 0,0:01:27.05,0:01:29.45,Default,,0000,0000,0000,,- [ Beeps ]\N- now.
+Dialogue: 0,0:01:30.42,0:01:32.52,Default,,0000,0000,0000,,- Seeley.\N- Camille.
+Dialogue: 0,0:01:32.62,0:01:34.69,Default,,0000,0000,0000,,- Don't call me Camille.\N- Don't call me Seeley.
+Dialogue: 0,0:01:34.79,0:01:37.12,Default,,0000,0000,0000,,Dr. Brennan, Dr. Saroyan.\NYou two know each other, right?
+Dialogue: 0,0:01:37.22,0:01:39.62,Default,,0000,0000,0000,,- No.\N- No.
+Dialogue: 0,0:01:39.73,0:01:41.93,Default,,0000,0000,0000,,- Uh-oh.\N-\NDr. Brennan,
+Dialogue: 0,0:01:42.03,0:01:44.13,Default,,0000,0000,0000,,I'd like you to check out\Nthe automobile this train hit.
+Dialogue: 0,0:01:44.23,0:01:45.83,Default,,0000,0000,0000,,- It's probably\Nwhat caused the derailment.\N- [ Booth ] Accidental?
+Dialogue: 0,0:01:45.93,0:01:49.83,Default,,0000,0000,0000,,N.T.S.B. guy says the train\Nstruck the car at least 200\Nyards from the nearest access.
+Dialogue: 0,0:01:49.94,0:01:52.27,Default,,0000,0000,0000,,- Deliberate?\N- Eight minutes, Steve!
+Dialogue: 0,0:01:52.37,0:01:55.11,Default,,0000,0000,0000,,Probably suicide.
+Dialogue: 0,0:01:55.21,0:01:56.94,Default,,0000,0000,0000,,Why are you still here,\NDr. Brennan?
+Dialogue: 0,0:01:57.04,0:02:00.54,Default,,0000,0000,0000,,Because I'm not a coroner,\Nand I don't work for you.
+Dialogue: 0,0:02:00.65,0:02:02.78,Default,,0000,0000,0000,,Well, you got that\Nhalf right.
+Dialogue: 0,0:02:02.88,0:02:05.55,Default,,0000,0000,0000,,Found him, Cam!\NStill breathing!
+Dialogue: 0,0:02:05.65,0:02:07.58,Default,,0000,0000,0000,,Thanks, Steve!\NAll right.
+Dialogue: 0,0:02:07.69,0:02:10.69,Default,,0000,0000,0000,,Every survivor's\None less person for me\Nto autopsy.
+Dialogue: 0,0:02:10.79,0:02:13.22,Default,,0000,0000,0000,,[ Exhales ]\NYou look good\Nout of your suit, Seeley.
+Dialogue: 0,0:02:13.33,0:02:15.33,Default,,0000,0000,0000,,But then you always did.
+Dialogue: 0,0:02:15.43,0:02:19.23,Default,,0000,0000,0000,,Yeah, thanks--\NIt's great to have you back\Nin D.C., Camille.
+Dialogue: 0,0:02:19.33,0:02:24.13,Default,,0000,0000,0000,,One minute\Nshe was holding a severed arm.\NThe next, she's hitting on you.
+Dialogue: 0,0:02:24.24,0:02:27.14,Default,,0000,0000,0000,,No, she wasn't hitting on me.\NAnd you know what?\NShe is your boss Bones.
+Dialogue: 0,0:02:27.24,0:02:29.34,Default,,0000,0000,0000,,No. Goodman's my boss.\NMay I approach?
+Dialogue: 0,0:02:29.44,0:02:32.91,Default,,0000,0000,0000,,- All yours, Dr. Brandon.\N- Brennan. Dr. Brennan.
+Dialogue: 0,0:02:33.01,0:02:37.08,Default,,0000,0000,0000,,- You want to guess my name?\N- No. There are thousands of you\Nin D.C. and only one of me.
+Dialogue: 0,0:02:37.18,0:02:39.55,Default,,0000,0000,0000,,You know what?\NWhile you were away,\NGoodman decided...
+Dialogue: 0,0:02:39.65,0:02:41.69,Default,,0000,0000,0000,,there should be\Na head of Forensics\Nat the Jeffersonian.
+Dialogue: 0,0:02:41.79,0:02:44.45,Default,,0000,0000,0000,,- It never occurred to you\Nto check in, huh?\N- Why didn't Goodman hire me?
+Dialogue: 0,0:02:44.56,0:02:47.62,Default,,0000,0000,0000,,- [ Booth ]\NMy guess? People skills.\N- I have people skills.
+Dialogue: 0,0:02:47.73,0:02:49.69,Default,,0000,0000,0000,,All right.\NThat firefighter's name\Nis Nelson.
+Dialogue: 0,0:02:49.80,0:02:51.76,Default,,0000,0000,0000,,This is at least\Nthe fourth time\Nyou've met him.
+Dialogue: 0,0:02:51.86,0:02:55.33,Default,,0000,0000,0000,,Odds are Cam knows\Nhis kids' names\Nafter meeting him once.
+Dialogue: 0,0:02:55.43,0:02:57.30,Default,,0000,0000,0000,,A lot of jewelry, male.
+Dialogue: 0,0:02:57.40,0:02:59.57,Default,,0000,0000,0000,,Thighbone suggests\Nhe was tall.
+Dialogue: 0,0:02:59.67,0:03:02.87,Default,,0000,0000,0000,,I.D. bracelet.\NIt's good-quality gold.
+Dialogue: 0,0:03:02.98,0:03:04.37,Default,,0000,0000,0000,,Slightly melted.
+Dialogue: 0,0:03:07.28,0:03:10.18,Default,,0000,0000,0000,,Too melted\Nfor a regular car fire.\NDo you see a skull?
+Dialogue: 0,0:03:10.28,0:03:12.72,Default,,0000,0000,0000,,Hey, Bones.\NI'm not looking for a skull.
+Dialogue: 0,0:03:12.82,0:03:15.49,Default,,0000,0000,0000,,Burn damage\Non the body is more intense\Nthan I'd expect from a car fire,
+Dialogue: 0,0:03:15.59,0:03:19.92,Default,,0000,0000,0000,,even if the fuel tank\Nruptured and was absolutely full\Nat the time of impact.
+Dialogue: 0,0:03:20.03,0:03:21.99,Default,,0000,0000,0000,,Do you see anything on this car\Nthat isn't ruptured?
+Dialogue: 0,0:03:22.09,0:03:24.63,Default,,0000,0000,0000,,- Booth, three deaths\Nin the first-class car.\N- Oh, homicide.
+Dialogue: 0,0:03:24.73,0:03:26.60,Default,,0000,0000,0000,,That makes it my case.
+Dialogue: 0,0:03:26.70,0:03:28.67,Default,,0000,0000,0000,,- One of them's a senator.\N- That makes a difference?
+Dialogue: 0,0:03:28.77,0:03:31.20,Default,,0000,0000,0000,,Facts of life, Bones.
+Dialogue: 0,0:03:31.30,0:03:33.60,Default,,0000,0000,0000,,[ Police Radio Chatter ]
+Dialogue: 0,0:03:34.74,0:03:35.74,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:03:37.44,0:03:40.44,Default,,0000,0000,0000,,Apparently, Cam\Nis autopsying a senator.
+Dialogue: 0,0:03:40.55,0:03:42.81,Default,,0000,0000,0000,,[ Hodgins ]\NA senator? We're movin'\Nup in the world.
+Dialogue: 0,0:03:42.92,0:03:44.98,Default,,0000,0000,0000,,They have a past.\NCam and the senator?
+Dialogue: 0,0:03:45.08,0:03:47.02,Default,,0000,0000,0000,,Cam and Booth.
+Dialogue: 0,0:03:47.12,0:03:49.22,Default,,0000,0000,0000,,Look how she touches his arm\Nwhen he laughs.
+Dialogue: 0,0:03:49.32,0:03:51.15,Default,,0000,0000,0000,,You touch my arm\Nwhen\NI\Nlaugh.
+Dialogue: 0,0:03:51.26,0:03:53.69,Default,,0000,0000,0000,,No. No, you touch me.\NIt's a big difference.
+Dialogue: 0,0:03:54.83,0:03:56.86,Default,,0000,0000,0000,,Okay, what do we got?
+Dialogue: 0,0:03:56.96,0:04:00.93,Default,,0000,0000,0000,,Male, 40s.\NApproximately 6 foot 7.\NRight-handed.
+Dialogue: 0,0:04:01.03,0:04:02.97,Default,,0000,0000,0000,,Six foot 7?
+Dialogue: 0,0:04:03.07,0:04:07.27,Default,,0000,0000,0000,,Athlete in his youth.\NRight shoulder is worn\Nfrom a repetitive motion.
+Dialogue: 0,0:04:07.37,0:04:09.51,Default,,0000,0000,0000,,- Baseball pitcher maybe.\N- More like, um--
+Dialogue: 0,0:04:09.61,0:04:11.44,Default,,0000,0000,0000,,[ Booth, Zack ]\NBasketball.
+Dialogue: 0,0:04:11.54,0:04:13.74,Default,,0000,0000,0000,,Six foot 7.\NIt makes sense.
+Dialogue: 0,0:04:13.85,0:04:15.58,Default,,0000,0000,0000,,Every bone in his body\Nis broken.
+Dialogue: 0,0:04:15.68,0:04:18.42,Default,,0000,0000,0000,,Dude, he got hit\Nby a train.
+Dialogue: 0,0:04:18.52,0:04:21.85,Default,,0000,0000,0000,,"W-A-R."\NIt's all I can make out\Nof one name.
+Dialogue: 0,0:04:21.95,0:04:23.89,Default,,0000,0000,0000,,And then "Love, Brianna."
+Dialogue: 0,0:04:23.99,0:04:27.06,Default,,0000,0000,0000,,- Dude!\N- You're saying "dude"\Nway too much.
+Dialogue: 0,0:04:27.16,0:04:31.80,Default,,0000,0000,0000,,Forties, 6 foot 7,\NW-A-R, Brianna.
+Dialogue: 0,0:04:31.90,0:04:34.03,Default,,0000,0000,0000,,This is Warren Lynch.
+Dialogue: 0,0:04:34.13,0:04:36.80,Default,,0000,0000,0000,,- [ Brennan, Zack ]\NWho's Warren Lynch?\N- No way.
+Dialogue: 0,0:04:36.90,0:04:38.84,Default,,0000,0000,0000,,Warren Lynch?\NLynchpin International,\NWarren Lynch?
+Dialogue: 0,0:04:38.94,0:04:41.47,Default,,0000,0000,0000,,- Yeah.\N- I am not telling the press...
+Dialogue: 0,0:04:41.57,0:04:43.34,Default,,0000,0000,0000,,that Warren Lynch\Nkilled Senator Paula Davis...
+Dialogue: 0,0:04:43.44,0:04:45.68,Default,,0000,0000,0000,,before we're completely certain.\N[ Brennan ]\NI know Senator Davis.
+Dialogue: 0,0:04:45.78,0:04:47.71,Default,,0000,0000,0000,,I signed a book for her\Nto give to her daughter.
+Dialogue: 0,0:04:47.81,0:04:51.21,Default,,0000,0000,0000,,Man, I love Paula Davis.\NShe could've been president.
+Dialogue: 0,0:04:51.32,0:04:54.22,Default,,0000,0000,0000,,Warren Lynch and Senator Davis\Nkilled in one accident?
+Dialogue: 0,0:04:54.32,0:04:56.19,Default,,0000,0000,0000,,No way it's a coincidence.
+Dialogue: 0,0:04:56.29,0:04:58.26,Default,,0000,0000,0000,,Hey, Hodgepodge,\Nall engines reverse.
+Dialogue: 0,0:04:58.36,0:05:01.43,Default,,0000,0000,0000,,First we identify\Nbeyond the shadow of a doubt,\Nthen we get paranoid.
+Dialogue: 0,0:05:01.53,0:05:04.36,Default,,0000,0000,0000,,I'm cool.\NAs long as paranoia's\Non the schedule somewhere.
+Dialogue: 0,0:05:04.46,0:05:07.66,Default,,0000,0000,0000,,- It wasn't suicide.\N- Jagged edges to the breaks,
+Dialogue: 0,0:05:07.77,0:05:09.93,Default,,0000,0000,0000,,small fragments,\Nlack of circular...
+Dialogue: 0,0:05:10.04,0:05:12.60,Default,,0000,0000,0000,,or radiating fractures\Nor adherent spurs.
+Dialogue: 0,0:05:12.71,0:05:14.54,Default,,0000,0000,0000,,What does that mean?
+Dialogue: 0,0:05:14.64,0:05:17.57,Default,,0000,0000,0000,,This man was dead\Nfor several hours\Nbefore the train hit him.
+Dialogue: 0,0:05:20.55,0:05:21.51,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:05:25.38,0:05:26.35,Default,,0000,0000,0000,,♪ [Theme Music] ♪
+Dialogue: 0,0:07:09.05,0:07:10.59,Default,,0000,0000,0000,,If you, like many people,
+Dialogue: 0,0:07:10.59,0:07:12.06,Default,,0000,0000,0000,,are covered by both Medicare
+Dialogue: 0,0:07:12.06,0:07:13.82,Default,,0000,0000,0000,,and your state's Medicaid,
+Dialogue: 0,0:07:13.83,0:07:14.72,Default,,0000,0000,0000,,here's something important
+Dialogue: 0,0:07:14.73,0:07:16.16,Default,,0000,0000,0000,,to know.
+Dialogue: 0,0:07:16.16,0:07:20.10,Default,,0000,0000,0000,,Medicare Annual Enrollment\Nis here and ends December 7th.
+Dialogue: 0,0:07:20.10,0:07:21.60,Default,,0000,0000,0000,,So now's a great time to look
+Dialogue: 0,0:07:21.60,0:07:24.47,Default,,0000,0000,0000,,at a UnitedHealthcare Dual\NComplete plan.
+Dialogue: 0,0:07:24.47,0:07:26.37,Default,,0000,0000,0000,,It could give you even\Nmore health benefits
+Dialogue: 0,0:07:26.37,0:07:27.97,Default,,0000,0000,0000,,than you already have.
+Dialogue: 0,0:07:27.97,0:07:31.07,Default,,0000,0000,0000,,To find out if you or someone\Nyou care about is eligible,
+Dialogue: 0,0:07:31.08,0:07:34.08,Default,,0000,0000,0000,,it's easy...\Ncall now to talk with us.
+Dialogue: 0,0:07:34.08,0:07:37.35,Default,,0000,0000,0000,,We can explain it all\Nand answer your questions.
+Dialogue: 0,0:07:37.35,0:07:38.92,Default,,0000,0000,0000,,Medicaid gives you benefits
+Dialogue: 0,0:07:38.92,0:07:40.95,Default,,0000,0000,0000,,and Medicare gives you some,\Ntoo.
+Dialogue: 0,0:07:40.95,0:07:42.35,Default,,0000,0000,0000,,But a Dual Complete plan
+Dialogue: 0,0:07:42.35,0:07:44.52,Default,,0000,0000,0000,,can add even more benefits\Nand features
+Dialogue: 0,0:07:44.52,0:07:46.96,Default,,0000,0000,0000,,compared to Original Medicare.
+Dialogue: 0,0:07:46.96,0:07:50.43,Default,,0000,0000,0000,,You'll get $0 copays\Non all covered prescriptions-
+Dialogue: 0,0:07:50.43,0:07:52.70,Default,,0000,0000,0000,,including brand names.
+Dialogue: 0,0:07:52.70,0:07:54.33,Default,,0000,0000,0000,,And depending\Non where you live,
+Dialogue: 0,0:07:54.33,0:07:56.47,Default,,0000,0000,0000,,you could enjoy\Nother benefits, too.
+Dialogue: 0,0:07:56.47,0:07:58.67,Default,,0000,0000,0000,,Like more dental care,
+Dialogue: 0,0:07:58.67,0:08:01.74,Default,,0000,0000,0000,,and rides to and from\Nyour doctor or pharmacy.
+Dialogue: 0,0:08:01.74,0:08:05.31,Default,,0000,0000,0000,,Most plans even give you up\Nto $300 a month to help pay
+Dialogue: 0,0:08:05.31,0:08:07.28,Default,,0000,0000,0000,,for covered\Nover-the-counter products,
+Dialogue: 0,0:08:07.28,0:08:10.48,Default,,0000,0000,0000,,groceries, and new\Nthis year - utility bills.
+Dialogue: 0,0:08:10.48,0:08:12.35,Default,,0000,0000,0000,,And best of all,\Nwith this plan,
+Dialogue: 0,0:08:12.35,0:08:14.75,Default,,0000,0000,0000,,there's no extra cost to you.
+Dialogue: 0,0:08:14.75,0:08:17.79,Default,,0000,0000,0000,,Remember, if you have\NMedicare and Medicaid,
+Dialogue: 0,0:08:17.79,0:08:20.82,Default,,0000,0000,0000,,chances are, you could get\Na Dual Complete plan.
+Dialogue: 0,0:08:20.83,0:08:22.79,Default,,0000,0000,0000,,So call now to talk with us.
+Dialogue: 0,0:08:22.79,0:08:25.43,Default,,0000,0000,0000,,Our agents are available\Nto help.
+Dialogue: 0,0:08:25.43,0:08:27.80,Default,,0000,0000,0000,,We know healthcare\Ncan be confusing.
+Dialogue: 0,0:08:27.80,0:08:30.60,Default,,0000,0000,0000,,UnitedHealthcare can\Nstraighten things out.
+Dialogue: 0,0:08:30.60,0:08:32.74,Default,,0000,0000,0000,,And with over 40 years\Nof experience...
+Dialogue: 0,0:08:32.74,0:08:35.14,Default,,0000,0000,0000,,...you can count on us\Nto be there for you.
+Dialogue: 0,0:08:35.14,0:08:36.64,Default,,0000,0000,0000,,With a Dual Complete plan
+Dialogue: 0,0:08:36.64,0:08:39.98,Default,,0000,0000,0000,,you could have $0 copays on\Nall covered prescriptions...
+Dialogue: 0,0:08:39.98,0:08:42.31,Default,,0000,0000,0000,,help paying for covered\Nover-the counter products,
+Dialogue: 0,0:08:42.31,0:08:44.51,Default,,0000,0000,0000,,groceries and utility bills...
+Dialogue: 0,0:08:44.52,0:08:48.49,Default,,0000,0000,0000,,more dental coverage, too...\Nall at no extra cost.
+Dialogue: 0,0:08:48.49,0:08:49.69,Default,,0000,0000,0000,,If you have both\NMedicare
+Dialogue: 0,0:08:49.69,0:08:50.92,Default,,0000,0000,0000,,and Medicaid,
+Dialogue: 0,0:08:50.92,0:08:53.69,Default,,0000,0000,0000,,you may be eligible for\NDual Complete.
+Dialogue: 0,0:08:53.69,0:08:56.49,Default,,0000,0000,0000,,Hurry, Annual Enrollment\Nends December 7th.
+Dialogue: 0,0:08:56.50,0:08:58.26,Default,,0000,0000,0000,,So call the number\Non your screen now
+Dialogue: 0,0:08:58.26,0:09:00.73,Default,,0000,0000,0000,,to see if you're eligible\Nor to enroll.
+Dialogue: 0,0:09:00.73,0:09:02.20,Default,,0000,0000,0000,,There's more for you...
+Dialogue: 0,0:09:02.20,0:09:04.87,Default,,0000,0000,0000,,with a UnitedHealthcare\NDual Complete plan.
+Dialogue: 0,0:09:04.87,0:09:08.31,Default,,0000,0000,0000,,♪
+Dialogue: 0,0:09:24.66,0:09:25.62,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:09:29.83,0:09:32.10,Default,,0000,0000,0000,,[ Saroyan ]\NWe are tighter than\Na nun's knees on this one.
+Dialogue: 0,0:09:32.20,0:09:34.63,Default,,0000,0000,0000,,No press, no conjecture\Nwith anyone outside this room.
+Dialogue: 0,0:09:34.73,0:09:36.57,Default,,0000,0000,0000,,Why?\NBecause we are\Ngonna find...
+Dialogue: 0,0:09:36.67,0:09:38.40,Default,,0000,0000,0000,,the details\Nof Senator Davis's death...
+Dialogue: 0,0:09:38.50,0:09:40.44,Default,,0000,0000,0000,,without giving Oliver Stone\Nor Michael Moore any ideas.
+Dialogue: 0,0:09:40.54,0:09:42.84,Default,,0000,0000,0000,,Are we assuming\NSenator Davis's death\Nwas a coincidence?
+Dialogue: 0,0:09:42.94,0:09:46.74,Default,,0000,0000,0000,,You wanna kill someone, planting\Nyourself in front of a train\Nprobably not the best idea.
+Dialogue: 0,0:09:46.85,0:09:49.18,Default,,0000,0000,0000,,But too early\Nto make any assumptions.
+Dialogue: 0,0:09:49.28,0:09:52.45,Default,,0000,0000,0000,,[ Sighs ]\NI am a diuretic seagull, people.\NEverything goes through me.
+Dialogue: 0,0:09:52.55,0:09:55.29,Default,,0000,0000,0000,,10:00 a.m., here, tomorro.
+Dialogue: 0,0:09:55.39,0:09:58.15,Default,,0000,0000,0000,,"Zackaroni," your turn\Nto bring the doughnuts.
+Dialogue: 0,0:09:59.06,0:10:01.09,Default,,0000,0000,0000,,Zackaroni?
+Dialogue: 0,0:10:01.19,0:10:04.43,Default,,0000,0000,0000,,Cam noticed\Nthat I eat macaroni and cheese\Nevery day at lunch.
+Dialogue: 0,0:10:04.53,0:10:07.06,Default,,0000,0000,0000,,Every single day?\NYep.
+Dialogue: 0,0:10:07.17,0:10:10.73,Default,,0000,0000,0000,,You should be okay\Nwith Dr. Saroyan getting\Nthe head of Forensics job.
+Dialogue: 0,0:10:10.84,0:10:12.54,Default,,0000,0000,0000,,Why is that?
+Dialogue: 0,0:10:12.64,0:10:15.77,Default,,0000,0000,0000,,Because you are a strictly\Nrubber to the road,\Nhardball scientist.
+Dialogue: 0,0:10:15.87,0:10:19.24,Default,,0000,0000,0000,,You're not\Na flesh-pressing, ink-stained,\Npolicy-making "wank."
+Dialogue: 0,0:10:19.24,0:10:20.18,Default,,0000,0000,0000,,You're not\Na flesh-pressing, ink-stained,\Npolicy-making "wank."
+Dialogue: 0,0:10:20.71,0:10:24.05,Default,,0000,0000,0000,,- What are her qualifications?\N- Chief Coroner of New York\Nfor two years.
+Dialogue: 0,0:10:24.15,0:10:26.18,Default,,0000,0000,0000,,Assistant Federal Coroner\Nbefore that.
+Dialogue: 0,0:10:26.28,0:10:30.05,Default,,0000,0000,0000,,- How am I doing?\N- Very well. Impressive.
+Dialogue: 0,0:10:30.16,0:10:32.02,Default,,0000,0000,0000,,- [ Cell Phone Ringing ]\N- Brennan.
+Dialogue: 0,0:10:32.12,0:10:34.89,Default,,0000,0000,0000,,We were discussing\Nher mother's case.
+Dialogue: 0,0:10:34.99,0:10:38.56,Default,,0000,0000,0000,,- Fine.\N- I'll be there in 15 minutes.
+Dialogue: 0,0:10:38.66,0:10:41.53,Default,,0000,0000,0000,,Yes. Good, Dr. Brennan.\NWe'll chat later.
+Dialogue: 0,0:10:44.67,0:10:49.11,Default,,0000,0000,0000,,[ Chuckles ]\NIt's a very interesting case.
+Dialogue: 0,0:10:49.21,0:10:53.01,Default,,0000,0000,0000,,Brennan identified skeletal\Nremains as her mother's--\Nkilled by a blow to the head.
+Dialogue: 0,0:10:53.11,0:10:55.28,Default,,0000,0000,0000,,Initial suspect was her father.\NBut in the end, we arrested...
+Dialogue: 0,0:10:55.38,0:10:56.98,Default,,0000,0000,0000,,a pig farmer-hit man\Nin Witness Protection.
+Dialogue: 0,0:10:57.08,0:10:59.92,Default,,0000,0000,0000,,Added wrinkle,\NBrennan gets a call--\NDr. Hodgins?
+Dialogue: 0,0:11:00.02,0:11:01.82,Default,,0000,0000,0000,,You're chattering me to death\N'cause you hope I'll forget\Nyou called me a "wank".
+Dialogue: 0,0:11:02.85,0:11:05.82,Default,,0000,0000,0000,,It's a made-up word.\NNo meaning.
+Dialogue: 0,0:11:05.92,0:11:10.66,Default,,0000,0000,0000,,My name is Lisa Supac, and I am\Nthe Assistant U.S. Attorney\Nattached to this case.
+Dialogue: 0,0:11:10.76,0:11:13.73,Default,,0000,0000,0000,,I'd like to hear first from\Nthe National Transportation\Nand Safety Board.
+Dialogue: 0,0:11:13.83,0:11:15.30,Default,,0000,0000,0000,,Mr. Hobbes?\NThank you.
+Dialogue: 0,0:11:15.40,0:11:19.50,Default,,0000,0000,0000,,At 8:04 this evening,\Na high-speed commuter train\Nstruck a private vehicle.
+Dialogue: 0,0:11:19.60,0:11:23.24,Default,,0000,0000,0000,,The front car derailed,\Nkilling three people,\Nincluding Senator Paula Davis.
+Dialogue: 0,0:11:23.34,0:11:27.04,Default,,0000,0000,0000,,Preliminary indications\Nshow that the car\Nwas placed there purposely.
+Dialogue: 0,0:11:27.15,0:11:28.88,Default,,0000,0000,0000,,Dr. Brennan,\Nwas the Jeffersonian...
+Dialogue: 0,0:11:28.98,0:11:31.82,Default,,0000,0000,0000,,able to confirm\Nthat the driver\Nof the car was Warren Lynch?
+Dialogue: 0,0:11:31.92,0:11:33.78,Default,,0000,0000,0000,,Dental records\Nand physical characteristics\Nestablished that.
+Dialogue: 0,0:11:33.89,0:11:35.75,Default,,0000,0000,0000,,- Yes.\N- The vehicle was registered\Nto Mr. Lynch.
+Dialogue: 0,0:11:35.85,0:11:38.72,Default,,0000,0000,0000,,We'll verify that the jewelry\Nfound on his body was his.
+Dialogue: 0,0:11:38.82,0:11:41.09,Default,,0000,0000,0000,,- Plus, we have this.\N- [ Beeps ]
+Dialogue: 0,0:11:41.19,0:11:43.79,Default,,0000,0000,0000,,[ Supac ]\NA photograph\Nfrom the carpool lane?
+Dialogue: 0,0:11:43.90,0:11:47.66,Default,,0000,0000,0000,,At 1:56 this afternoon,\NMr. Lynch drove illegally\Nin the diamond lane on I-270.
+Dialogue: 0,0:11:47.77,0:11:51.60,Default,,0000,0000,0000,,Our good old\NMaryland State Police cameras--\Nthey caught the infraction.
+Dialogue: 0,0:11:51.70,0:11:54.30,Default,,0000,0000,0000,,This is definitely\Nthe vehicle found on the tracks.
+Dialogue: 0,0:11:54.41,0:11:58.17,Default,,0000,0000,0000,,Nobody saw or heard\Nfrom Warren Lynch\Nafter this photo was take.
+Dialogue: 0,0:11:58.28,0:12:00.41,Default,,0000,0000,0000,,You can't honestly\Nexpect anyone to believe...
+Dialogue: 0,0:12:00.51,0:12:03.15,Default,,0000,0000,0000,,that Warren Lynch\Ncommitted suicide\Nby driving into a train.
+Dialogue: 0,0:12:03.25,0:12:05.62,Default,,0000,0000,0000,,Daniel Burrows,\NSecurity and Exchange\NCommission.
+Dialogue: 0,0:12:05.72,0:12:08.08,Default,,0000,0000,0000,,We were about to lay charges\Nagainst Mr. Lynch...
+Dialogue: 0,0:12:08.19,0:12:11.45,Default,,0000,0000,0000,,that would not only wipe him out\Nfinancially but send him\Nto prison for several years.
+Dialogue: 0,0:12:11.56,0:12:14.42,Default,,0000,0000,0000,,I heard rumors.\NBut for a man like Lynch\Nto kill himself--
+Dialogue: 0,0:12:14.53,0:12:16.76,Default,,0000,0000,0000,,Mr. Lynch\Ndid not commit suicide.
+Dialogue: 0,0:12:16.86,0:12:19.66,Default,,0000,0000,0000,,Dr. Brennan's examination\Nshows that he was dead\Nfor at least six hours...
+Dialogue: 0,0:12:19.77,0:12:21.63,Default,,0000,0000,0000,,before the train\Nstruck his car.
+Dialogue: 0,0:12:21.73,0:12:23.87,Default,,0000,0000,0000,,- Dead how?\N- I don't know that yet.
+Dialogue: 0,0:12:23.97,0:12:25.90,Default,,0000,0000,0000,,But can we assume\Nthat it was foul play?
+Dialogue: 0,0:12:26.00,0:12:29.87,Default,,0000,0000,0000,,When it becomes public knowledge\Nthat Warren Lynch is dead,
+Dialogue: 0,0:12:29.98,0:12:32.28,Default,,0000,0000,0000,,stock in\NLynchpin International's\Ngonna plummet.
+Dialogue: 0,0:12:32.38,0:12:35.25,Default,,0000,0000,0000,,Well, it sucks for the people\Nwho invested in Lynchpin,\Nbut otherwise--
+Dialogue: 0,0:12:35.35,0:12:37.15,Default,,0000,0000,0000,,That's a motive for murder.
+Dialogue: 0,0:12:37.25,0:12:40.05,Default,,0000,0000,0000,,How is losing money\Na motive?
+Dialogue: 0,0:12:40.15,0:12:42.12,Default,,0000,0000,0000,,[ Burrows ]\NIt's called\Nshorting the stock.
+Dialogue: 0,0:12:42.22,0:12:44.45,Default,,0000,0000,0000,,Basically you bet that\Nthe share price is gonna fall.
+Dialogue: 0,0:12:44.56,0:12:46.52,Default,,0000,0000,0000,,And when it does,\Nyou collect.
+Dialogue: 0,0:12:46.63,0:12:49.89,Default,,0000,0000,0000,,- How much we talking?\N- Tens, maybe hundreds,\Nof millions.
+Dialogue: 0,0:12:51.56,0:12:52.53,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:12:57.07,0:12:59.04,Default,,0000,0000,0000,,[ Woman ]\NYes, these are\NWarren's things.
+Dialogue: 0,0:12:59.14,0:13:01.77,Default,,0000,0000,0000,,I bought him the I.D. bracelet\Non our first anniversary.
+Dialogue: 0,0:13:02.74,0:13:04.71,Default,,0000,0000,0000,,[ Booth ]\N"Casu consulto."
+Dialogue: 0,0:13:04.81,0:13:07.68,Default,,0000,0000,0000,,- What does that mean?\N- Accidentally on purpose.
+Dialogue: 0,0:13:07.78,0:13:11.65,Default,,0000,0000,0000,,- Why do you know things\Nlike this?\N- It was my husband's motto.
+Dialogue: 0,0:13:11.75,0:13:13.42,Default,,0000,0000,0000,,Mr. Lynch wrote about it\Nin his autobiography.
+Dialogue: 0,0:13:13.55,0:13:17.32,Default,,0000,0000,0000,,He played basketball in college.\NMade it all the way\Nto the national championships.
+Dialogue: 0,0:13:17.42,0:13:21.72,Default,,0000,0000,0000,,Warren was a high scorer,\Nbut a player on the other team\Nlocked him out of the key.
+Dialogue: 0,0:13:21.83,0:13:24.49,Default,,0000,0000,0000,,Warren injured\Nthe opposing player,\Nsent him to the hospital,
+Dialogue: 0,0:13:24.60,0:13:26.86,Default,,0000,0000,0000,,and made it look\Ncompletely inadvertent.
+Dialogue: 0,0:13:26.97,0:13:28.57,Default,,0000,0000,0000,,"Accidentally on purpose."
+Dialogue: 0,0:13:28.67,0:13:31.23,Default,,0000,0000,0000,,He wrote this about himself\Nas if it were a good thing?
+Dialogue: 0,0:13:31.34,0:13:34.27,Default,,0000,0000,0000,,Well, you don't become\NWarren Lynch by playing\Nby the rules.
+Dialogue: 0,0:13:34.37,0:13:37.91,Default,,0000,0000,0000,,I'm still his wife.\NSo this all comes\Nto me now, correct?
+Dialogue: 0,0:13:38.01,0:13:40.84,Default,,0000,0000,0000,,Still his wife,\NMrs. Lynch?
+Dialogue: 0,0:13:40.95,0:13:43.05,Default,,0000,0000,0000,,Were you and Mr. Lynch\Nhaving marital problems?
+Dialogue: 0,0:13:43.15,0:13:45.55,Default,,0000,0000,0000,,Warren and I were separating.
+Dialogue: 0,0:13:45.65,0:13:48.48,Default,,0000,0000,0000,,- Why?\N- Infidelity.
+Dialogue: 0,0:13:48.59,0:13:50.75,Default,,0000,0000,0000,,Hmm. On whose part?
+Dialogue: 0,0:13:50.86,0:13:53.66,Default,,0000,0000,0000,,I found out that Warren\Nwas seeing someone.
+Dialogue: 0,0:13:53.76,0:13:56.26,Default,,0000,0000,0000,,- Only someone\Nturned out to be--\N- Some dozen.
+Dialogue: 0,0:13:56.36,0:13:58.09,Default,,0000,0000,0000,,Hmm.\NI'm gonna need a list.
+Dialogue: 0,0:13:59.80,0:14:02.33,Default,,0000,0000,0000,,When Brianna confronted Warren,\Nhe had a private investigator\Nlook into her activities.
+Dialogue: 0,0:14:02.43,0:14:05.13,Default,,0000,0000,0000,,I admit,\Nhe didn't come up dry.
+Dialogue: 0,0:14:05.24,0:14:07.57,Default,,0000,0000,0000,,- Private investigator's name?\N- Rick Turco.
+Dialogue: 0,0:14:07.67,0:14:10.54,Default,,0000,0000,0000,,He was one of Lynch's\Nall-purpose, go-to,\Ndirty-work fixer.
+Dialogue: 0,0:14:10.64,0:14:13.64,Default,,0000,0000,0000,,Yeah.\NI'm familiar with Rick Turco.\NThank you for your cooperation.
+Dialogue: 0,0:14:17.12,0:14:18.92,Default,,0000,0000,0000,,Cheating spouse who stands\Nto inherit it all.
+Dialogue: 0,0:14:19.02,0:14:22.59,Default,,0000,0000,0000,,Corrupt business practices.\NAnd Turco, the private dick.\NWhere do we start?
+Dialogue: 0,0:14:22.69,0:14:24.85,Default,,0000,0000,0000,,Two types of glass\Nwere embedded in\Nwhat was left of Lynch.
+Dialogue: 0,0:14:24.96,0:14:27.82,Default,,0000,0000,0000,,- We'll start with glass.\N- Tempered automotive\Nsafety glass and silicate.
+Dialogue: 0,0:14:27.93,0:14:30.39,Default,,0000,0000,0000,,Tempered glass\Ncame from the car windows.\NWhat about the other?
+Dialogue: 0,0:14:30.50,0:14:32.66,Default,,0000,0000,0000,,It's 70%\Namorphous silicon dioxide.
+Dialogue: 0,0:14:32.76,0:14:35.83,Default,,0000,0000,0000,,What's that?\NIt's a common\Ndomestic container.
+Dialogue: 0,0:14:35.93,0:14:39.97,Default,,0000,0000,0000,,Oh. Like a jar.\NWhy can't we just say a jar?
+Dialogue: 0,0:14:43.44,0:14:46.18,Default,,0000,0000,0000,,Anything new, Zackaroni?\NZackaroni?
+Dialogue: 0,0:14:46.28,0:14:49.95,Default,,0000,0000,0000,,The victim's left shoulder\Nand elbow were badly\Ndislocated postmortem.
+Dialogue: 0,0:14:50.05,0:14:52.72,Default,,0000,0000,0000,,You mean between the time\Nhe died and the time\Nhe got hit by the train?
+Dialogue: 0,0:14:52.82,0:14:54.72,Default,,0000,0000,0000,,[ Brennan ]\NBlood flow was nonexistent\Nwhen the dislocation occurred.
+Dialogue: 0,0:14:54.82,0:14:57.22,Default,,0000,0000,0000,,Okay.\NYou guys do this stuff,\Nand I'll start on Turco.
+Dialogue: 0,0:14:57.32,0:14:59.56,Default,,0000,0000,0000,,What's that?\NA private investigator.
+Dialogue: 0,0:14:59.66,0:15:01.19,Default,,0000,0000,0000,,Turco's an affliction.
+Dialogue: 0,0:15:01.29,0:15:03.69,Default,,0000,0000,0000,,I'll set up a meeting\Nand call you.
+Dialogue: 0,0:15:03.80,0:15:05.93,Default,,0000,0000,0000,,You shouldn't\Ncall me Zackaroni.
+Dialogue: 0,0:15:06.03,0:15:08.63,Default,,0000,0000,0000,,Yeah. I knew that\Nthe moment I said it.
+Dialogue: 0,0:15:08.73,0:15:11.50,Default,,0000,0000,0000,,I'm going to get\Na bone mineral density reading.
+Dialogue: 0,0:15:11.60,0:15:13.70,Default,,0000,0000,0000,,You didn't actually\Nwant the job, did you?
+Dialogue: 0,0:15:13.81,0:15:16.24,Default,,0000,0000,0000,,I don't even know\Nwhat the job is.
+Dialogue: 0,0:15:16.34,0:15:18.57,Default,,0000,0000,0000,,Well, Goodman will\Nexplain his decision.
+Dialogue: 0,0:15:18.68,0:15:21.34,Default,,0000,0000,0000,,Goodman\Nappointed Dr. Saroyan\Nwhile I was on vacation,
+Dialogue: 0,0:15:21.45,0:15:23.98,Default,,0000,0000,0000,,then took\Na two-month sabbatical\Nto avoid me.
+Dialogue: 0,0:15:24.08,0:15:26.08,Default,,0000,0000,0000,,That explains a lot.\NAll right.\NYou know, I think...
+Dialogue: 0,0:15:26.18,0:15:28.35,Default,,0000,0000,0000,,it's because\Nyou are very task-oriented.
+Dialogue: 0,0:15:28.45,0:15:32.76,Default,,0000,0000,0000,,Zack?\NTask-oriented is a euphemism\Nfor lacking overall perspective.
+Dialogue: 0,0:15:32.86,0:15:36.06,Default,,0000,0000,0000,,Oh, no. No.
+Dialogue: 0,0:15:36.16,0:15:39.66,Default,,0000,0000,0000,,Yeah. Yeah.\NA little.
+Dialogue: 0,0:15:39.76,0:15:41.50,Default,,0000,0000,0000,,Like, when's my birthday?
+Dialogue: 0,0:15:41.60,0:15:44.10,Default,,0000,0000,0000,,I can get the computer\Nto remind me about birthdays.
+Dialogue: 0,0:15:44.20,0:15:46.37,Default,,0000,0000,0000,,[ Sighs ]\NThat's one of\Na gajillion examples.
+Dialogue: 0,0:15:46.47,0:15:48.54,Default,,0000,0000,0000,,You could tell me\Nthe other gajillion minus one.
+Dialogue: 0,0:15:48.64,0:15:50.91,Default,,0000,0000,0000,,What do you see, Zack?
+Dialogue: 0,0:15:51.01,0:15:52.88,Default,,0000,0000,0000,,Uh, bone loss.
+Dialogue: 0,0:15:52.98,0:15:56.48,Default,,0000,0000,0000,,Lack of bone density suggests\Nthat Warren Lynch was\Nmuch older than his 40s.
+Dialogue: 0,0:15:56.58,0:15:59.02,Default,,0000,0000,0000,,But the other\Nindicators of age--
+Dialogue: 0,0:15:59.12,0:16:03.32,Default,,0000,0000,0000,,epiphyseal rings,\Ncranial sutures--\Nall disagree.
+Dialogue: 0,0:16:03.42,0:16:06.86,Default,,0000,0000,0000,,Age doesn't explain\Nthe ossification of cartilage\Nwhere the ribs meet the sternum.
+Dialogue: 0,0:16:06.96,0:16:10.03,Default,,0000,0000,0000,,Well, what does explain it?\N[ Brennan ] Opiates.
+Dialogue: 0,0:16:15.77,0:16:18.27,Default,,0000,0000,0000,,Warren Lynch was\Na heroin addict.
+Dialogue: 0,0:16:18.54,0:19:51.65,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:19:51.85,0:19:54.62,Default,,0000,0000,0000,,Agent Booth,\NI'm a private investigator.
+Dialogue: 0,0:19:54.72,0:19:57.55,Default,,0000,0000,0000,,My greatest asset\Nis my discretion.
+Dialogue: 0,0:19:57.66,0:19:59.82,Default,,0000,0000,0000,,Brianna Lynch already told us\Nthat you work for her husband.
+Dialogue: 0,0:19:59.82,0:20:00.49,Default,,0000,0000,0000,,Brianna Lynch already told us\Nthat you work for her husband.
+Dialogue: 0,0:20:00.93,0:20:02.89,Default,,0000,0000,0000,,Well, Miss Lynch is welcome\Nto say whatever she likes.
+Dialogue: 0,0:20:02.99,0:20:07.43,Default,,0000,0000,0000,,That client confidentiality\Nroutine no longer exists\Nwhen the client is dead.
+Dialogue: 0,0:20:07.53,0:20:10.80,Default,,0000,0000,0000,,That's not the assurance\NI give my very demanding,\Nvery high profile clients.
+Dialogue: 0,0:20:10.80,0:20:11.83,Default,,0000,0000,0000,,That's not the assurance\NI give my very demanding,\Nvery high profile clients.
+Dialogue: 0,0:20:11.94,0:20:14.37,Default,,0000,0000,0000,,Till death do us not part.
+Dialogue: 0,0:20:14.47,0:20:17.64,Default,,0000,0000,0000,,Yeah. How would\Nyour very demanding, very\Nhigh profile clients feel...
+Dialogue: 0,0:20:17.74,0:20:21.14,Default,,0000,0000,0000,,if they found out\Nthat you procured heroin\Nfor Warren Lynch?
+Dialogue: 0,0:20:21.25,0:20:23.61,Default,,0000,0000,0000,,[ Exhales ]\NWhat?
+Dialogue: 0,0:20:23.72,0:20:25.58,Default,,0000,0000,0000,,Warren Lynch was\Na heroin addict.
+Dialogue: 0,0:20:25.68,0:20:27.85,Default,,0000,0000,0000,,I'm gonna open up\Na drug investigation on\Nyou, Mr. Turco.
+Dialogue: 0,0:20:27.95,0:20:30.95,Default,,0000,0000,0000,,Once the press\Ngets wind of that, your\Nvery high profile clients...
+Dialogue: 0,0:20:31.06,0:20:33.62,Default,,0000,0000,0000,,will find some other\Nunprincipled Mr. Fix It.
+Dialogue: 0,0:20:33.73,0:20:36.29,Default,,0000,0000,0000,,Warren Lynch was a junkie?
+Dialogue: 0,0:20:36.39,0:20:38.73,Default,,0000,0000,0000,,- What's your evidence?\N- Bones?
+Dialogue: 0,0:20:43.53,0:20:46.40,Default,,0000,0000,0000,,Well, so what does\Nall this mean?
+Dialogue: 0,0:20:46.50,0:20:50.01,Default,,0000,0000,0000,,- Sum it up for the man, Bones.\N- Warren Lynch suffered\Ndeclining bone mass...
+Dialogue: 0,0:20:50.11,0:20:54.14,Default,,0000,0000,0000,,due to long-term abuse\Nof his hypothalamic\Npituitary gonadal access.
+Dialogue: 0,0:20:54.25,0:20:57.98,Default,,0000,0000,0000,,Nothing says junkie\Nlike your gonads' access, Ricky.
+Dialogue: 0,0:20:58.08,0:21:02.02,Default,,0000,0000,0000,,I had no idea.\NAnd I certainly never\Nprocured any heroin for him.
+Dialogue: 0,0:21:02.12,0:21:05.02,Default,,0000,0000,0000,,Warren Lynch sure as hell\Nwasn't trolling for $10 hits\Nin Lincoln Heights.
+Dialogue: 0,0:21:05.12,0:21:07.59,Default,,0000,0000,0000,,Come on, Agent Booth.\NYou know my rep.
+Dialogue: 0,0:21:07.69,0:21:10.63,Default,,0000,0000,0000,,I'm a sin eater.\NI make problems go away.
+Dialogue: 0,0:21:10.73,0:21:14.76,Default,,0000,0000,0000,,You mean like when Lynch's wife\Nfound out that he was sleeping\Nwith other women?
+Dialogue: 0,0:21:14.87,0:21:17.17,Default,,0000,0000,0000,,- Oh.\N- [ Sighs ]
+Dialogue: 0,0:21:17.27,0:21:19.44,Default,,0000,0000,0000,,All right.\NAnything I say,\Nstrictest confidence, correct?
+Dialogue: 0,0:21:19.54,0:21:21.90,Default,,0000,0000,0000,,Hmm.
+Dialogue: 0,0:21:22.01,0:21:25.84,Default,,0000,0000,0000,,Warren Lynch brought me in\Nto deal with a blackmailer.
+Dialogue: 0,0:21:25.94,0:21:28.38,Default,,0000,0000,0000,,Warren Lynch\Nwas being blackmailed?
+Dialogue: 0,0:21:28.48,0:21:31.98,Default,,0000,0000,0000,,By one of his girlfriends?\NThat would be\Nmy assumption, yes.
+Dialogue: 0,0:21:32.08,0:21:35.58,Default,,0000,0000,0000,,I paid 'em off before.\NBut this was a much bigger deal.\NMore serious.
+Dialogue: 0,0:21:35.69,0:21:38.52,Default,,0000,0000,0000,,- Had to be the heroin, right?\N- How'd it play out?
+Dialogue: 0,0:21:38.62,0:21:41.96,Default,,0000,0000,0000,,I negotiated the payment down\Nfrom a mil to a quarter million,\Npaid 'em off.
+Dialogue: 0,0:21:42.06,0:21:44.76,Default,,0000,0000,0000,,- That was three days ago.\N- How?
+Dialogue: 0,0:21:44.86,0:21:48.90,Default,,0000,0000,0000,,- Dead drop at Rock Creek Park.\N- And you have no idea\Nwho it was?
+Dialogue: 0,0:21:49.00,0:21:51.17,Default,,0000,0000,0000,,Well, I had a phone call.\NI traced it back.
+Dialogue: 0,0:21:51.27,0:21:53.34,Default,,0000,0000,0000,,It dead-ended\Non a stolen cell phone.
+Dialogue: 0,0:22:01.58,0:22:03.45,Default,,0000,0000,0000,,You did a good job.
+Dialogue: 0,0:22:03.55,0:22:06.75,Default,,0000,0000,0000,,Given your heroin bombshell,\NI went back\Nto what tissue remained...
+Dialogue: 0,0:22:06.85,0:22:08.38,Default,,0000,0000,0000,,and found traces of\Nlaudanine and reticuline,
+Dialogue: 0,0:22:08.49,0:22:09.95,Default,,0000,0000,0000,,alkaloids found\Nin the opium poppy.
+Dialogue: 0,0:22:10.05,0:22:13.19,Default,,0000,0000,0000,,I'd like Angela to do\Na facial reconstruction.
+Dialogue: 0,0:22:13.29,0:22:15.99,Default,,0000,0000,0000,,Confirm my finding?
+Dialogue: 0,0:22:16.09,0:22:18.93,Default,,0000,0000,0000,,It's handy having a pathologist\Nright in the building.\NTo turn opium into heroin,
+Dialogue: 0,0:22:19.03,0:22:23.10,Default,,0000,0000,0000,,it's exposed to hot\Nacetic anhydride, which\Nproduces 18 neutral impurities.
+Dialogue: 0,0:22:23.20,0:22:26.30,Default,,0000,0000,0000,,The ratio of these impurities\Nindicates the heroin's origin.\NIn this case, Mexico.
+Dialogue: 0,0:22:26.40,0:22:28.64,Default,,0000,0000,0000,,Mexican heroin is very common.
+Dialogue: 0,0:22:28.74,0:22:33.14,Default,,0000,0000,0000,,I-- I wonder if there's\Nanything we can do\Nto narrow it down further.
+Dialogue: 0,0:22:35.31,0:22:37.35,Default,,0000,0000,0000,,- Gas chromatography--\N- [ Beeping ]
+Dialogue: 0,0:22:37.45,0:22:39.52,Default,,0000,0000,0000,,shows there was also\Nfentanyl in the heroin.
+Dialogue: 0,0:22:39.62,0:22:42.39,Default,,0000,0000,0000,,What's that?
+Dialogue: 0,0:22:42.49,0:22:45.32,Default,,0000,0000,0000,,This reminds me\Nof when you interviewed me\Nto be your grad student.
+Dialogue: 0,0:22:45.42,0:22:47.76,Default,,0000,0000,0000,,She knows what fentanyl is.
+Dialogue: 0,0:22:47.86,0:22:51.16,Default,,0000,0000,0000,,It's a narcotic which boosts\Nthe effects of the heroin.
+Dialogue: 0,0:22:51.26,0:22:53.26,Default,,0000,0000,0000,,According to Metro cops,
+Dialogue: 0,0:22:53.36,0:22:55.87,Default,,0000,0000,0000,,14 addicts O.D.'d this week\Noff this one shipment.
+Dialogue: 0,0:22:55.97,0:22:58.73,Default,,0000,0000,0000,,Have you told Booth?\NI'll leave that to you.
+Dialogue: 0,0:23:01.81,0:23:04.37,Default,,0000,0000,0000,,How'd I do?
+Dialogue: 0,0:23:06.54,0:23:08.58,Default,,0000,0000,0000,,I thought\Nshe did quite well.
+Dialogue: 0,0:23:08.68,0:23:10.68,Default,,0000,0000,0000,,You said you had\Nsomething else to show me.
+Dialogue: 0,0:23:10.78,0:23:15.08,Default,,0000,0000,0000,,[ Zack ] In a car fire,\Ngasoline vapor ignites\Nat 280 degrees Celsius...
+Dialogue: 0,0:23:15.19,0:23:17.29,Default,,0000,0000,0000,,and rises to a flame temperature\Nof 2,200 degrees.
+Dialogue: 0,0:23:17.39,0:23:19.42,Default,,0000,0000,0000,,[ Hodgins ]\NIf the gas tank were full\Nat the time of impact,
+Dialogue: 0,0:23:19.52,0:23:21.99,Default,,0000,0000,0000,,the fire should\Nhave burned for approximately\N20 minutes without intervention.
+Dialogue: 0,0:23:22.09,0:23:24.13,Default,,0000,0000,0000,,Tell me that's not\Na real skeleton.
+Dialogue: 0,0:23:24.23,0:23:27.16,Default,,0000,0000,0000,,No. We made him\Nout of calcium phosphate\Nand hydroxyapatite.
+Dialogue: 0,0:23:27.27,0:23:29.20,Default,,0000,0000,0000,,And Spam.
+Dialogue: 0,0:23:29.30,0:23:30.87,Default,,0000,0000,0000,,Twenty minutes now!
+Dialogue: 0,0:23:32.80,0:23:35.77,Default,,0000,0000,0000,,That's still a significant\Namount of Spam.
+Dialogue: 0,0:23:35.87,0:23:38.07,Default,,0000,0000,0000,,And according to\Nthe fire department repor,
+Dialogue: 0,0:23:38.18,0:23:42.01,Default,,0000,0000,0000,,the car burned for 40 minutes,\Nand it still took four minutes\Nto put out.
+Dialogue: 0,0:23:42.11,0:23:44.65,Default,,0000,0000,0000,,- Which means\Nthere was extra fuel.\N- And the extra glass you found?
+Dialogue: 0,0:23:44.75,0:23:47.42,Default,,0000,0000,0000,,- Five-gallon mason jars.\N-\N[ Zack ] Six of them.
+Dialogue: 0,0:23:47.52,0:23:49.49,Default,,0000,0000,0000,,- Filled with gasoline.\N- That or moonshine.
+Dialogue: 0,0:23:51.32,0:23:54.12,Default,,0000,0000,0000,,Why does the whole lab\Nsmell like a luau?
+Dialogue: 0,0:23:54.23,0:23:57.46,Default,,0000,0000,0000,,Zack and Hodgins are proving\Nthat there was extra accelerant\Nin Lynch's vehicle.
+Dialogue: 0,0:23:57.56,0:24:01.13,Default,,0000,0000,0000,,- Using what medium?\N- Artificial bone\Ncovered with Spam.
+Dialogue: 0,0:24:01.23,0:24:04.20,Default,,0000,0000,0000,,Turn this off.
+Dialogue: 0,0:24:14.05,0:24:16.41,Default,,0000,0000,0000,,- Why wasn't\NI told about this?\N- [ Chuckles ]
+Dialogue: 0,0:24:16.51,0:24:18.41,Default,,0000,0000,0000,,I encourage\Nindependent inquiry.
+Dialogue: 0,0:24:18.52,0:24:20.58,Default,,0000,0000,0000,,Your encouragement does not\Nsignify my authorization.
+Dialogue: 0,0:24:20.69,0:24:22.32,Default,,0000,0000,0000,,If it happens again,\NI will take action.
+Dialogue: 0,0:24:23.86,0:24:25.79,Default,,0000,0000,0000,,And I'm from New York,\Nwhich means that I will take\NNew York action. Am I clear?
+Dialogue: 0,0:24:25.89,0:24:29.09,Default,,0000,0000,0000,,- Not at all.\N- I'm from Michigan.
+Dialogue: 0,0:24:29.19,0:24:31.09,Default,,0000,0000,0000,,Dr. Saroyan means\Nshe'll make us watch\Nmusical theater.
+Dialogue: 0,0:24:31.20,0:24:33.96,Default,,0000,0000,0000,,Wrong New York.\NI'm more from the "get mugged\Nin broad daylight" tradition.
+Dialogue: 0,0:24:34.07,0:24:35.93,Default,,0000,0000,0000,,This is not\Na high school science fair.
+Dialogue: 0,0:24:36.03,0:24:38.30,Default,,0000,0000,0000,,This is\Nthe Jeffersonian Institute.
+Dialogue: 0,0:24:38.40,0:24:40.44,Default,,0000,0000,0000,,Unauthorized experiments\Nin Forensics will get you fired.
+Dialogue: 0,0:24:40.54,0:24:43.87,Default,,0000,0000,0000,,But we're Hodgepodge\Nand Zackaroni.
+Dialogue: 0,0:24:43.98,0:24:48.31,Default,,0000,0000,0000,,- And they work for me.\N- What I'd really like to do is\Nenjoy a meeting of the minds.
+Dialogue: 0,0:24:48.41,0:24:50.91,Default,,0000,0000,0000,,But if you insist on\Nan organizational pyramid,
+Dialogue: 0,0:24:51.02,0:24:53.82,Default,,0000,0000,0000,,I will be at the top.
+Dialogue: 0,0:24:56.39,0:24:57.35,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:24:59.69,0:25:01.52,Default,,0000,0000,0000,,[ Booth ]\NSpam?
+Dialogue: 0,0:25:01.63,0:25:03.39,Default,,0000,0000,0000,,[ Brennan ]\NThere were mason jars filled\Nwith gasoline in the backseat...
+Dialogue: 0,0:25:03.49,0:25:05.43,Default,,0000,0000,0000,,intended to break\Nwhen the train hit.
+Dialogue: 0,0:25:05.53,0:25:07.43,Default,,0000,0000,0000,,Oh. And they got this\Nwith Spam?\NYeah, Spam.
+Dialogue: 0,0:25:07.53,0:25:09.77,Default,,0000,0000,0000,,Hmm. And Cam, she got all\Nbent out of shape.
+Dialogue: 0,0:25:09.87,0:25:11.73,Default,,0000,0000,0000,,She wants to authorize\Nall experiments.
+Dialogue: 0,0:25:11.84,0:25:13.64,Default,,0000,0000,0000,,Great. You know,\NZack and Hodgins,
+Dialogue: 0,0:25:13.74,0:25:16.04,Default,,0000,0000,0000,,they do an experiment\Nwith fake bones and Spam.
+Dialogue: 0,0:25:16.14,0:25:19.81,Default,,0000,0000,0000,,What is your Spam fixation?\NA defense lawyer hears Spam,
+Dialogue: 0,0:25:19.91,0:25:22.08,Default,,0000,0000,0000,,he makes a joke,\Nand the jury laughs.
+Dialogue: 0,0:25:22.18,0:25:26.25,Default,,0000,0000,0000,,And everything we get from\Nthe Jeffersonian is framed\Nas goofy science, you know,
+Dialogue: 0,0:25:26.35,0:25:29.69,Default,,0000,0000,0000,,from a bunch of squints\Nwith no connection\Nto the real world.
+Dialogue: 0,0:25:29.79,0:25:31.75,Default,,0000,0000,0000,,That wouldn't happen.\NReally?
+Dialogue: 0,0:25:31.86,0:25:34.09,Default,,0000,0000,0000,,Like the time\Nyou dropped a dead monkey\Ndown the elevator shaft?
+Dialogue: 0,0:25:34.19,0:25:36.76,Default,,0000,0000,0000,,That was to show--
+Dialogue: 0,0:25:36.86,0:25:38.79,Default,,0000,0000,0000,,Okay, I take your point.
+Dialogue: 0,0:25:38.90,0:25:42.46,Default,,0000,0000,0000,,Cam's goal is\Na successful prosecution\Nin a court of law.
+Dialogue: 0,0:25:42.57,0:25:45.57,Default,,0000,0000,0000,,Same as mine and yours.\NNo. You're all about\Nfinding the truth.
+Dialogue: 0,0:25:45.67,0:25:50.11,Default,,0000,0000,0000,,Okay, your words say good,\Nbut your tone says bad.
+Dialogue: 0,0:25:50.21,0:25:53.34,Default,,0000,0000,0000,,So it's confusing.\NCam knows\Nthat too much truth...
+Dialogue: 0,0:25:53.44,0:25:56.41,Default,,0000,0000,0000,,is just as bad\Nas too little.\N[ Cell Phone Ringing ]
+Dialogue: 0,0:25:56.51,0:25:58.41,Default,,0000,0000,0000,,See? Which is why\Nshe got the job.
+Dialogue: 0,0:25:58.52,0:26:00.32,Default,,0000,0000,0000,,Booth.
+Dialogue: 0,0:26:00.42,0:26:04.69,Default,,0000,0000,0000,,Angela says that you and Cam\Nhad a sexual relationship. Does\Nthat affect your view of her?
+Dialogue: 0,0:26:04.79,0:26:06.59,Default,,0000,0000,0000,,Patch me through.\NWildly out of line.
+Dialogue: 0,0:26:06.69,0:26:09.09,Default,,0000,0000,0000,,Just so you know that.
+Dialogue: 0,0:26:09.19,0:26:11.19,Default,,0000,0000,0000,,When?\NHmm.
+Dialogue: 0,0:26:11.30,0:26:13.46,Default,,0000,0000,0000,,Did you get the doer?\NPersonal prerogative...
+Dialogue: 0,0:26:13.56,0:26:15.50,Default,,0000,0000,0000,,is at the heart\Nof scientific inquiry.\NBones.
+Dialogue: 0,0:26:17.44,0:26:19.97,Default,,0000,0000,0000,,[ Sighs ]\NThanks for the notification.
+Dialogue: 0,0:26:29.28,0:26:31.15,Default,,0000,0000,0000,,What?
+Dialogue: 0,0:26:33.22,0:26:37.55,Default,,0000,0000,0000,,The man who was charged\Nwith murdering your mother--
+Dialogue: 0,0:26:37.66,0:26:40.12,Default,,0000,0000,0000,,The pig farmer,\NVince McVicar.
+Dialogue: 0,0:26:40.22,0:26:41.72,Default,,0000,0000,0000,,He was killed.
+Dialogue: 0,0:26:43.23,0:26:46.76,Default,,0000,0000,0000,,Today at the Alexandria\NFederal Holding Facility.\N[ Sighs ]
+Dialogue: 0,0:26:48.33,0:26:50.20,Default,,0000,0000,0000,,[ Sighs ]
+Dialogue: 0,0:26:50.30,0:26:52.50,Default,,0000,0000,0000,,I don't--
+Dialogue: 0,0:26:54.07,0:26:56.94,Default,,0000,0000,0000,,He was the only connection\Nto my father.
+Dialogue: 0,0:26:57.04,0:26:59.31,Default,,0000,0000,0000,,His trial was gonna be my--
+Dialogue: 0,0:27:04.65,0:27:07.22,Default,,0000,0000,0000,,How am I ever gonna find out\Nwhat really happened?
+Dialogue: 0,0:27:11.72,0:27:12.69,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:27:17.53,0:27:19.40,Default,,0000,0000,0000,,[ Saroyan ]\NThat's not Warren Lynch.
+Dialogue: 0,0:27:19.50,0:27:22.30,Default,,0000,0000,0000,,- How accurate is this thing?\N- [ Brennan ] It's not\Nthe machine that's accurate.
+Dialogue: 0,0:27:22.40,0:27:24.00,Default,,0000,0000,0000,,It's Angela,\Nand she's good.
+Dialogue: 0,0:27:24.10,0:27:25.77,Default,,0000,0000,0000,,That is not Warren Lynch.
+Dialogue: 0,0:27:25.87,0:27:29.54,Default,,0000,0000,0000,,Hey, Zack provided a skull,\Nand this is the face\Nthat goes with it.
+Dialogue: 0,0:27:30.57,0:27:32.57,Default,,0000,0000,0000,,Could it be the wrong skull?
+Dialogue: 0,0:27:32.68,0:27:35.91,Default,,0000,0000,0000,,Zack doesn't make\Nthat kind of mistake.\NHe's also very good.
+Dialogue: 0,0:27:36.01,0:27:39.38,Default,,0000,0000,0000,,- What about the dental records?\N- I'll check 'em for tampering.
+Dialogue: 0,0:27:39.48,0:27:42.58,Default,,0000,0000,0000,,But you're certain\Nthat the body in the car--\NIs not Warren Lynch.
+Dialogue: 0,0:27:42.69,0:27:45.22,Default,,0000,0000,0000,,Absolutely certain.\NAll right.
+Dialogue: 0,0:27:47.82,0:27:48.79,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:27:53.73,0:27:56.70,Default,,0000,0000,0000,,- SNHU supported me from\Nday one to graduation.
+Dialogue: 0,0:27:59.80,0:28:01.14,Default,,0000,0000,0000,,The instructors, my advisor,
+Dialogue: 0,0:28:01.24,0:28:03.54,Default,,0000,0000,0000,,I think we kind of all\Nwent on a journey together.
+Dialogue: 0,0:28:05.64,0:28:07.21,Default,,0000,0000,0000,,- At Southern New\NHampshire University
+Dialogue: 0,0:28:07.31,0:28:09.58,Default,,0000,0000,0000,,I don't feel like I'm\Nburying myself in debt.
+Dialogue: 0,0:28:09.68,0:28:12.28,Default,,0000,0000,0000,,It's less than I ever expected\Nto spend on a college.
+Dialogue: 0,0:28:14.29,0:28:17.15,Default,,0000,0000,0000,,- Completing my degree\Nat SNHU empowered me
+Dialogue: 0,0:28:17.25,0:28:18.69,Default,,0000,0000,0000,,when applying for jobs.
+Dialogue: 0,0:28:18.79,0:28:21.12,Default,,0000,0000,0000,,They had the exact degree\Nprogram I was looking for
+Dialogue: 0,0:28:21.23,0:28:22.62,Default,,0000,0000,0000,,to advance my career.
+Dialogue: 0,0:28:25.36,0:28:29.73,Default,,0000,0000,0000,,- [Naeem] We had students from\Nall 50 states, 71 countries.
+Dialogue: 0,0:28:29.83,0:28:31.00,Default,,0000,0000,0000,,It's a remarkable group.
+Dialogue: 0,0:28:32.90,0:28:35.20,Default,,0000,0000,0000,,- I'm the first of my family\Nto have a college degree.
+Dialogue: 0,0:28:35.31,0:28:36.71,Default,,0000,0000,0000,,So it feels amazing.
+Dialogue: 0,0:28:36.81,0:28:39.98,Default,,0000,0000,0000,,- This is where you need\Nto be, here at SNHU.
+Dialogue: 0,0:28:40.08,0:28:41.21,Default,,0000,0000,0000,,- It's the best school
+Dialogue: 0,0:28:41.31,0:28:44.18,Default,,0000,0000,0000,,for the world that\Nwe live in right now.
+Dialogue: 0,0:28:44.28,0:28:45.45,Default,,0000,0000,0000,,- Whatever's going\Non in your life.
+Dialogue: 0,0:28:45.55,0:28:47.85,Default,,0000,0000,0000,,Whatever your story\Nis, you can do it too.
+Dialogue: 0,0:28:49.09,0:28:49.72,Default,,0000,0000,0000,,- [Narrator] Next\Nterm starts soon.
+Dialogue: 0,0:28:49.82,0:28:50.82,Default,,0000,0000,0000,,Visit snhu.edu.
+Dialogue: 0,0:31:06.86,0:31:09.06,Default,,0000,0000,0000,,[ Supac ]\NThe man in the car\Nwas not Warren Lynch?
+Dialogue: 0,0:31:09.13,0:31:11.79,Default,,0000,0000,0000,,No. This was the man\Nbehind the wheel.
+Dialogue: 0,0:31:11.90,0:31:15.03,Default,,0000,0000,0000,,You had dental records.\NWell, somebody digitized...
+Dialogue: 0,0:31:15.13,0:31:17.47,Default,,0000,0000,0000,,Lynch's dental X-rays\Nand then refilmed them...
+Dialogue: 0,0:31:17.57,0:31:20.27,Default,,0000,0000,0000,,utilizing authentic\Nalphanumeric bar codes.
+Dialogue: 0,0:31:20.37,0:31:22.84,Default,,0000,0000,0000,,-The records\Nwere expertly faked.\N-Where the hell is Warren Lynch?
+Dialogue: 0,0:31:22.94,0:31:25.71,Default,,0000,0000,0000,,I've informed the F.B.I.\Nthat they might want\Nto start looking for him.
+Dialogue: 0,0:31:25.81,0:31:27.58,Default,,0000,0000,0000,,In the meantime,\Nwe're moving to I.D. this guy.
+Dialogue: 0,0:31:27.68,0:31:31.25,Default,,0000,0000,0000,,Mistakes like this cannot happen\Nwhen the case concerns\Na dead senator.
+Dialogue: 0,0:31:31.35,0:31:34.48,Default,,0000,0000,0000,,Miss Montenegro uncovered\Na fraud. That's the opposite\Nof a mistake.
+Dialogue: 0,0:31:34.59,0:31:36.69,Default,,0000,0000,0000,,Save it for\Nthe press conference,\NDr. Saroyan.
+Dialogue: 0,0:31:38.32,0:31:40.82,Default,,0000,0000,0000,,Thank you.
+Dialogue: 0,0:31:40.93,0:31:44.23,Default,,0000,0000,0000,,Hey, if you'd made a mistake,\NI'd have thrown you\Nto the wolves.
+Dialogue: 0,0:31:44.33,0:31:47.53,Default,,0000,0000,0000,,[ Booth ]\NMetro cops hinted the guy\Npushing the Mexican heroin...
+Dialogue: 0,0:31:47.63,0:31:50.53,Default,,0000,0000,0000,,laced with fentanyl\Nis Eddie Bean--
+Dialogue: 0,0:31:50.63,0:31:54.40,Default,,0000,0000,0000,,young guy,\Nbaldy-headed, 5'5",\N145 pounds.
+Dialogue: 0,0:31:56.34,0:31:57.57,Default,,0000,0000,0000,,You know,\Nif drugs were legalized,
+Dialogue: 0,0:31:57.68,0:32:01.18,Default,,0000,0000,0000,,they could be dispensed\Nfrom clean, safe,\Ncontrolled outlets...
+Dialogue: 0,0:32:01.28,0:32:03.48,Default,,0000,0000,0000,,by trained personnel--\Nnot in alleyways by criminals.
+Dialogue: 0,0:32:03.58,0:32:06.01,Default,,0000,0000,0000,,Yeah, right.
+Dialogue: 0,0:32:08.35,0:32:10.22,Default,,0000,0000,0000,,Hey, that's our guy.\NLet's go.\NOh, no, no. Shh.
+Dialogue: 0,0:32:10.32,0:32:14.36,Default,,0000,0000,0000,,What we gotta do\Nis we gotta wait until he deals.
+Dialogue: 0,0:32:14.46,0:32:17.03,Default,,0000,0000,0000,,Catch him in the act.
+Dialogue: 0,0:32:17.13,0:32:20.66,Default,,0000,0000,0000,,We wait?\NFor how long?\NHowever long it takes.
+Dialogue: 0,0:32:20.76,0:32:23.97,Default,,0000,0000,0000,,What do we do while we wait?
+Dialogue: 0,0:32:24.07,0:32:25.90,Default,,0000,0000,0000,,This is a stakeout.\NWe converse.
+Dialogue: 0,0:32:26.00,0:32:28.77,Default,,0000,0000,0000,,Well, I tried\Nto initiate conversation\Non the drug war but--
+Dialogue: 0,0:32:28.87,0:32:30.61,Default,,0000,0000,0000,,Oh, God, fine.\NYou know what?
+Dialogue: 0,0:32:30.71,0:32:33.28,Default,,0000,0000,0000,,Let's just talk about something\Nwe're not gonna argue about.
+Dialogue: 0,0:32:33.38,0:32:35.54,Default,,0000,0000,0000,,[ Sighs ]
+Dialogue: 0,0:32:36.95,0:32:40.28,Default,,0000,0000,0000,,Been out\Nto your mother's grave?\NNot since the funeral.
+Dialogue: 0,0:32:40.38,0:32:43.02,Default,,0000,0000,0000,,Really?\NWhy would I?
+Dialogue: 0,0:32:43.12,0:32:46.09,Default,,0000,0000,0000,,Well, to connect.\NShe's dead.
+Dialogue: 0,0:32:47.59,0:32:50.16,Default,,0000,0000,0000,,Fine.\NYou know what?\NForget it.
+Dialogue: 0,0:32:50.26,0:32:53.23,Default,,0000,0000,0000,,Dead. As in\Ngone from this world.
+Dialogue: 0,0:32:53.33,0:32:56.33,Default,,0000,0000,0000,,[ Man Shouting, Indistinct ]
+Dialogue: 0,0:32:58.10,0:33:00.17,Default,,0000,0000,0000,,Excuse me.
+Dialogue: 0,0:33:00.27,0:33:02.27,Default,,0000,0000,0000,,I'm curious.
+Dialogue: 0,0:33:02.37,0:33:04.54,Default,,0000,0000,0000,,Um, do you talk\Nto the headstone?
+Dialogue: 0,0:33:04.64,0:33:07.14,Default,,0000,0000,0000,,I mean, what do you--\NWhat do you say?
+Dialogue: 0,0:33:07.24,0:33:09.31,Default,,0000,0000,0000,,It looks like\NI'm talking to the headstone.
+Dialogue: 0,0:33:09.41,0:33:11.35,Default,,0000,0000,0000,,But what I'm really saying\Nis that--
+Dialogue: 0,0:33:11.45,0:33:13.92,Default,,0000,0000,0000,,Forget about\Nwhere the words are aimed.
+Dialogue: 0,0:33:14.02,0:33:16.49,Default,,0000,0000,0000,,What I say is that...
+Dialogue: 0,0:33:16.59,0:33:18.79,Default,,0000,0000,0000,,I remember them.
+Dialogue: 0,0:33:18.89,0:33:20.79,Default,,0000,0000,0000,,They can't hear you...
+Dialogue: 0,0:33:20.89,0:33:23.63,Default,,0000,0000,0000,,because they're dead.
+Dialogue: 0,0:33:23.73,0:33:26.56,Default,,0000,0000,0000,,My mouth moves,\Nwords come out,
+Dialogue: 0,0:33:26.66,0:33:29.36,Default,,0000,0000,0000,,but none seem\Nto get across\Nthe drawbridge...
+Dialogue: 0,0:33:29.47,0:33:32.13,Default,,0000,0000,0000,,to the princess I know\Nwho awaits within.
+Dialogue: 0,0:33:33.90,0:33:35.04,Default,,0000,0000,0000,,We're on!
+Dialogue: 0,0:33:36.81,0:33:38.14,Default,,0000,0000,0000,,What princess?
+Dialogue: 0,0:33:38.24,0:33:39.98,Default,,0000,0000,0000,,Hey! Oh, hey, Eddie.\NWhat the hell?
+Dialogue: 0,0:33:40.08,0:33:42.18,Default,,0000,0000,0000,,How are you doin', huh?\N[ Grunts ]
+Dialogue: 0,0:33:42.28,0:33:44.48,Default,,0000,0000,0000,,Pockets.\NWatch out for needles.
+Dialogue: 0,0:33:44.58,0:33:46.68,Default,,0000,0000,0000,,Don't you have\Nto read him his rights\Nbefore you strangle him?
+Dialogue: 0,0:33:46.78,0:33:48.88,Default,,0000,0000,0000,,Empty.\NI had to hold\Nhis throat closed...
+Dialogue: 0,0:33:48.99,0:33:50.62,Default,,0000,0000,0000,,so he wouldn't\Nswallow the evidence.
+Dialogue: 0,0:33:50.72,0:33:52.89,Default,,0000,0000,0000,,All right.\NIf you bite me,
+Dialogue: 0,0:33:52.99,0:33:55.56,Default,,0000,0000,0000,,I will squeeze\Nyour little pinhead off.
+Dialogue: 0,0:33:56.86,0:33:58.39,Default,,0000,0000,0000,,- [ Groaning ]\N- [ Gagging ]
+Dialogue: 0,0:33:58.50,0:34:00.33,Default,,0000,0000,0000,,Okay. Oh, easy.
+Dialogue: 0,0:34:00.43,0:34:04.23,Default,,0000,0000,0000,,- [ Grunts ] There it is!\N- You shouldn't swallow heroin.\NIt's dangerous.
+Dialogue: 0,0:34:04.33,0:34:06.33,Default,,0000,0000,0000,,- [ Groaning ]\N- Okay. Eddie.
+Dialogue: 0,0:34:06.44,0:34:09.00,Default,,0000,0000,0000,,Eddie--\NEddie.
+Dialogue: 0,0:34:09.11,0:34:10.74,Default,,0000,0000,0000,,Eddie, Eddie, Eddie.\NHey, Eddie.
+Dialogue: 0,0:34:10.84,0:34:12.77,Default,,0000,0000,0000,,I'm gonna ask you\Na question, okay?
+Dialogue: 0,0:34:12.88,0:34:15.28,Default,,0000,0000,0000,,You answer, you walk away.\NAll right?
+Dialogue: 0,0:34:15.38,0:34:18.91,Default,,0000,0000,0000,,You don't answer--\NYou book me.\NI get sick.
+Dialogue: 0,0:34:19.02,0:34:22.05,Default,,0000,0000,0000,,I know the drill.\NNo.\NIf you don't answer,
+Dialogue: 0,0:34:22.15,0:34:26.99,Default,,0000,0000,0000,,I'm gonna cram this\Nback down your throat\Nwithout the protection.
+Dialogue: 0,0:34:27.09,0:34:30.79,Default,,0000,0000,0000,,All right, you sold some\Nof this crap to a tall guy,\Nover six and a half feet tall.
+Dialogue: 0,0:34:30.89,0:34:32.76,Default,,0000,0000,0000,,Show him, Bones.\NWhat?
+Dialogue: 0,0:34:32.86,0:34:35.66,Default,,0000,0000,0000,,Show him.\NOh, um--
+Dialogue: 0,0:34:37.20,0:34:40.57,Default,,0000,0000,0000,,- Like that tall.\N- Uh, nobody I know.
+Dialogue: 0,0:34:40.67,0:34:43.14,Default,,0000,0000,0000,,[ Grunts ]\NHere. Come on, eat it. Eat.
+Dialogue: 0,0:34:43.24,0:34:46.01,Default,,0000,0000,0000,,That's it.\NGet it in there. That's it.\N[ Coughing, Choking ]
+Dialogue: 0,0:34:47.21,0:34:49.34,Default,,0000,0000,0000,,Ray!\NRay?
+Dialogue: 0,0:34:49.45,0:34:51.41,Default,,0000,0000,0000,,- Ray! Ray Stewart.\N- Tell me about Ray, huh?
+Dialogue: 0,0:34:51.52,0:34:53.28,Default,,0000,0000,0000,,Everybody knows him down here.\NHe's a longtime skel.
+Dialogue: 0,0:34:53.38,0:34:55.92,Default,,0000,0000,0000,,When was the last time\Nyou saw him?
+Dialogue: 0,0:34:56.02,0:34:58.12,Default,,0000,0000,0000,,He bought a stick of dynamite\Nabout three days ago.
+Dialogue: 0,0:34:58.22,0:35:00.46,Default,,0000,0000,0000,,I feel I should alert you.
+Dialogue: 0,0:35:00.56,0:35:03.16,Default,,0000,0000,0000,,There's an additive\Nin this heroin\Nthat causes overdoses.
+Dialogue: 0,0:35:04.63,0:35:06.39,Default,,0000,0000,0000,,Well--\NThanks.
+Dialogue: 0,0:35:06.50,0:35:08.76,Default,,0000,0000,0000,,- Hey, where'd you find her?\N- Museum.
+Dialogue: 0,0:35:08.87,0:35:10.60,Default,,0000,0000,0000,,[ Cell Phone Ringing ]\NOh.
+Dialogue: 0,0:35:10.70,0:35:13.77,Default,,0000,0000,0000,,He should warn the addicts.\NYeah. Like they do\Non a pack of cigarettes.
+Dialogue: 0,0:35:13.87,0:35:16.44,Default,,0000,0000,0000,,When? Thanks.
+Dialogue: 0,0:35:16.54,0:35:18.34,Default,,0000,0000,0000,,What?\NThey found Warren Lynch.
+Dialogue: 0,0:35:18.44,0:35:22.48,Default,,0000,0000,0000,,Mr. Lynch was thrown\Nfrom a speeding car.
+Dialogue: 0,0:35:22.58,0:35:25.55,Default,,0000,0000,0000,,It's a minor miracle\Nhe survived.
+Dialogue: 0,0:35:25.65,0:35:27.95,Default,,0000,0000,0000,,It may be because he was already\Nunconscious at the time.
+Dialogue: 0,0:35:28.05,0:35:30.02,Default,,0000,0000,0000,,Unconscious?\NYes.
+Dialogue: 0,0:35:30.12,0:35:33.69,Default,,0000,0000,0000,,Badly beaten.\NInternal bleeding, broken ribs,
+Dialogue: 0,0:35:33.79,0:35:38.19,Default,,0000,0000,0000,,both legs, some spinal damage,\Nbroken pelvis.
+Dialogue: 0,0:35:38.30,0:35:40.86,Default,,0000,0000,0000,,When can we talk to him?\NAnytime you want,
+Dialogue: 0,0:35:40.96,0:35:42.83,Default,,0000,0000,0000,,as long as you don't\Nexpect a response.
+Dialogue: 0,0:35:42.93,0:35:44.87,Default,,0000,0000,0000,,This man has\Nsevere brain damage.
+Dialogue: 0,0:35:44.97,0:35:48.20,Default,,0000,0000,0000,,Off the record,\Nhe's not going to wake up.
+Dialogue: 0,0:35:48.31,0:35:52.21,Default,,0000,0000,0000,,Best-case scenario,\Nhe spends the rest of his life\Nhooked up to feeding tubes.
+Dialogue: 0,0:35:52.31,0:35:54.24,Default,,0000,0000,0000,,This is one of\Nthe richest men\Nin the country.
+Dialogue: 0,0:35:54.34,0:35:57.68,Default,,0000,0000,0000,,Most of the time,\Nthat might mean something.\NNot now.
+Dialogue: 0,0:35:57.78,0:36:00.02,Default,,0000,0000,0000,,Dr. Lawrence,\Nthis man holds the key...
+Dialogue: 0,0:36:00.12,0:36:02.52,Default,,0000,0000,0000,,to how and why\NSenator Paula Davis died.
+Dialogue: 0,0:36:02.62,0:36:06.79,Default,,0000,0000,0000,,I'm sorry. Anything\Nthat man has in his head,\Nit's going to stay there.
+Dialogue: 0,0:36:06.89,0:36:08.69,Default,,0000,0000,0000,,Excuse me.
+Dialogue: 0,0:36:13.46,0:36:14.43,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:39:18.01,0:39:24.59,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:39:24.59,0:39:29.09,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:39:29.09,0:39:31.53,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:39:48.31,0:39:50.68,Default,,0000,0000,0000,,After Zack nagged me\Na hundred times--
+Dialogue: 0,0:39:50.95,0:39:54.45,Default,,0000,0000,0000,,It's important for us to explain\Nhow the victim's shoulder\Nand elbow were dislocated.
+Dialogue: 0,0:39:54.55,0:39:56.58,Default,,0000,0000,0000,,[ Angela ]\NAnd I re-created\Nthe most likely sequence.
+Dialogue: 0,0:39:56.69,0:39:59.39,Default,,0000,0000,0000,,[ Bones Popping ]
+Dialogue: 0,0:39:59.49,0:40:02.19,Default,,0000,0000,0000,,- Ouch!\N- The victim was dead\Nwhen this happened.
+Dialogue: 0,0:40:02.29,0:40:05.29,Default,,0000,0000,0000,,He didn't feel it.\NRun it again.
+Dialogue: 0,0:40:08.20,0:40:10.00,Default,,0000,0000,0000,,[ Booth ]\NThat's like he was\Nputting his jacket on.
+Dialogue: 0,0:40:10.10,0:40:12.20,Default,,0000,0000,0000,,Corpses don't usually\Ndo that.
+Dialogue: 0,0:40:12.30,0:40:15.10,Default,,0000,0000,0000,,These injuries occurred\Nwhen the corpse\Nwas forced into a jacket.
+Dialogue: 0,0:40:15.21,0:40:18.14,Default,,0000,0000,0000,,- Yeah. Most likely\Nby two people.\N- Yeah. In a big hurry.
+Dialogue: 0,0:40:18.24,0:40:20.07,Default,,0000,0000,0000,,They had a train to meet.
+Dialogue: 0,0:40:20.08,0:40:20.54,Default,,0000,0000,0000,,They had a train to meet.
+Dialogue: 0,0:40:21.21,0:40:22.64,Default,,0000,0000,0000,,Got anything on\Nthe H.O.V. lane photograph?\NYeah.
+Dialogue: 0,0:40:22.75,0:40:26.31,Default,,0000,0000,0000,,It was relatively easy to get\Nthe license plate numbers from\Nthese two cars.
+Dialogue: 0,0:40:26.42,0:40:28.35,Default,,0000,0000,0000,,Yeah, well,\NI'll check 'em out.
+Dialogue: 0,0:40:28.45,0:40:30.22,Default,,0000,0000,0000,,But there was another car.
+Dialogue: 0,0:40:30.32,0:40:32.35,Default,,0000,0000,0000,,- In the next lane.\N- How do you know that?
+Dialogue: 0,0:40:32.46,0:40:35.86,Default,,0000,0000,0000,,- Well, rich guys\Nkeep their cars shiny.\N- [ Beeping ]
+Dialogue: 0,0:40:35.96,0:40:38.66,Default,,0000,0000,0000,,Adjusting for the diffraction\Nof light caused by the curve--
+Dialogue: 0,0:40:38.76,0:40:41.46,Default,,0000,0000,0000,,It's a Navigator.\NBut get this.
+Dialogue: 0,0:40:41.57,0:40:43.83,Default,,0000,0000,0000,,[ Beeping ]
+Dialogue: 0,0:40:43.93,0:40:46.33,Default,,0000,0000,0000,,I don't know if that's\Nof any use to you.
+Dialogue: 0,0:40:46.44,0:40:49.34,Default,,0000,0000,0000,,Yeah. It's of use.
+Dialogue: 0,0:40:50.54,0:40:53.48,Default,,0000,0000,0000,,Booth, do either of these\Ncount as experiments?
+Dialogue: 0,0:40:53.58,0:40:55.48,Default,,0000,0000,0000,,'Cause if they do,\Nwe could both get fired...
+Dialogue: 0,0:40:55.58,0:40:57.45,Default,,0000,0000,0000,,by your old sweetheart.
+Dialogue: 0,0:40:57.55,0:41:00.11,Default,,0000,0000,0000,,[ Chuckles ]\NYou know, you just quit\Ntelling Bones...
+Dialogue: 0,0:41:00.22,0:41:02.75,Default,,0000,0000,0000,,who you think\NI've slept with.\N[ Angela ] Think?
+Dialogue: 0,0:41:02.85,0:41:05.75,Default,,0000,0000,0000,,What do you mean, think?
+Dialogue: 0,0:41:08.39,0:41:10.93,Default,,0000,0000,0000,,[ Saroyan ] Two people\Nforced the corpse into a jacket.\NThat's excellent work.
+Dialogue: 0,0:41:11.03,0:41:14.23,Default,,0000,0000,0000,,- Who's that?\N- I think it's Rick Turco.
+Dialogue: 0,0:41:14.33,0:41:17.77,Default,,0000,0000,0000,,Means Turco's probably\Nthe last person to see Lynch\Nbefore he fell off the radar.
+Dialogue: 0,0:41:17.87,0:41:20.00,Default,,0000,0000,0000,,Angela and Zack are scared\Nthat this counts\Nas an experiment...
+Dialogue: 0,0:41:20.10,0:41:22.04,Default,,0000,0000,0000,,and you are\Ngonna fire them.
+Dialogue: 0,0:41:22.14,0:41:23.74,Default,,0000,0000,0000,,Ah, I am getting through.
+Dialogue: 0,0:41:23.84,0:41:25.87,Default,,0000,0000,0000,,Why did you\Ntake this job, Camille?
+Dialogue: 0,0:41:25.98,0:41:28.71,Default,,0000,0000,0000,,- Why shouldn't I, Seeley?\N- Because it's basically\Nherding cats,
+Dialogue: 0,0:41:28.81,0:41:30.58,Default,,0000,0000,0000,,and you're a dog person.
+Dialogue: 0,0:41:30.68,0:41:33.35,Default,,0000,0000,0000,,- Dogs herd cats.\N- Dogs don't do that.
+Dialogue: 0,0:41:33.45,0:41:37.42,Default,,0000,0000,0000,,- Chase 'em up trees, whatever.\N- Seriously, Cam.\NWhy did you take this job?
+Dialogue: 0,0:41:37.52,0:41:41.32,Default,,0000,0000,0000,,[ Clicks Tongue ]\NThese are titanium rib clippers\Nfrom Germany.
+Dialogue: 0,0:41:41.42,0:41:45.73,Default,,0000,0000,0000,,My last job, used bolt cutters\Nfrom Home Depot.\NThese are much, much nicer.
+Dialogue: 0,0:41:45.83,0:41:49.63,Default,,0000,0000,0000,,This autopsy table\Nhas downdraft ventilation.\NNo rotting corpse smell, Seeley.
+Dialogue: 0,0:41:49.73,0:41:51.13,Default,,0000,0000,0000,,My last table\Ndidn't even have a drain.
+Dialogue: 0,0:41:51.23,0:41:53.80,Default,,0000,0000,0000,,Think about that a second.\NLeaky corpse, no drain.
+Dialogue: 0,0:41:53.90,0:41:57.44,Default,,0000,0000,0000,,So you took this job\Nfor better equipment.
+Dialogue: 0,0:41:57.54,0:42:01.38,Default,,0000,0000,0000,,I've spent my whole\Nprofessional life in\Nbasement rooms with no windows.
+Dialogue: 0,0:42:01.48,0:42:03.34,Default,,0000,0000,0000,,Now I'm in\Nthe Jeffersonian Institute.
+Dialogue: 0,0:42:05.02,0:42:06.75,Default,,0000,0000,0000,,What?\NGotta ask.
+Dialogue: 0,0:42:06.85,0:42:10.05,Default,,0000,0000,0000,,You so do not.\NOr did you take this job\Nbecause of--
+Dialogue: 0,0:42:10.15,0:42:12.72,Default,,0000,0000,0000,,[ Laughing ]\NOh, my God. The ego.
+Dialogue: 0,0:42:12.82,0:42:16.02,Default,,0000,0000,0000,,[ Mock Chuckling ]\NSay it.
+Dialogue: 0,0:42:17.53,0:42:20.23,Default,,0000,0000,0000,,Nothing to do with you.
+Dialogue: 0,0:42:20.33,0:42:24.03,Default,,0000,0000,0000,,I need Bones\Nthis afternoon.\NOkay.
+Dialogue: 0,0:42:24.13,0:42:27.10,Default,,0000,0000,0000,,It's about her mother's murder\Nand her father's disappearance.
+Dialogue: 0,0:42:27.20,0:42:30.10,Default,,0000,0000,0000,,Plus, she dedicated\Nher book to you, so--\NIt's a legitimate case, Cam.
+Dialogue: 0,0:42:30.21,0:42:32.81,Default,,0000,0000,0000,,I know.\NI read the file.
+Dialogue: 0,0:42:32.91,0:42:35.61,Default,,0000,0000,0000,,- Why hasn't she confronted me?\N- About what?
+Dialogue: 0,0:42:35.71,0:42:39.55,Default,,0000,0000,0000,,About me being parachuted in\Nover her head.
+Dialogue: 0,0:42:39.65,0:42:42.35,Default,,0000,0000,0000,,- Finds me intimidating, right?\N- [ Chuckling ]
+Dialogue: 0,0:42:42.45,0:42:44.42,Default,,0000,0000,0000,,Hey, I intimidate people.
+Dialogue: 0,0:42:44.52,0:42:47.22,Default,,0000,0000,0000,,Yeah.
+Dialogue: 0,0:42:47.32,0:42:49.12,Default,,0000,0000,0000,,Bones doesn't intimidate.
+Dialogue: 0,0:42:49.23,0:42:51.53,Default,,0000,0000,0000,,Then what?
+Dialogue: 0,0:42:51.63,0:42:55.53,Default,,0000,0000,0000,,You've seen the way\Nshe stares at human remains\Nbefore she makes a decision.
+Dialogue: 0,0:42:55.63,0:42:57.83,Default,,0000,0000,0000,,Yes.\NYou're human remains,
+Dialogue: 0,0:42:57.93,0:43:00.80,Default,,0000,0000,0000,,and she hasn't made\Na decision yet.
+Dialogue: 0,0:43:07.04,0:43:09.61,Default,,0000,0000,0000,,How do I help her\Nmake the right decision?
+Dialogue: 0,0:43:09.71,0:43:12.68,Default,,0000,0000,0000,,Go for the truth.\NTake care of her people.
+Dialogue: 0,0:43:12.78,0:43:16.15,Default,,0000,0000,0000,,Oh, and I like the whole\Nintimidation thing.
+Dialogue: 0,0:43:16.25,0:43:18.02,Default,,0000,0000,0000,,I think it's cute.
+Dialogue: 0,0:43:22.33,0:43:23.29,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:43:25.03,0:43:29.56,Default,,0000,0000,0000,,[ Guard Shouts ]\N[ Door Buzzes, Slams ]
+Dialogue: 0,0:43:29.67,0:43:31.50,Default,,0000,0000,0000,,I got no reason to lie.
+Dialogue: 0,0:43:31.60,0:43:35.27,Default,,0000,0000,0000,,I'm facing life at least.\NProbably gonna get executed.
+Dialogue: 0,0:43:35.37,0:43:38.44,Default,,0000,0000,0000,,What did you do?\NMr. Downs\Nkilled his entire family.
+Dialogue: 0,0:43:38.54,0:43:40.48,Default,,0000,0000,0000,,I killed your friend...
+Dialogue: 0,0:43:40.58,0:43:44.01,Default,,0000,0000,0000,,'cause he cut\Nin the cafeteria line and\Nsnagged the last orange juice.
+Dialogue: 0,0:43:44.11,0:43:47.15,Default,,0000,0000,0000,,Broke off a sharpened toothbrush\Nin his jugular.
+Dialogue: 0,0:43:47.25,0:43:50.02,Default,,0000,0000,0000,,Mr. Downs,\Nthe man you killed--\NMcVicar?
+Dialogue: 0,0:43:50.12,0:43:52.79,Default,,0000,0000,0000,,He's not my friend.\NHe killed my mother.
+Dialogue: 0,0:43:52.89,0:43:55.86,Default,,0000,0000,0000,,- You come to tell me thanks?\N- No.
+Dialogue: 0,0:43:55.96,0:43:59.73,Default,,0000,0000,0000,,McVicar was my last chance\Nto find out some things.
+Dialogue: 0,0:43:59.83,0:44:01.73,Default,,0000,0000,0000,,McVicar might've known\Nsomething about my father.
+Dialogue: 0,0:44:01.83,0:44:04.90,Default,,0000,0000,0000,,I can't ask my father\Nbecause he left a message...
+Dialogue: 0,0:44:05.00,0:44:07.44,Default,,0000,0000,0000,,on my answering machine\Ntelling me\Nto stop looking for him.
+Dialogue: 0,0:44:07.54,0:44:10.61,Default,,0000,0000,0000,,[ Guard ] Pull 'em out.\N[ Guard #2 ]\NFull search, both cells.
+Dialogue: 0,0:44:10.71,0:44:13.41,Default,,0000,0000,0000,,I'll tell you what.
+Dialogue: 0,0:44:13.51,0:44:16.51,Default,,0000,0000,0000,,Maybe...
+Dialogue: 0,0:44:16.61,0:44:20.48,Default,,0000,0000,0000,,look at McVicar's murder\Nas a second message from Max,
+Dialogue: 0,0:44:20.58,0:44:24.05,Default,,0000,0000,0000,,one that he didn't use\Nthe phone for.
+Dialogue: 0,0:44:24.15,0:44:27.69,Default,,0000,0000,0000,,We never mentioned\Nmy father's name was Max.
+Dialogue: 0,0:44:29.06,0:44:32.59,Default,,0000,0000,0000,,- I'm done.\N- Did you perform a hit\Nfor Max Keenan?
+Dialogue: 0,0:44:35.27,0:44:39.70,Default,,0000,0000,0000,,- You performed a hit\Nfor Max Keenan.\N- Take it as a sign from God.
+Dialogue: 0,0:44:39.80,0:44:41.34,Default,,0000,0000,0000,,[ Door Buzzes ]
+Dialogue: 0,0:44:45.91,0:44:49.54,Default,,0000,0000,0000,,How am I gonna tell Russ\Nour father ordered the death\Nof another human being?
+Dialogue: 0,0:44:49.65,0:44:52.51,Default,,0000,0000,0000,,If he did that,\Nand I'm not saying\Nit happened that way,
+Dialogue: 0,0:44:52.62,0:44:55.28,Default,,0000,0000,0000,,then your father took down\Nthe man who murdered his wife.
+Dialogue: 0,0:44:55.39,0:44:57.15,Default,,0000,0000,0000,,Good people don't have\Nother people murdered.
+Dialogue: 0,0:44:57.25,0:44:59.19,Default,,0000,0000,0000,,Good people\Ndon't even know how.
+Dialogue: 0,0:44:59.29,0:45:02.99,Default,,0000,0000,0000,,Your father buried your mother\Nin a pair of new shoes\Nin the cemetery...
+Dialogue: 0,0:45:03.09,0:45:04.93,Default,,0000,0000,0000,,with her dolphin belt buckle\Nthat reminded her of you...
+Dialogue: 0,0:45:05.03,0:45:06.93,Default,,0000,0000,0000,,because you both\Nlove dolphins.
+Dialogue: 0,0:45:07.03,0:45:08.80,Default,,0000,0000,0000,,This does not\Nmake him a good man.
+Dialogue: 0,0:45:08.90,0:45:11.63,Default,,0000,0000,0000,,People can be more\Nthan one thing.
+Dialogue: 0,0:45:11.74,0:45:13.70,Default,,0000,0000,0000,,We were at a dead end.\NOkay? Now we're not.
+Dialogue: 0,0:45:13.80,0:45:17.71,Default,,0000,0000,0000,,Okay? We know that your father\Ngot to Mitchell Downs,\Npersuaded him to kill McVicar.
+Dialogue: 0,0:45:17.81,0:45:19.71,Default,,0000,0000,0000,,We find out how he did that,
+Dialogue: 0,0:45:19.81,0:45:23.34,Default,,0000,0000,0000,,we're that much closer\Nto finding out what happened\Nto your old man.
+Dialogue: 0,0:45:23.45,0:45:25.55,Default,,0000,0000,0000,,I mean, that's if\Nyou still want to find him.
+Dialogue: 0,0:45:25.65,0:45:28.58,Default,,0000,0000,0000,,I do.\NOkay.
+Dialogue: 0,0:45:28.69,0:45:30.69,Default,,0000,0000,0000,,Silver lining.
+Dialogue: 0,0:45:32.69,0:45:34.49,Default,,0000,0000,0000,,♪♪ [ Soft Rock ]
+Dialogue: 0,0:45:34.59,0:45:40.80,Default,,0000,0000,0000,,♪ Once I wanted to be\Nthe greatest ♪
+Dialogue: 0,0:45:43.20,0:45:48.84,Default,,0000,0000,0000,,♪ No wind or waterfall\Ncould stall me ♪
+Dialogue: 0,0:45:50.14,0:45:54.81,Default,,0000,0000,0000,,♪ And then came the rush\Nof the flood ♪
+Dialogue: 0,0:45:55.91,0:46:00.88,Default,,0000,0000,0000,,♪ Stars at night\Nturned deep to dust ♪
+Dialogue: 0,0:46:00.98,0:46:02.48,Default,,0000,0000,0000,,♪ Melt me down ♪
+Dialogue: 0,0:46:25.24,0:46:28.74,Default,,0000,0000,0000,,Warren Lynch was in on it.\NWhere'd that come from?
+Dialogue: 0,0:46:28.85,0:46:32.85,Default,,0000,0000,0000,,He had his own dolphin.\NThat "N.C., lots of A's,"\Nnational championship ring.
+Dialogue: 0,0:46:32.95,0:46:35.65,Default,,0000,0000,0000,,His own dolphin.\NAll the rest\Nof his jewelry...
+Dialogue: 0,0:46:35.75,0:46:37.55,Default,,0000,0000,0000,,was removed\Nand placed on the dead man--
+Dialogue: 0,0:46:37.65,0:46:41.29,Default,,0000,0000,0000,,his $10,000 watch,\Nhis I.D. band from his wife,\Nhis two other rings.
+Dialogue: 0,0:46:41.39,0:46:43.39,Default,,0000,0000,0000,,But not\Nthe championship ring.
+Dialogue: 0,0:46:43.49,0:46:46.76,Default,,0000,0000,0000,,That's good, Bones.\NThe only reason they wouldn't\Nrip it off his hands is--
+Dialogue: 0,0:46:46.86,0:46:49.16,Default,,0000,0000,0000,,Because Lynch was\Ncalling the shots.
+Dialogue: 0,0:46:49.27,0:46:52.50,Default,,0000,0000,0000,,And I know exactly\Nwho was in on it.
+Dialogue: 0,0:46:54.34,0:46:57.00,Default,,0000,0000,0000,,[ Chuckling ]\NSo Warren Lynch and I\Nconspired...
+Dialogue: 0,0:46:57.11,0:46:59.11,Default,,0000,0000,0000,,to disappear him\Nfor a few days...
+Dialogue: 0,0:46:59.21,0:47:02.28,Default,,0000,0000,0000,,so that we could profit from\Nshorting Lynchpin stock, huh?
+Dialogue: 0,0:47:02.38,0:47:05.31,Default,,0000,0000,0000,,- Well, you know,\Nthat's my thinking.\N- [ Laughing ]
+Dialogue: 0,0:47:05.42,0:47:08.02,Default,,0000,0000,0000,,[ Turco On Speaker ]\NThen dressed a junkie\Nin Warren's clothes,
+Dialogue: 0,0:47:08.12,0:47:10.45,Default,,0000,0000,0000,,planted him in front\Nof a train and--
+Dialogue: 0,0:47:10.55,0:47:12.39,Default,,0000,0000,0000,,Wait.\NDid I murder the junkie?
+Dialogue: 0,0:47:12.39,0:47:13.42,Default,,0000,0000,0000,,Wait.\NDid I murder the junkie?
+Dialogue: 0,0:47:13.52,0:47:15.19,Default,,0000,0000,0000,,No. Bones said\Nyou probably found him dead.
+Dialogue: 0,0:47:15.29,0:47:18.13,Default,,0000,0000,0000,,But what I think\Nis that you and Lynch...
+Dialogue: 0,0:47:18.23,0:47:22.26,Default,,0000,0000,0000,,intended a white-collar crime,\Nbut a senator died.
+Dialogue: 0,0:47:22.37,0:47:24.23,Default,,0000,0000,0000,,[ Turco On Speaker, Laughing ]\NThen I got all hinky...
+Dialogue: 0,0:47:24.33,0:47:26.67,Default,,0000,0000,0000,,and tossed Warren\Nout of the car at\N80 miles an hour.
+Dialogue: 0,0:47:26.77,0:47:28.50,Default,,0000,0000,0000,,[ Chuckling ]
+Dialogue: 0,0:47:28.61,0:47:30.84,Default,,0000,0000,0000,,Is that a confession?
+Dialogue: 0,0:47:30.94,0:47:34.71,Default,,0000,0000,0000,,Nah. Nah.\NJust gettin' it straight.
+Dialogue: 0,0:47:34.81,0:47:38.61,Default,,0000,0000,0000,,You know, as a professionl\Ninvestigator myself,
+Dialogue: 0,0:47:38.72,0:47:43.18,Default,,0000,0000,0000,,I have to point out\Nthat blackmailers make\Nmuch better suspects.
+Dialogue: 0,0:47:43.29,0:47:47.79,Default,,0000,0000,0000,,Well, Lynchpin has no record of\Na quarter-million-dollar payout\Nthree days ago.
+Dialogue: 0,0:47:47.89,0:47:51.36,Default,,0000,0000,0000,,Well, there's not exactly\Na column for blackmail payouts\Nin the corporate books.
+Dialogue: 0,0:47:51.46,0:47:55.06,Default,,0000,0000,0000,,If I'd only agreed\Nto the full payout,
+Dialogue: 0,0:47:55.16,0:47:57.90,Default,,0000,0000,0000,,Lynch might've never been\Ntaken by those animals.
+Dialogue: 0,0:47:59.20,0:48:02.14,Default,,0000,0000,0000,,Hey, let's play\Na little show-and-tell, huh?
+Dialogue: 0,0:48:02.24,0:48:06.21,Default,,0000,0000,0000,,'Cause we can put you\Nwith Lynch moments before\Nhe fell off the radar.
+Dialogue: 0,0:48:11.58,0:48:14.92,Default,,0000,0000,0000,,That's maybe me before\Nhe fell off the radar.
+Dialogue: 0,0:48:15.02,0:48:17.59,Default,,0000,0000,0000,,We worked together.
+Dialogue: 0,0:48:17.69,0:48:20.66,Default,,0000,0000,0000,,[ Chuckles ]\NYou got nothin'.
+Dialogue: 0,0:48:23.86,0:48:26.39,Default,,0000,0000,0000,,Booth.
+Dialogue: 0,0:48:31.33,0:48:33.37,Default,,0000,0000,0000,,Do that lying thing.\NCould you be more specific?
+Dialogue: 0,0:48:33.47,0:48:36.80,Default,,0000,0000,0000,,We tell him Lynch woke up\Nand gave a statement\Nincriminating him.
+Dialogue: 0,0:48:36.91,0:48:40.34,Default,,0000,0000,0000,,Turco knows the lying thing.\NTell him Lynch said something\Nonly Lynch could say.
+Dialogue: 0,0:48:40.44,0:48:43.18,Default,,0000,0000,0000,,Oh, great idea, except for\Nthe "only Lynch could say" part.
+Dialogue: 0,0:48:43.28,0:48:46.25,Default,,0000,0000,0000,,[ Gulps ] The ring?\NAh, he'll ask for specifics\Nof the conversations.
+Dialogue: 0,0:48:46.35,0:48:48.78,Default,,0000,0000,0000,,I gotta cut him loose.\NWhat-- He's gonna\Nget away with it?
+Dialogue: 0,0:48:48.89,0:48:50.89,Default,,0000,0000,0000,,Well, you know,\Nthat happens sometimes, Bones.
+Dialogue: 0,0:48:50.99,0:48:53.09,Default,,0000,0000,0000,,That's that brown\Nlittle smelly part of the job.
+Dialogue: 0,0:48:53.19,0:48:55.99,Default,,0000,0000,0000,,Shoulder and elbow.\NThe junkie's\Nshoulder and elbow...
+Dialogue: 0,0:48:56.09,0:48:59.16,Default,,0000,0000,0000,,were dislocated when they\Nforced him into Lynch's jacket.
+Dialogue: 0,0:48:59.26,0:49:01.83,Default,,0000,0000,0000,,We don't know\Nif Lynch was there for that.\NIt took two people.
+Dialogue: 0,0:49:01.93,0:49:04.47,Default,,0000,0000,0000,,It was him.
+Dialogue: 0,0:49:04.57,0:49:06.43,Default,,0000,0000,0000,,Come on, Booth.
+Dialogue: 0,0:49:06.54,0:49:10.10,Default,,0000,0000,0000,,The part of you with\Nthe big gambling problem\Nmust love this idea.
+Dialogue: 0,0:49:11.47,0:49:15.31,Default,,0000,0000,0000,,Right there. Mm-hmm.\NThat's the reason\Nyou didn't get Cam's job.
+Dialogue: 0,0:49:18.98,0:49:21.78,Default,,0000,0000,0000,,Oh, two against one.\NThat's unfair.
+Dialogue: 0,0:49:21.88,0:49:25.89,Default,,0000,0000,0000,,- Warren Lynch woke up.\N- Ah, and he's talking, right?
+Dialogue: 0,0:49:25.99,0:49:28.19,Default,,0000,0000,0000,,Huh? Is he pointing\Nhis finger straight at me?
+Dialogue: 0,0:49:28.29,0:49:29.56,Default,,0000,0000,0000,,That's correct.\NWhat's he saying?
+Dialogue: 0,0:49:29.66,0:49:32.66,Default,,0000,0000,0000,,He let you take\Nall of his jewelry except\Nhis championship ring.
+Dialogue: 0,0:49:32.76,0:49:34.56,Default,,0000,0000,0000,,No. I asked,\Nwhat did he say, in words.
+Dialogue: 0,0:49:38.47,0:49:42.40,Default,,0000,0000,0000,,Hey, unless I'm under arrest,\NI'm leaving, folks.
+Dialogue: 0,0:49:42.51,0:49:46.11,Default,,0000,0000,0000,,Mr. Lynch said it was\Ndifficult getting his jacket\Nonto the corpse.
+Dialogue: 0,0:49:46.21,0:49:48.14,Default,,0000,0000,0000,,Rigor mortis.
+Dialogue: 0,0:49:48.24,0:49:50.81,Default,,0000,0000,0000,,You have a train to meet.\NYou're in a hurry.
+Dialogue: 0,0:49:50.91,0:49:52.88,Default,,0000,0000,0000,,And the sound\Nof the shoulder popping.
+Dialogue: 0,0:49:54.95,0:49:56.92,Default,,0000,0000,0000,,[ Bones Popping ]
+Dialogue: 0,0:49:59.16,0:50:01.29,Default,,0000,0000,0000,,Then the elbow,\Nlike knuckles popping--
+Dialogue: 0,0:50:01.39,0:50:03.02,Default,,0000,0000,0000,,[ Popping ]
+Dialogue: 0,0:50:03.13,0:50:04.99,Default,,0000,0000,0000,,only louder.
+Dialogue: 0,0:50:06.20,0:50:08.10,Default,,0000,0000,0000,,Sickening.
+Dialogue: 0,0:50:11.47,0:50:12.43,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:54:34.26,0:54:35.26,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:54:37.40,0:54:41.27,Default,,0000,0000,0000,,Turco will admit\Nto helping Warren Lynch\Nplace a dead body...
+Dialogue: 0,0:54:41.37,0:54:44.41,Default,,0000,0000,0000,,in Mr. Lynch's car\Nand rigging it to burn...
+Dialogue: 0,0:54:44.51,0:54:46.61,Default,,0000,0000,0000,,with the intent\Nof moving the market.
+Dialogue: 0,0:54:46.71,0:54:49.54,Default,,0000,0000,0000,,Everything else,\Nincluding placing it\Non the tracks,
+Dialogue: 0,0:54:49.65,0:54:51.81,Default,,0000,0000,0000,,he says Lynch did\Non his own.
+Dialogue: 0,0:54:51.91,0:54:54.75,Default,,0000,0000,0000,,He's lying.\NThere's a small matter\Nof proving that in court.
+Dialogue: 0,0:54:54.85,0:54:56.98,Default,,0000,0000,0000,,- What's the maximum sentence\Non those charges?\N- Ten years.
+Dialogue: 0,0:54:57.09,0:54:59.22,Default,,0000,0000,0000,,He killed three people.
+Dialogue: 0,0:54:59.32,0:55:03.46,Default,,0000,0000,0000,,- And put one in a coma.\N- But Lynch deserves to be in\Na coma, so it doesn't count.
+Dialogue: 0,0:55:03.56,0:55:05.93,Default,,0000,0000,0000,,Look. Turco puts\Nall the blame on Lynch.\NHe does 10 years,
+Dialogue: 0,0:55:06.03,0:55:07.90,Default,,0000,0000,0000,,and he gets all the money\Nfrom shorting the stock.
+Dialogue: 0,0:55:08.00,0:55:11.50,Default,,0000,0000,0000,,It's 10 years or nothing.\NI can only work\Nwith what I'm given,
+Dialogue: 0,0:55:11.60,0:55:13.53,Default,,0000,0000,0000,,and the forensic work\Non this was not good enough.
+Dialogue: 0,0:55:13.64,0:55:16.24,Default,,0000,0000,0000,,- What?\N- You were fooled\Nby fake dental records,
+Dialogue: 0,0:55:16.34,0:55:18.07,Default,,0000,0000,0000,,you baked some Spam.
+Dialogue: 0,0:55:18.17,0:55:19.67,Default,,0000,0000,0000,,[ Saroyan ]\NWhat did you want us to do?
+Dialogue: 0,0:55:19.78,0:55:21.64,Default,,0000,0000,0000,,- Your jobs.\N- Hey!
+Dialogue: 0,0:55:21.64,0:55:24.01,Default,,0000,0000,0000,,You want us to do your job.\NMy people gave you all\Nthe evidence you need...
+Dialogue: 0,0:55:24.11,0:55:25.45,Default,,0000,0000,0000,,to fry Turco\Nwith any reasonable jury.
+Dialogue: 0,0:55:25.55,0:55:29.08,Default,,0000,0000,0000,,- Forensically--\N- We gave you everything\Nyou needed to arrest Turco.
+Dialogue: 0,0:55:29.19,0:55:31.85,Default,,0000,0000,0000,,- Arrest is not a conviction.\N- We gave you enough to\Nreject his plea bargain...
+Dialogue: 0,0:55:31.95,0:55:33.59,Default,,0000,0000,0000,,and indict him in\Nthe wrongful death\Nof a senator.
+Dialogue: 0,0:55:33.69,0:55:37.36,Default,,0000,0000,0000,,-Indictment is not a conviction.\N-You accept that plea bargain,\Nthe investigation stops.
+Dialogue: 0,0:55:37.46,0:55:40.63,Default,,0000,0000,0000,,Indict him.\NGive us time to give you\Nwhat you need.
+Dialogue: 0,0:55:40.73,0:55:42.93,Default,,0000,0000,0000,,If you accept this plea bargain,\Nyou don't deserve to be\Na federal prosecuto
+Dialogue: 0,0:55:43.03,0:55:44.70,Default,,0000,0000,0000,,- Dr. Saroyan--\N- Yeah, it's scary.
+Dialogue: 0,0:55:44.80,0:55:48.07,Default,,0000,0000,0000,,The whole country will be\Nwatching. You don't want to go\Nin with less than a sure thing.
+Dialogue: 0,0:55:48.17,0:55:51.54,Default,,0000,0000,0000,,But you put my people on\Nthe stand as expert witnesses,\Nand that's a sure thing.
+Dialogue: 0,0:55:51.64,0:55:53.91,Default,,0000,0000,0000,,- [ Together ] Not Zack.\N- [ Saroyan ] You tell\Nthe story of what happened...
+Dialogue: 0,0:55:54.01,0:55:55.38,Default,,0000,0000,0000,,using the evidence\Nthese people provided.
+Dialogue: 0,0:55:55.48,0:55:57.71,Default,,0000,0000,0000,,If you have any ability\Nas a prosecutor,\Nyou'll win the case.
+Dialogue: 0,0:55:57.81,0:56:00.05,Default,,0000,0000,0000,,- Are you finished?\N- No, Miss Supac.
+Dialogue: 0,0:56:00.15,0:56:02.15,Default,,0000,0000,0000,,In the future, when you have\Nproblems with my team,
+Dialogue: 0,0:56:02.25,0:56:05.95,Default,,0000,0000,0000,,you register them with me\Nin private, not by grandstanding\Nin a public forum.
+Dialogue: 0,0:56:10.49,0:56:11.46,Default,,0000,0000,0000,,♪♪
+Dialogue: 0,0:56:18.63,0:56:20.80,Default,,0000,0000,0000,,Okay, um,
+Dialogue: 0,0:56:20.90,0:56:23.54,Default,,0000,0000,0000,,I sort of see\Nwhy she got the job.
+Dialogue: 0,0:56:30.51,0:56:32.31,Default,,0000,0000,0000,,[ Booth ]\NWell, looks like\Nyour brother was here.
+Dialogue: 0,0:56:32.42,0:56:36.22,Default,,0000,0000,0000,,I never understood the idea\Nof bringing flowers.
+Dialogue: 0,0:56:37.79,0:56:39.75,Default,,0000,0000,0000,,Just for once, Bones,\Ndo what people do.
+Dialogue: 0,0:56:39.86,0:56:42.19,Default,,0000,0000,0000,,Okay?\NSee how it feels.
+Dialogue: 0,0:56:42.29,0:56:44.19,Default,,0000,0000,0000,,Come on.\NThat's it.
+Dialogue: 0,0:56:44.29,0:56:47.23,Default,,0000,0000,0000,,I'm gonna go stand over here\Nwhile you, uh, you know,\Ntalk to your mom.
+Dialogue: 0,0:56:47.33,0:56:49.76,Default,,0000,0000,0000,,I told you,\NI don't do... that.
+Dialogue: 0,0:56:52.13,0:56:54.64,Default,,0000,0000,0000,,Mmm.
+Dialogue: 0,0:56:58.14,0:57:00.57,Default,,0000,0000,0000,,Mom, it's me, Temperance.
+Dialogue: 0,0:57:00.68,0:57:02.54,Default,,0000,0000,0000,,[ Scoffs ]
+Dialogue: 0,0:57:09.08,0:57:11.69,Default,,0000,0000,0000,,I have questions,\Nbut you can't answer them.
+Dialogue: 0,0:57:11.79,0:57:14.69,Default,,0000,0000,0000,,No offense,\Nbut I don't think...
+Dialogue: 0,0:57:14.79,0:57:17.42,Default,,0000,0000,0000,,there's anything\Nhere of you but your bones so--
+Dialogue: 0,0:57:17.53,0:57:19.56,Default,,0000,0000,0000,,[ Scoffs, Chuckles ]
+Dialogue: 0,0:57:19.66,0:57:22.16,Default,,0000,0000,0000,,I can't believe\NI'm doing this.
+Dialogue: 0,0:57:28.47,0:57:30.77,Default,,0000,0000,0000,,Was Dad a good man or...
+Dialogue: 0,0:57:33.91,0:57:35.74,Default,,0000,0000,0000,,a bad man?
+Dialogue: 0,0:57:38.88,0:57:40.41,Default,,0000,0000,0000,,He had someone killed.
+Dialogue: 0,0:57:44.42,0:57:47.65,Default,,0000,0000,0000,,Had him murdered and--\N[ Whimpers ]
+Dialogue: 0,0:57:47.76,0:57:50.46,Default,,0000,0000,0000,,What's the truth?\NDo I--
+Dialogue: 0,0:57:52.83,0:57:56.10,Default,,0000,0000,0000,,Do I keep looking,\Nor do I let it go\Nlike he asked?
+Dialogue: 0,0:57:59.34,0:58:01.47,Default,,0000,0000,0000,,Who's he protecting,\Nhimself?
+Dialogue: 0,0:58:03.57,0:58:07.07,Default,,0000,0000,0000,,Or me and... Russ?
+Dialogue: 0,0:58:17.79,0:58:20.62,Default,,0000,0000,0000,,[ Exhales, Sighs ]
+Dialogue: 0,0:58:22.19,0:58:24.46,Default,,0000,0000,0000,,Booth,\NI asked the questions,
+Dialogue: 0,0:58:24.56,0:58:27.06,Default,,0000,0000,0000,,and guess what.
+Dialogue: 0,0:58:27.16,0:58:30.36,Default,,0000,0000,0000,,- No answer.\N- Well, maybe\Nif you weren't standing...
+Dialogue: 0,0:58:30.47,0:58:33.27,Default,,0000,0000,0000,,right on top of her,\Ntook a step to the left,\Nshowed a little respect.
+Dialogue: 0,0:58:33.37,0:58:36.74,Default,,0000,0000,0000,,Sometimes it takes a while\Nto get an answer, okay?
+Dialogue: 0,0:58:36.84,0:58:39.57,Default,,0000,0000,0000,,Just leave the flowers.
+Dialogue: 0,0:58:41.11,0:58:44.31,Default,,0000,0000,0000,,I get answers at a lab.\NYou get them from people.
+Dialogue: 0,0:58:44.41,0:58:46.98,Default,,0000,0000,0000,,Nobody gets answers\Nfrom a slab of stone.
+Dialogue: 0,0:58:47.08,0:58:50.08,Default,,0000,0000,0000,,Yeah? I see an answer in the\Nstone. You buried your mother\Nas Christine Brennan,
+Dialogue: 0,0:58:50.19,0:58:52.25,Default,,0000,0000,0000,,the woman that you knew\Nas your mother,
+Dialogue: 0,0:58:52.35,0:58:54.96,Default,,0000,0000,0000,,and not by her real name,\NRuth Keenan.
+Dialogue: 0,0:58:55.06,0:58:56.62,Default,,0000,0000,0000,,That tells me who you are.
+Dialogue: 0,0:59:03.80,0:59:06.30,Default,,0000,0000,0000,,- What do you got?\N- A dolphin.
+Dialogue: 0,0:59:07.67,0:59:10.80,Default,,0000,0000,0000,,♪♪ [ Soft Rock ]
+Dialogue: 0,0:59:10.91,0:59:14.14,Default,,0000,0000,0000,,What does that tell you?\NWhat does that tell you?
+Dialogue: 0,0:59:15.44,0:59:17.48,Default,,0000,0000,0000,,My father was here.
+Dialogue: 0,0:59:17.58,0:59:19.31,Default,,0000,0000,0000,,Because he loves your mother...
+Dialogue: 0,0:59:19.42,0:59:23.42,Default,,0000,0000,0000,,and grieves her loss,\Nand he came here\Nto talk to her.
+Dialogue: 0,0:59:26.12,0:59:27.85,Default,,0000,0000,0000,,You're tainting evidence.
+Dialogue: 0,0:59:27.96,0:59:30.22,Default,,0000,0000,0000,,It's not that kind\Nof evidence, Bones.
+Dialogue: 0,0:59:30.33,0:59:33.26,Default,,0000,0000,0000,,It's evidence\Nof something else,
+Dialogue: 0,0:59:33.36,0:59:35.73,Default,,0000,0000,0000,,something that can't be tainted.
+Dialogue: 0,0:59:39.64,0:59:43.00,Default,,0000,0000,0000,,♪♪ [ Continues ]
+Dialogue: 0,0:59:48.48,0:59:50.34,Default,,0000,0000,0000,,It's beautiful.
+Dialogue: 0,0:59:53.25,0:59:55.08,Default,,0000,0000,0000,,Yeah.
+

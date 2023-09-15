@@ -1,9 +1,9 @@
 1
-00:00:43,664 --> 00:00:45,951
+00:00:43,732 --> 00:00:45,951
 [ Insect Buzzing ]
 
 2
-00:00:54,242 --> 00:00:56,795
+00:00:54,310 --> 00:00:56,795
 [ Louder Buzzing ]
 
 3
@@ -30,66 +30,66 @@ Well, Nick the Dick.
 What a surprise.
 
 8
-00:03:43,263 --> 00:03:45,613
+00:03:43,263 --> 00:03:45,534
 Where you comin' from,
 Nick ?
 
 9
-00:03:45,670 --> 00:03:47,703
+00:03:45,603 --> 00:03:47,636
 Fishin'
 in Cuernavaca.
 
 10
-00:03:47,703 --> 00:03:51,205
+00:03:47,705 --> 00:03:51,274
 Sure you were.
 What do you say we take
 a look at your catch, huh ?
 
 11
-00:03:51,205 --> 00:03:53,671
+00:03:51,356 --> 00:03:53,822
 Come on.
 
 12
-00:04:00,180 --> 00:04:02,000
+00:04:00,180 --> 00:04:01,931
 Me, I would've
 thrown 'em back.
 
 13
-00:04:02,137 --> 00:04:04,037
+00:04:02,000 --> 00:04:03,900
 <i>Bajanse, todos.</i>
 
 14
-00:04:04,037 --> 00:04:06,972
+00:04:03,968 --> 00:04:06,903
 <i>Formen una linea aqui,</i>
 <i>por favor.</i>
 
 15
-00:04:08,388 --> 00:04:11,466
+00:04:08,388 --> 00:04:11,548
 So, Nick, what do you get ?
 A hundred bucks a head ?
 Two hundred ?
 
 16
-00:04:11,466 --> 00:04:13,180
+00:04:11,590 --> 00:04:13,790
 Hope you saved it all for
 your lawyer, my friend,
 
 17
-00:04:13,180 --> 00:04:15,627
+00:04:13,824 --> 00:04:15,791
 because you are
 gonna need it.
 
 18
-00:04:16,677 --> 00:04:19,731
+00:04:16,745 --> 00:04:19,695
 [ Brakes Screech ]
 
 19
-00:04:19,800 --> 00:04:22,780
+00:04:19,695 --> 00:04:22,395
 - We'll take it from here.
 - Who the hell are you ?
 
 20
-00:04:22,780 --> 00:04:24,372
+00:04:22,395 --> 00:04:24,328
 I.N.S., Division Six.
 
 21
@@ -110,16 +110,16 @@ money on, Dee ?
 - [ Chuckles ]
 
 24
-00:04:33,280 --> 00:04:37,210
+00:04:33,280 --> 00:04:37,183
 [ Speaks In Spanish ]
 
 25
-00:04:37,210 --> 00:04:39,177
+00:04:37,183 --> 00:04:39,150
 Okay.
 
 26
-00:04:39,229 --> 00:04:42,128
-Preoccupation in then either battles the.
+00:04:39,159 --> 00:04:42,128
+A preoccupation in then either battles the.
 
 27
 00:04:43,450 --> 00:04:50,290
@@ -143,485 +143,486 @@ They don't look at it.
 When we fail at all?
 
 32
-00:05:05,195 --> 00:05:06,364
-The know I wasn't even up a.
+00:05:05,195 --> 00:05:07,406
+The know I wasn't even up a labradoodle
+is by the.
 
 33
-00:05:06,844 --> 00:05:10,012
+00:05:08,515 --> 00:05:11,847
 - We've got a winner here, Dee.
 - [ Chuckles ]
 
 34
-00:05:10,012 --> 00:05:16,988
-<i>[ Agent Speaks In Spanish ]</i>
+00:05:12,160 --> 00:05:14,347
+Although the whether say I'd say.
 
 35
+00:05:14,421 --> 00:05:17,152
+<i>[ Agent Speaks In Spanish ]</i>
+
+36
 00:05:17,463 --> 00:05:18,220
 If I watch sir.
 
-36
-00:05:18,458 --> 00:05:21,640
+37
+00:05:18,458 --> 00:05:21,561
 - Sir, you can't just--
 - Don't "sir" me, young man.
 
-37
-00:05:21,640 --> 00:05:24,441
+38
+00:05:21,561 --> 00:05:24,362
 You have no idea
 who you're dealing with.
 
-38
+39
 00:05:25,720 --> 00:05:28,750
 Soup and say they'll call me on our
 eight the airport hour.
 
-39
+40
 00:05:29,002 --> 00:05:34,386
 We're gonna have a little
 chat with our friend here.
 You fellas can hit the road.
 
-40
+41
 00:05:34,507 --> 00:05:38,276
 <i>[ Kay ]</i>
 <i>Keep on protecting us</i>
 <i>from the dangerous aliens.</i>
 
-41
-00:05:42,382 --> 00:05:46,522
+42
+00:05:42,382 --> 00:05:46,384
 You ever hear of
 Division Six ?
 There is no Division Six.
 
-42
-00:05:46,591 --> 00:05:49,625
+43
+00:05:46,453 --> 00:05:49,487
 This is bullshit.
 Hell, yeah.
 
-43
-00:05:50,315 --> 00:05:54,250
+44
+00:05:49,556 --> 00:05:53,491
 Looks like you fell off
 the bus in the wrong
 part of town, amigo.
 
-44
-00:05:54,250 --> 00:05:57,384
+45
+00:05:53,560 --> 00:05:56,694
 I'm gonna bet dollars to pesos
 you're not from
 anywhere near here.
 
-45
-00:05:58,398 --> 00:06:01,361
+46
+00:05:58,398 --> 00:06:01,304
 - [ Roars ]
 - Mikey ?
 
-46
-00:06:01,361 --> 00:06:06,030
+47
+00:06:01,373 --> 00:06:06,042
 <i> [ Alien Language ]</i>
 
-47
-00:06:06,940 --> 00:06:09,126
+48
+00:06:06,940 --> 00:06:09,025
 <i> [ Continues ]</i>
 
-48
-00:06:09,790 --> 00:06:11,724
+49
+00:06:09,093 --> 00:06:11,027
 When'd they
 let you out of jail ?
 
-49
-00:06:12,062 --> 00:06:14,529
+50
+00:06:11,095 --> 00:06:13,562
 [ Continues ]
 Political refugee,
 right.
 
-50
-00:06:14,529 --> 00:06:17,684
+51
+00:06:13,562 --> 00:06:17,684
 You know how many treaties
 you just violated ?
 [ Continues ]
 
-51
+52
 00:06:17,684 --> 00:06:19,617
 One ?
 Try seven.
 
-52
+53
 00:06:19,686 --> 00:06:21,786
 [ Continues ]
 
-53
-00:06:21,855 --> 00:06:24,340
+54
+00:06:21,855 --> 00:06:24,222
 That's enough, Mikey.
 Hand me that head.
 
-54
-00:06:24,340 --> 00:06:26,298
+55
+00:06:24,265 --> 00:06:26,232
 [ Scoffs ]
 
-55
-00:06:26,298 --> 00:06:29,094
+56
+00:06:26,232 --> 00:06:29,000
 [ Continues ]
 
-56
-00:06:29,162 --> 00:06:31,870
+57
+00:06:29,042 --> 00:06:31,462
 Put up your arms
 and all your flippers.
 
-57
-00:06:31,870 --> 00:06:34,201
+58
+00:06:31,531 --> 00:06:34,301
 [ Continues ]
 
-58
-00:06:34,201 --> 00:06:38,652
+59
+00:06:34,301 --> 00:06:38,720
 <i>[ Alien Continues Speaking</i>
 <i>  In Alien Language ]</i>
 
-59
-00:06:38,652 --> 00:06:41,083
+60
+00:06:38,720 --> 00:06:41,070
 [ Gasps ]
 
-60
-00:06:41,083 --> 00:06:44,323
+61
+00:06:41,070 --> 00:06:44,352
 -<i> [ Growling ]</i>
 -<i> Ah, shit !</i>
 
-61
-00:06:44,324 --> 00:06:47,422
+62
+00:06:44,392 --> 00:06:47,409
 [ Snarling, Roaring ]
 
-62
-00:06:47,422 --> 00:06:50,096
+63
+00:06:47,409 --> 00:06:50,124
 <i>[ Kay ]</i>
 <i>Dee, shoot him !</i>
 
-63
-00:06:50,097 --> 00:06:53,362
+64
+00:06:50,165 --> 00:06:53,349
 [ Snarling ]
 
-64
-00:06:53,362 --> 00:06:55,463
+65
+00:06:53,374 --> 00:06:55,450
 <i> [ Agent Screaming ]</i>
 
-65
-00:06:55,463 --> 00:06:59,107
+66
+00:06:55,450 --> 00:06:59,099
 -<i> Dee !</i>
 -<i> [ Screaming Continues ]</i>
 
-66
-00:06:59,107 --> 00:07:02,193
+67
+00:06:59,099 --> 00:07:02,193
 -<i> [ Snarling ]</i>
 -<i> [ Screaming ]</i>
 
-67
-00:07:10,184 --> 00:07:12,304
+68
+00:07:10,252 --> 00:07:12,304
 [ Sighs ]
 
-68
-00:07:14,755 --> 00:07:16,421
+69
+00:07:14,839 --> 00:07:16,491
 Th--
 
-69
-00:07:16,421 --> 00:07:19,277
+70
+00:07:16,507 --> 00:07:19,277
 Th-- Th--
 
-70
-00:07:19,277 --> 00:07:21,906
+71
+00:07:19,346 --> 00:07:22,683
 <i> Th--</i>
 "That."
 
-71
-00:07:21,906 --> 00:07:24,782
+72
+00:07:22,683 --> 00:07:24,839
 That wa-- wa--
 
-72
-00:07:24,782 --> 00:07:28,209
+73
+00:07:24,839 --> 00:07:28,519
 Was not human, I know.
 Looks like you got some
 entrails on you, pal.
 
-73
-00:07:28,209 --> 00:07:32,347
+74
+00:07:30,312 --> 00:07:32,658
 What the hell ?
 <i>The situation's</i>
 <i>under control.</i>
 
-74
-00:07:32,350 --> 00:07:34,960
+75
+00:07:32,659 --> 00:07:35,018
 Calm down, please.
 Give me your attention.
 
-75
-00:07:35,028 --> 00:07:37,910
+76
+00:07:35,028 --> 00:07:37,968
 I'll be glad to tell you
 what happened.
 
-76
-00:07:45,572 --> 00:07:48,700
+77
+00:07:45,572 --> 00:07:48,351
 This is called
 a neuralizer.
 
-77
-00:07:48,700 --> 00:07:50,650
+78
+00:07:48,351 --> 00:07:50,650
 It's a gift from some
 friends from out of town.
 
-78
+79
 00:07:50,650 --> 00:07:54,580
 This red eye will
 isolate the electronic
 impulses in your brains--
 
-79
-00:07:54,653 --> 00:07:56,620
+80
+00:07:54,580 --> 00:07:56,547
 more specifically,
 the ones for memory.
 
-80
-00:07:56,620 --> 00:07:59,350
+81
+00:07:56,616 --> 00:07:59,350
 That's good, fellas.
 Give me a splay burn
 around the perimeter...
 
-81
-00:07:59,350 --> 00:08:02,470
+82
+00:07:59,350 --> 00:08:02,653
 with holes at
 40, 60, and 80 meters
 from right here.
 
-82
-00:08:02,470 --> 00:08:04,489
+83
+00:08:02,653 --> 00:08:04,653
 <i>Thank you.</i>
 
-83
-00:08:07,689 --> 00:08:10,128
+84
+00:08:07,727 --> 00:08:10,292
 <i>[ Kay ]</i>
 <i>That's good.</i>
 <i>Thank you.</i>
 
-84
-00:08:10,197 --> 00:08:14,170
+85
+00:08:10,469 --> 00:08:14,170
 What in the hell
 is going on ?
 Excellent question.
 
-85
+86
 00:08:14,170 --> 00:08:16,937
 And the answer you're
 looking for lies right here.
 
-86
+87
 00:08:19,873 --> 00:08:22,673
 Who are you, really ?
 <i>Really ?</i>
 
-87
+88
 00:08:22,742 --> 00:08:27,112
 I am just a figment
 of your imagination.
 
-88
+89
 00:08:27,112 --> 00:08:29,347
 <i>[ Beeping, Zapping ]</i>
 
-89
-00:08:31,284 --> 00:08:33,853
+90
+00:08:31,163 --> 00:08:33,784
 Damn,
 what a gullible breed.
 
-90
+91
 00:08:33,853 --> 00:08:38,089
 <i>I'm serious, fellas.</i>
 <i>You're lucky to be alive</i>
 <i>after a blast like that.</i>
 
-91
+92
 00:08:38,116 --> 00:08:40,783
 - What blast ?
 - The underground gas main.
 
-92
-00:08:40,783 --> 00:08:44,830
+93
+00:08:40,783 --> 00:08:44,910
 <i>You fellas need to exercise</i>
 <i>a lot more caution before</i>
 <i>discharging your firearms.</i>
 
-93
-00:08:44,830 --> 00:08:47,097
+94
+00:08:44,910 --> 00:08:47,177
 <i>Especially you.</i>
 
-94
+95
 00:08:47,260 --> 00:08:51,836
 Have yourselves checked out
 with E.M.S. on the other side
 of the hill before you leave.
 
-95
-00:09:03,350 --> 00:09:06,762
+96
+00:09:03,350 --> 00:09:06,654
 I'm sorry about
 back there.
 It happens.
 
-96
-00:09:06,830 --> 00:09:08,797
+97
+00:09:06,722 --> 00:09:08,689
 Didn't used to.
 
-97
-00:09:10,157 --> 00:09:13,931
+98
+00:09:10,157 --> 00:09:13,908
 The spirit's willing, Kay,
 
-98
-00:09:13,931 --> 00:09:16,210
+99
+00:09:13,908 --> 00:09:16,278
 but the rest of me--
 
-99
-00:09:16,210 --> 00:09:18,463
+100
+00:09:16,278 --> 00:09:18,463
 [ Sighs ]
 
-100
-00:09:18,532 --> 00:09:21,334
+101
+00:09:18,532 --> 00:09:21,402
 They're beautiful,
 aren't they ?
 What ?
 
-101
-00:09:21,334 --> 00:09:23,301
+102
+00:09:21,470 --> 00:09:23,437
 The stars.
 
-102
-00:09:23,301 --> 00:09:25,497
+103
+00:09:23,452 --> 00:09:26,887
 We never just look anymore.
 
-103
-00:09:25,497 --> 00:09:28,773
+104
+00:09:26,888 --> 00:09:28,923
 <i>[ Kay ]</i>
 <i>No.</i>
 
-104
+105
 00:09:31,678 --> 00:09:34,281
 I'll tell you, Kay,
 
-105
+106
 00:09:34,281 --> 00:09:37,182
 I will miss the chase.
 
-106
-00:09:38,365 --> 00:09:40,485
+107
+00:09:38,433 --> 00:09:40,485
 [ Sighs ]
 
-107
-00:09:41,335 --> 00:09:44,789
+108
+00:09:41,419 --> 00:09:44,789
 No, Dee, you won't.
 
-108
-00:09:46,106 --> 00:09:48,876
+109
+00:09:46,257 --> 00:09:48,793
 Freeze !
 N.Y.P.D. !
 
-109
-00:09:48,878 --> 00:09:50,945
+110
+00:09:48,809 --> 00:09:50,862
 Freeze !
 
-110
-00:09:50,945 --> 00:09:53,348
+111
+00:09:50,878 --> 00:09:53,348
 [ Panting ]
 All yours, Edwards.
 
-111
-00:09:54,982 --> 00:09:56,782
+112
+00:09:54,982 --> 00:09:56,768
 Freeze means stop !
 
-112
-00:09:56,782 --> 00:09:59,620
+113
+00:09:56,784 --> 00:09:59,620
 <i>Yo !</i>
 <i>Whoa !</i>
 
-113
-00:10:02,420 --> 00:10:05,427
+114
+00:10:02,489 --> 00:10:05,427
 What the hell ?
 
-114
-00:10:06,291 --> 00:10:09,897
+115
+00:10:06,427 --> 00:10:09,814
 <i>All right.</i>
 <i>Aw, come on !</i>
 
-115
-00:10:09,899 --> 00:10:13,568
+116
+00:10:09,830 --> 00:10:13,485
 - Aah !
 - [ Passengers Screaming ]
 
-116
-00:10:13,636 --> 00:10:16,944
+117
+00:10:13,553 --> 00:10:16,861
 It just be rainin'
 black people in New York.
 
-117
-00:10:38,142 --> 00:10:41,339
+118
+00:10:38,210 --> 00:10:41,326
 [ Grunting ]
 
-118
-00:10:41,339 --> 00:10:45,140
+119
+00:10:41,326 --> 00:10:45,400
 Do you see this ?  Huh ?
 N.Y.P.D. !
 
-119
-00:10:45,140 --> 00:10:48,320
+120
+00:10:45,469 --> 00:10:48,373
 It means I will knock
 your punk-ass down !
 
-120
-00:10:48,320 --> 00:10:49,375
+121
+00:10:48,388 --> 00:10:50,288
 He's coming !
 He's coming !
 
-121
-00:10:49,375 --> 00:10:52,896
+122
+00:10:50,288 --> 00:10:53,458
 And when he gets here,
 I'll arrest his ass too.
 
-122
-00:10:53,390 --> 00:10:55,920
+123
+00:10:53,458 --> 00:10:55,907
 [ Electronic Beeping ]
 
-123
-00:10:55,926 --> 00:10:58,996
+124
+00:10:55,907 --> 00:10:59,023
 Oh, you're tryin' to
 catch a beat down, huh ?
 
-124
-00:10:58,996 --> 00:11:02,083
+125
+00:10:59,064 --> 00:11:02,083
 [ Grunting ]
 
-125
-00:11:05,102 --> 00:11:07,365
+126
+00:11:05,170 --> 00:11:07,352
 [ Horn Honks ]
 
-126
-00:11:07,365 --> 00:11:11,692
+127
+00:11:07,352 --> 00:11:11,692
 [ Brakes Screech,
 Horns Honk ]
 
-127
-00:11:16,113 --> 00:11:18,600
+128
+00:11:16,181 --> 00:11:18,600
 [ Roaring ]
 
-128
-00:12:05,915 --> 00:12:07,884
+129
+00:12:05,779 --> 00:12:07,815
 What's up ?
 
-129
+130
 00:12:07,884 --> 00:12:10,618
 He's coming.
 
-130
-00:12:10,687 --> 00:12:13,904
+131
+00:12:10,687 --> 00:12:13,772
 He's coming because I failed,
 and now he'll kill me too.
 
-131
-00:12:14,090 --> 00:12:14,390
-Yeah, well.
-
 132
-00:12:14,390 --> 00:12:16,857
+00:12:13,772 --> 00:12:16,239
 You're just pissin'
 everybody off today, huh ?
 
@@ -638,34 +639,34 @@ Your world's gonna end.
 What the hell are you ?
 
 136
-00:12:30,674 --> 00:12:35,210
+00:12:30,674 --> 00:12:34,513
 Hey, watch that ledge.
 Watch the ledge.
 
 137
-00:12:35,210 --> 00:12:38,415
+00:12:34,582 --> 00:12:38,484
 <i> Look, come on down.</i>
 <i> We'll get those eyes fixed.</i>
 <i> Don't even worry about it.</i>
 
 138
-00:12:38,415 --> 00:12:41,316
+00:12:38,566 --> 00:12:41,467
 <i> Wait a minute.</i>
 <i> Let me talk to you.</i>
 <i> Hey !  Hey !</i>
 
 139
-00:12:42,166 --> 00:12:44,485
+00:12:42,234 --> 00:12:44,485
 <i>[ Body Thuds ]</i>
 
 140
-00:12:47,657 --> 00:12:50,481
+00:12:47,574 --> 00:12:50,395
 <i>[ Man ]</i>
 <i>I work my butt off</i>
 <i>to make a livin',</i>
 
 141
-00:12:50,481 --> 00:12:52,760
+00:12:50,395 --> 00:12:52,760
 <i>all I want is to come home</i>
 <i>to a nice clean house...</i>
 
@@ -697,39 +698,39 @@ Watch the ledge.
 <i>or ain't been hit enough.</i>
 
 147
-00:13:07,582 --> 00:13:11,283
+00:13:07,549 --> 00:13:11,314
 <i>I can't make up my mind.</i>
 <i>You're useless, Beatrice.</i>
 
 148
-00:13:11,359 --> 00:13:14,927
+00:13:11,314 --> 00:13:14,946
 <i>The only thing that pulls</i>
 <i>its weight around here</i>
 <i>is my goddamn truck !</i>
 
 149
-00:13:25,309 --> 00:13:27,744
+00:13:25,315 --> 00:13:27,812
 Figures.
 
 150
-00:13:27,744 --> 00:13:29,897
+00:13:27,812 --> 00:13:29,897
 <i>[ Screen Door Closes ]</i>
 
 151
-00:13:34,751 --> 00:13:37,438
+00:13:34,835 --> 00:13:37,355
 What the heck is it, Edgar ?
 
 152
-00:13:37,507 --> 00:13:42,171
+00:13:37,424 --> 00:13:42,088
 Get your big butt
 back in the house.
 
 153
-00:13:42,859 --> 00:13:45,513
+00:13:42,927 --> 00:13:45,513
 <i>[ Screen Door Closes ]</i>
 
 154
-00:13:53,423 --> 00:13:57,226
+00:13:53,287 --> 00:13:57,158
 <i>[ Alien Voice ]</i>
 <i>Place projectile weapon</i>
 <i>on the ground.</i>
@@ -746,19 +747,19 @@ my cold, dead fingers.
 <i>is acceptable.</i>
 
 157
-00:14:12,722 --> 00:14:15,453
+00:14:12,790 --> 00:14:15,440
 [ Cracking Sound ]
 
 158
-00:14:15,453 --> 00:14:18,279
+00:14:15,465 --> 00:14:18,279
 [ Crunching ]
 
 159
-00:14:19,496 --> 00:14:22,283
+00:14:19,564 --> 00:14:22,283
 <i>[ Footsteps ]</i>
 
 160
-00:14:23,066 --> 00:14:25,219
+00:14:23,134 --> 00:14:25,219
 [ Grunting ]
 
 161
@@ -768,7 +769,7 @@ was that ?
 Sugar.
 
 162
-00:14:32,629 --> 00:14:35,203
+00:14:32,629 --> 00:14:35,029
 I've never seen
 sugar do that.
 
@@ -793,46 +794,46 @@ More !
 [ Grunting ]
 
 168
-00:15:02,005 --> 00:15:04,225
+00:15:02,073 --> 00:15:04,225
 [ Gulping ]
 
 169
-00:15:07,944 --> 00:15:10,331
+00:15:08,012 --> 00:15:10,295
 [ Sighs Contentedly ]
 
 170
-00:15:10,400 --> 00:15:14,347
+00:15:10,317 --> 00:15:14,264
 Edgar, your skin
 is hangin' off your bones.
 
 171
-00:15:17,187 --> 00:15:19,283
+00:15:17,255 --> 00:15:19,270
 [ Sloshing Sound ]
 
 172
-00:15:19,283 --> 00:15:21,642
+00:15:19,270 --> 00:15:21,642
 Oh, yeah.
 
 173
-00:15:23,843 --> 00:15:26,113
+00:15:23,848 --> 00:15:26,113
 There.
 Is that better ?
 
 174
-00:15:39,976 --> 00:15:42,797
+00:15:40,044 --> 00:15:42,797
 <i> [ Grunting ]</i>
 
 175
-00:15:52,623 --> 00:15:55,342
+00:15:52,691 --> 00:15:55,342
 [ Mooing ]
 
 176
-00:15:55,411 --> 00:15:58,513
+00:15:55,411 --> 00:15:58,400
 "Perpetrator then blinked
 two sets of eyelids."
 
 177
-00:15:58,513 --> 00:16:00,942
+00:15:58,469 --> 00:16:00,836
 You mean blinked
 with both eyes ?
 No, sir.
@@ -844,7 +845,7 @@ then he blinked
 a completely different set.
 
 179
-00:16:03,930 --> 00:16:07,464
+00:16:03,934 --> 00:16:07,468
 You know,
 like high beams
 and low beams.
@@ -864,107 +865,107 @@ into a million pieces ?
 After, sir.
 
 183
-00:16:16,513 --> 00:16:20,381
+00:16:16,365 --> 00:16:20,233
 And why is it that none
 of the other officers saw
 either of these two events ?
 
 184
-00:16:20,525 --> 00:16:23,293
+00:16:20,233 --> 00:16:23,293
 Some of the other officers
 are soggy around
 the midsection.
 
 185
-00:16:23,293 --> 00:16:25,098
+00:16:23,294 --> 00:16:25,727
 I guess that's why they
 weren't able to keep up.
 
 186
-00:16:25,098 --> 00:16:27,992
+00:16:25,727 --> 00:16:28,063
 Edwards, if you were
 half the man I am--
 
 187
-00:16:28,060 --> 00:16:30,945
+00:16:28,063 --> 00:16:30,945
 I am half the man
 that you are.
 Hey, what is your problem ?
 
 188
-00:16:30,945 --> 00:16:33,265
+00:16:30,973 --> 00:16:33,373
 My problem is you bein'
 all up in my damn face.
 
 189
-00:16:33,265 --> 00:16:35,666
+00:16:33,429 --> 00:16:35,830
 I think he threw him
 off the roof.
 It may be you next.
 
 190
-00:16:35,666 --> 00:16:37,393
+00:16:35,885 --> 00:16:38,119
 - I want to talk to you.
 - Ten minutes,
 
 191
-00:16:37,393 --> 00:16:40,571
+00:16:38,201 --> 00:16:40,735
 you take your best shot,
 tough guy.
 
 192
-00:16:40,571 --> 00:16:44,558
+00:16:40,735 --> 00:16:44,626
 Take ten minutes
 on a Stairmaster,
 you pudgy bastard.
 
 193
-00:16:44,558 --> 00:16:47,177
+00:16:44,626 --> 00:16:47,177
 [ Sighs ]
 
 194
-00:16:48,447 --> 00:16:50,744
+00:16:48,311 --> 00:16:50,245
 I believe you.
 
 195
-00:16:50,744 --> 00:16:52,693
+00:16:50,352 --> 00:16:52,653
 Laurel Weaver,
 Deputy Medical Examiner.
 
 196
-00:16:52,693 --> 00:16:55,602
+00:16:52,736 --> 00:16:55,586
 Find me at
 the morgue on 26th.
 Wait a minute.
 
 197
-00:16:55,655 --> 00:16:58,993
+00:16:55,654 --> 00:16:58,789
 - Hey, wait a minute.
 - [ Kay ]  Excuse me.
 
 198
-00:16:58,993 --> 00:17:02,427
+00:16:58,858 --> 00:17:02,427
 You're Dr. Weaver
 with the coroner's office
 working on the John Doe, right ?
 
 199
-00:17:02,631 --> 00:17:05,266
+00:17:02,525 --> 00:17:05,160
 Yes, that's right.
 Will you look
 at this, please ?
 
 200
-00:17:07,781 --> 00:17:09,901
+00:17:07,849 --> 00:17:09,901
 [ Sighs ]
 
 201
-00:17:12,238 --> 00:17:15,082
+00:17:12,102 --> 00:17:14,906
 Some night, huh ?
 Yeah, some night.
 
 202
-00:17:15,082 --> 00:17:18,277
+00:17:14,974 --> 00:17:18,277
 They were gills,
 not eyelids.
 
@@ -974,18 +975,18 @@ Gills.
 He was out of breath.
 
 204
-00:17:21,180 --> 00:17:24,444
+00:17:21,180 --> 00:17:24,281
 Who are you ?
 Did he say anything
 to you ?
 
 205
-00:17:24,572 --> 00:17:27,673
+00:17:24,350 --> 00:17:27,602
 Yeah, he said the world
 was comin' to an end.
 
 206
-00:17:27,673 --> 00:17:29,639
+00:17:27,602 --> 00:17:29,568
 Did he say when ?
 
 207
@@ -1004,12 +1005,12 @@ Come on,
 let's take a ride.
 
 210
-00:17:42,669 --> 00:17:46,087
+00:17:42,669 --> 00:17:45,843
 Wait a minute.
 I got tons of paperwork--
 
 211
-00:17:46,087 --> 00:17:48,283
+00:17:45,850 --> 00:17:48,283
 It's all done.
 Good work, Edwards.
 
@@ -1020,7 +1021,7 @@ dude down on foot ?
 That's tough, kid.
 
 213
-00:17:51,495 --> 00:17:53,495
+00:17:51,441 --> 00:17:53,441
 That's double tough.
 
 214
@@ -1035,5082 +1036,5082 @@ F.B.I. ?
 N.S.A. ?
 
 216
-00:18:07,625 --> 00:18:09,793
+00:18:07,694 --> 00:18:10,243
 [ Kay ]
 I'm part of a bureau
 that licenses, monitors...
 
 217
-00:18:09,793 --> 00:18:12,463
+00:18:10,244 --> 00:18:12,545
 and polices alien activity
 on the planet Earth.
 
 218
-00:18:12,531 --> 00:18:15,963
+00:18:12,695 --> 00:18:15,663
 Yeah, whatever.
 We're here.
 
 219
-00:18:17,236 --> 00:18:19,653
+00:18:17,236 --> 00:18:19,708
 This is where
 we goin' ?
 Yep.
 
 220
-00:18:19,783 --> 00:18:22,933
+00:18:19,777 --> 00:18:22,811
 This is Jack Jeebs' spot.
 He buys from
 chain snatchers.
 
 221
-00:18:22,933 --> 00:18:25,700
+00:18:22,893 --> 00:18:25,660
 He doesn't even
 sell guns.
 Really ?
 
 222
-00:18:25,846 --> 00:18:28,813
+00:18:25,729 --> 00:18:28,696
 Look, I'm gonna slide up
 in here and I'm gonna
 put my thing down.
 
 223
-00:18:28,813 --> 00:18:31,213
+00:18:28,697 --> 00:18:31,248
 But when I come back out,
 I want some real answers.
 
 224
-00:18:31,221 --> 00:18:31,358
-Go.
-
-225
-00:18:31,480 --> 00:18:33,980
+00:18:31,248 --> 00:18:33,748
 Okay, go put
 your thing down.
 
-226
-00:18:38,457 --> 00:18:41,502
+225
+00:18:38,457 --> 00:18:41,156
 Officer Eduardo.
 Hey, how did these
 get here ?
 
-227
-00:18:41,502 --> 00:18:43,789
+226
+00:18:41,173 --> 00:18:43,607
 I thought I turned these in
 to the proper authorities.
 
-228
-00:18:43,789 --> 00:18:47,113
+227
+00:18:43,726 --> 00:18:47,028
 The way I hear it, Jeebs,
 you're into something hotter
 than some stolen Rolexes.
 
-229
-00:18:47,113 --> 00:18:47,412
-That well.
-
-230
-00:18:47,599 --> 00:18:50,533
+228
+00:18:47,097 --> 00:18:50,031
 I'm a huge crack dealer,
 but I still work here
 'cause I love the hours.
 
-231
+229
+00:18:50,053 --> 00:18:50,473
+Hours.
+
+230
 00:18:50,533 --> 00:18:53,800
 I'm talkin' about guns,
 smart ass.  Weird ones.
 
-232
+231
 00:18:53,800 --> 00:18:56,562
 Come on, Edwards.
 What you see is what I got.
 
-233
-00:18:56,562 --> 00:18:58,195
+232
+00:18:56,562 --> 00:18:58,041
 <i>[ Door Opens ]</i>
 
-234
-00:18:59,116 --> 00:19:01,783
+233
+00:18:58,041 --> 00:19:00,708
 Why don't you show him
 the imports, Jeebs ?
 
-235
-00:19:01,783 --> 00:19:03,223
+234
+00:19:00,777 --> 00:19:03,511
 Hiya, Kay.
 How are you ?
 
-236
-00:19:03,223 --> 00:19:05,190
+235
+00:19:03,511 --> 00:19:05,473
 Show him the imports
 right now.
 
-237
-00:19:05,201 --> 00:19:08,418
+236
+00:19:05,473 --> 00:19:08,440
 I got out of
 that business.
 I hate it when you lie.
 
-238
-00:19:08,487 --> 00:19:12,171
+237
+00:19:08,473 --> 00:19:11,555
 - Just hold on a second.
 - I'm gonna count to three.
 
-239
-00:19:12,394 --> 00:19:16,362
+238
+00:19:11,563 --> 00:19:15,592
 He'll do it, Jeebs.
 That man does not look stable.
 <i>One, two...</i>
 
-240
-00:19:16,362 --> 00:19:19,003
+239
+00:19:15,662 --> 00:19:18,823
 He is just crazy
 when he's like this.
 He's always crazy.
 
-241
-00:19:19,003 --> 00:19:20,900
+240
+00:19:18,823 --> 00:19:21,013
 Why don't you get a massage ?
 Take a cruise--
 
-242
-00:19:20,900 --> 00:19:23,000
+241
+00:19:21,013 --> 00:19:23,113
 three.
 Drop the weapon.
 
-243
-00:19:23,069 --> 00:19:25,282
+242
+00:19:23,113 --> 00:19:25,113
 - I warned him.
 - Drop the weapon !
 
-244
-00:19:25,282 --> 00:19:28,183
+243
+00:19:25,138 --> 00:19:28,127
 <i>You warned him.</i>
 Don't make me kill you.
 
-245
-00:19:28,183 --> 00:19:28,333
-How?
-
-246
-00:19:28,395 --> 00:19:30,829
+244
+00:19:28,151 --> 00:19:30,629
 <i>[ Alien Voice ]</i>
 <i>You insensitive prick !</i>
 
-247
-00:19:33,579 --> 00:19:36,621
+245
+00:19:33,579 --> 00:19:36,135
 Do you have any idea
 how much that stings ?
 
-248
-00:19:36,643 --> 00:19:39,411
+246
+00:19:36,159 --> 00:19:38,971
 Show us the merchandise
 or you're gonna lose
 another head.
 
-249
-00:19:41,868 --> 00:19:44,689
+247
+00:19:41,936 --> 00:19:44,689
 [ Buzzer ]
 
-250
-00:19:51,823 --> 00:19:54,065
+248
+00:19:52,033 --> 00:19:54,065
 Mr. Edwards ?
 
-251
-00:19:57,269 --> 00:20:00,037
+249
+00:19:57,139 --> 00:20:00,037
 Right there,
 the one in the middle.
 
-252
-00:20:03,209 --> 00:20:06,684
+250
+00:20:03,126 --> 00:20:06,600
 <i> You sold a reverberating</i>
 <i> carbonizer with</i>
 <i> mutate capacity...</i>
 
-253
-00:20:06,684 --> 00:20:09,485
+251
+00:20:06,600 --> 00:20:09,401
 to an unlicensed cephlapoid,
 you piece of shit.
 
-254
-00:20:10,013 --> 00:20:12,803
+252
+00:20:09,415 --> 00:20:12,803
 He looked all right to me.
 <i> It must've been for</i>
 <i> an assassination.</i>
 
-255
-00:20:12,803 --> 00:20:14,420
+253
+00:20:12,803 --> 00:20:15,036
 Who's the target ?
 <i>I don't know.</i>
 
-256
-00:20:14,420 --> 00:20:16,520
+254
+00:20:15,118 --> 00:20:17,218
 <i> Goddamn it,</i>
 <i> Jeebs !</i>
 I don't know !
 
-257
-00:20:16,589 --> 00:20:18,823
+255
+00:20:17,218 --> 00:20:19,403
 All right, let's
 confiscate all of it.
 
-258
-00:20:18,891 --> 00:20:21,353
+256
+00:20:19,403 --> 00:20:21,353
 And I want you on the next
 transport off this rock...
 
-259
-00:20:21,353 --> 00:20:23,710
+257
+00:20:21,353 --> 00:20:23,754
 or I'm gonna shoot you
 where it don't grow back.
 
-260
-00:20:23,710 --> 00:20:26,063
+258
+00:20:23,778 --> 00:20:26,063
 [ Turns Weapon Off ]
 
-261
-00:20:26,132 --> 00:20:30,748
+259
+00:20:26,132 --> 00:20:30,829
 Yeah, and I'm gonna be back
 to talk about them Rolexes.
 
-262
-00:20:50,470 --> 00:20:52,957
+260
+00:20:50,538 --> 00:20:52,957
 [ Bell Jingles ]
 
-263
+261
 00:20:53,025 --> 00:20:55,492
 Searching for a handle
 on the moment ?
 
-264
+262
 00:20:57,263 --> 00:20:59,696
 I can't help you.
 
-265
+263
 00:20:59,766 --> 00:21:02,363
 The only comfort I can offer
 is my promise...
 
-266
+264
 00:21:02,363 --> 00:21:05,569
 that tomorrow morning,
 you won't remember a thing.
 
-267
-00:21:05,569 --> 00:21:08,065
+265
+00:21:05,600 --> 00:21:08,139
 That's not exactly some
 shit you just forget.
 [ Beeping ]
 
-268
-00:21:08,065 --> 00:21:10,666
+266
+00:21:08,154 --> 00:21:10,755
 Have you ever seen
 one of these, son ?
 
-269
-00:21:10,724 --> 00:21:13,310
+267
+00:21:10,792 --> 00:21:13,274
 <i>[ Kay Laughing ]</i>
 
-270
-00:21:13,379 --> 00:21:15,882
+268
+00:21:13,274 --> 00:21:15,756
 <i>And so she looks over</i>
 <i>at her husband,</i>
 
-271
-00:21:15,882 --> 00:21:19,216
+269
+00:21:15,756 --> 00:21:19,216
 then she sets it
 back down in her lap
 and she says,
 
-272
+270
 00:21:19,285 --> 00:21:22,920
 "Honey, this one's
 eating my popcorn."
 
-273
+271
 00:21:22,989 --> 00:21:27,491
 <i>[ Laughing Hysterically ]</i>
 <i>Did you get it ?</i>
 
-274
+272
 00:21:27,559 --> 00:21:29,994
 "This one's eating my pop--"
 
-275
-00:21:30,062 --> 00:21:32,063
+273
+00:21:30,062 --> 00:21:31,996
 Oh, gotta go.
 
-276
+274
 00:21:32,063 --> 00:21:34,564
 Thanks for the
 egg rolls, kid.
 <i> Wait a minute.</i>
 
-277
-00:21:34,633 --> 00:21:36,953
+275
+00:21:34,631 --> 00:21:36,867
 Who are you ?
 <i>See what I mean</i>
 <i>about tequila ?</i>
 
-278
-00:21:36,953 --> 00:21:40,583
+276
+00:21:36,936 --> 00:21:40,583
 <i>You're a very bright</i>
 <i>young man, James, but you</i>
 <i>need to lay off the sauce.</i>
 
-279
-00:21:40,606 --> 00:21:43,176
+277
+00:21:40,606 --> 00:21:43,124
 I'll see you bright
 and early, 9:00.
 
-280
+278
 00:21:43,176 --> 00:21:46,877
 Be there...
 or be square.
 
-281
-00:21:50,463 --> 00:21:52,817
+279
+00:21:50,531 --> 00:21:52,817
 <i>[ Door Closes ]</i>
 
-282
-00:22:05,045 --> 00:22:07,597
+280
+00:22:05,113 --> 00:22:07,597
 <i>[ Door Creaks ]</i>
 
-283
+281
 00:22:07,666 --> 00:22:10,769
 <i> Well, well, well.</i>
 <i> Movin' right in, are we ?</i>
 
-284
+282
 00:22:10,769 --> 00:22:12,703
 Think we own the place ?
 
-285
-00:22:12,771 --> 00:22:15,233
+283
+00:22:12,771 --> 00:22:15,206
 <i>I've got an eviction</i>
 <i>notice for you boys.</i>
 
-286
+284
 00:22:15,233 --> 00:22:18,075
 Just what exactly do you
 think you're doin' here ?
 
-287
-00:22:18,144 --> 00:22:21,780
+285
+00:22:18,103 --> 00:22:21,821
 I'm takin' care
 of your pest problem.
 <i>Pest problem ?</i>
 
-288
-00:22:21,780 --> 00:22:22,793
+286
+00:22:21,821 --> 00:22:23,788
 Pest ?
 
-289
-00:22:22,793 --> 00:22:26,217
+287
+00:22:23,816 --> 00:22:26,285
 Yeah.  You got a hell
 of an infestation.
 
-290
+288
 00:22:26,285 --> 00:22:29,153
 You know, I've noticed
 an infestation here.
 
-291
-00:22:29,153 --> 00:22:30,503
+289
+00:22:29,222 --> 00:22:31,313
 Everywhere I look, in fact.
 
-292
-00:22:30,503 --> 00:22:34,959
+290
+00:22:31,313 --> 00:22:35,027
 Nothin' but an undeveloped,
 unevolved, barely conscious
 pond scum,
 
-293
+291
 00:22:35,027 --> 00:22:37,728
 totally convinced
 of their own superiority...
 
-294
+292
 00:22:37,796 --> 00:22:42,122
 as they scurry about
 their short, pointless lives.
 
-295
-00:22:42,134 --> 00:22:44,403
+293
+00:22:42,134 --> 00:22:44,447
 Well, yeah.
 
-296
-00:22:44,403 --> 00:22:46,583
+294
+00:22:44,459 --> 00:22:47,049
 Don't you wanna
 get rid of 'em ?
 
-297
-00:22:46,583 --> 00:22:48,873
+295
+00:22:47,062 --> 00:22:48,985
 In the worst way.
 
-298
-00:22:52,657 --> 00:22:55,478
+296
+00:22:52,725 --> 00:22:55,478
 <i> [ Grunting ]</i>
 
-299
-00:23:11,176 --> 00:23:13,829
+297
+00:23:11,244 --> 00:23:13,829
 [ Fans Blowing ]
 
-300
-00:23:16,167 --> 00:23:18,647
+298
+00:23:16,031 --> 00:23:18,285
 Help you ?
 
-301
-00:23:18,647 --> 00:23:22,382
+299
+00:23:18,300 --> 00:23:22,171
 Yeah, this dude gave me
 this card the other day--
 Elevator.
 
-302
-00:23:37,803 --> 00:23:42,758
+300
+00:23:37,871 --> 00:23:42,758
 <i>[ Whirring Sound ]</i>
 
-303
-00:23:46,511 --> 00:23:49,198
+301
+00:23:46,595 --> 00:23:49,198
 You're late.
 Sit down.
 
-304
+302
 00:23:55,907 --> 00:23:57,807
 My name is Zed.
 
-305
+303
 00:23:57,875 --> 00:24:00,643
 You're all here
 because you're
 the best of the best:
 
-306
+304
 00:24:00,711 --> 00:24:05,539
 Marines, Air Force,
 Navy SEALS,
 Army Rangers, N.Y.P.D.
 
-307
+305
 00:24:05,552 --> 00:24:08,653
 And we're looking
 for one of you.
 Just one.
 
-308
+306
 00:24:08,653 --> 00:24:11,487
 What will follow
 is a series of
 simple tests...
 
-309
+307
 00:24:11,556 --> 00:24:16,092
 for motor skills,
 concentration, stamina.
 
-310
+308
 00:24:16,161 --> 00:24:19,104
 I see we have
 a question.
 Yeah, I'm sorry.
 
-311
-00:24:19,134 --> 00:24:23,136
+309
+00:24:19,104 --> 00:24:23,103
 Maybe you already answered this,
 but why exactly are we here ?
 
-312
-00:24:23,136 --> 00:24:26,104
+310
+00:24:23,103 --> 00:24:26,104
 - Son ?
 - Second Lieutenant Jake Jensen.
 
-313
+311
 00:24:26,104 --> 00:24:28,037
 West Point.
 Graduate with honors.
 
-314
+312
 00:24:28,106 --> 00:24:31,254
 We're here because
 you're looking for the best
 of the best of the best, sir !
 
-315
-00:24:34,459 --> 00:24:36,579
+313
+00:24:34,527 --> 00:24:36,579
 [ Chuckles ]
 
-316
+314
 00:24:36,647 --> 00:24:38,848
 What's so funny, Edwards ?
 
-317
-00:24:38,916 --> 00:24:42,010
+315
+00:24:38,916 --> 00:24:41,351
 Your boy,
 Captain America over here.
 
-318
-00:24:42,010 --> 00:24:46,312
+316
+00:24:41,419 --> 00:24:46,105
 <i>"The best of the best</i>
 <i> of the best, sir !</i>
 <i> With honors."</i>
 
-319
-00:24:46,312 --> 00:24:48,384
+317
+00:24:46,136 --> 00:24:48,804
 <i>Yeah, he's just</i>
 <i>really excited...</i>
 
-320
-00:24:48,384 --> 00:24:50,526
+318
+00:24:48,804 --> 00:24:50,759
 and he has no clue
 why we're here.
 
-321
-00:24:50,595 --> 00:24:53,865
+319
+00:24:50,759 --> 00:24:53,960
 That's just--
 That's very funny to me.
 
-322
-00:24:53,865 --> 00:24:56,199
+320
+00:24:54,029 --> 00:24:56,363
 Y'all ain't laughin',
 though.
 
-323
-00:25:03,908 --> 00:25:06,325
+321
+00:25:03,908 --> 00:25:06,091
 Okay, let's get going.
 
-324
-00:25:09,877 --> 00:25:12,865
+322
+00:25:09,945 --> 00:25:12,865
 [ Covers Ripped From Test Book ]
 
-325
-00:26:17,245 --> 00:26:20,132
+323
+00:26:17,313 --> 00:26:20,132
 [ Horrible Scraping Sound ]
 
-326
-00:26:25,587 --> 00:26:27,773
+324
+00:26:25,671 --> 00:26:27,773
 Ah.
 
-327
-00:26:30,391 --> 00:26:33,946
+325
+00:26:30,542 --> 00:26:33,863
 Wanna get down on this ?
 
-328
-00:26:33,948 --> 00:26:36,582
+326
+00:26:33,879 --> 00:26:36,582
 <i>[ Alarm Sounding ]</i>
 
-329
-00:26:39,720 --> 00:26:44,356
+327
+00:26:39,718 --> 00:26:44,356
 [ Gunshots ]
 
-330
-00:26:53,281 --> 00:26:55,745
+328
+00:26:53,349 --> 00:26:55,732
 [ Gunshot ]
 
-331
-00:26:55,745 --> 00:26:57,837
+329
+00:26:55,757 --> 00:26:57,837
 <i> [ Door Opening ]</i>
 
-332
+330
 00:26:57,905 --> 00:27:01,373
 -<i> [ Zed ]  Edwards,</i>
 <i>  what the hell happened ?</i>
 -<i> Hesitated.</i>
 
-333
-00:27:03,644 --> 00:27:09,384
+331
+00:27:03,644 --> 00:27:09,054
 -<i> May I ask why you felt little</i>
 <i>  Tiffany deserved to die ?</i>
 -<i> She was the only one...</i>
 
-334
-00:27:09,384 --> 00:27:12,519
+332
+00:27:09,054 --> 00:27:12,189
 -<i> that seemed dangerous, sir.</i>
 -<i> How'd you come to</i>
 <i>  that conclusion ?</i>
 
-335
-00:27:12,519 --> 00:27:17,214
+333
+00:27:12,328 --> 00:27:17,064
 First I was gonna pop this guy
 hangin' from the light.  Then
 I realized he's workin' out.
 
-336
-00:27:17,214 --> 00:27:21,204
+334
+00:27:17,169 --> 00:27:21,204
 How would I feel if somebody
 come in the gym, bust me in my
 ass while I'm on the treadmill ?
 
-337
+335
 00:27:21,204 --> 00:27:25,491
 Then I saw this
 snarling beast guy and I noticed
 he had a tissue in his hand.
 
-338
+336
 00:27:25,494 --> 00:27:28,828
 <i>I'm realizing he's not snarling,</i>
 <i>he's sneezing.</i>
 
-339
-00:27:28,883 --> 00:27:31,884
+337
+00:27:28,849 --> 00:27:31,850
 <i>Ain't no real threat there.</i>
 <i>Then I saw little Tiffany.</i>
 
-340
+338
 00:27:31,884 --> 00:27:34,854
 I'm thinking,
 eight-year-old white girl,
 middle of the ghetto,
 
-341
+339
 00:27:34,913 --> 00:27:37,947
 <i>bunch of monsters,</i>
 <i>this time of night</i>
 <i>with quantum physics books.</i>
 
-342
+340
 00:27:37,947 --> 00:27:40,584
 <i>She about to</i>
 <i>start some shit, Zed.</i>
 <i>She's about eight years old.</i>
 
-343
-00:27:40,584 --> 00:27:45,184
+341
+00:27:40,584 --> 00:27:44,964
 Those books are way too advanced
 for her.  If you ask me,
 I say she's up to somethin'.
 
-344
-00:27:45,253 --> 00:27:49,782
+342
+00:27:45,170 --> 00:27:49,699
 And to be honest,
 I'd appreciate it if you
 eased up off my back about it.
 
-345
+343
 00:27:51,959 --> 00:27:54,393
 Or do I owe her
 an apology ?
 
-346
+344
 00:28:01,235 --> 00:28:03,435
 That was a good shot, though ?
 Right ?
 
-347
+345
 00:28:08,409 --> 00:28:12,845
 He's got a real problem
 with authority.
 So do I.
 
-348
+346
 00:28:12,914 --> 00:28:16,430
 But this kid ran down
 a cephlapoid.
 On foot, boss.
 
-349
+347
 00:28:16,430 --> 00:28:19,220
 That's gotta be
 tough enough.
 
-350
+348
 00:28:19,220 --> 00:28:22,087
 Let's hope you know
 what you're doing.
 
-351
-00:28:26,240 --> 00:28:29,028
+349
+00:28:26,308 --> 00:28:28,992
 <i>[ Men Chattering ]</i>
 
-352
-00:28:29,096 --> 00:28:31,254
+350
+00:28:28,992 --> 00:28:31,063
 Gentlemen.
 
-353
-00:28:31,254 --> 00:28:34,014
+351
+00:28:31,132 --> 00:28:34,014
 <i>Congratulations.</i>
 <i>You're everything</i>
 <i>we've come to expect...</i>
 
-354
+352
 00:28:34,014 --> 00:28:35,968
 from years of
 government training.
 
-355
+353
 00:28:36,037 --> 00:28:40,704
 And now if you'll follow me,
 we have one more test
 to administer.  An eye exam.
 
-356
-00:28:54,455 --> 00:28:56,729
+354
+00:28:54,455 --> 00:28:56,776
 Where you going ?
 
-357
+355
 00:28:56,814 --> 00:28:59,215
 Yo.  Hey, man,
 what the hell is all this ?
 
-358
+356
 00:28:59,360 --> 00:29:02,694
 Back in the mid-1950s,
 the government started
 a little underfunded agency...
 
-359
+357
 00:29:02,694 --> 00:29:06,593
 with the simple and laughable
 purpose of establishing contact
 with a race not of this planet.
 
-360
+358
 00:29:06,714 --> 00:29:08,934
 <i>[ Zed ]</i>
 <i>...if you'll look directly</i>
 <i>at the end of this device,</i>
 
-361
-00:29:08,934 --> 00:29:10,395
+359
+00:29:08,934 --> 00:29:10,764
 we'll administer
 the eye test.
 
-362
-00:29:10,395 --> 00:29:12,672
+360
+00:29:10,764 --> 00:29:12,684
 Everybody thought
 the agency was a joke
 except the aliens,
 
-363
+361
 00:29:12,684 --> 00:29:16,508
 who made contact
 March 2, 1961
 outside New York.
 
-364
+362
 00:29:16,577 --> 00:29:18,864
 <i>There were nine of us</i>
 <i>the first night.</i>
 
-365
+363
 00:29:18,864 --> 00:29:23,184
 <i>Seven agents, one astronomer...</i>
 <i>and one dumb kid who got lost</i>
 <i>on the wrong back road.</i>
 
-366
+364
 00:29:23,184 --> 00:29:26,120
 Aw, you brought that
 tall man some flowers.
 
-367
+365
 00:29:26,120 --> 00:29:28,653
 This way.
 
-368
+366
 00:29:28,722 --> 00:29:31,523
 <i> They were a group of </i>
 <i> intergalactic refugees.</i>
 
-369
+367
 00:29:31,592 --> 00:29:35,544
 Wanted to use the earth
 as an apolitical zone
 for creatures without a planet.
 
-370
+368
 00:29:35,544 --> 00:29:37,430
 Did you ever see the movie
 <i> Casablanca ?</i>
 Mm-hmm.
 
-371
+369
 00:29:37,430 --> 00:29:39,264
 Same thing,
 'cept no Nazis.
 Oh.
 
-372
-00:29:39,264 --> 00:29:42,601
+370
+00:29:39,264 --> 00:29:42,532
 We agreed and we concealed
 all the evidence
 of their landing.
 
-373
-00:29:42,604 --> 00:29:47,574
+371
+00:29:42,535 --> 00:29:47,505
 Uh-huh.  So, these are
 <i>real</i> flying saucers and the
 World's Fair was a cover-up ?
 
-374
-00:29:47,574 --> 00:29:49,374
+372
+00:29:47,505 --> 00:29:49,374
 Why else would we
 hold it in Queens ?
 
-375
+373
 00:29:49,374 --> 00:29:52,404
 More non-humans arrive
 every year and they
 live among us in secret.
 
-376
+374
 00:29:52,647 --> 00:29:55,614
 Uh, look.  I'm sorry.
 Not to change the subject
 or anything,
 
-377
+375
 00:29:55,614 --> 00:29:58,327
 but when was the last time
 you had a CAT scan ?
 Six months ago.
 
-378
-00:29:58,344 --> 00:30:01,545
+376
+00:29:58,327 --> 00:30:01,490
 It's company policy.
 You should
 make another appointment.
 
-379
-00:30:01,705 --> 00:30:06,074
+377
+00:30:01,490 --> 00:30:05,859
 Look, tell your boy Zed I had
 an absolutely wonderful time,
 and thank you for everything.
 
-380
-00:30:06,074 --> 00:30:08,242
+378
+00:30:05,859 --> 00:30:08,027
 But why don't you
 show me the door ?
 
-381
-00:30:08,540 --> 00:30:10,540
+379
+00:30:08,095 --> 00:30:10,177
 [ Sighing ]
 All right.
 
-382
-00:30:10,540 --> 00:30:12,344
+380
+00:30:10,177 --> 00:30:12,344
 I'm gonna get some coffee.
 You want some ?
 No, thank you.
 
-383
-00:30:12,344 --> 00:30:14,300
+381
+00:30:12,344 --> 00:30:14,244
 I'm fine.
 Okay.
 
-384
-00:30:14,368 --> 00:30:18,674
+382
+00:30:14,256 --> 00:30:18,481
 <i>[ Speaking Alien Language,</i>
 <i>  Laughing ]</i>
 
-385
-00:30:18,743 --> 00:30:22,212
+383
+00:30:18,481 --> 00:30:22,006
 How you doin', fellas ?
 [ All ]
 Hi, Kay.
 
-386
-00:30:22,350 --> 00:30:24,983
+384
+00:30:22,006 --> 00:30:24,695
 That's not decaf,
 is it ?
 Viennese Cinnamon.
 
-387
-00:30:25,104 --> 00:30:28,372
+385
+00:30:24,706 --> 00:30:28,030
 <i>[ Kay ]</i>
 <i>Don't tell me we only got that</i>
 <i>powered cream.  I hate that.</i>
 
-388
-00:30:28,372 --> 00:30:31,306
+386
+00:30:28,043 --> 00:30:31,033
 <i>[ Alien Speaking</i>
 <i>   Alien Language ]</i>
 
-389
-00:30:31,496 --> 00:30:34,264
+387
+00:30:31,046 --> 00:30:33,870
 Good.  Good.
 
-390
-00:30:34,334 --> 00:30:37,835
+388
+00:30:33,882 --> 00:30:37,522
 <i>You guys</i>
 <i>getting along all right ?</i>
 [ Chattering In Alien ]
 
-391
-00:30:37,835 --> 00:30:41,204
+389
+00:30:37,574 --> 00:30:41,564
 -<i> [ Kay ]</i>
 <i>  Well, don't work too hard.</i>
 - [ All ]  Okay.
 
-392
-00:30:41,204 --> 00:30:44,205
+390
+00:30:41,564 --> 00:30:44,565
 - So, you guys seen
 the cahuengas on--
 - Sure you don't want coffee ?
 
-393
-00:30:44,330 --> 00:30:49,200
+391
+00:30:44,647 --> 00:30:49,517
 - [ Stuttering ]
 -<i> [ Aliens Continue Chattering ]</i>
 
-394
-00:30:49,200 --> 00:30:51,434
+392
+00:30:49,517 --> 00:30:51,434
 <i>[ Aliens Laughing ]</i>
 
-395
+393
 00:30:51,434 --> 00:30:53,174
 <i> [ Kay ]</i>
 <i> All right, kid,</i>
 <i> here's the deal.</i>
 
-396
+394
 00:30:53,174 --> 00:30:56,564
 <i> At any given time there are</i>
 <i> around 1,500 aliens</i>
 <i> on the planet,</i>
 
-397
+395
 00:30:56,565 --> 00:30:58,865
 most of them
 right here in Manhattan.
 
-398
+396
 00:30:58,980 --> 00:31:02,114
 And most are decent enough.
 They're just trying
 to make a living.
 
-399
+397
 00:31:02,114 --> 00:31:05,014
 Cab drivers.
 Not as many
 as you'd think.
 
-400
+398
 00:31:05,021 --> 00:31:08,122
 Humans, for the most part,
 don't have a clue.
 They don't want or need one.
 
-401
+399
 00:31:08,122 --> 00:31:12,724
 They're happy.
 They think they have a...
 good bead on things.
 
-402
+400
 00:31:12,793 --> 00:31:15,674
 Uh, but why-why
 the big secret ?
 People are smart.
 
-403
+401
 00:31:15,674 --> 00:31:17,744
 They can handle it.
 A person is smart.
 
-404
+402
 00:31:17,745 --> 00:31:22,114
 People are dumb, panicky,
 dangerous animals,
 and you know it.
 
-405
+403
 00:31:22,115 --> 00:31:25,349
 Fifteen hundred years ago
 everybody<i> knew...</i>
 
-406
+404
 00:31:25,350 --> 00:31:27,317
 the earth was the center
 of the universe.
 
-407
+405
 00:31:27,374 --> 00:31:31,004
 Five hundred years ago
 everybody knew
 the earth was flat.
 
-408
+406
 00:31:31,005 --> 00:31:35,774
 And fifteen minutes ago,
 you knew that people were
 alone on this planet.
 
-409
-00:31:37,184 --> 00:31:41,854
+407
+00:31:35,913 --> 00:31:40,583
 [ Sighs ]
 Imagine what
 you'll<i> know...</i> tomorrow.
 
-410
-00:31:42,533 --> 00:31:45,090
+408
+00:31:42,533 --> 00:31:42,655
+What's.
+
+409
+00:31:43,024 --> 00:31:45,254
 What's the catch ?
 The catch ?
 
-411
-00:31:45,159 --> 00:31:48,584
+410
+00:31:45,316 --> 00:31:48,584
 The catch is you will
 sever every human contact.
 
-412
+411
 00:31:48,584 --> 00:31:52,552
 Nobody will ever know
 you exist anywhere.
 
-413
+412
 00:31:52,553 --> 00:31:54,520
 Ever.
 
-414
-00:31:57,871 --> 00:32:00,805
+413
+00:31:57,871 --> 00:32:00,712
 I'll give you till sunrise
 to think it over.
 
-415
-00:32:03,577 --> 00:32:05,579
+414
+00:32:03,577 --> 00:32:05,551
 Hey !
 
-416
+415
 00:32:05,579 --> 00:32:08,313
 <i>Is it worth it ?</i>
 Oh, yeah.
 It's worth it.
 
-417
+416
 00:32:10,984 --> 00:32:13,252
 If you're strong enough.
 
-418
+417
 00:33:12,679 --> 00:33:14,679
 What's up, pops ?
 
-419
+418
 00:33:24,411 --> 00:33:26,444
 All right, I'm in.
 'Cause, look,
 
-420
-00:33:26,444 --> 00:33:29,294
+419
+00:33:26,444 --> 00:33:29,144
 there's some next level shit
 goin' on around here
 and I'm with that.
 
-421
-00:33:29,363 --> 00:33:32,891
+420
+00:33:29,280 --> 00:33:32,808
 But before y'all get to beamin'
 me up, there's a couple of
 things I want you to understand.
 
-422
+421
 00:33:32,894 --> 00:33:36,829
 First off, you chose me,
 so you recognize the skills.
 
-423
+422
 00:33:36,944 --> 00:33:40,913
 And I don't want nobody callin'
 me "son" or "kid" or "sport"
 or nothin' like that.  Cool ?
 
-424
+423
 00:33:40,994 --> 00:33:44,896
 Cool.  Whatever you say, slick.
 But I need to tell you something
 about your skills.
 
-425
-00:33:46,780 --> 00:33:51,597
+424
+00:33:46,780 --> 00:33:51,314
 As of right now,
 they mean precisely... dick.
 
-426
-00:33:56,190 --> 00:33:58,624
+425
+00:33:56,190 --> 00:33:58,788
 Kay.
 <i>[ Woman On P.A. ]</i>
 <i>Due to asteroid turbulence,</i>
 
-427
-00:33:58,624 --> 00:34:01,409
+426
+00:33:58,788 --> 00:34:01,477
 <i>the 4:15 to Osiris</i>
 <i>will be delayed.</i>
 
-428
-00:34:01,409 --> 00:34:03,728
+427
+00:34:01,477 --> 00:34:03,728
 [ Aliens Chattering ]
 
-429
-00:34:05,079 --> 00:34:07,466
+428
+00:34:05,163 --> 00:34:07,466
 Purpose of trip ?
 Diplomatic mission.
 
-430
+429
 00:34:07,535 --> 00:34:10,369
 Duration of stay ?
 Lunch.
 
-431
+430
 00:34:10,437 --> 00:34:12,437
 Any fruits or
 vegetables ?
 
-432
-00:34:12,506 --> 00:34:16,411
+431
+00:34:12,506 --> 00:34:16,275
 <i>[ Woman ]</i>
 <i>The transport</i>
 <i>from Xenderfloip has docked.</i>
 
-433
-00:34:16,479 --> 00:34:21,616
+432
+00:34:16,343 --> 00:34:21,480
 <i>[ Speaking Alien ]</i>
 <i>Please meet your party</i>
 <i>outside the detainment area.</i>
 
-434
-00:34:24,885 --> 00:34:27,233
+433
+00:34:24,885 --> 00:34:27,052
 You wanna stay away
 from that guy.  He's, uh--
 
-435
-00:34:27,233 --> 00:34:29,756
+434
+00:34:27,120 --> 00:34:29,688
 [ Alien Growling ]
 He's grouchy.
 
-436
+435
 00:34:29,756 --> 00:34:31,823
 <i> Three-hour delay</i>
 <i> in customs...</i>
 
-437
+436
 00:34:31,892 --> 00:34:34,124
 after a trip of
 17 trillion miles is
 gonna make anybody cranky.
 
-438
+437
 00:34:34,124 --> 00:34:37,514
 You know what I mean ?
 Wh-What branch of the
 government do we report to ?
 
-439
+438
 00:34:37,514 --> 00:34:40,248
 Well, none.  They ask
 too many questions.
 Who pays for all this ?
 
-440
+439
 00:34:40,503 --> 00:34:43,905
 We hold the patents
 on a few gadgets we confiscated
 from out-of-state visitors.
 
-441
+440
 00:34:43,905 --> 00:34:47,474
 Um, Velcro,
 microwave ovens, liposuction.
 
-442
+441
 00:34:47,477 --> 00:34:49,844
 This is a fascinating
 little gadget.
 
-443
+442
 00:34:49,844 --> 00:34:53,234
 It's gonna replace CD's soon.
 Guess I'll have to buy
 the "White" album again.
 
-444
+443
 00:34:53,234 --> 00:34:55,574
 Oh.  That is a lot of fun.
 It's a universal translator.
 
-445
+444
 00:34:55,664 --> 00:34:57,831
 We're not even
 supposed to have it,
 and I'll tell you why.
 
-446
-00:34:57,944 --> 00:35:01,664
+445
+00:34:57,934 --> 00:35:01,202
 Human thought is
 so primitive it's looked upon
 as an infectious disease...
 
-447
-00:35:01,664 --> 00:35:03,614
+446
+00:35:01,203 --> 00:35:03,572
 in some of
 the better galaxies.
 [ Device Beeping ]
 
-448
+447
 00:35:03,614 --> 00:35:05,614
 That kinda makes you proud,
 doesn't it ?  Huh ?
 
-449
+448
 00:35:05,654 --> 00:35:08,455
 Hey, what's this thin--
 Whoo !  Oh !
 
-450
-00:35:08,566 --> 00:35:11,867
+449
+00:35:08,593 --> 00:35:11,894
 - [ Crowd Shouting ]
 - Oh !  Okay, just be calm !
 
-451
-00:35:11,935 --> 00:35:15,537
+450
+00:35:11,962 --> 00:35:15,564
 <i>Just be--  Relax !</i>
 <i>Okay ?  Ooh, watch your heads !</i>
 
-452
-00:35:15,605 --> 00:35:18,072
+451
+00:35:15,633 --> 00:35:18,100
 Somebody get him
 some ice !  Ooh.
 
-453
-00:35:18,208 --> 00:35:21,944
+452
+00:35:18,168 --> 00:35:21,904
 <i>Look out !  Just move</i>
 <i>when it's comin' at you !</i>
 
-454
-00:35:26,547 --> 00:35:30,752
+453
+00:35:26,547 --> 00:35:30,780
 Oh, damn.
 Um, um, I'm gonna
 pay for that !
 
-455
-00:35:30,820 --> 00:35:32,920
+454
+00:35:30,848 --> 00:35:32,948
 - [ Woman Screams ]
 - Oh !
 
-456
+455
 00:35:41,316 --> 00:35:45,930
 This thing caused
 the 1977 New York blackout.
 
-457
+456
 00:35:45,999 --> 00:35:50,034
 Practical joke
 by the Great Attracter.
 He thought it was funny as hell.
 
-458
-00:35:51,472 --> 00:35:55,476
+457
+00:35:51,472 --> 00:35:55,407
 Sorry, y'all.
 It was a accident.
 Sorry.
 
-459
+458
 00:35:55,476 --> 00:35:58,310
 Observation.
 The heart of
 our little endeavor.
 
-460
-00:35:58,379 --> 00:36:00,881
+459
+00:35:58,379 --> 00:36:00,812
 Meet the twins.
 "Blblup" and Bob.
 
-461
+460
 00:36:00,881 --> 00:36:04,283
 This map shows the location
 of every registered alien
 on earth at any given time.
 
-462
+461
 00:36:04,351 --> 00:36:06,318
 Some of them
 under constant surveillance.
 
-463
-00:36:06,387 --> 00:36:09,134
+462
+00:36:06,387 --> 00:36:08,920
 <i>Everyone on those screens</i>
 <i>is an alien.</i>
 
-464
-00:36:09,134 --> 00:36:12,068
+463
+00:36:08,989 --> 00:36:12,061
 <i>In public, they're as normal</i>
 <i>as you are but in private--</i>
 <i>Well.</i>
 
-465
-00:36:12,739 --> 00:36:16,874
+464
+00:36:12,130 --> 00:36:16,265
 - You'll get the idea.
 - Oh, man.
 
-466
-00:36:16,874 --> 00:36:19,433
+465
+00:36:16,265 --> 00:36:19,433
 Doesn't make any sense,
 does it ?
 
-467
+466
 00:36:19,433 --> 00:36:22,601
 Well, no--  It makes
 perfect sense.
 
-468
+467
 00:36:22,670 --> 00:36:25,184
 When I was in third grade,
 everybody told me
 I was crazy,
 
-469
+468
 00:36:25,184 --> 00:36:28,604
 <i>but I knew our teacher</i>
 <i>had to be fro-from, like</i>
 <i>Venus or somethin' like that.</i>
 
-470
-00:36:28,604 --> 00:36:32,864
+469
+00:36:28,650 --> 00:36:33,553
 Ms. Edelson.
 Jupiter, actually.
 Well, one of the moons.
 
-471
-00:36:32,864 --> 00:36:35,204
+470
+00:36:33,553 --> 00:36:35,788
 <i> [ Woman ]</i>
 <i> Revolve.  Class !</i>
 
-472
-00:36:35,204 --> 00:36:38,983
+471
+00:36:35,788 --> 00:36:39,134
 Be quiet and pay attention !
 
-473
-00:36:39,052 --> 00:36:43,285
+472
+00:36:39,134 --> 00:36:43,285
 <i> If I have to tell you</i>
 <i> one more time--</i>
 
-474
+473
 00:36:43,285 --> 00:36:46,259
 <i>[ Zed ]</i>
 <i>Edwards !  Let's put it on.</i>
 
-475
+474
 00:36:46,259 --> 00:36:50,995
 - Put what on ?
 - The last suit
 you'll ever wear.
 
-476
+475
 00:37:03,677 --> 00:37:06,554
 <i>[ Zed ]</i>
 <i>You will dress only in attire</i>
 <i>specially sanctioned...</i>
 
-477
-00:37:06,554 --> 00:37:06,914
-By a.
-
-478
-00:37:06,940 --> 00:37:09,074
+476
+00:37:06,554 --> 00:37:08,688
 <i>by MIB Special Services.</i>
 
-479
-00:37:09,074 --> 00:37:11,785
+477
+00:37:08,688 --> 00:37:11,785
 <i>You'll conform</i>
 <i>to the identity we give you,</i>
 
-480
+478
 00:37:11,785 --> 00:37:14,720
 <i>eat where we tell you,</i>
 <i>live where we tell you.</i>
 
-481
+479
 00:37:14,788 --> 00:37:19,358
 <i>From now on, you'll have no</i>
 <i>identifying marks of any kind.</i>
 
-482
+480
 00:37:19,426 --> 00:37:22,193
 <i>You will not stand out</i>
 <i>in any way.</i>
 
-483
+481
 00:37:22,193 --> 00:37:24,554
 <i>Your entire image is crafted...</i>
 
-484
+482
 00:37:24,554 --> 00:37:27,435
 <i>to leave no lasting memory</i>
 <i>with anyone you encounter.</i>
 Ow !
 
-485
-00:37:27,468 --> 00:37:30,344
+483
+00:37:27,435 --> 00:37:30,235
 <i>You are a rumor,</i>
 <i>recognizable only...</i>
 
-486
-00:37:30,344 --> 00:37:33,343
+484
+00:37:30,303 --> 00:37:33,343
 <i>as deja vu,</i>
 <i>and dismissed just as quickly.</i>
 
-487
+485
 00:37:33,764 --> 00:37:36,298
 <i>You don't exist.</i>
 <i> You were never even born.</i>
 
-488
-00:37:38,033 --> 00:37:40,934
+486
+00:37:38,445 --> 00:37:41,510
 <i>Anonymity is your name.</i>
 
-489
-00:37:40,934 --> 00:37:43,715
+487
+00:37:41,510 --> 00:37:43,754
 <i>Silence your native tongue.</i>
 
-490
-00:37:43,715 --> 00:37:46,124
+488
+00:37:43,754 --> 00:37:46,124
 <i>You are no longer</i>
 <i>part of the system.</i>
 
-491
-00:37:46,124 --> 00:37:50,693
+489
+00:37:46,124 --> 00:37:51,222
 <i>You are above the system.</i>
 <i>Over it.  Beyond it.</i>
 
-492
-00:37:50,804 --> 00:37:53,925
+490
+00:37:51,291 --> 00:37:53,955
 <i>We're "them."</i>
 <i> We're "they."</i>
 
-493
+491
 00:37:53,994 --> 00:37:56,461
 <i>We are the Men in Black.</i>
 
-494
-00:38:03,937 --> 00:38:09,644
+492
+00:38:03,937 --> 00:38:07,171
 <i>[ Jay ]</i>
 <i>You know what the difference is</i>
 <i>between you and me ?</i>
 
-495
-00:38:09,653 --> 00:38:11,953
+493
+00:38:09,443 --> 00:38:11,743
 I make this look good.
 
-496
-00:38:13,647 --> 00:38:16,467
+494
+00:38:13,647 --> 00:38:16,047
 Gonna go for a little ride,
 you and me.
 
-497
-00:38:16,467 --> 00:38:18,899
+495
+00:38:16,100 --> 00:38:18,967
 I'll put you down here
 for just a minute,
 then Daddy'll be right back.
 
-498
-00:38:18,899 --> 00:38:21,887
+496
+00:38:18,967 --> 00:38:21,887
 [ Meowing ]
 
-499
-00:38:24,171 --> 00:38:26,291
+497
+00:38:24,239 --> 00:38:26,291
 [ Tires Squealing ]
 
-500
-00:38:34,081 --> 00:38:39,438
+498
+00:38:34,149 --> 00:38:39,438
 [ Grunting ]
 
-501
-00:38:49,450 --> 00:38:54,469
+499
+00:38:49,450 --> 00:38:54,223
 [ Meows ]
 Okay.  We're ready to go
 for a little ride.
 
-502
-00:38:54,469 --> 00:38:56,564
+500
+00:38:54,292 --> 00:38:56,358
 We're gonna meet
 one of Daddy's friends
 and you're gonna like him.
 
-503
+501
 00:39:00,861 --> 00:39:03,328
 Okay, let's see.
 
-504
+502
 00:39:03,396 --> 00:39:07,154
 Bee !
 We've got the deposed
 sur-prefect of Singalee...
 
-505
-00:39:07,394 --> 00:39:10,428
+503
+00:39:07,210 --> 00:39:10,244
 <i> touching down in the forest</i>
 <i> outside Portland tonight.</i>
 
-506
-00:39:10,544 --> 00:39:13,412
+504
+00:39:10,244 --> 00:39:13,112
 Humanoid ?
 <i> You wish.  Bring a sponge.</i>
 
-507
-00:39:13,793 --> 00:39:16,994
+505
+00:39:13,194 --> 00:39:16,395
 [ Chuckles ]
 <i> And here.  Red letter</i>
 <i> from last night.</i>
 
-508
+506
 00:39:16,994 --> 00:39:20,597
 We had an unauthorized
 landing somewhere
 in upstate New York.
 
-509
+507
 00:39:20,597 --> 00:39:22,454
 <i> Kay, keep your ears</i>
 <i> opened on this one.</i>
 
-510
+508
 00:39:22,454 --> 00:39:25,923
 <i> We're not hosting an</i>
 <i> intergalactic kegger here.</i>
 
-511
-00:39:26,486 --> 00:39:29,654
+509
+00:39:26,063 --> 00:39:29,231
 <i>[ Alarm Beeping ]</i>
 Well, well, well.
 We got a skimmer.
 
-512
-00:39:29,654 --> 00:39:32,893
+510
+00:39:29,309 --> 00:39:32,845
 Landed alien out of zone.
 Who is it ?
 <i> Redgick.</i>
 
-513
+511
 00:39:32,893 --> 00:39:36,283
 <i> He's not cleared to</i>
 <i> leave Manhattan, but he's</i>
 <i> way outta town right now.</i>
 
-514
+512
 00:39:36,284 --> 00:39:38,485
 <i> Stuck on the</i>
 <i> New Jersey Turnpike.</i>
 
-515
+513
 00:39:38,500 --> 00:39:43,604
 Why don't you take Junior here
 with you.  This is a good one
 for him to warm up on.
 
-516
+514
 00:39:43,604 --> 00:39:45,804
 Go get 'em, tiger.
 
-517
-00:39:45,804 --> 00:39:50,609
+515
+00:39:45,804 --> 00:39:50,573
 <i> [ Alarm Continues ]</i>
 
-518
-00:39:50,677 --> 00:39:54,815
+516
+00:39:50,573 --> 00:39:54,689
 <i> [ Jay Mocking ]</i>
 <i> We're not hosting</i>
 <i> an intergalactic kegger.</i>
 
-519
-00:39:54,815 --> 00:39:59,117
+517
+00:39:54,689 --> 00:39:59,117
 [ Chuckles ]
 Zed.  He just--
 
-520
-00:40:00,621 --> 00:40:03,254
+518
+00:40:00,621 --> 00:40:03,092
 Unlimited technology
 from the whole universe,
 
-521
-00:40:03,254 --> 00:40:06,255
+519
+00:40:03,161 --> 00:40:06,162
 and we cruise around
 in a Ford P.O.S.
 
-522
+520
 00:40:08,428 --> 00:40:13,033
 - Fasten your seat belt.
 - See, now we got to work
 on your people skills.
 
-523
+521
 00:40:13,033 --> 00:40:15,867
 You know, you'd get a much
 better reaction if you were
 a little more polite.
 
-524
+522
 00:40:15,936 --> 00:40:18,849
 - Fasten your seat belt, please.
 - Whoa, that was good.
 
-525
-00:40:18,849 --> 00:40:20,688
+523
+00:40:18,849 --> 00:40:20,756
 - Did you hurt yourself--
 - [ Tires Screech, Motor Revs ]
 
-526
-00:40:20,688 --> 00:40:22,908
+524
+00:40:20,756 --> 00:40:22,872
 [ Yells ]
 
-527
-00:40:22,976 --> 00:40:26,049
+525
+00:40:22,872 --> 00:40:25,787
 Oh, the red button there, kid.
 Don't ever, ever
 touch the red button.
 
-528
-00:40:26,049 --> 00:40:29,150
+526
+00:40:25,787 --> 00:40:28,935
 Oh !
 
-529
-00:40:29,286 --> 00:40:31,686
+527
+00:40:28,952 --> 00:40:31,482
 Ooh.
 
-530
-00:40:34,535 --> 00:40:36,721
+528
+00:40:34,603 --> 00:40:36,685
 [ Tires Screech ]
 
-531
-00:40:36,790 --> 00:40:40,261
+529
+00:40:36,685 --> 00:40:40,134
 All right, Pop,
 that'll be $72, there.
 <i>[ Woman's Voice, Indistinct ]</i>
 
-532
-00:40:40,261 --> 00:40:44,478
+530
+00:40:40,134 --> 00:40:44,485
 Okay, sweetie, let me pay
 the impolite driver.
 
-533
-00:40:44,478 --> 00:40:46,775
+531
+00:40:44,546 --> 00:40:46,762
 <i>[ Tires Screech ]</i>
 
-534
-00:40:46,775 --> 00:40:49,868
+532
+00:40:46,787 --> 00:40:49,868
 [ Sighs, Grunts ]
 
-535
-00:40:54,889 --> 00:40:58,043
+533
+00:40:54,957 --> 00:40:58,043
 [ Chattering ]
 
-536
-00:41:03,263 --> 00:41:05,684
+534
+00:41:03,331 --> 00:41:05,684
 [ Meows ]
 
-537
-00:41:13,106 --> 00:41:17,128
+535
+00:41:13,174 --> 00:41:17,128
 [ Speaking Alien Language ]
 
-538
+536
 00:41:18,279 --> 00:41:18,789
 You are free.
 
-539
+537
 00:41:20,364 --> 00:41:26,618
 I guess you are on the that gives me
 great structures are not touching shoot
 
-540
+538
 00:41:26,889 --> 00:41:29,979
 Purchase hey John Keats costs cheat day.
 
-541
+539
 00:41:33,219 --> 00:41:38,828
 Pottery sculpture yeah that's he adds
 garage question correctly me that.
 
-542
+540
 00:41:41,234 --> 00:41:42,734
 The Florida Jupiter.
 
-543
-00:41:45,859 --> 00:41:49,599
+541
+00:41:45,723 --> 00:41:49,310
 [ Bell Rings ]
 Six is up !
 
-544
-00:41:49,599 --> 00:41:52,533
+542
+00:41:49,326 --> 00:41:52,396
 Where is Ivan ?
 <i>[ Edgar ]</i>
 <i>Gave him a break.</i>
 
-545
-00:42:02,643 --> 00:42:08,661
+543
+00:42:02,560 --> 00:42:08,679
 [ Speaking Alien Language ]
 
-546
-00:42:08,662 --> 00:42:10,815
+544
+00:42:08,730 --> 00:42:10,815
 [ Grunts ]
 
-547
+545
 00:42:15,455 --> 00:42:18,422
 You can kill us both,
 but you will not
 find the Galaxy.
 
-548
+546
 00:42:18,491 --> 00:42:21,860
 <i>Oh, you're right</i>
 <i>about one thing.</i>
 <i>[ Chuckles ]</i>
 
-549
-00:42:22,376 --> 00:42:24,829
+547
+00:42:22,444 --> 00:42:24,829
 [ Moans ]
 
-550
-00:42:25,412 --> 00:42:29,280
+548
+00:42:25,496 --> 00:42:29,350
 - [ Yells ]
 - [ Grunts ]
 
-551
-00:42:29,280 --> 00:42:31,648
+549
+00:42:29,366 --> 00:42:31,720
 - [ Edgar Yells ]
 - [ Meows ]
 
-552
-00:42:31,648 --> 00:42:33,447
+550
+00:42:31,736 --> 00:42:33,521
 - [ Hisses ]
 - [ Yells ]
 
-553
-00:42:33,521 --> 00:42:35,784
+551
+00:42:33,589 --> 00:42:35,771
 [ Meows, Hisses ]
 
-554
-00:42:35,790 --> 00:42:38,759
+552
+00:42:35,771 --> 00:42:38,786
 You're not goin'
 anywhere, pal.
 [ Grunts ]
 
-555
-00:42:38,759 --> 00:42:41,123
+553
+00:42:38,827 --> 00:42:41,110
 [ Yelling, Chattering ]
 
-556
-00:42:41,123 --> 00:42:44,533
+554
+00:42:41,110 --> 00:42:44,525
 What's goin' on, man ?
 [ Grunts ]
 
-557
-00:42:44,533 --> 00:42:46,475
+555
+00:42:44,525 --> 00:42:46,472
 Hey, hey,
 hey, easy !
 
-558
-00:42:46,475 --> 00:42:50,587
+556
+00:42:46,489 --> 00:42:50,606
 [ Chattering ]
 [ Grunts ]
 
-559
-00:42:50,604 --> 00:42:53,058
+557
+00:42:50,672 --> 00:42:53,058
 [ Growls ]
 
-560
-00:42:54,661 --> 00:42:57,945
+558
+00:42:54,578 --> 00:42:57,862
 Like to see your license
 and registration, please.
 
-561
+559
 00:43:00,500 --> 00:43:03,467
 <i>Like to see your other license</i>
 <i>and registration, please.</i>
 
-562
-00:43:10,643 --> 00:43:13,719
+560
+00:43:10,643 --> 00:43:13,477
 All right, your resident alien
 card has you restricted
 to the island of Manhattan.
 
-563
-00:43:13,719 --> 00:43:17,084
+561
+00:43:13,546 --> 00:43:17,084
 - Where are you goin', Redgie ?
 - Well, it's my wife.  She's--
 
-564
+562
 00:43:17,084 --> 00:43:19,017
 Well, look.
 
-565
-00:43:19,086 --> 00:43:22,488
+563
+00:43:19,086 --> 00:43:22,420
 [ Crying, Squealing ]
 <i>[ Kay ]</i>
 <i>Oh, all right.</i>
 
-566
+564
 00:43:22,488 --> 00:43:26,124
 Okay, no big deal.
 Okay.  You come with me, Redge.
 
-567
+565
 00:43:26,193 --> 00:43:28,126
 <i> [ Crying,</i>
 <i>   Squealing Continue ]</i>
 
-568
-00:43:28,195 --> 00:43:30,597
+566
+00:43:28,195 --> 00:43:30,528
 [ Blows ]
 And, um, and you
 handle this.
 
-569
-00:43:30,597 --> 00:43:33,339
+567
+00:43:30,528 --> 00:43:33,339
 - What ?  Me ?
 - Yeah, it's easy.
 You just catch.
 
-570
+568
 00:43:33,339 --> 00:43:35,708
 Are you sure he knows
 what he's doing ?
 He does it all the time.
 
-571
+569
 00:43:35,709 --> 00:43:37,810
 <i>Let the man work.</i>
 [ Whispering ]
 Hey.
 
-572
-00:43:38,150 --> 00:43:40,150
+570
+00:43:37,942 --> 00:43:39,942
 Um.  Okay,
 uh, yeah.
 [ Crying, Grunting ]
 
-573
-00:43:40,150 --> 00:43:44,219
+571
+00:43:40,024 --> 00:43:44,093
 [ Blows ]
 [ Screaming ]
 
-574
-00:43:44,288 --> 00:43:47,056
+572
+00:43:44,161 --> 00:43:46,929
 Ooh !  Kay !
 Oh, damn, man !
 
-575
-00:43:47,056 --> 00:43:49,189
+573
+00:43:46,998 --> 00:43:49,131
 Some--  Kay !
 Something's peekin' !
 
-576
-00:43:49,209 --> 00:43:51,242
+574
+00:43:49,200 --> 00:43:51,233
 [ Screaming, Grunting ]
 Croagg the Midwife's at 54th
 and Madison.
 
-577
-00:43:51,340 --> 00:43:53,506
+575
+00:43:51,302 --> 00:43:53,468
 [ Screaming Continues ]
 You're headed out of town,
 Redgie.  What's goin' on ?
 
-578
-00:43:53,506 --> 00:43:55,869
+576
+00:43:53,468 --> 00:43:55,869
 Well, we're
 meeting someone.
 Who are you meeting ?
 
-579
+577
 00:43:55,869 --> 00:43:59,003
 Well, it's a ship.
 A ship ?  I didn't see
 a departure clearance for today.
 
-580
-00:43:59,059 --> 00:44:01,061
+578
+00:43:59,059 --> 00:44:01,018
 You didn't ?
 No.
 
-581
-00:44:01,061 --> 00:44:02,109
+579
+00:44:01,061 --> 00:44:04,655
 Well, it's an emergency.
 What--
 You're doin' fine, ace.
 
-582
-00:44:02,109 --> 00:44:08,829
+580
+00:44:04,697 --> 00:44:07,658
 What kind of emergency ?
 What's the rush to get off
 the planet all of a sudden ?
 
-583
-00:44:08,829 --> 00:44:10,405
+581
+00:44:07,700 --> 00:44:10,294
 <i> Excuse me, Miss.</i>
 We just don't like
 the neighborhood anymore.
 
-584
-00:44:10,405 --> 00:44:13,606
+582
+00:44:10,336 --> 00:44:13,563
 Kay !
 It's just some of the, uh,
 new arrivals.
 
-585
-00:44:13,608 --> 00:44:16,678
+583
+00:44:13,606 --> 00:44:16,692
 What new arrivals ?
 Have anything to do with
 the crasher from last night ?
 
-586
-00:44:16,678 --> 00:44:18,492
+584
+00:44:16,692 --> 00:44:18,560
 <i> Excuse me, Miss.</i>
 <i> [ Screams ]</i>
 
-587
-00:44:18,492 --> 00:44:22,090
+585
+00:44:18,560 --> 00:44:22,077
 [ Grunts, Whimpers ]
 
-588
-00:44:22,090 --> 00:44:24,115
+586
+00:44:22,077 --> 00:44:24,058
 <i> [ Jay ]</i>
 <i> Oh, man.</i>
 
-589
-00:44:24,184 --> 00:44:29,332
+587
+00:44:24,058 --> 00:44:29,009
 Oh, man.  Oh.
 Oh, Kay, look.
 
-590
-00:44:29,375 --> 00:44:32,709
+588
+00:44:29,025 --> 00:44:32,490
 - Oh, man.
 - [ Laughs ]
 
-591
-00:44:32,709 --> 00:44:36,799
+589
+00:44:32,558 --> 00:44:36,797
 Congratulations, Redge,
 it's a... squid.
 
-592
-00:44:36,799 --> 00:44:38,733
+590
+00:44:36,865 --> 00:44:38,799
 <i> [ Jay ]</i>
 <i> Kay, man.</i>
 
-593
-00:44:38,733 --> 00:44:44,051
+591
+00:44:38,799 --> 00:44:44,119
 [ Laughs ]
 You know, it's actually
 kind of--
 
-594
-00:44:44,051 --> 00:44:47,515
+592
+00:44:44,119 --> 00:44:47,502
 [ Hacks, Giggles ]
 
-595
-00:44:47,515 --> 00:44:50,574
+593
+00:44:47,527 --> 00:44:50,574
 [ Spits ]
 
-596
+594
 00:44:50,643 --> 00:44:52,844
 <i> Cute.</i>
 
-597
-00:44:52,844 --> 00:44:56,825
+595
+00:44:52,844 --> 00:44:56,812
 <i> [ Car Door Opens, Closes ]</i>
 
-598
-00:44:56,825 --> 00:44:59,583
+596
+00:44:56,837 --> 00:44:59,583
 <i> [ Kay Sighs ]</i>
 
-599
+597
 00:44:59,652 --> 00:45:04,322
 Anything about that
 seem unusual to you ?
 
-600
-00:45:04,390 --> 00:45:09,343
+598
+00:45:04,390 --> 00:45:09,344
 <i>What would scare Redgick</i>
 <i>so badly that he'd risk</i>
 <i>a warp jump with a newborn ?</i>
 
-601
-00:45:09,489 --> 00:45:12,424
+599
+00:45:09,345 --> 00:45:12,280
 We'll check
 the hot sheets.
 <i> [ Engine Starts ]</i>
 
-602
+600
 00:45:16,602 --> 00:45:20,038
 <i>These are the hot sheets ?</i>
 Best investigative
 reporting on the planet.
 
-603
+601
 00:45:20,106 --> 00:45:22,040
 Go ahead.
 Read the<i> New York Times</i>
 if you want to.
 
-604
-00:45:22,108 --> 00:45:24,173
+602
+00:45:22,108 --> 00:45:24,042
 They get lucky sometimes.
 Thanks, Manny.
 
-605
-00:45:24,189 --> 00:45:27,457
+603
+00:45:24,110 --> 00:45:27,457
 Cannot believe
 you're lookin' for tips
 in the supermarket tabloids.
 
-606
+604
 00:45:28,915 --> 00:45:30,915
 Not lookin' for.
 
-607
+605
 00:45:32,152 --> 00:45:34,819
 <i> Found.</i>
 
-608
-00:45:46,900 --> 00:45:49,552
+606
+00:45:46,900 --> 00:45:49,433
 Wait a minute.
 Slow down.
 Why ?
 
-609
-00:45:49,696 --> 00:45:54,099
+607
+00:45:49,502 --> 00:45:54,099
 Give her time
 to get the wrong impression.
 Makes things go a lot smoother.
 
-610
+608
 00:45:54,099 --> 00:45:57,400
 - Can I help you gentlemen ?
 - Uh, yes, ma'am.
 I'm Special Agent Manheim.
 
-611
+609
 00:45:57,429 --> 00:46:00,930
 This is Special Agent Black,
 F.B.I.  We'd like to talk
 to you about your visitor.
 
-612
+610
 00:46:01,119 --> 00:46:03,189
 <i>You here to make fun</i>
 <i>of me too ?</i>
 No, ma'am.
 
-613
+611
 00:46:03,189 --> 00:46:07,057
 We at the FBI do not have
 a sense of humor we're
 aware of.  May we come in ?
 
-614
-00:46:08,488 --> 00:46:10,716
+612
+00:46:08,483 --> 00:46:10,449
 - Sure.
 - Thank you.
 
-615
-00:46:10,719 --> 00:46:13,720
+613
+00:46:10,449 --> 00:46:13,524
 <i>Lemonade ?</i>
 Oh, yes, please.
 
-616
-00:46:16,829 --> 00:46:19,155
+614
+00:46:16,681 --> 00:46:18,763
 <i>The chief of police himself</i>
 <i>come up to the house...</i>
 
-617
-00:46:19,155 --> 00:46:22,629
+615
+00:46:18,789 --> 00:46:22,433
 <i>and did a full out</i>
 <i>professional investigation.</i>
 
-618
-00:46:22,629 --> 00:46:25,030
+616
+00:46:22,502 --> 00:46:25,030
 Took a police report and writ
 down everything I said,
 
-619
-00:46:25,152 --> 00:46:28,053
+617
+00:46:25,135 --> 00:46:28,036
 from A to Z, not believing
 one thing I said.
 
-620
-00:46:28,053 --> 00:46:28,839
+618
+00:46:28,036 --> 00:46:29,979
 Sort of pokin' fun
 at me.
 
-621
-00:46:28,839 --> 00:46:34,745
+619
+00:46:29,979 --> 00:46:34,748
 And they asked me, "If he was
 murdered, how was he able
 to walk back in the house ?"
 
-622
-00:46:34,814 --> 00:46:37,989
+620
+00:46:34,814 --> 00:46:37,955
 <i>And I gotta admit to you that</i>
 <i>that one got me sort of stumped.</i>
 
-623
+621
 00:46:37,989 --> 00:46:42,253
 But I'll tell you somethin'
 right now.  I know Edgar,
 and that wasn't Edgar.
 
-624
-00:46:42,322 --> 00:46:45,889
+622
+00:46:42,264 --> 00:46:45,623
 <i>It's like somethin'</i>
 <i>was wearin' Edgar.</i>
 
-625
-00:46:46,089 --> 00:46:49,458
+623
+00:46:45,691 --> 00:46:49,145
 Like a... like a suit.
 
-626
-00:46:49,458 --> 00:46:53,113
+624
+00:46:49,145 --> 00:46:53,181
 An... Edgar suit.
 
-627
-00:46:53,113 --> 00:46:57,969
+625
+00:46:53,181 --> 00:46:57,933
 [ Laughs, Cries ]
 
-628
-00:46:58,038 --> 00:47:02,311
+626
+00:46:57,933 --> 00:47:02,140
 Dude was that ugly
 before he was a alien.
 
-629
-00:47:02,311 --> 00:47:05,645
+627
+00:47:02,208 --> 00:47:05,645
 [ Laughing Continues ]
 I'm sorry.
 
-630
+628
 00:47:05,645 --> 00:47:09,213
 Go on.
 [ Chuckles, Sniffles ]
 Anyway.
 
-631
+629
 00:47:09,282 --> 00:47:12,383
 I come to,
 and he's gone.
 
-632
+630
 00:47:12,452 --> 00:47:14,652
 - Did he say anything ?
 - Yes.
 
-633
+631
 00:47:14,720 --> 00:47:17,055
 He asked me
 for some water.
 
-634
-00:47:17,123 --> 00:47:20,551
+632
+00:47:17,123 --> 00:47:20,325
 - Some, uh, sugar water.
 - Sugar water ?
 
-635
-00:47:20,635 --> 00:47:22,569
+633
+00:47:20,393 --> 00:47:22,327
 <i>Yeah, I remember</i>
 <i>that right.</i>
 
-636
-00:47:22,569 --> 00:47:25,303
+634
+00:47:22,395 --> 00:47:25,129
 <i>Because I thought that</i>
 <i>that was odd.  That he asked me</i>
 <i>for sugar water...</i>
 
-637
-00:47:25,329 --> 00:47:28,564
+635
+00:47:25,149 --> 00:47:28,433
 <i>and not lemonade</i>
 <i>or ice water or...</i>
 
-638
-00:47:28,569 --> 00:47:31,737
+636
+00:47:28,501 --> 00:47:31,737
 <i>regular water</i>
 <i>or tap water.</i>
 
-639
+637
 00:47:31,737 --> 00:47:35,073
 All right, Beatrice.
 There was no alien.
 
-640
-00:47:35,141 --> 00:47:38,049
+638
+00:47:35,141 --> 00:47:37,877
 The flash of light
 you saw in the sky
 was not a UFO.
 
-641
-00:47:38,049 --> 00:47:40,929
+639
+00:47:37,877 --> 00:47:40,929
 <i> Swamp gas from a weather</i>
 <i> balloon was trapped</i>
 <i> in a thermal pocket...</i>
 
-642
+640
 00:47:40,929 --> 00:47:42,694
 and it refracted
 the light from Venus.
 
-643
+641
 00:47:42,694 --> 00:47:45,609
 W-Wa-Wait a minute.
 So you just flash that thing,
 
-644
+642
 00:47:45,669 --> 00:47:47,738
 it erases her memory
 and y-you just make up
 a new one ?
 
-645
+643
 00:47:47,738 --> 00:47:49,657
 A standard
 issue neuralizer.
 
-646
+644
 00:47:49,657 --> 00:47:52,592
 And that weak-ass story
 is the best you can
 come up with ?
 
-647
+645
 00:47:52,658 --> 00:47:57,519
 All right.  On a more personal
 note, Beatrice, Edgar ran off
 with an old girlfriend.
 
-648
-00:47:57,519 --> 00:47:59,299
+646
+00:47:57,519 --> 00:47:59,559
 <i>You're gonna go stay with</i>
 <i>your mom a couple of nights.</i>
 
-649
-00:47:59,299 --> 00:48:01,239
+647
+00:47:59,559 --> 00:48:01,239
 You're gonna get
 over it and decide
 you're better off.
 
-650
+648
 00:48:01,239 --> 00:48:05,470
 Well, yeah, you know,
 'ca-'cause h-he never
 appreciated you anyway.
 
-651
+649
 00:48:05,538 --> 00:48:09,540
 In fact, you know what ?
 You kicked him out.
 
-652
+650
 00:48:09,609 --> 00:48:12,457
 <i> And now that he's gone,</i>
 <i> you gonna go in town,</i>
 <i> you go to Bloomingdales,</i>
 
-653
+651
 00:48:12,457 --> 00:48:14,049
 you find yourself
 some nice dresses.
 
-654
+652
 00:48:14,049 --> 00:48:18,216
 Get yourself some shoes.
 You know, find somewhere,
 maybe, you could get a facial.
 
-655
+653
 00:48:18,284 --> 00:48:23,158
 And, uh, oh.  Hire a decorator
 to come in here quick,
 'cause... damn !
 
-656
-00:48:29,012 --> 00:48:32,049
+654
+00:48:29,012 --> 00:48:31,599
 <i>Yo, Kay, when do</i>
 <i>I get my own...</i>
 
-657
-00:48:32,049 --> 00:48:35,250
+655
+00:48:31,599 --> 00:48:34,815
 flashy, little memory
 messer-upper thingy ?
 
-658
-00:48:35,409 --> 00:48:35,589
-Up.
+656
+00:48:34,869 --> 00:48:35,589
+When you grow up?
 
-659
-00:48:36,920 --> 00:48:39,770
+657
+00:48:36,890 --> 00:48:38,753
 Please, not green.
 
-660
+658
 00:48:40,157 --> 00:48:42,623
 Oh, damn.
 
-661
+659
 00:48:42,692 --> 00:48:45,137
 I don't suppose you know
 what kind of alien life-form...
 
-662
+660
 00:48:45,137 --> 00:48:47,371
 leaves a green spectral trail
 and craves sugar water, do you ?
 
-663
+661
 00:48:47,431 --> 00:48:51,267
 Oh, wait.  That was on
 "Final Jeopardy" last night.
 
-664
+662
 00:48:51,267 --> 00:48:54,301
 <i>Damn, Alex said--</i>
 Zed, we have a bug.
 
-665
+663
 00:48:54,577 --> 00:48:58,012
 So... what ?
 We don't like bugs ?
 
-666
+664
 00:48:58,012 --> 00:49:00,641
 Bugs thrive
 on carnage, tiger.
 
-667
+665
 00:49:00,697 --> 00:49:02,630
 They consume,
 infest, destroy,
 
-668
-00:49:02,630 --> 00:49:05,180
+666
+00:49:02,630 --> 00:49:05,098
 live off the death
 and destruction
 of other species.
 
-669
-00:49:05,248 --> 00:49:07,637
+667
+00:49:05,098 --> 00:49:07,248
 You were stung
 as a child, weren't you ?
 Listen, kid.
 
-670
-00:49:07,638 --> 00:49:12,173
+668
+00:49:07,317 --> 00:49:11,852
 <i> Imagine a giant cockroach</i>
 <i> with unlimited strength,</i>
 
-671
-00:49:12,174 --> 00:49:15,810
+669
+00:49:11,921 --> 00:49:15,557
 <i> a massive</i>
 <i> inferiority complex</i>
 <i> and a real short temper...</i>
 
-672
-00:49:15,810 --> 00:49:18,992
+670
+00:49:15,625 --> 00:49:18,962
 <i> is tear-assing</i>
 <i> around Manhattan Island</i>
 <i> in a brand-new Edgar suit.</i>
 
-673
-00:49:18,992 --> 00:49:21,259
+671
+00:49:18,962 --> 00:49:21,229
 That sound like fun ?
 
-674
+672
 00:49:22,832 --> 00:49:24,699
 What's the move ?
 
-675
-00:49:24,767 --> 00:49:28,832
+673
+00:49:24,767 --> 00:49:27,602
 With the bug in town,
 we'll watch the morgues.
 
-676
+674
 00:49:40,601 --> 00:49:42,717
 Where do you want
 contestant number three ?
 
-677
-00:49:42,785 --> 00:49:45,858
+675
+00:49:42,785 --> 00:49:45,927
 Just leave it there.
 What's with the cat ?
 
-678
-00:49:45,924 --> 00:49:48,992
+676
+00:49:45,996 --> 00:49:49,064
 Oh, the cat.
 There's a problem with the cat.
 Sign here.
 
-679
-00:49:48,992 --> 00:49:52,393
+677
+00:49:49,146 --> 00:49:52,547
 What's the problem
 with the cat ?
 It's your problem.  Heh-heh.
 
-680
-00:49:55,265 --> 00:49:57,386
+678
+00:49:55,265 --> 00:49:57,468
 I hate the living.
 
-681
-00:49:58,701 --> 00:50:01,240
+679
+00:49:58,701 --> 00:50:00,932
 Shall we ?
 
-682
-00:50:29,799 --> 00:50:32,371
+680
+00:50:29,799 --> 00:50:32,063
 Oh, my God.
 
-683
-00:50:35,605 --> 00:50:38,511
+681
+00:50:35,605 --> 00:50:38,203
 Whoa, buddy,
 what are you ?
 
-684
+682
 00:50:46,015 --> 00:50:49,522
 Subject was approximately
 112 degrees at time of autopsy,
 
-685
-00:50:49,522 --> 00:50:52,072
+683
+00:50:49,522 --> 00:50:52,288
 indicating an increase
 in body temperature.
 
-686
-00:50:52,072 --> 00:50:55,974
+684
+00:50:52,288 --> 00:50:56,156
 Examiner tried to verify this
 rectally only to find
 the subject was without rectum,
 
-687
-00:50:55,992 --> 00:50:58,072
+685
+00:50:56,156 --> 00:50:58,072
 which is,
 needless to say, really--
 
-688
+686
 00:50:58,072 --> 00:51:02,242
 <i>Weird.  I'm Dr. Leo Manville,</i>
 <i>Department of Public Health.</i>
 
-689
+687
 00:51:02,242 --> 00:51:04,910
 This is Dr. White.
 <i>[ Medical Examiner Scoffs ]</i>
 
-690
-00:51:04,910 --> 00:51:07,102
+688
+00:51:04,910 --> 00:51:07,251
 You boys must not have
 much of a home life.
 
-691
-00:51:07,102 --> 00:51:10,738
+689
+00:51:07,251 --> 00:51:10,752
 We watch the morgues carefully.
 Do you have something
 unusual around here ?
 
-692
+690
 00:51:10,807 --> 00:51:13,441
 I'd say so.
 Triple homicide.
 
-693
+691
 00:51:13,510 --> 00:51:16,884
 The first body I opened up
 was pretty normal, except he
 was broken in half.
 
-694
+692
 00:51:16,884 --> 00:51:20,548
 But when I opened up
 the other two--
 Well, let me show you.
 
-695
-00:51:27,090 --> 00:51:30,699
+693
+00:51:27,032 --> 00:51:29,928
 There's a skeletal structure
 unlike anything
 I've ever seen before.
 
-696
-00:51:30,699 --> 00:51:32,400
+694
+00:51:29,939 --> 00:51:32,202
 <i> [ Kay ]</i>
 <i> I'll have a look</i>
 <i> at this one.</i>
 
-697
-00:51:32,400 --> 00:51:35,066
+695
+00:51:32,246 --> 00:51:34,995
 Dr. White, why don't you
 and Dr. Weaver check out
 the other body ?
 
-698
-00:51:35,092 --> 00:51:37,059
+696
+00:51:35,064 --> 00:51:37,059
 This way, Doctor.
 
-699
+697
 00:51:37,100 --> 00:51:39,162
 This one's
 even stranger.
 
-700
+698
 00:51:39,168 --> 00:51:41,135
 I did a full laparotomy.
 
-701
+699
 00:51:41,135 --> 00:51:42,862
 I started with the lesser
 curvature of the stomach,
 
-702
+700
 00:51:42,862 --> 00:51:45,573
 but we could start with
 the gastroesophageal junction.
 
-703
-00:51:47,310 --> 00:51:50,714
+701
+00:51:47,144 --> 00:51:50,479
 Let's start
 wherever you started at.
 
-704
-00:51:50,714 --> 00:51:52,780
+702
+00:51:50,548 --> 00:51:52,780
 Okeydokey.
 
-705
-00:51:53,850 --> 00:51:55,916
+703
+00:51:53,684 --> 00:51:55,916
 Oh.
 
-706
-00:51:57,434 --> 00:51:59,520
+704
+00:51:57,502 --> 00:51:59,484
 <i>[ Meowing ]</i>
 
-707
-00:51:59,589 --> 00:52:02,722
+705
+00:51:59,484 --> 00:52:02,323
 - That your cat ?
 -<i> Guess it is now.</i>
 
-708
-00:52:02,722 --> 00:52:05,060
+706
+00:52:02,392 --> 00:52:05,060
 It came in with the body.
 Okay.  Dive right in.
 
-709
+707
 00:52:05,060 --> 00:52:07,661
 I'm sure
 he won't mind.
 [ Groaning ]
 
-710
+708
 00:52:10,400 --> 00:52:12,435
 You have
 really pretty eyes.
 
-711
+709
 00:52:12,435 --> 00:52:14,369
 Thank you.
 
-712
-00:52:18,074 --> 00:52:21,112
+710
+00:52:18,074 --> 00:52:20,975
 You feel that ?
 Where the pyloric
 junction would be ?
 
-713
-00:52:21,112 --> 00:52:24,142
+711
+00:52:21,043 --> 00:52:24,142
 Push it aside.
 Notice anything strange ?
 [ Groaning ]
 
-714
+712
 00:52:24,142 --> 00:52:27,382
 Stomach, liver, lungs.
 Nope.  All fine.
 
-715
+713
 00:52:28,385 --> 00:52:30,843
 Doctor,
 they're all missing.
 
-716
+714
 00:52:30,843 --> 00:52:34,745
 Of course.  That's obviously
 the first thing I noticed.
 
-717
+715
 00:52:34,791 --> 00:52:40,163
 What I was pointing out
 is the fact that there
 are no, um, pieces...
 
-718
+716
 00:52:40,163 --> 00:52:42,664
 of them left.
 
-719
-00:52:42,666 --> 00:52:46,462
+717
+00:52:42,666 --> 00:52:46,372
 Yeah, you know,
 so they're intact...
 
-720
-00:52:46,462 --> 00:52:48,652
+718
+00:52:46,372 --> 00:52:48,505
 wherever they are
 whole somewhere.
 
-721
-00:52:48,652 --> 00:52:51,118
+719
+00:52:48,505 --> 00:52:50,971
 That we can
 be sure of.
 Have we met before ?
 
-722
-00:52:51,120 --> 00:52:54,054
+720
+00:52:51,040 --> 00:52:53,974
 [ Chuckles ]
 I'm having the strangest
 feeling of deja vu.
 
-723
+721
 00:52:55,512 --> 00:52:57,845
 Yeah, me too.
 Really ?
 
-724
+722
 00:52:57,914 --> 00:53:01,224
 You wanna know
 what I really think,
 but don't tell that guy.
 
-725
+723
 00:53:01,224 --> 00:53:03,082
 He looks like he's
 under enough stress.
 
-726
+724
 00:53:03,082 --> 00:53:05,062
 See, I don't think
 this body's really a body.
 
-727
+725
 00:53:05,062 --> 00:53:08,222
 I think it's some kind
 of transport unit
 for something else.
 
-728
+726
 00:53:08,291 --> 00:53:10,224
 The question is, what ?
 
-729
-00:53:10,293 --> 00:53:13,198
+727
+00:53:10,293 --> 00:53:13,060
 Mm-hmm.
 This freaking you out ?
 
-730
-00:53:13,267 --> 00:53:17,102
+728
+00:53:13,129 --> 00:53:16,964
 Nah.  [ Scoffing ]
 Nah, girl.
 
-731
-00:53:18,535 --> 00:53:21,619
+729
+00:53:18,535 --> 00:53:21,502
 You know what I like
 to do sometimes
 when it's really late ?
 
-732
-00:53:23,473 --> 00:53:25,518
+730
+00:53:23,473 --> 00:53:24,939
 No.
 
-733
-00:53:25,972 --> 00:53:28,039
+731
+00:53:25,007 --> 00:53:27,074
 <i>Dr. White ?</i>
 
-734
-00:53:28,077 --> 00:53:31,333
+732
+00:53:28,077 --> 00:53:30,378
 Um, excuse me.
 
-735
+733
 00:53:32,415 --> 00:53:34,682
 Ugh !
 
-736
-00:53:34,751 --> 00:53:37,669
+734
+00:53:34,751 --> 00:53:37,320
 What do you think ?
 Very interesting.
 
-737
-00:53:37,672 --> 00:53:40,439
+735
+00:53:37,389 --> 00:53:40,385
 She got a real "Queen of
 the Undead" thing goin'.
 
-738
+736
 00:53:40,510 --> 00:53:42,711
 No, the body.
 Great body.
 
-739
+737
 00:53:42,711 --> 00:53:45,211
 The dead body.
 Oh.
 
-740
-00:53:45,262 --> 00:53:49,131
+738
+00:53:45,211 --> 00:53:48,931
 You gonna have to go
 look at that thing.
 You recognize him ?
 
-741
-00:53:49,131 --> 00:53:53,093
+739
+00:53:48,931 --> 00:53:53,069
 Yeah, he looks like the big guy
 I saw down at headquarters,
 only a little deader.
 
-742
-00:53:53,093 --> 00:53:55,394
+740
+00:53:53,069 --> 00:53:55,370
 What do you think
 killed him ?
 
-743
-00:53:55,438 --> 00:53:57,707
+741
+00:53:55,438 --> 00:53:57,638
 Bug ?
 Dr. White.
 
-744
+742
 00:53:57,707 --> 00:53:59,774
 You're up, slugger.
 Oh.
 
-745
+743
 00:54:02,812 --> 00:54:04,545
 Look at this.
 
-746
-00:54:04,614 --> 00:54:09,226
+744
+00:54:04,614 --> 00:54:07,548
 <i> [ Jay ]</i>
 <i> What the hell</i>
 <i> is that ?</i>
 
-747
-00:54:10,934 --> 00:54:13,998
+745
+00:54:11,002 --> 00:54:13,985
 [ Beeping, Hissing ]
 
-748
-00:54:13,998 --> 00:54:17,558
+746
+00:54:14,010 --> 00:54:17,558
 [ Whirring ]
 
-749
-00:54:24,033 --> 00:54:27,112
+747
+00:54:23,905 --> 00:54:26,834
 [ Labored Breathing ]
 Must...
 
-750
-00:54:27,112 --> 00:54:29,045
+748
+00:54:26,903 --> 00:54:29,071
 [ Sighing ]
 
-751
-00:54:29,323 --> 00:54:31,790
+749
+00:54:29,071 --> 00:54:31,538
 <i> to prevent...</i>
 
-752
-00:54:32,160 --> 00:54:34,493
+750
+00:54:33,710 --> 00:54:36,207
 contest.
 
-753
-00:54:34,493 --> 00:54:38,379
+751
+00:54:36,215 --> 00:54:38,482
 <i> It's okay.</i>
 <i> What are you</i>
 <i> trying to say ?</i>
 
-754
-00:54:38,448 --> 00:54:42,784
+752
+00:54:38,482 --> 00:54:42,784
 - To prevent--
 - To prevent... struggle ?
 
-755
-00:54:42,819 --> 00:54:46,492
+753
+00:54:42,819 --> 00:54:46,288
 [ Sighing ]
 No.  To prevent--
 
-756
-00:54:46,492 --> 00:54:49,459
+754
+00:54:46,289 --> 00:54:49,324
 - War ?
 - War.
 
-757
-00:54:51,728 --> 00:54:54,531
+755
+00:54:51,728 --> 00:54:54,600
 The galaxy...
 
-758
-00:54:54,531 --> 00:54:56,597
+756
+00:54:54,669 --> 00:54:56,735
 is on...
 
-759
-00:54:57,099 --> 00:54:59,434
+757
+00:54:57,099 --> 00:54:59,585
 Orion's...
 
-760
-00:55:01,137 --> 00:55:03,604
+758
+00:55:01,137 --> 00:55:03,755
 be-- be--
 
-761
-00:55:04,672 --> 00:55:06,705
+759
+00:55:04,841 --> 00:55:07,025
 What is word ?
 [ Labored Breathing ]
 
-762
-00:55:06,705 --> 00:55:08,676
+760
+00:55:07,025 --> 00:55:08,745
 <i> [ Jay ]</i>
 <i> Bed ?</i>
 
-763
+761
 00:55:08,745 --> 00:55:12,112
 Belt ?  Orion's belt ?
 
-764
-00:55:25,208 --> 00:55:27,261
+762
+00:55:25,276 --> 00:55:27,261
 [ Meowing ]
 
-765
-00:55:28,144 --> 00:55:31,298
+763
+00:55:28,212 --> 00:55:31,298
 [ Sighing ]
 
-766
+764
 00:55:31,367 --> 00:55:36,082
 "To prevent war, the galaxy
 is on Orion's belt."
 What the hell does that mean ?
 
-767
+765
 00:55:36,082 --> 00:55:38,416
 [ Sighing ]
 
-768
-00:55:39,943 --> 00:55:42,360
+766
+00:55:39,943 --> 00:55:42,014
 Dr., um--
 
-769
-00:55:42,360 --> 00:55:44,483
+767
+00:55:42,014 --> 00:55:44,447
 <i>Whatever.</i>
 <i>Come here.</i>
 Dr. Whatever ?
 
-770
-00:55:44,483 --> 00:55:47,551
+768
+00:55:44,447 --> 00:55:47,515
 You guys aren't really from
 the Department of Health,
 are you ?
 
-771
-00:55:47,584 --> 00:55:50,222
+769
+00:55:47,584 --> 00:55:49,784
 Rosenberg--
 Oh, damn.
 
-772
-00:55:50,222 --> 00:55:52,040
+770
+00:55:49,784 --> 00:55:52,040
 <i>[ Kay ]</i>
 <i>The Arquillians</i>
 <i>are not gonna like this.</i>
 
-773
+771
 00:55:52,040 --> 00:55:55,162
 <i>This guy was one</i>
 <i>of the royal family.</i>
 I knew it.
 
-774
-00:55:55,162 --> 00:55:59,511
+772
+00:55:55,162 --> 00:55:59,664
 This is an alien, and you guys
 are from some government agency
 trying to keep it under wraps.
 
-775
-00:55:59,511 --> 00:56:02,879
+773
+00:55:59,666 --> 00:56:03,034
 He said,
 "To prevent war, the galaxy
 is on Orion's belt."
 
-776
-00:56:02,899 --> 00:56:05,422
+774
+00:56:03,034 --> 00:56:05,422
 <i>This makes total sense.</i>
 <i>How else do you</i>
 <i>explain New York ?</i>
 
-777
+775
 00:56:05,422 --> 00:56:08,757
 The other day,
 I was in this cab,
 and this guy was--
 
-778
-00:56:09,839 --> 00:56:12,112
+776
+00:56:09,838 --> 00:56:11,992
 "Galaxy on Orion's belt"
 doesn't make sense.
 
-779
-00:56:12,201 --> 00:56:16,269
+777
+00:56:11,992 --> 00:56:16,076
 That's what the little dude
 inside the big dude's head said,
 right ?  Right after--
 
-780
-00:56:16,651 --> 00:56:19,852
+778
+00:56:16,145 --> 00:56:19,412
 <i>Damn, man !  You did</i>
 <i>the flashy thing already.</i>
 
-781
-00:56:19,852 --> 00:56:22,786
+779
+00:56:19,415 --> 00:56:22,492
 Whoever you guys are,
 show me I.D. if you're
 gonna be in the morgue.
 
-782
-00:56:22,904 --> 00:56:25,972
+780
+00:56:22,492 --> 00:56:25,584
 Of course, young lady.
 Have a look at this
 for me, please.
 
-783
-00:56:25,972 --> 00:56:27,862
+781
+00:56:25,639 --> 00:56:27,639
 Would you stop that ?
 What ?
 
-784
-00:56:27,862 --> 00:56:30,202
+782
+00:56:27,639 --> 00:56:30,472
 That thing is gonna give her
 brain cancer or something.
 
-785
-00:56:30,202 --> 00:56:32,760
+783
+00:56:30,472 --> 00:56:32,760
 Never hurt her before.
 We gotta get
 the doors closed.
 
-786
-00:56:32,829 --> 00:56:35,842
+784
+00:56:32,774 --> 00:56:35,787
 Special services
 will be here any minute.
 "Never hurt her before" ?
 
-787
+785
 00:56:35,842 --> 00:56:37,842
 How many times have you
 "flashy thinged"
 that poor woman ?
 
-788
+786
 00:56:38,017 --> 00:56:41,185
 Couple.
 You're not worried about
 no long-term damage ?
 
-789
-00:56:41,185 --> 00:56:43,851
+787
+00:56:41,185 --> 00:56:43,852
 A little.
 Have you ever
 flashy-thinged me ?
 
-790
-00:56:43,851 --> 00:56:45,470
+788
+00:56:43,931 --> 00:56:45,897
 No.
 I ain't playin'
 with you, Kay.
 
-791
-00:56:45,470 --> 00:56:47,708
+789
+00:56:45,939 --> 00:56:47,872
 Have you ever
 flashy-thinged me ?
 No.
 
-792
+790
 00:56:56,619 --> 00:57:00,022
 I think I should be in charge
 of the flashy memory thing
 department.
 
-793
+791
 00:57:00,022 --> 00:57:03,991
 Not while I'm around, ace.
 You won't be happy till you
 fricassee somebody's brain out.
 
-794
-00:57:03,993 --> 00:57:07,432
+792
+00:57:03,993 --> 00:57:07,430
 We got two dead aliens
 and a deputy medical examiner
 who needs a new memory.
 
-795
-00:57:07,432 --> 00:57:09,465
+793
+00:57:07,430 --> 00:57:09,463
 Yes, sir.
 
-796
+794
 00:57:10,600 --> 00:57:12,800
 Make it
 a happy memory.
 
-797
-00:57:15,118 --> 00:57:18,739
+795
+00:57:15,186 --> 00:57:18,739
 <i> [ Shouting, Banging ]</i>
 
-798
-00:57:27,063 --> 00:57:31,786
+796
+00:57:27,131 --> 00:57:31,786
 [ Grunting, Screaming ]
 
-799
-00:57:32,669 --> 00:57:35,066
+797
+00:57:32,737 --> 00:57:35,053
 [ Crunching ]
 
-800
-00:57:35,066 --> 00:57:37,758
+798
+00:57:35,078 --> 00:57:37,758
 [ Groaning ]
 
-801
-00:57:45,535 --> 00:57:48,535
+799
+00:57:45,542 --> 00:57:48,535
 <i> [ Edgar Growling ]</i>
 <i> Where is it ?</i>
 
-802
-00:58:01,230 --> 00:58:03,784
+800
+00:58:01,298 --> 00:58:03,784
 [ Sighing ]
 
-803
-00:58:31,428 --> 00:58:33,580
+801
+00:58:31,512 --> 00:58:33,497
 <i> [ Jay ]</i>
 <i> Hey, Zed.</i>
 
-804
-00:58:33,650 --> 00:58:37,314
+802
+00:58:33,567 --> 00:58:37,231
 <i> Doesn't anybody ever get</i>
 <i> any sleep around here ?</i>
 
-805
-00:58:37,314 --> 00:58:41,416
+803
+00:58:37,285 --> 00:58:41,387
 The twins keep us
 on Centaurian time.
 It's a 37-hour day.
 
-806
-00:58:41,476 --> 00:58:41,571
-Would.
-
-807
-00:58:41,571 --> 00:58:45,507
+804
+00:58:41,387 --> 00:58:45,323
 Give it a few months.
 You'll get used to it, or you'll
 have a psychotic episode.
 
-808
+805
 00:58:45,542 --> 00:58:50,512
 Here's Orion.  It's a grouping
 of the brightest stars
 in the northern sky.
 
-809
+806
 00:58:50,512 --> 00:58:53,183
 And here's Orion's belt.
 That's what
 the little guy said.
 
-810
+807
 00:58:53,183 --> 00:58:56,851
 "To prevent war,
 the galaxy is on
 Orion's belt."
 
-811
-00:58:56,992 --> 00:58:59,572
+808
+00:58:56,970 --> 00:58:59,537
 <i>Junior, there are no galaxies</i>
 <i>on Orion's belt.</i>
 
-812
+809
 00:58:59,602 --> 00:59:03,682
 The belt is just
 these three stars.
 Galaxies are huge.
 
-813
+810
 00:59:03,682 --> 00:59:06,049
 They're made up
 of billions of stars.
 
-814
+811
 00:59:06,049 --> 00:59:08,182
 You heard wrong.
 
-815
+812
 00:59:08,250 --> 00:59:10,450
 Whatever, man.
 I know what I heard.
 
-816
+813
 00:59:47,289 --> 00:59:49,256
 Pretty lady.
 [ Beeping ]
 
-817
+814
 00:59:52,095 --> 00:59:55,629
 <i> Uh-huh.  Okay.</i>
 
-818
+815
 00:59:55,698 --> 01:00:00,968
 That grumpy-guy story's
 startin' to come into focus
 a little bit here.
 
-819
+816
 01:00:01,102 --> 01:00:04,137
 So you were the guy in
 that picture you showed me
 with the flowers.
 
-820
-01:00:05,242 --> 01:00:09,511
+817
+01:00:05,173 --> 01:00:09,442
 Yeah.
 And I take it she never
 got those flowers.
 
-821
-01:00:09,652 --> 01:00:11,685
+818
+01:00:09,442 --> 01:00:11,475
 She ever get married
 or anything ?
 
-822
-01:00:11,685 --> 01:00:14,662
+819
+01:00:11,544 --> 01:00:14,545
 No.
 Well, you know
 what they say.
 
-823
+820
 01:00:14,662 --> 01:00:17,763
 "It's better to have loved
 and lost than never
 to have loved at all."
 
-824
-01:00:18,721 --> 01:00:20,872
+821
+01:00:18,721 --> 01:00:20,851
 Try it.
 
-825
+822
 01:00:20,872 --> 01:00:22,905
 <i> [ Zed ]</i>
 <i> Kay.</i>
 
-826
-01:00:25,561 --> 01:00:28,611
+823
+01:00:25,561 --> 01:00:28,612
 <i> Take a look</i>
 <i> at this.</i>
 They're all leaving.
 
-827
-01:00:28,840 --> 01:00:30,807
+824
+01:00:28,613 --> 01:00:30,580
 We've had 12 jump
 in the last hour.
 
-828
-01:00:30,807 --> 01:00:32,907
+825
+01:00:30,730 --> 01:00:32,830
 Redgick was
 just the first.
 
-829
-01:00:32,907 --> 01:00:35,367
+826
+01:00:32,866 --> 01:00:35,367
 What the hell
 do they know
 that we don't ?
 
-830
+827
 01:00:35,367 --> 01:00:37,334
 Why does a rat
 desert a ship ?
 
-831
-01:00:37,339 --> 01:00:41,560
+828
+01:00:37,339 --> 01:00:41,316
 Give me Lem Sat Four,
 please, with a proton
 induction thermoscan.
 
-832
-01:00:42,478 --> 01:00:45,715
+829
+01:00:42,478 --> 01:00:45,162
 <i>[ Kay ]</i>
 <i>Thank you.  Okay.</i>
 <i>Lem Sat 18.</i>
 
-833
-01:00:47,116 --> 01:00:49,961
+830
+01:00:47,116 --> 01:00:49,666
 All right.
 Four thousand.
 
-834
-01:00:52,596 --> 01:00:54,896
+831
+01:00:53,055 --> 01:00:55,371
 <i>[ Kay ]</i>
 <i>That's an Arquillian</i>
 <i>battle cruiser.</i>
 
-835
-01:00:54,896 --> 01:00:57,364
+832
+01:00:55,424 --> 01:00:57,908
 And we've got
 a dead Arquillian prince.
 
-836
-01:00:57,886 --> 01:01:01,287
+833
+01:00:57,908 --> 01:01:01,287
 <i>[ Indistinct Arquillian</i>
 <i>  Radio Transmission ]</i>
 [ Kay ]  Speak of the devil.
 
-837
+834
 01:01:01,287 --> 01:01:04,497
 They sound pissed.
 Boys, translate that.
 Step on it.
 
-838
+835
 01:01:04,974 --> 01:01:08,041
 Get down to Rosenberg's
 jewelry store and see
 what you can turn up.
 
-839
-01:01:10,273 --> 01:01:12,506
+836
+01:01:10,273 --> 01:01:12,670
 Kay ?
 
-840
-01:01:13,509 --> 01:01:17,030
+837
+01:01:13,509 --> 01:01:16,441
 Give the kid a weapon.
 
-841
-01:01:25,154 --> 01:01:28,107
+838
+01:01:25,154 --> 01:01:27,890
 A Series Four de-atomizer.
 That's what
 I'm talkin' about.
 
-842
-01:01:28,108 --> 01:01:30,842
+839
+01:01:27,890 --> 01:01:30,624
 Noisy cricket.
 
-843
-01:01:32,361 --> 01:01:34,729
+840
+01:01:32,361 --> 01:01:34,361
 Hey, Kay.  Nah, nah.
 Come on, man.
 
-844
-01:01:34,729 --> 01:01:38,517
+841
+01:01:34,430 --> 01:01:38,516
 You get
 a Series Four de-atomizer,
 I get a little midget cricket ?
 
-845
-01:01:38,517 --> 01:01:40,517
+842
+01:01:38,516 --> 01:01:40,516
 Ooh !  Kid !
 
-846
-01:01:43,039 --> 01:01:45,582
+843
+01:01:43,039 --> 01:01:45,664
 Feel like I'm gonna break
 this damn thing.
 
-847
-01:02:12,548 --> 01:02:14,411
+844
+01:02:12,616 --> 01:02:14,398
 <i> [ Snorting ]</i>
 
-848
-01:02:14,411 --> 01:02:17,471
+845
+01:02:14,423 --> 01:02:17,471
 [ Hiccuping, Gagging ]
 
-849
-01:02:20,141 --> 01:02:24,378
+846
+01:02:20,148 --> 01:02:24,378
 - [ Grunting ]
 -<i> [ Machinery Whirring ]</i>
 
-850
-01:02:28,129 --> 01:02:32,019
+847
+01:02:29,454 --> 01:02:32,019
 Hey, this is
 my truck !
 
-851
+848
 01:02:32,088 --> 01:02:35,427
 Yeah, and make sure
 you tell 'em that
 down at the impound.
 
-852
+849
 01:02:35,427 --> 01:02:37,460
 [ Grunting ]
 
-853
+850
 01:02:43,532 --> 01:02:46,172
 Please.
 
-854
+851
 01:02:54,643 --> 01:02:57,597
 Who breaks into
 a jewelry store and
 leaves all the jewels ?
 
-855
+852
 01:02:57,597 --> 01:02:59,830
 Somebody not looking
 for jewelry.
 
-856
-01:03:01,350 --> 01:03:05,374
+853
+01:03:01,350 --> 01:03:05,456
 This guy had
 a serious crush
 on his cat.
 <i>[ Gunshot ]</i>
 
-857
-01:03:06,855 --> 01:03:09,156
+854
+01:03:06,855 --> 01:03:09,320
 Get down !
 
-858
-01:03:09,225 --> 01:03:11,125
+855
+01:03:09,389 --> 01:03:11,289
 Ahh !
 
-859
-01:03:12,861 --> 01:03:14,361
+856
+01:03:12,861 --> 01:03:14,525
 Eeee !
 
-860
-01:03:16,032 --> 01:03:19,733
+857
+01:03:16,032 --> 01:03:19,897
 That's him !
 That's the bug
 in the Edgar suit.
 
-861
-01:03:22,471 --> 01:03:25,739
+858
+01:03:22,471 --> 01:03:25,903
 -<i> [ Gunshot ]</i>
 - [ Screaming ]
 
-862
-01:03:32,495 --> 01:03:34,992
+859
+01:03:32,563 --> 01:03:34,979
 <i> [ Tires Screeching ]</i>
 
-863
-01:03:34,992 --> 01:03:37,084
+860
+01:03:35,004 --> 01:03:37,084
 [ Screaming ]
 
-864
-01:03:41,055 --> 01:03:43,999
+861
+01:03:41,062 --> 01:03:44,011
 We do not discharge our weapons
 in view of the public !
 
-865
-01:03:43,999 --> 01:03:46,493
+862
+01:03:44,029 --> 01:03:46,410
 Man, we ain't got time
 for this cover-up bullshit !
 
-866
-01:03:46,562 --> 01:03:49,377
+863
+01:03:46,479 --> 01:03:49,294
 I don't know whether or not
 you've forgotten, but there's
 a alien battle cruiser--
 
-867
-01:03:49,377 --> 01:03:53,457
+864
+01:03:49,298 --> 01:03:53,457
 There's always an alien battle
 cruiser or a Korilian death ray
 or intergalactic plague...
 
-868
+865
 01:03:53,457 --> 01:03:55,617
 that's about to wipe out life
 on this miserable planet.
 
-869
-01:03:55,617 --> 01:03:58,317
+866
+01:03:55,617 --> 01:03:58,551
 The only way people get on
 with their happy lives is,
 
-870
-01:03:58,317 --> 01:04:01,108
+867
+01:03:58,605 --> 01:04:01,272
 they do not
 know about it.
 
-871
-01:04:05,414 --> 01:04:09,297
+868
+01:04:05,414 --> 01:04:09,219
 And don't worry about the bug.
 He's not leavin' town.
 
-872
-01:04:09,297 --> 01:04:11,397
+869
+01:04:09,287 --> 01:04:11,387
 We got his ship.
 
-873
-01:04:16,025 --> 01:04:18,855
+870
+01:04:16,025 --> 01:04:18,696
 <i> Excuse me.</i>
 <i> Excuse me, ladies</i>
 <i> and gentlemen, uh--</i>
 
-874
-01:04:18,855 --> 01:04:22,390
+871
+01:04:18,765 --> 01:04:22,300
 Zed, we need a containment crew
 on McDougal Street,
 south of Houston.
 
-875
-01:04:22,965 --> 01:04:27,267
+872
+01:04:22,604 --> 01:04:26,906
 [ Chuckles ]  Containment may be
 a moot point, old friend.
 The exodus continues.
 
-876
-01:04:27,267 --> 01:04:29,188
+873
+01:04:26,906 --> 01:04:29,188
 It's like the party's over,
 and the last to leave...
 
-877
+874
 01:04:29,188 --> 01:04:31,121
 gets stuck with the check.
 <i> [ Aliens Chattering ]</i>
 
-878
-01:04:31,273 --> 01:04:34,340
+875
+01:04:31,271 --> 01:04:34,338
 [ Groans ]
 You sorry little ingrates !
 
-879
-01:04:34,492 --> 01:04:37,893
+876
+01:04:34,407 --> 01:04:37,808
 Ahh !  [ Shouting In
 Alien Language ]  ...Zed !
 
-880
-01:04:38,045 --> 01:04:41,680
+877
+01:04:37,877 --> 01:04:41,512
 [ Raucous Laughter ]
 ♪♪ [ Singing "Star-Spangled
 Banner" In Alien Language ]
 
-881
-01:04:41,714 --> 01:04:43,947
+878
+01:04:41,581 --> 01:04:43,814
 <i>[ Kay ]  What about</i>
 <i>the Arquillians ?</i>
 
-882
+879
 01:04:43,947 --> 01:04:47,482
 We've only translated
 part of the message so far:
 "Deliver the galaxy."
 
-883
-01:04:47,548 --> 01:04:50,882
+880
+01:04:47,482 --> 01:04:50,816
 <i>They don't want much,</i>
 <i>do they ?</i>
 Oh, it gets better.
 
-884
-01:04:51,065 --> 01:04:53,566
+881
+01:04:50,890 --> 01:04:53,391
 They're holding us
 responsible.
 
-885
-01:04:56,846 --> 01:05:00,967
+882
+01:04:56,914 --> 01:05:00,931
 [ Grunting ]
 
-886
-01:05:01,037 --> 01:05:03,372
+883
+01:05:00,931 --> 01:05:03,246
 Where do you keep
 your dead ?
 
-887
-01:05:03,372 --> 01:05:05,705
+884
+01:05:03,246 --> 01:05:05,628
 I don't have any dead.
 [ Grunts ]
 
-888
-01:05:05,770 --> 01:05:08,271
+885
+01:05:05,642 --> 01:05:08,192
 Where ?
 [ Choking ]
 I-I don't know.
 
-889
-01:05:08,271 --> 01:05:10,744
+886
+01:05:08,212 --> 01:05:10,744
 Uh, th-the city morgue ?
 
-890
-01:05:11,494 --> 01:05:13,647
+887
+01:05:11,562 --> 01:05:13,647
 [ Grunts ]
 
-891
-01:05:20,703 --> 01:05:23,723
+888
+01:05:20,787 --> 01:05:23,640
 That's three
 for a dollar !  Sir !
 
-892
-01:05:23,792 --> 01:05:27,135
+889
+01:05:23,656 --> 01:05:26,877
 Well, some light--
 Some light refracted, uh,
 off of Venus...
 
-893
-01:05:27,233 --> 01:05:30,768
+890
+01:05:26,893 --> 01:05:30,481
 into some swamp gas,
 and that's what made the, um--
 
-894
-01:05:30,768 --> 01:05:32,902
+891
+01:05:30,496 --> 01:05:32,683
 <i>[ Kay ]</i>
 <i>All right, kid.</i>
 
-895
-01:05:32,910 --> 01:05:37,247
+892
+01:05:32,698 --> 01:05:37,088
 E-Excuse me.  What's up ?
 <i>The Arquillians want the galaxy,</i>
 <i>whatever that means.</i>
 
-896
-01:05:37,247 --> 01:05:39,147
+893
+01:05:37,103 --> 01:05:39,139
 We need help--
 a professional,
 
-897
+894
 01:05:39,147 --> 01:05:42,209
 somebody
 with years of experience
 in intergalactic politics.
 
-898
-01:05:42,278 --> 01:05:45,060
+895
+01:05:42,209 --> 01:05:44,703
 I just hope the little prick
 hasn't skipped town.
 
-899
-01:05:45,060 --> 01:05:48,016
+896
+01:05:44,703 --> 01:05:47,932
 [ Man On P.A. ]
 May I have your attention,
 please ?  Thank you.
 
-900
-01:05:48,016 --> 01:05:53,554
+897
+01:05:47,932 --> 01:05:53,531
 If you will gather over here.
 That's right.  Move in closer.
 That's good.  Thanks.
 
-901
-01:05:53,622 --> 01:05:57,124
+898
+01:05:53,531 --> 01:05:57,124
 If you'll look right here,
 I'd appreciate it.  Thank you.
 
-902
-01:06:09,671 --> 01:06:13,138
+899
+01:06:09,671 --> 01:06:13,137
 That's the worst disguise ever.
 That guy's definitely an alien.
 
-903
-01:06:13,138 --> 01:06:16,506
+900
+01:06:13,137 --> 01:06:16,505
 ***
 
-904
-01:06:17,187 --> 01:06:21,145
+901
+01:06:16,587 --> 01:06:20,422
 -<i> You busy, Frank ?</i>
 - Sorry, can't talk now.
 My flight's leavin'--
 
-905
-01:06:21,145 --> 01:06:23,586
+902
+01:06:20,422 --> 01:06:23,356
 Whoa !  Get your paws off me !
 Call the pound.
 We got a stray.
 
-906
-01:06:23,586 --> 01:06:27,117
+903
+01:06:23,356 --> 01:06:27,117
 - The dog owes my friend money.
 <i>- Arquillians and bugs, Frank.</i>
 <i>  What do you know ?</i>
 
-907
-01:06:27,117 --> 01:06:29,691
+904
+01:06:27,117 --> 01:06:29,952
 - I know nothin'.  [ Yelping ]
 - Not a thing ?  Okay.
 
-908
-01:06:29,691 --> 01:06:33,494
+905
+01:06:30,004 --> 01:06:33,807
 <i>[ Yelping Continues ]</i>
 <i>Stop it !  Stop it !  Stop it !</i>
 <i>Okay !  Okay !</i>
 
-909
-01:06:33,562 --> 01:06:38,307
+906
+01:06:34,257 --> 01:06:38,307
 Rosenberg wasn't
 some two-bit Arquillian.  He was
 the guardian of a whole galaxy.
 
-910
-01:06:38,307 --> 01:06:41,367
+907
+01:06:38,307 --> 01:06:41,359
 - Th-They thought he'd
 be safe here on Earth.
 - And the bug had other plans.
 
-911
-01:06:41,367 --> 01:06:45,029
+908
+01:06:41,359 --> 01:06:45,294
 The galaxy is the best source
 for subatomic energy
 in the universe.
 
-912
-01:06:45,029 --> 01:06:48,108
+909
+01:06:45,294 --> 01:06:48,147
 If the bugs
 get their claws on it,
 kiss the Arquillians good-bye.
 
-913
+910
 01:06:48,147 --> 01:06:52,406
 Ask about the belt.
 Rosenberg
 said something about Orion's
 belt.  What's he talkin' about ?
 
-914
-01:06:52,414 --> 01:06:55,004
+911
+01:06:52,406 --> 01:06:54,981
 Beats me.
 Beat you ?  Okay.
 
-915
-01:06:55,004 --> 01:06:57,447
+912
+01:06:55,034 --> 01:06:58,785
 <i>[ Yelping ]</i>
 <i>No !  No !  No !</i>
 <i>Stop it !  Ow !</i>
 
-916
-01:06:57,447 --> 01:07:01,421
+913
+01:06:58,830 --> 01:07:01,421
 Uh, they're rehearsing
 a ventriloquist act.
 
-917
-01:07:01,490 --> 01:07:05,187
+914
+01:07:01,466 --> 01:07:05,163
 The galaxy is here !
 What do you mean "here" ?
 
-918
+915
 01:07:05,187 --> 01:07:08,007
 A galaxy's hundreds of millions
 of stars.  How is it here ?
 
-919
+916
 01:07:08,097 --> 01:07:10,947
 You humans--
 when are you gonna learn
 that size doesn't matter ?
 
-920
-01:07:11,247 --> 01:07:14,681
+917
+01:07:10,947 --> 01:07:14,187
 <i>Just 'cause something's</i>
 <i>important, doesn't mean</i>
 <i>it's not very, very small.</i>
 
-921
-01:07:14,945 --> 01:07:18,512
+918
+01:07:14,187 --> 01:07:17,997
 How small ?
 Tiny.  Like the size
 of a marble or a jewel.
 
-922
-01:07:18,597 --> 01:07:21,698
+919
+01:07:18,226 --> 01:07:21,327
 If you'll excuse me,
 I gotta be walked
 before my flight.
 
-923
-01:07:21,717 --> 01:07:24,684
+920
+01:07:21,409 --> 01:07:24,376
 All right,
 get outta here.
 
-924
-01:07:25,017 --> 01:07:28,553
+921
+01:07:24,376 --> 01:07:27,912
 If the galaxy's here,
 it's not on Orion's belt.
 
-925
-01:07:30,633 --> 01:07:33,130
+922
+01:07:30,701 --> 01:07:33,117
 [ Barking ]
 
-926
-01:07:33,130 --> 01:07:35,189
+923
+01:07:33,142 --> 01:07:35,189
 [ Meows ]
 
-927
-01:07:39,893 --> 01:07:42,028
+924
+01:07:39,900 --> 01:07:42,028
 Kay.
 
-928
-01:07:46,024 --> 01:07:48,134
+925
+01:07:46,071 --> 01:07:48,051
 [ Gasps ]
 [ Meows ]
 
-929
-01:07:48,204 --> 01:07:50,401
+926
+01:07:48,073 --> 01:07:50,204
 [ Purring ]
 Boy, when you
 want attention--
 
-930
-01:07:51,640 --> 01:07:55,244
+927
+01:07:51,509 --> 01:07:55,092
 Orion ?
 That's a pretty name.
 
-931
-01:07:55,244 --> 01:07:57,211
+928
+01:07:55,113 --> 01:07:57,211
 What's this ?
 
-932
-01:08:07,323 --> 01:08:09,356
+929
+01:08:07,192 --> 01:08:09,356
 Wow.
 
-933
-01:08:36,615 --> 01:08:38,768
+930
+01:08:36,683 --> 01:08:38,768
 [ Grunts ]
 
-934
-01:08:39,986 --> 01:08:42,516
+931
+01:08:40,054 --> 01:08:42,503
 [ Dings ]
 
-935
-01:08:42,516 --> 01:08:44,518
+932
+01:08:42,528 --> 01:08:44,505
 <i> [ Dings ]</i>
 
-936
-01:08:44,518 --> 01:08:48,578
+933
+01:08:44,505 --> 01:08:48,578
 <i>[ Dinging Continues ]</i>
 
-937
+934
 01:08:48,647 --> 01:08:50,880
 <i>[ Man ]</i>
 <i>Okay.</i>
 
-938
+935
 01:08:50,949 --> 01:08:53,216
 Yes, good.  Thank you.
 
-939
+936
 01:08:53,285 --> 01:08:56,404
 Thank you for making sure
 the bell works.
 
-940
+937
 01:08:59,158 --> 01:09:01,090
 <i>What's up,</i>
 <i>Farmer John ?</i>
 
-941
+938
 01:09:01,160 --> 01:09:04,557
 Ohh, a man
 came in here earlier.
 
-942
+939
 01:09:05,564 --> 01:09:08,731
 - A dead man.
 - And that means what to me ?
 
-943
+940
 01:09:10,969 --> 01:09:14,436
 He was a very dear friend
 of mine.
 
-944
-01:09:14,575 --> 01:09:18,511
+941
+01:09:14,489 --> 01:09:18,425
 I believe he had
 an animal with him.
 It was a gift I gave him.
 
-945
-01:09:18,567 --> 01:09:21,435
+942
+01:09:18,507 --> 01:09:21,375
 A pet cat.
 Means worlds to me.
 
-946
-01:09:21,841 --> 01:09:23,907
+943
+01:09:21,444 --> 01:09:23,510
 [ Clears Throat ]
 I'd like to have it back.
 
-947
-01:09:23,907 --> 01:09:27,117
+944
+01:09:23,516 --> 01:09:27,117
 <i>I'm gonna need a picture I.D.,</i>
 <i>written proof of ownership</i>
 <i>of the cat,</i>
 
-948
+945
 01:09:27,117 --> 01:09:31,553
 notarized proof of kinship
 with... the deceased.
 
-949
-01:09:31,590 --> 01:09:34,961
+946
+01:09:31,590 --> 01:09:34,788
 Don't do that.
 
-950
-01:09:34,961 --> 01:09:36,928
+947
+01:09:34,793 --> 01:09:36,928
 Do what ?
 
-951
+948
 01:09:36,928 --> 01:09:40,263
 Don't do it.
 
-952
+949
 01:09:40,332 --> 01:09:42,765
 <i>Oh, man.</i>
 
-953
-01:09:48,820 --> 01:09:52,842
+950
+01:09:48,888 --> 01:09:52,842
 [ Growling ]
 
-954
-01:09:53,725 --> 01:09:55,845
+951
+01:09:53,793 --> 01:09:55,845
 [ Tires Screech ]
 
-955
-01:09:57,649 --> 01:10:00,981
+952
+01:09:57,513 --> 01:10:00,200
 Kay, why don't you
 let me handle this one ?
 What ?
 
-956
-01:10:00,981 --> 01:10:03,927
+953
+01:10:00,216 --> 01:10:03,920
 All we gotta do is
 go in and get a cat.
 It's not that hard.
 
-957
+954
 01:10:03,927 --> 01:10:07,863
 If<i> you</i> go in there, you're gonna
 lay your Jack Webb on her,
 start flashin' your brain ray.
 
-958
-01:10:07,870 --> 01:10:10,627
+955
+01:10:07,870 --> 01:10:10,566
 ***
 
-959
-01:10:10,696 --> 01:10:16,100
+956
+01:10:10,613 --> 01:10:16,017
 She don't need you flashin' away
 half her med school classes.
 Five minutes.
 Two minutes.
 
-960
-01:10:16,207 --> 01:10:20,737
+957
+01:10:17,719 --> 01:10:20,737
 <i> Where's the animal ?</i>
 I told you, I don't know.
 
-961
-01:10:20,787 --> 01:10:23,139
+958
+01:10:20,791 --> 01:10:23,139
 <i> Let's see if we can</i>
 <i> find it.</i>
 
-962
-01:10:23,208 --> 01:10:28,548
+959
+01:10:23,208 --> 01:10:28,466
 [ Yelling,
 Grunting ]
 
-963
-01:10:28,616 --> 01:10:31,751
+960
+01:10:28,480 --> 01:10:31,739
 -<i> [ Bell Dinging ]</i>
 -<i> [ Jay ]  Hello ?</i>
 
-964
-01:10:31,887 --> 01:10:34,321
+961
+01:10:31,834 --> 01:10:34,268
 <i> Hello ?</i>
 
-965
-01:10:39,057 --> 01:10:41,763
+962
+01:10:39,057 --> 01:10:41,642
 Hello ?
 
-966
-01:10:44,363 --> 01:10:46,562
+963
+01:10:44,363 --> 01:10:46,480
 How ya doin' ?
 Hello.
 
-967
+964
 01:10:46,562 --> 01:10:49,442
 I'm Sergeant Friday
 from the 26th precinct.
 
-968
+965
 01:10:49,442 --> 01:10:53,137
 Uh, a cat came in
 with a corpse the other day.
 "Orion" on the name tag.
 
-969
+966
 01:10:53,137 --> 01:10:55,592
 - Yes, that's right.
 - Right.  Uh, well,
 
-970
+967
 01:10:55,592 --> 01:10:59,462
 this cat is a, a witness
 in a murder case.
 
-971
-01:10:59,462 --> 01:11:01,622
+968
+01:10:59,462 --> 01:11:02,229
 I'm gonna need to take him,
 ask him a few questions.
 
-972
-01:11:01,622 --> 01:11:04,657
+969
+01:11:02,229 --> 01:11:05,072
 - I don't know where
 the cat is right now.
 - Oh, you don't ?
 
-973
+970
 01:11:05,072 --> 01:11:08,273
 No, but maybe you could take me
 with you instead.
 
-974
-01:11:09,621 --> 01:11:11,882
+971
+01:11:09,621 --> 01:11:11,623
 Damn, you do start fast,
 don't you ?
 
-975
-01:11:11,883 --> 01:11:15,885
+972
+01:11:11,623 --> 01:11:15,625
 <i> I'd really like to go</i>
 <i> with you... now.</i>
 
-976
-01:11:17,012 --> 01:11:20,580
+973
+01:11:15,694 --> 01:11:19,262
 Uh-huh.  And, uh,
 exactly why is that ?
 
-977
+974
 01:11:37,049 --> 01:11:39,215
 Look, stud, you're really
 not getting this.
 
-978
+975
 01:11:39,216 --> 01:11:43,052
 There's something I need you
 to help me with.
 
-979
-01:11:47,707 --> 01:11:50,537
+976
+01:11:47,775 --> 01:11:50,524
 [ Growling ]
 
-980
-01:11:50,537 --> 01:11:53,663
+977
+01:11:50,549 --> 01:11:53,627
 [ Screaming ]
 
-981
-01:11:53,732 --> 01:11:56,604
+978
+01:11:53,627 --> 01:11:56,409
 - Freeze it, bug.
 - Christ, you are thick !
 
-982
-01:11:56,673 --> 01:11:59,374
+979
+01:11:56,409 --> 01:11:59,158
 - How was I to know ?
 - Did I have to sing it
 for you ?
 
-983
-01:11:59,375 --> 01:12:02,914
+980
+01:11:59,222 --> 01:12:02,831
 - If you weren't comin' on
 like some drunken prom date--
 - That is so typical.
 
-984
-01:12:02,914 --> 01:12:06,312
+981
+01:12:02,842 --> 01:12:06,316
 - A woman shows the slightest
 hint of sexual independence--
 - Shut up !
 
-985
-01:12:06,312 --> 01:12:09,279
+982
+01:12:06,458 --> 01:12:09,425
 - Let her go, shit-eater.
 - Listen, monkey boy.
 
-986
-01:12:09,348 --> 01:12:14,051
+983
+01:12:09,433 --> 01:12:14,136
 Compared to you, I'm on the top
 rung of the evolutionary ladder.
 So can it, all right ?
 
-987
-01:12:14,119 --> 01:12:16,989
+984
+01:12:14,136 --> 01:12:16,937
 <i> Show me your face,</i>
 <i> and I'll cure</i>
 <i> all your ills.</i>
 
-988
-01:12:16,989 --> 01:12:20,557
+985
+01:12:16,989 --> 01:12:20,591
 Ever pull wings off a fly ?
 Ya care to see the fly
 get even ?
 
-989
-01:12:20,625 --> 01:12:25,364
+986
+01:12:20,625 --> 01:12:25,329
 How far do you think you're
 gonna get without your ship--
 that piece of space trash ?
 
-990
-01:12:25,364 --> 01:12:27,965
+987
+01:12:25,364 --> 01:12:27,999
 [ Alien ]  Put your weapons
 down !
 <i> [ Kay ]</i>
 <i> Never gonna happen.</i>
 
-991
-01:12:28,033 --> 01:12:31,430
+988
+01:12:28,033 --> 01:12:31,004
 -<i> [ Jay ]  It's okay, Laurel.</i>
 - How is it okay ?
 
-992
-01:12:31,430 --> 01:12:33,305
+989
+01:12:31,072 --> 01:12:33,373
 I'm sayin'
 i-it's gonna<i> be</i> okay.
 
-993
-01:12:33,305 --> 01:12:35,287
+990
+01:12:33,373 --> 01:12:35,355
 Don't bet on it,
 meat sack.
 [ Gasps ]
 
-994
-01:12:35,287 --> 01:12:40,244
+991
+01:12:35,355 --> 01:12:40,244
 [ Screaming ]
 
-995
-01:12:41,660 --> 01:12:44,524
+992
+01:12:41,728 --> 01:12:44,511
 <i> [ Screaming ]</i>
 
-996
-01:12:44,524 --> 01:12:48,418
+993
+01:12:44,511 --> 01:12:48,418
 [ Grunting, Screaming ]
 Let me go !
 
-997
-01:13:02,167 --> 01:13:06,489
+994
+01:13:02,036 --> 01:13:05,202
 - Ah, take me here.
 - No way.
 
-998
-01:13:06,671 --> 01:13:08,138
+995
+01:13:06,540 --> 01:13:08,138
 - Take me !
 - [ Tires Squealing ]
 
-999
-01:13:10,876 --> 01:13:13,377
+996
+01:13:10,745 --> 01:13:13,377
 Come back !
 Come back !
 
-1000
-01:13:24,423 --> 01:13:26,390
+997
+01:13:24,292 --> 01:13:26,390
 He's in a cab !
 
-1001
-01:13:49,014 --> 01:13:51,683
+998
+01:13:48,883 --> 01:13:51,531
 Don't move !  Don't move !
 Don't move !
 
-1002
-01:13:51,752 --> 01:13:54,153
+999
+01:13:51,552 --> 01:13:54,084
 Hey, man, what ?
 Whoa !
 
-1003
-01:13:57,804 --> 01:13:59,923
+1000
+01:13:57,872 --> 01:13:59,923
 [ Tires Squealing ]
 
-1004
-01:14:04,696 --> 01:14:07,595
+1001
+01:14:04,560 --> 01:14:07,397
 He's not leaving the planet
 in a cab.  Let's go.
 
-1005
-01:14:11,870 --> 01:14:15,305
+1002
+01:14:11,869 --> 01:14:15,305
 Come with me.
 Put up a bio-net all
 the way around Manhattan.
 
-1006
-01:14:15,305 --> 01:14:17,135
+1003
+01:14:15,305 --> 01:14:17,572
 If it's not human,
 I don't want it
 to leave this island.
 
-1007
-01:14:17,135 --> 01:14:20,495
+1004
+01:14:17,656 --> 01:14:20,806
 <i> Yes, sir.</i>
 What do we hear
 from our friends upstairs ?
 
-1008
-01:14:20,930 --> 01:14:23,797
+1005
+01:14:20,806 --> 01:14:23,673
 "Deliver the galaxy."
 We've got
 the bug's ship.
 
-1009
-01:14:23,797 --> 01:14:25,205
+1006
+01:14:23,673 --> 01:14:25,205
 He's gotta
 be looking
 for a way out.
 
-1010
-01:14:25,205 --> 01:14:28,177
+1007
+01:14:25,205 --> 01:14:28,172
 [ Alarm Sounding ]
 
-1011
+1008
 01:14:28,220 --> 01:14:30,695
 <i>[ Computer ]</i>
 <i>Warning.</i>
 <i>Protonic fusion detection.</i>
 
-1012
+1009
 01:14:30,722 --> 01:14:34,199
 <i>Warning.  Protonic fusion</i>
 <i>detection.</i>
 
-1013
-01:14:38,697 --> 01:14:42,163
+1010
+01:14:38,697 --> 01:14:41,540
 What the hell are they
 shootin' at us for ?
 <i> Arquillian battle rules.</i>
 
-1014
-01:14:42,232 --> 01:14:44,218
+1011
+01:14:41,566 --> 01:14:44,218
 <i>[ Kay ]</i>
 <i>First we get an ultimatum,</i>
 <i>then a warning shot,</i>
 
-1015
-01:14:44,255 --> 01:14:46,622
+1012
+01:14:44,218 --> 01:14:46,346
 <i>and then we have</i>
 <i>a galactic standard week</i>
 <i>to respond.</i>
 
-1016
-01:14:46,622 --> 01:14:50,942
+1013
+01:14:46,346 --> 01:14:51,215
 "A galactic standard week" ?
 How the hell long is that ?
 One hour.
 
-1017
-01:14:50,942 --> 01:14:53,010
+1014
+01:14:51,215 --> 01:14:53,283
 One hour.
 Then what ?
 
-1018
-01:14:54,861 --> 01:14:57,080
+1015
+01:14:54,929 --> 01:14:57,080
 [ Alarm Sounding ]
 
-1019
-01:14:58,350 --> 01:15:01,035
+1016
+01:14:58,350 --> 01:15:00,334
 <i>[ Jay ]</i>
 <i>Oh, that's bullshit.</i>
 
-1020
-01:15:01,035 --> 01:15:02,345
+1017
+01:15:00,352 --> 01:15:02,345
 <i> To keep the bugs</i>
 <i> from getting it,</i>
 
-1021
+1018
 01:15:02,345 --> 01:15:04,475
 <i> the Arquillians will</i>
 <i> destroy that galaxy.</i>
 
-1022
-01:15:04,475 --> 01:15:07,993
+1019
+01:15:04,475 --> 01:15:08,009
 <i> [ Zed ]</i>
 <i> And whatever planet</i>
 <i> it's on.</i>
 
-1023
-01:15:07,993 --> 01:15:11,328
+1020
+01:15:08,157 --> 01:15:11,492
 You're talking about us.
 [ Chuckles ]
 Sucks, huh ?
 
-1024
-01:15:13,365 --> 01:15:15,436
+1021
+01:15:13,365 --> 01:15:15,462
 <i>I'm pulling up</i>
 <i>the location...</i>
 
-1025
-01:15:15,455 --> 01:15:17,388
+1022
+01:15:15,531 --> 01:15:17,464
 of every
 interstellar vehicle
 within 100 miles.
 
-1026
-01:15:17,526 --> 01:15:19,560
+1023
+01:15:17,533 --> 01:15:19,567
 Already did.
 Frank the Pug
 took the last ship.
 
-1027
-01:15:19,697 --> 01:15:21,864
+1024
+01:15:19,635 --> 01:15:21,802
 We got Snedens Landing
 and Throg's Neck.
 They're all gone.
 
-1028
-01:15:21,897 --> 01:15:23,831
+1025
+01:15:21,870 --> 01:15:23,804
 Atlantic City ?
 <i> Adios.</i>  Gone.
 
-1029
+1026
 01:15:23,831 --> 01:15:25,765
 All right.
 Bayonne.
 Gone.
 
-1030
-01:15:25,956 --> 01:15:27,890
+1027
+01:15:25,874 --> 01:15:27,808
 All right.  There's
 Three Mile Island.
 Gone.
 
-1031
-01:15:27,890 --> 01:15:30,558
+1028
+01:15:27,876 --> 01:15:30,544
 Yo.
 Staten Island ?
 Gone, thank God.
 
-1032
-01:15:30,587 --> 01:15:33,421
+1029
+01:15:30,613 --> 01:15:33,447
 Fellas.
 If that bug gets off
 the planet with that galaxy,
 
-1033
-01:15:33,559 --> 01:15:36,159
+1030
+01:15:33,516 --> 01:15:36,116
 we're all bug food.
 Hey, old guys !
 
-1034
-01:15:40,959 --> 01:15:44,515
+1031
+01:15:40,959 --> 01:15:44,225
 Do those still work ?
 
-1035
-01:15:57,677 --> 01:15:59,945
+1032
+01:15:57,909 --> 01:16:00,341
 [ Edgar ]
 You're comin' with me.
 [ Laurel ]  What ?
 
-1036
-01:15:59,945 --> 01:16:03,746
+1033
+01:16:00,409 --> 01:16:03,910
 It's a long trip.
 I'll need a snack.
 
-1037
-01:16:03,815 --> 01:16:06,749
+1034
+01:16:03,979 --> 01:16:06,913
 Whoa !
 [ Screams ]
 
-1038
-01:16:08,820 --> 01:16:10,923
+1035
+01:16:08,820 --> 01:16:10,951
 Wait a minute.
 You're taking the tunnel ?
 
-1039
-01:16:10,991 --> 01:16:13,826
+1036
+01:16:11,019 --> 01:16:13,854
 You know a better way
 to get to Queens ?
 Thing's gonna be packed.
 
-1040
-01:16:17,643 --> 01:16:21,465
+1037
+01:16:17,711 --> 01:16:21,465
 [ Tires Squealing ]
 
-1041
-01:16:26,905 --> 01:16:29,899
+1038
+01:16:26,769 --> 01:16:29,356
 - Do you remember
 the little red button ?
 - Yeah.
 
-1042
-01:16:29,899 --> 01:16:31,894
+1039
+01:16:29,372 --> 01:16:31,808
 <i> Push the little</i>
 <i> red button.</i>
 
-1043
-01:16:31,894 --> 01:16:33,961
+1040
+01:16:31,876 --> 01:16:33,961
 And you may wanna
 put on a seat belt.
 
-1044
+1041
 01:16:34,012 --> 01:16:36,715
 <i> [ Jay ]</i>
 <i> Kay !</i>
 
-1045
-01:16:38,897 --> 01:16:41,551
+1042
+01:16:38,965 --> 01:16:41,551
 [ Screaming ]
 
-1046
-01:16:42,668 --> 01:16:45,365
+1043
+01:16:42,736 --> 01:16:45,352
 [ Groaning ]
 
-1047
-01:16:45,365 --> 01:16:47,424
+1044
+01:16:45,352 --> 01:16:47,367
 You're much too tense.
 You're a young man.
 
-1048
-01:16:47,493 --> 01:16:50,195
+1045
+01:16:47,367 --> 01:16:49,948
 You need to relax.
 Learn to take some joy
 in your work.
 
-1049
-01:16:50,225 --> 01:16:52,825
+1046
+01:16:49,964 --> 01:16:52,612
 <i> Do you like music ?</i>
 
-1050
-01:16:52,901 --> 01:16:55,535
+1047
+01:16:52,633 --> 01:16:55,315
 <i>♪ [ Rock 'n' Roll ]</i>
 Man !
 
-1051
-01:16:55,604 --> 01:16:57,771
+1048
+01:16:55,336 --> 01:16:57,551
 That's better.
 <i>♪ Left my home</i>
 <i>  in Norfolk, Virginia ♪</i>
 
-1052
-01:16:57,840 --> 01:17:00,341
+1049
+01:16:57,571 --> 01:17:00,120
 <i>♪ California on my mind ♪</i>
 
-1053
-01:17:00,410 --> 01:17:03,611
+1050
+01:17:00,141 --> 01:17:03,390
 <i>♪ I straddled that Grayhound</i>
 <i>  and rode him into Raleigh ♪</i>
 
-1054
-01:17:03,680 --> 01:17:05,613
+1051
+01:17:03,411 --> 01:17:05,392
 <i>♪ And all across</i>
 <i>  Caroline ♪</i>
 
-1055
-01:17:05,682 --> 01:17:08,316
+1052
+01:17:05,413 --> 01:17:08,095
 <i>♪ Somebody help me</i>
 <i>  get out of Louisiana ♪</i>
 
-1056
-01:17:08,454 --> 01:17:10,420
+1053
+01:17:08,116 --> 01:17:10,130
 <i>♪ [ Continues ]</i>
 
-1057
-01:17:10,420 --> 01:17:13,321
+1054
+01:17:10,151 --> 01:17:13,100
 <i>♪ There are people there</i>
 <i>  who care a little 'bout me ♪</i>
 
-1058
-01:17:13,388 --> 01:17:16,155
+1055
+01:17:13,121 --> 01:17:15,936
 <i>♪ And they won't let</i>
 <i>  the poor boy down ♪</i>
 All right, now.
 
-1059
-01:17:16,291 --> 01:17:20,293
+1056
+01:17:15,956 --> 01:17:20,089
 Aw, shit !
 Aw, damn !
 [ Humming ]
 
-1060
-01:17:21,460 --> 01:17:24,466
+1057
+01:17:21,329 --> 01:17:24,194
 <i> [ Jay ]</i>
 <i> Kay.  Kay !</i>
 
-1061
-01:17:28,200 --> 01:17:30,239
+1058
+01:17:28,069 --> 01:17:30,016
 You do know
 Elvis is dead, right ?
 
-1062
-01:17:30,309 --> 01:17:33,176
+1059
+01:17:30,038 --> 01:17:33,036
 No, Elvis is not dead.
 He just went home.
 
-1063
-01:17:34,406 --> 01:17:37,345
+1060
+01:17:34,275 --> 01:17:37,124
 <i>♪ Swing low, chariot</i>
 <i>  Come down easy ♪</i>
 
-1064
-01:17:37,414 --> 01:17:39,580
+1061
+01:17:37,145 --> 01:17:39,359
 <i>♪ Take me</i>
 <i>  to the terminal zone ♪</i>
 
-1065
-01:17:39,649 --> 01:17:41,749
+1062
+01:17:39,380 --> 01:17:41,528
 <i>♪ Cut your engine</i>
 <i>  and cool your wings ♪</i>
 
-1066
-01:17:41,749 --> 01:17:45,484
+1063
+01:17:41,549 --> 01:17:45,284
 <i>♪ And let me make it</i>
 <i>  to the telephone ♪♪</i>
 [ Dinging, Ringing ]
 
-1067
-01:17:45,484 --> 01:17:49,265
+1064
+01:17:45,284 --> 01:17:49,265
 [ Laurel Groans ]
 You don't want
 to eat me.
 
-1068
-01:17:49,265 --> 01:17:51,555
+1065
+01:17:49,265 --> 01:17:51,199
 I'm a very
 important person
 on my planet.
 
-1069
-01:17:51,623 --> 01:17:54,059
+1066
+01:17:51,457 --> 01:17:53,824
 Like a queen.
 A goddess, even.
 
-1070
-01:17:54,059 --> 01:17:56,135
+1067
+01:17:53,824 --> 01:17:56,124
 There are those
 who worship me.
 
-1071
-01:17:56,135 --> 01:17:58,086
+1068
+01:17:56,124 --> 01:17:58,086
 I'm not telling you this
 to try to impress you.
 
-1072
-01:17:58,086 --> 01:18:00,430
+1069
+01:17:58,086 --> 01:18:00,274
 I'm just letting you know
 it could start a war.
 
-1073
-01:18:00,499 --> 01:18:03,246
+1070
+01:18:00,333 --> 01:18:02,666
 Good !  War--
 That means more food
 for my family,
 
-1074
-01:18:03,246 --> 01:18:05,015
+1071
+01:18:02,735 --> 01:18:05,068
 all 78 million
 of 'em.
 
-1075
-01:18:05,015 --> 01:18:06,930
+1072
+01:18:05,133 --> 01:18:07,103
 That's a lot
 of mouths to feed,
 your highness.
 
-1076
-01:18:06,930 --> 01:18:09,239
+1073
+01:18:07,166 --> 01:18:09,239
 You're a wonderful dad,
 but I'm staying here !
 
-1077
-01:18:09,912 --> 01:18:13,776
+1074
+01:18:10,266 --> 01:18:13,776
 - [ Groans ]
 - Oh !
 
-1078
-01:18:30,862 --> 01:18:33,532
+1075
+01:18:30,850 --> 01:18:33,463
 Now, that's
 what I'm talkin' about.
 
-1079
+1076
 01:18:33,532 --> 01:18:36,700
 Roaches check in.
 
-1080
-01:18:36,768 --> 01:18:41,163
+1077
+01:18:36,768 --> 01:18:39,436
 But they don't
 check out.
 
-1081
+1078
 01:18:43,174 --> 01:18:48,278
 <i>Warning.  Eight minutes</i>
 <i>to the destruction</i>
 <i>of earth.</i>
 
-1082
+1079
 01:18:49,981 --> 01:18:52,415
 <i>Eight minutes</i>
 <i>to destruction.</i>
 
-1083
-01:19:30,869 --> 01:19:33,823
+1080
+01:19:30,937 --> 01:19:33,823
 <i>[ Crowd Cheering ]</i>
 
-1084
-01:19:37,896 --> 01:19:41,165
+1081
+01:19:37,896 --> 01:19:41,033
 We'll use pulsar level five
 with the sub-sonic
 implosion factor.
 
-1085
-01:19:41,165 --> 01:19:41,315
+1082
+01:19:41,101 --> 01:19:44,437
 What ?
 Just shoot the damn thing
 on the count of three.
 
-1086
-01:19:41,315 --> 01:19:47,337
+1083
+01:19:44,519 --> 01:19:47,487
 One, two, three !
 
-1087
-01:20:46,598 --> 01:20:50,367
+1084
+01:20:46,598 --> 01:20:50,517
 Oh, you idiots !
 
-1088
-01:20:50,435 --> 01:20:53,407
+1085
+01:20:50,585 --> 01:20:53,419
 You don't get it.
 I've won.
 
-1089
-01:20:53,475 --> 01:20:56,309
+1086
+01:20:53,419 --> 01:20:56,322
 <i>It's over.</i>
 
-1090
-01:20:56,377 --> 01:20:59,011
+1087
+01:20:56,391 --> 01:20:59,025
 You milk suckers !
 
-1091
-01:20:59,147 --> 01:21:01,081
+1088
+01:20:59,094 --> 01:21:01,028
 You don't matter.
 
-1092
-01:21:01,081 --> 01:21:03,500
+1089
+01:21:01,032 --> 01:21:03,500
 In fact, in a few seconds,
 you won't even be matter.
 
-1093
+1090
 01:21:03,500 --> 01:21:06,634
 You're under arrest
 for violating sections
 4153 of the Tycho Treaty.
 
-1094
+1091
 01:21:06,634 --> 01:21:09,088
 <i>[ Jay ]</i>
 <i>So hand over whatever</i>
 <i>galaxy you might be carrying...</i>
 
-1095
+1092
 01:21:09,088 --> 01:21:12,650
 and step away from your
 busted-ass vehicle,
 and put your hands on your head.
 
-1096
-01:21:12,651 --> 01:21:14,550
+1093
+01:21:12,650 --> 01:21:14,549
 Oh, oh.
 
-1097
-01:21:14,620 --> 01:21:17,320
+1094
+01:21:14,631 --> 01:21:17,331
 Let's see.
 
-1098
-01:21:17,320 --> 01:21:19,454
+1095
+01:21:17,331 --> 01:21:19,465
 <i> I put my hands...</i>
 
-1099
-01:21:19,454 --> 01:21:21,433
+1096
+01:21:19,494 --> 01:21:21,528
 on,
 
-1100
-01:21:21,433 --> 01:21:23,933
+1097
+01:21:21,597 --> 01:21:24,097
 on my head.
 
-1101
-01:21:26,405 --> 01:21:28,371
+1098
+01:21:26,405 --> 01:21:28,535
 Like this ?
 
-1102
-01:21:47,793 --> 01:21:50,026
+1099
+01:21:47,793 --> 01:21:50,190
 Kay.
 
-1103
-01:21:52,077 --> 01:21:54,808
+1100
+01:21:52,145 --> 01:21:54,795
 [ Snarling ]
 
-1104
-01:21:54,808 --> 01:21:57,801
+1101
+01:21:54,820 --> 01:21:57,765
 [ Roaring ]
 
-1105
-01:21:57,869 --> 01:22:00,140
+1102
+01:21:57,765 --> 01:21:59,903
 That did not go at all
 the way I planned.
 
-1106
-01:22:00,140 --> 01:22:01,909
+1103
+01:21:59,971 --> 01:22:01,909
 Whatever happens,
 don't let him get
 on the second ship.
 
-1107
-01:22:01,909 --> 01:22:05,076
+1104
+01:22:01,909 --> 01:22:05,107
 What ?  What are you
 talking about ?
 Keep him on this planet.
 
-1108
-01:22:05,076 --> 01:22:06,054
+1105
+01:22:05,114 --> 01:22:07,012
 Kay--  Kay,
 where are you goin' ?
 
-1109
-01:22:06,054 --> 01:22:09,813
+1106
+01:22:07,018 --> 01:22:09,751
 I'm gonna
 get my gun back.
 
-1110
-01:22:09,881 --> 01:22:13,285
+1107
+01:22:09,767 --> 01:22:13,066
 <i> [ Kay ]</i>
 <i> Hey !  Hey, bug !</i>
 
-1111
-01:22:13,353 --> 01:22:15,320
+1108
+01:22:13,103 --> 01:22:15,070
 Wait a minute.
 I'm talking to you.
 
-1112
-01:22:15,320 --> 01:22:16,700
+1109
+01:22:15,070 --> 01:22:16,700
 You know how many
 of your kind I've swatted
 with a newspaper ?
 
-1113
-01:22:16,700 --> 01:22:19,188
+1110
+01:22:16,700 --> 01:22:19,159
 You're nothing but a smear
 on the sports page to me,
 
-1114
-01:22:19,257 --> 01:22:22,277
+1111
+01:22:19,159 --> 01:22:22,126
 you slimy, gut-sucking
 intestinal parasite !
 
-1115
-01:22:22,293 --> 01:22:25,815
+1112
+01:22:22,127 --> 01:22:25,762
 Eat me.
 Eat me !
 
-1116
-01:22:26,712 --> 01:22:29,075
+1113
+01:22:26,780 --> 01:22:29,062
 [ Growling ]
 
-1117
-01:22:29,075 --> 01:22:31,901
+1114
+01:22:29,062 --> 01:22:31,901
 Kay !  Kay !
 
-1118
-01:22:34,286 --> 01:22:36,773
+1115
+01:22:34,354 --> 01:22:36,773
 [ Roaring ]
 
-1119
-01:22:39,157 --> 01:22:41,778
+1116
+01:22:39,241 --> 01:22:41,778
 Hey !
 
-1120
-01:22:43,662 --> 01:22:46,783
+1117
+01:22:43,813 --> 01:22:46,700
 What's up ?
 You're just gonna
 eat and run, huh ?
 
-1121
-01:22:46,852 --> 01:22:49,270
+1118
+01:22:46,716 --> 01:22:48,852
 What about dessert ?
 
-1122
-01:22:51,322 --> 01:22:54,627
+1119
+01:22:51,186 --> 01:22:54,408
 [ Groans ]
 Whoa.
 
-1123
-01:22:54,695 --> 01:22:56,629
+1120
+01:22:54,423 --> 01:22:56,410
 That's it ?
 
-1124
-01:22:56,765 --> 01:22:58,965
+1121
+01:22:56,425 --> 01:22:58,761
 Where you goin' ?
 This party's just
 gettin' started.
 
+1122
+01:22:58,820 --> 01:22:59,300
+Started.
+
+1123
+01:23:00,529 --> 01:23:02,849
+Where you goin' ?
+
+1124
+01:23:02,865 --> 01:23:05,167
+Where you goin' ?
+
 1125
-01:23:00,665 --> 01:23:03,070
-Where you goin' ?
-
-1126
-01:23:03,070 --> 01:23:05,236
-Where you goin' ?
-
-1127
 01:23:05,236 --> 01:23:07,103
 [ Snarls ]
 Let me tell you
 somethin'.
 
-1128
-01:23:07,171 --> 01:23:09,207
+1126
+01:23:07,171 --> 01:23:09,276
 There's only one way
 off of this planet, baby,
 
-1129
-01:23:09,207 --> 01:23:11,407
+1127
+01:23:09,345 --> 01:23:11,545
 and that's through me.
 
-1130
-01:23:13,158 --> 01:23:15,277
+1128
+01:23:13,226 --> 01:23:15,277
 [ Panting ]
 
-1131
-01:23:18,029 --> 01:23:20,717
+1129
+01:23:18,113 --> 01:23:20,717
 - [ Snarling ]
 - Yo !
 
-1132
-01:23:28,406 --> 01:23:31,628
+1130
+01:23:28,557 --> 01:23:31,628
 [ Yelling ]
 [ Snarling ]
 
-1133
-01:23:36,014 --> 01:23:38,234
+1131
+01:23:36,082 --> 01:23:38,234
 [ Screaming ]
 
-1134
-01:23:39,718 --> 01:23:42,015
+1132
+01:23:39,786 --> 01:23:42,002
 [ Groaning ]
 
-1135
-01:23:42,015 --> 01:23:44,574
+1133
+01:23:42,002 --> 01:23:44,574
 [ Branches Snap,
 Laurel Screams ]
 
-1136
-01:23:51,583 --> 01:23:54,025
+1134
+01:23:51,586 --> 01:23:54,033
 Hey !
 
-1137
-01:23:54,025 --> 01:23:56,000
+1135
+01:23:54,055 --> 01:23:56,035
 Where you goin' ?
 
-1138
-01:23:56,000 --> 01:23:58,009
+1136
+01:23:56,057 --> 01:23:58,071
 <i> Why you runnin',</i>
 <i> huh ?</i>
 
-1139
-01:23:58,009 --> 01:24:00,586
+1137
+01:23:58,092 --> 01:24:00,674
 I'm still standin'.
 
-1140
-01:24:00,586 --> 01:24:02,959
+1138
+01:24:00,695 --> 01:24:02,959
 <i>Come on, bring it !</i>
 <i> Come on, bring it !</i>
 
-1141
-01:24:16,960 --> 01:24:20,409
+1139
+01:24:17,111 --> 01:24:20,326
 - [ Loud Crunch ]
 - [ Snarling ]
 
-1142
-01:24:20,436 --> 01:24:22,579
+1140
+01:24:20,348 --> 01:24:22,496
 Uh-oh.
 
-1143
-01:24:22,647 --> 01:24:25,400
+1141
+01:24:22,517 --> 01:24:25,247
 I'm sorry.
 Was that your auntie ?
 
-1144
-01:24:25,400 --> 01:24:27,400
+1142
+01:24:25,316 --> 01:24:27,400
 [ Snarling ]
 
-1145
+1143
 01:24:27,457 --> 01:24:29,390
 Then that must mean
 that that's your uncle
 then, huh ?
 
-1146
-01:24:29,390 --> 01:24:31,146
+1144
+01:24:29,390 --> 01:24:31,141
 [ Loud Crunch ]
 
-1147
-01:24:31,189 --> 01:24:34,914
+1145
+01:24:31,189 --> 01:24:33,629
 Oh, you know
 y'all look alike.
 
-1148
-01:24:38,262 --> 01:24:40,196
+1146
+01:24:38,262 --> 01:24:40,202
 [ Growling,
 Roaring ]
 
-1149
-01:24:40,264 --> 01:24:43,866
+1147
+01:24:40,264 --> 01:24:43,872
 [ Chuckles ]
 Well, well.
 
-1150
-01:24:43,935 --> 01:24:46,826
+1148
+01:24:43,935 --> 01:24:46,828
 Big bad bug got a bit
 of a soft spot, huh ?
 
-1151
-01:24:46,826 --> 01:24:50,261
+1149
+01:24:46,828 --> 01:24:50,263
 - [ Crunch ]
 - [ Snarling ]
 
-1152
-01:24:51,078 --> 01:24:56,214
+1150
+01:24:50,342 --> 01:24:55,478
 <i>See, what I can't understand</i>
 <i>is why you gotta come down here</i>
 <i>bringin' all this ruckus.</i>
 
-1153
-01:24:56,214 --> 01:24:58,520
+1151
+01:24:55,951 --> 01:24:58,519
 Snatchin' up galaxies
 and everything.
 
-1154
-01:24:58,520 --> 01:25:03,923
+1152
+01:24:58,519 --> 01:25:03,922
 <i>My attitude is,</i>
 <i>don't start nothin',</i>
 <i>won't be nothin'.</i>
 
-1155
-01:25:06,271 --> 01:25:08,958
+1153
+01:25:06,339 --> 01:25:08,922
 [ Growling ]
 
-1156
-01:25:09,027 --> 01:25:13,164
+1154
+01:25:08,922 --> 01:25:13,039
 You need to ease up
 out my face before
 something bad happen to you.
 
-1157
-01:25:13,164 --> 01:25:16,432
+1155
+01:25:13,039 --> 01:25:16,432
 <i> [ Electronic Whining ]</i>
 Too late.
 
-1158
-01:25:19,317 --> 01:25:22,438
+1156
+01:25:19,385 --> 01:25:22,438
 [ Both Groaning ]
 
-1159
-01:25:24,923 --> 01:25:27,110
+1157
+01:25:25,007 --> 01:25:27,110
 Ugh !
 
-1160
-01:25:41,907 --> 01:25:44,137
+1158
+01:25:41,975 --> 01:25:44,124
 [ Beeping ]
 
-1161
-01:25:44,137 --> 01:25:48,716
+1159
+01:25:44,124 --> 01:25:48,708
 Zed, call the Arquillians.
 Tell them we have
 the galaxy.
 
-1162
-01:25:48,716 --> 01:25:51,300
+1160
+01:25:48,708 --> 01:25:51,222
 You got it,
 friend.
 
-1163
-01:25:51,369 --> 01:25:54,855
+1161
+01:25:51,239 --> 01:25:54,420
 Ugh.  Goin' to get
 your gun back, huh ?
 
-1164
-01:25:54,855 --> 01:25:57,020
+1162
+01:25:54,442 --> 01:25:56,739
 I like this gun.
 
-1165
-01:25:57,020 --> 01:25:59,537
+1163
+01:25:56,808 --> 01:25:59,310
 Yeah, well, while you
 was in there playin' around,
 
-1166
-01:25:59,538 --> 01:26:01,671
+1164
+01:25:59,310 --> 01:26:01,443
 I was down here
 doin' all the work.
 
-1167
-01:26:01,922 --> 01:26:04,790
+1165
+01:26:01,512 --> 01:26:04,380
 You know, first I had
 to bean him in the head
 with this big rock.
 
-1168
-01:26:04,790 --> 01:26:06,757
+1166
+01:26:04,448 --> 01:26:06,566
 Then I was gonna hit him
 with this two-by-four.
 
-1169
-01:26:06,757 --> 01:26:08,660
+1167
+01:26:06,566 --> 01:26:08,566
 He kicked me.
 You know, it hurt.
 
-1170
+1168
 01:26:08,660 --> 01:26:11,060
 But then I got
 to-to the fire, you know,
 I was "yah !" with the fire.
 
-1171
-01:26:11,060 --> 01:26:14,390
+1169
+01:26:11,118 --> 01:26:11,210
+Would.
+
+1170
+01:26:11,210 --> 01:26:14,811
 Not bad for your
 second day of work,
 is it ?
 
-1172
-01:26:14,390 --> 01:26:18,201
+1171
+01:26:14,857 --> 01:26:18,258
 This definitely rates
 about a 9.0 on my
 weird-shit-o-meter.
 
-1173
-01:26:18,232 --> 01:26:22,400
+1172
+01:26:18,290 --> 01:26:22,458
 Should have been here
 for the Zeronion
 migration in 1968.
 
-1174
-01:26:22,400 --> 01:26:24,867
+1173
+01:26:22,564 --> 01:26:25,031
 Whoa.
 
-1175
-01:26:24,936 --> 01:26:27,987
+1174
+01:26:25,100 --> 01:26:28,151
 I guess you weren't
 even alive in '68.
 
-1176
-01:26:33,111 --> 01:26:36,264
+1175
+01:26:33,111 --> 01:26:36,009
 Interesting job
 you guys have.
 
-1177
-01:26:50,328 --> 01:26:54,230
+1176
+01:26:50,328 --> 01:26:54,160
 Kay, um, look, I know
 we got these rules
 and everything,
 
-1178
+1177
 01:26:54,230 --> 01:26:56,720
 but I was thinking,
 she did help us
 bust that bug,
 
-1179
+1178
 01:26:56,750 --> 01:26:59,384
 and maybe we didn't
 have to flashy thing her.
 
-1180
-01:27:00,590 --> 01:27:02,990
+1179
+01:27:00,805 --> 01:27:02,903
 Kay, come on, man.
 Wh-Who's she gonna tell ?
 
-1181
-01:27:03,080 --> 01:27:06,248
+1180
+01:27:02,945 --> 01:27:06,113
 She hang out
 with all dead people.
 It's not for her.
 
-1182
-01:27:06,248 --> 01:27:08,379
+1181
+01:27:06,113 --> 01:27:08,379
 It's for me.
 
-1183
+1182
 01:27:08,379 --> 01:27:10,646
 [ Chuckling ]
 What ?
 
-1184
-01:27:12,717 --> 01:27:16,878
+1183
+01:27:12,717 --> 01:27:16,585
 They're beautiful,
 aren't they ?
 Stars.
 
-1185
-01:27:17,750 --> 01:27:21,418
+1184
+01:27:16,654 --> 01:27:21,418
 I mean, I never look at them
 anymore, but they actually
 are quite, uh...
 
-1186
+1185
 01:27:22,460 --> 01:27:24,994
 beautiful.
 
-1187
+1186
 01:27:26,998 --> 01:27:28,931
 Uh...
 
-1188
-01:27:29,000 --> 01:27:31,937
+1187
+01:27:29,000 --> 01:27:31,667
 <i>Kay, you're frightening</i>
 <i>your partner.</i>
 
-1189
-01:27:31,970 --> 01:27:34,737
+1188
+01:27:31,736 --> 01:27:34,737
 I haven't been training
 a partner.  I've been
 training a replacement.
 
-1190
+1189
 01:27:35,539 --> 01:27:37,976
 Wait a minute, Kay.
 
-1191
+1190
 01:27:37,976 --> 01:27:40,309
 I cannot do this job
 by myself.
 
-1192
+1191
 01:27:40,340 --> 01:27:43,412
 <i> Hey, guys, my apartment</i>
 <i> isn't anywhere near here.</i>
 
-1193
-01:27:43,481 --> 01:27:45,416
+1192
+01:27:43,412 --> 01:27:45,347
 It's not even
 on the same island.
 
-1194
+1193
 01:27:45,416 --> 01:27:47,616
 [ Clicking ]
 Days.
 
-1195
+1194
 01:27:47,685 --> 01:27:49,585
 Months.
 
-1196
-01:27:49,654 --> 01:27:52,917
+1195
+01:27:49,654 --> 01:27:52,721
 Years.
 Always face it
 forward.
 
-1197
+1196
 01:28:01,744 --> 01:28:03,710
 Kay.
 <i> I've just been down</i>
 <i> the gullet...</i>
 
-1198
-01:28:03,710 --> 01:28:05,620
+1197
+01:28:03,710 --> 01:28:05,638
 of an interstellar
 cockroach, kid.
 
-1199
-01:28:05,620 --> 01:28:08,537
+1198
+01:28:05,638 --> 01:28:08,537
 That's one
 of a hundred memories
 that I don't want.
 
-1200
-01:28:24,413 --> 01:28:26,889
+1199
+01:28:24,523 --> 01:28:26,889
 See you around, Jay.
 
-1201
-01:28:27,834 --> 01:28:32,461
+1200
+01:28:27,760 --> 01:28:32,295
 <i> [ Beep,</i>
 <i>   Electronic Whirr ]</i>
 
-1202
-01:28:32,530 --> 01:28:35,150
+1201
+01:28:32,364 --> 01:28:34,897
 No, you won't.
 
-1203
-01:28:57,402 --> 01:28:59,555
+1202
+01:28:57,470 --> 01:28:59,555
 [ Chuckles ]
 
-1204
-01:29:07,245 --> 01:29:09,431
+1203
+01:29:07,329 --> 01:29:09,431
 <i> [ Laurel ]</i>
 <i> Hey, Jay.</i>
 
-1205
-01:29:11,569 --> 01:29:14,242
+1204
+01:29:11,433 --> 01:29:13,903
 <i>Zed called.</i>
 <i>The high Consulate</i>
 <i>from Solaxiant Nine...</i>
 
+1205
+01:29:13,909 --> 01:29:13,970
+Of.
+
 1206
-01:29:14,242 --> 01:29:16,308
+01:29:13,970 --> 01:29:16,100
 wants floor seats
 for the Knicks-Bulls game.
 
 1207
-01:29:16,308 --> 01:29:21,012
+01:29:16,105 --> 01:29:21,010
 All right.  Let's put in
 a call to Dennis Rodman.
 He's from that planet.
@@ -6121,67 +6122,67 @@ Rodman ?
 You're kidding.
 
 1209
-01:29:23,047 --> 01:29:27,035
+01:29:23,047 --> 01:29:26,916
 <i> Nope.</i>
 Not much
 of a disguise.
 
 1210
-01:30:09,794 --> 01:30:13,534
+01:30:09,794 --> 01:30:13,296
 <i>♪ [ Dance Beat ]</i>
 
 1211
-01:30:13,534 --> 01:30:17,403
+01:30:13,364 --> 01:30:17,233
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1212
-01:30:17,440 --> 01:30:19,639
+01:30:17,302 --> 01:30:19,501
 <i>♪ It's the M.I.B.s ♪</i>
 
 1213
-01:30:19,640 --> 01:30:22,408
+01:30:19,570 --> 01:30:22,338
 <i>♪ Here come the M.I.B.s ♪</i>
 <i>♪ Men in black ♪</i>
 
 1214
-01:30:22,546 --> 01:30:26,581
+01:30:22,407 --> 01:30:26,442
 <i>♪ Here come</i>
 <i>  men in black ♪</i>
 
 1215
-01:30:26,718 --> 01:30:28,952
+01:30:26,510 --> 01:30:28,744
 <i>♪ They won't</i>
 <i>  let you remember ♪</i>
 
 1216
-01:30:29,325 --> 01:30:32,059
+01:30:28,813 --> 01:30:31,547
 <i>♪ The good guys dress in black</i>
 <i>  remember that ♪</i>
 
 1217
-01:30:32,059 --> 01:30:34,730
+01:30:31,615 --> 01:30:34,450
 <i>♪ Just in case</i>
 <i>  we're ever face to face</i>
 <i>  and make contact ♪</i>
 
 1218
-01:30:34,730 --> 01:30:36,897
+01:30:34,518 --> 01:30:36,685
 <i>♪ The title held by me</i>
 <i>  M.I.B. ♪</i>
 
 1219
-01:30:36,950 --> 01:30:39,117
+01:30:36,754 --> 01:30:39,117
 <i>♪ 'Cause what you think you saw</i>
 <i>  you did not see ♪</i>
 
 1220
-01:30:39,319 --> 01:30:41,452
+01:30:39,318 --> 01:30:41,451
 <i>♪ So don't blink, "B"</i>
 <i>  What was there is now gone ♪</i>
 
 1221
-01:30:41,452 --> 01:30:43,655
+01:30:41,451 --> 01:30:43,655
 <i>♪ Put the black suit</i>
 <i>   with the black Ray-Bans on ♪</i>
 
@@ -6196,7 +6197,7 @@ of a disguise.
 <i>  extraterrestrial violence ♪</i>
 
 1224
-01:30:47,855 --> 01:30:49,822
+01:30:47,862 --> 01:30:49,829
 <i>♪ But yo we ain't on</i>
 <i>  no government list ♪</i>
 
@@ -6242,17 +6243,17 @@ of a disguise.
 <i>  of the darkest of night ♪</i>
 
 1233
-01:31:16,461 --> 01:31:18,495
+01:31:16,412 --> 01:31:18,361
 <i>♪ On the horizon</i>
 <i>  bright lightnin' ♪</i>
 
 1234
-01:31:18,697 --> 01:31:21,265
+01:31:18,373 --> 01:31:20,997
 <i>♪ To sight tight, Camera zoom</i>
 <i>  on the impending doom ♪</i>
 
 1235
-01:31:21,335 --> 01:31:23,855
+01:31:21,065 --> 01:31:23,855
 <i>♪ But then like boom</i>
 <i>  black suits</i>
 <i>  filled the room up ♪</i>
@@ -6283,13 +6284,13 @@ of a disguise.
 <i>  That's the way we kick it ♪</i>
 
 1241
-01:31:34,857 --> 01:31:37,324
+01:31:34,694 --> 01:31:37,161
 <i>♪ You know what I mean</i>
 <i>  'Cause it's noisy</i>
 <i>  get wicked on ya ♪</i>
 
 1242
-01:31:37,324 --> 01:31:39,665
+01:31:37,230 --> 01:31:39,630
 <i>♪ We're your first, last</i>
 <i>  and only line of defense ♪</i>
 
@@ -6299,95 +6300,95 @@ of a disguise.
 <i>  of the universe ♪ </i>
 
 1244
-01:31:41,619 --> 01:31:45,273
+01:31:41,619 --> 01:31:45,321
 <i>♪ So don't fear us, cheer us</i>
 <i>  If you ever get near us</i>
 <i>  don't jeer us ♪</i>
 
 1245
-01:31:45,428 --> 01:31:48,496
+01:31:45,386 --> 01:31:48,454
 <i>♪ We're fearless M.I.B.s</i>
 <i>  Freezin' up all the flack ♪</i>
 
 1246
-01:31:48,646 --> 01:31:50,646
+01:31:48,727 --> 01:31:50,727
 <i>♪ Who's that stand for</i>
 <i>  Men in black ♪</i>
 
 1247
-01:31:50,646 --> 01:31:56,617
+01:31:50,727 --> 01:31:56,698
 <i>♪ The men in black ♪</i>
 
 1248
-01:32:01,139 --> 01:32:04,443
+01:32:01,139 --> 01:32:04,237
 <i>♪ The men in black ♪</i>
 
 1249
-01:32:07,252 --> 01:32:09,185
+01:32:07,345 --> 01:32:09,442
 <i>♪ Let me see you just</i>
 <i>  bounce it with me ♪</i>
 
 1250
-01:32:09,185 --> 01:32:11,151
+01:32:09,442 --> 01:32:11,375
 <i>♪ Just bounce with me</i>
 <i>   Just bounce it with me ♪</i>
 
 1251
-01:32:11,151 --> 01:32:12,543
+01:32:11,375 --> 01:32:13,275
 <i>♪ Come on let me see you</i>
 <i>  just slide with me ♪</i>
 
 1252
-01:32:12,543 --> 01:32:16,078
+01:32:13,275 --> 01:32:16,085
 <i>♪ Just slide with me</i>
 <i>   Just slide with me ♪</i>
 
 1253
-01:32:16,078 --> 01:32:18,095
+01:32:16,085 --> 01:32:18,095
 <i>♪ Come on, let me see you</i>
 <i>  take a walk with me ♪</i>
 
 1254
-01:32:18,095 --> 01:32:20,196
+01:32:18,095 --> 01:32:20,890
 <i>♪ Just walk it with me</i>
 <i>  Take a walk with me ♪</i>
 
 1255
-01:32:20,196 --> 01:32:23,431
+01:32:20,890 --> 01:32:24,125
 <i>♪ Come on</i>
 <i>  Make your neck work ♪</i>
 
 1256
-01:32:23,494 --> 01:32:26,905
+01:32:24,125 --> 01:32:27,526
 <i>♪ Now freeze ♪</i>
 <i>♪ Ah-ha-oh-hey-oh ♪</i>
 
 1257
-01:32:26,964 --> 01:32:29,442
+01:32:27,526 --> 01:32:29,994
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1258
-01:32:29,500 --> 01:32:31,444
+01:32:29,994 --> 01:32:31,928
 <i>♪ Men in black ♪</i>
 
 1259
-01:32:31,502 --> 01:32:36,482
+01:32:31,928 --> 01:32:36,898
 <i>♪ Galaxy defenders ♪</i>
 
 1260
-01:32:36,541 --> 01:32:40,286
+01:32:36,898 --> 01:32:40,633
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 <i>♪ Men in black ♪</i>
 
 1261
-01:32:40,344 --> 01:32:43,589
+01:32:40,633 --> 01:32:43,868
 <i>♪ They won't</i>
 <i>  let you remember ♪</i>
 
 1262
-01:32:43,647 --> 01:32:46,517
+01:32:43,868 --> 01:32:46,517
 <i>♪ All right, check it</i>
 <i>  Let me tell you this</i>
 <i>  in closing ♪</i>
@@ -6430,108 +6431,108 @@ of a disguise.
 <i>  the men in black ♪</i>
 
 1270
-01:33:05,473 --> 01:33:07,373
+01:33:05,419 --> 01:33:07,319
 <i>♪ Here they come ♪</i>
 
 1271
-01:33:07,442 --> 01:33:12,346
+01:33:07,320 --> 01:33:12,224
 <i>♪ Galaxy defenders ♪</i>
 
 1272
-01:33:12,347 --> 01:33:16,884
+01:33:12,225 --> 01:33:16,762
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 <i>♪ Oh, here they come ♪</i>
 
 1273
-01:33:16,884 --> 01:33:20,852
+01:33:16,830 --> 01:33:20,866
 <i>♪ They won't</i>
 <i>  let you remember ♪</i>
 <i>♪ Won't let you remember ♪</i>
 
 1274
-01:33:20,852 --> 01:33:24,921
+01:33:20,934 --> 01:33:25,003
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 <i>♪ Oh, here they come ♪</i>
 
 1275
-01:33:24,922 --> 01:33:29,561
+01:33:25,004 --> 01:33:29,575
 <i>♪ Galaxy defenders ♪</i>
 
 1276
-01:33:29,562 --> 01:33:33,798
+01:33:29,576 --> 01:33:33,812
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1277
-01:33:33,799 --> 01:33:39,537
+01:33:33,813 --> 01:33:39,551
 <i>♪ They won't</i>
 <i>  let you remember ♪</i>
 <i>♪ Won't let you remember ♪</i>
 
 1278
-01:33:39,538 --> 01:33:43,475
+01:33:39,552 --> 01:33:43,489
 <i>♪ Oh, here they come ♪</i>
 
 1279
-01:33:49,614 --> 01:33:53,119
+01:33:49,614 --> 01:33:53,131
 <i>♪ Here they come ♪</i>
 
 1280
-01:33:53,188 --> 01:33:57,957
+01:33:53,132 --> 01:33:57,969
 <i>♪ Won't let you remember ♪</i>
 
 1281
-01:33:58,026 --> 01:34:00,727
+01:33:57,970 --> 01:34:00,739
 <i>♪ Here they come ♪</i>
 
 1282
-01:34:00,796 --> 01:34:05,432
+01:34:00,740 --> 01:34:05,444
 <i>♪ Galaxy defenders ♪</i>
 <i>♪ Galaxy defenders ♪</i>
 
 1283
-01:34:05,501 --> 01:34:07,334
+01:34:05,445 --> 01:34:07,346
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1284
-01:34:07,403 --> 01:34:09,469
+01:34:07,347 --> 01:34:09,481
 <i>♪ Oh, here they come ♪</i>
 
 1285
-01:34:09,538 --> 01:34:14,341
+01:34:09,482 --> 01:34:14,353
 <i>♪ They won't</i>
 <i>  let you remember ♪</i>
 <i>♪ Won't let you remember ♪</i>
 
 1286
-01:34:14,410 --> 01:34:18,612
+01:34:14,354 --> 01:34:18,624
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1287
-01:34:18,680 --> 01:34:23,048
+01:34:18,625 --> 01:34:23,061
 <i>♪ They won't</i>
 <i>  let you remember ♪</i>
 
 1288
-01:34:23,117 --> 01:34:27,520
+01:34:23,062 --> 01:34:27,533
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1289
-01:34:27,589 --> 01:34:31,991
+01:34:27,601 --> 01:34:32,003
 <i>♪ Galaxy defenders ♪</i>
 
 1290
-01:34:32,060 --> 01:34:36,463
+01:34:32,004 --> 01:34:36,475
 <i>♪ Here come</i>
 <i>  the men in black ♪</i>
 
 1291
-01:34:36,601 --> 01:34:40,102
+01:34:36,544 --> 01:34:40,045
 <i>♪ They won't</i>
 <i>  let you remember ♪♪</i>
 

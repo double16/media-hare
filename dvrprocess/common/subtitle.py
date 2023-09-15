@@ -116,7 +116,7 @@ class SubtitleElementFacade(ABC):
 
     def __init__(self):
         self._normalized_texts: Union[list[str], None] = None
-        pass
+        self._normalized_start_words: Union[set[str], None] = None
 
     def __repr__(self):
         return f"({self.start(), self.end()} \"{self.text()}\""
@@ -148,6 +148,12 @@ class SubtitleElementFacade(ABC):
 
     def set_normalized_texts(self, new_values: list[str]):
         self._normalized_texts = new_values
+        l = list(map(lambda e: e[0:2], map(lambda f: f.split(), self._normalized_texts)))
+        self._normalized_start_words = set([item for sublist in l for item in sublist])
+
+    def normalized_start_words(self) -> set[str]:
+        self._check_normalized_texts()
+        return self._normalized_start_words
 
     def get_normalized_word_count(self) -> int:
         self._check_normalized_texts()
@@ -217,7 +223,7 @@ class SubtitleElementFacade(ABC):
             return
         d = self.duration()
         self.set_end(new_end)
-        self.set_start(new_end - d)
+        self.set_start(max(0, new_end - d))
 
 
 class AssElementFacade(SubtitleElementFacade):

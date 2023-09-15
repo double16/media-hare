@@ -322,6 +322,18 @@ Dialogue: 0,0:00:30.16,0:00:32.65,Default,,0,0,0,,{TIME:30160,32650}The the
         se = MockSubtitleElement('hey there')
         self.assertFalse(se.has_ending_sound_effect())
 
+    def test_normalized_start_words(self):
+        se = MockSubtitleElement('one two three four')
+        se.set_normalized_texts(['one two three four', 'five six seven eight'])
+        self.assertTrue('one' in se.normalized_start_words())
+        self.assertTrue('two' in se.normalized_start_words())
+        self.assertFalse('three' in se.normalized_start_words())
+        self.assertFalse('four' in se.normalized_start_words())
+        self.assertTrue('five' in se.normalized_start_words())
+        self.assertTrue('six' in se.normalized_start_words())
+        self.assertFalse('seven' in se.normalized_start_words())
+        self.assertFalse('eight' in se.normalized_start_words())
+
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
