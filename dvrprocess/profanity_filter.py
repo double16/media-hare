@@ -1383,7 +1383,7 @@ def find_subtitle_element_idx_le(time_ordinals: list[int], start: float) -> int:
 SUBTITLE_TEXT_TO_PLAIN_REMOVE = re.compile(r"\[.*?]|\(\D.*?\)|\{.*?}|<.*?>")
 SUBTITLE_TEXT_TO_PLAIN_WS = re.compile(r"\\[A-Za-z]|[,.?$!*&()\"-]|\W'|'\W|[\u007F-\uFFFF]")
 SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS = re.compile(r"\s+")
-SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"([0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]+)?)")
+SUBTITLE_TEXT_TO_PLAIN_NUMBERS = re.compile(r"(\d+(?:\.\d+)?)")
 SUBTITLE_TEXT_TO_PLAIN_ORDINALS = re.compile(r"(\d+)(?:st|nd|rd|th)")
 SUBTITLE_TEXT_TO_PLAIN_CURRENCY = re.compile(r"\$([0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]+)?)")
 SUBTITLE_TEXT_TO_PLAIN_ABBREV_DICT = {
