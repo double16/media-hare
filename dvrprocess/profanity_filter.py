@@ -1638,6 +1638,7 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
         return _LANG_TOOLS[lang_tool_lang]
     try:
         lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
+        atexit.register(lambda: lang_tool.close())
         _LANG_TOOLS[lang_tool_lang] = lang_tool
         return lang_tool
     except Exception as e:
@@ -1943,7 +1944,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                         else:
                             silence_start_bound = event.start() - min(max_offset_ms, abs(ave_start_adjustment) * 1.5)
 
-                        if event_idx == len(events):
+                        if event_idx >= len(events) - 1:
                             silence_end_bound = sys.maxsize
                         elif found_range_ms[event_idx + 1]:
                             silence_end_bound = found_range_ms[event_idx + 1][0]
@@ -1951,6 +1952,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             silence_end_bound = event.end() + min(max_offset_ms, abs(ave_end_adjustment) * 1.5)
 
                         for silence_candidate in silence_candidates:
+                            if event.duration() <= 0:
+                                continue
                             start_new_ms = max(silence_candidate[0], silence_start_bound)
                             end_new_ms = min(silence_candidate[1], silence_end_bound)
                             silence_duration_pct = (end_new_ms - start_new_ms) / event.duration()
