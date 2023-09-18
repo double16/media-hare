@@ -9,9 +9,8 @@ from subprocess import CalledProcessError
 import requests
 
 import common
-from common import config, constants
+from common import config, constants, hwaccel
 from dvr_post_process import dvr_post_process
-from dvrprocess.common import hwaccel
 from find_need_transcode import need_transcode_generator
 
 logger = logging.getLogger(__name__)
