@@ -427,7 +427,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                                             + '.ini')
     shutil.copyfile(comskip_ini_path, comskip_fitness_ini_path)
 
-    def f(solution, solution_idx):
+    def f(gad, solution, solution_idx):
         write_ini_from_solution(comskip_fitness_ini_path, genes, solution)
         logger.debug(f"Calculating fitness for {solution_repl(genes, solution)}")
 

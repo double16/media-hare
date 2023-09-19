@@ -21,6 +21,7 @@ from enum import Enum
 from typing import Union
 
 import numpy
+import psutil
 
 from . import tools
 
@@ -160,6 +161,34 @@ def _find_vaapi_method() -> HWAccelMethod:
     return HWAccelMethod.VAAPI if len(vaapi_encoders) > 0 else HWAccelMethod.NONE
 
 
+def _is_nvidia_tool_running(wait_timeout: float = 0) -> bool:
+    """
+    Check if an nvidia tool is running. Deadlocks can occur.
+    :param wait_timeout: time to wait in seconds, 0 for no wait
+    :return: True if an nvidia tool is running
+    """
+
+    def check() -> bool:
+        for p in psutil.process_iter():
+            try:
+                cmdline = " ".join(p.cmdline())
+                if 'nvidia-smi' in cmdline or 'gpustat' in cmdline:
+                    return True
+            except (PermissionError, psutil.AccessDenied, ProcessLookupError, psutil.NoSuchProcess):
+                pass
+        return False
+
+    if wait_timeout <= 0:
+        return check()
+
+    end_time = time.time() + wait_timeout
+    while end_time > time.time():
+        if not check():
+            return False
+        time.sleep(min(1.0, max(0.1, end_time - time.time())))
+    return True
+
+
 def _find_nvenc_method() -> HWAccelMethod:
     """
     Find nvidia encoding. Encoder specific options can be found with `ffmpeg -h encoder=h264_nvenc`.
@@ -171,6 +200,7 @@ def _find_nvenc_method() -> HWAccelMethod:
     if not tools.nvidia_smi.present():
         return HWAccelMethod.NONE
 
+    _is_nvidia_tool_running(wait_timeout=5)
     try:
         gpus = tools.nvidia_smi.check_output(["--list-gpus"], text=True)
         return HWAccelMethod.NVENC if 'GPU ' in gpus else HWAccelMethod.NONE
@@ -462,7 +492,11 @@ def _nvenc_gpustat() -> tuple[Union[float, None], Union[float, None]]:
 
     if _nvenc_gpustat_cache_expire > time.time():
         return _nvenc_gpustat_cache
+    if _nvenc_gpustat_cache[0] is not None and _is_nvidia_tool_running():
+        return _nvenc_gpustat_cache
 
+    # returning None, None on the first call indicates there is no GPU, so continue if necessary
+    _is_nvidia_tool_running(wait_timeout=5)
     try:
         stat = json.loads(tools.nvidia_gpustat.check_output(["--json"], text=True))
         compute = []

@@ -1,8 +1,7 @@
-
 #
 # User interface for terminal (curses).
 #
-
+import atexit
 import curses
 import logging
 import re
@@ -15,12 +14,11 @@ from .proc_invoker import StreamCapture
 
 logger = logging.getLogger(__name__)
 
-
 LOG_MSG_CLEAN = re.compile("[\r\n]+")
-
 
 _CURSESUI = None
 _CURSESUI_LAST_RESIZE = 0
+
 
 def _check_resize():
     global _CURSESUI, _CURSESUI_LAST_RESIZE
@@ -38,6 +36,16 @@ class CursesLogHandler(logging.Handler):
         self.pad = pad
         self.window = window
         self.y = 0
+        self.log_records_on_close = []
+
+        def flush_logs():
+            logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=logging.INFO,
+                                force=True)
+            summary_logger = logging.getLogger('summary')
+            for record in self.log_records_on_close:
+                summary_logger.handle(record)
+
+        atexit.register(flush_logs)
 
     def emit(self, record: logging.LogRecord) -> None:
         _check_resize()
@@ -55,8 +63,11 @@ class CursesLogHandler(logging.Handler):
             attr = curses.A_NORMAL
             if record.levelno >= logging.ERROR:
                 attr = curses.A_STANDOUT
-            self.pad.insnstr(self.y, 0, msg, max_x-1, attr)
-            self.y = min(self.y+1, max_y)
+                self.log_records_on_close.append(record)
+                if len(self.log_records_on_close) > 50:
+                    self.log_records_on_close.pop(0)
+            self.pad.insnstr(self.y, 0, msg, max_x - 1, attr)
+            self.y = min(self.y + 1, max_y)
 
             self.refresh()
         except:
@@ -107,7 +118,8 @@ class ProgressCurses(progress.Progress):
         super().stop(msg)
         self.listener.stop(self)
 
-    def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None, end: Union[int, None] = None) -> None:
+    def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None,
+                 end: Union[int, None] = None) -> None:
         super().progress(position, msg, start, end)
         if self.update_reporting():
             self.listener.progress(self, position, msg)
@@ -173,19 +185,19 @@ class ProgressWindow(CursesProgressListener):
             if task.pct is None:
                 bar_complete = ""
             else:
-                bar_complete = "=" * ceil((bar_width-2)*(task.pct/100))
+                bar_complete = "=" * ceil((bar_width - 2) * (task.pct / 100))
             bar_incomplete = " " * (bar_width - 2 - len(bar_complete))
             bar = f"[{bar_complete}{bar_incomplete}]"
 
             position_str = task.position_str(position)
             if position_str:
-                bar_left = max(1, floor((bar_width - len(position_str))/2))
-                bar_right = min(len(bar)-1, bar_left + 2 + len(position_str))
+                bar_left = max(1, floor((bar_width - len(position_str)) / 2))
+                bar_right = min(len(bar) - 1, bar_left + 2 + len(position_str))
                 bar = f"{bar[0:bar_left]} {position_str} {bar[bar_right:]}"
 
-            output = str(f"{label[0:msg_width+1]:>{msg_width}} {bar:<{bar_width}}")
+            output = str(f"{label[0:msg_width + 1]:>{msg_width}} {bar:<{bar_width}}")
             if eta_width > 0 and task.eta is not None:
-                output = f"{output} {task.remaining_human_duration():>{eta_width-1}}"
+                output = f"{output} {task.remaining_human_duration():>{eta_width - 1}}"
         else:
             output = ""
         self.window.move(task.relative_row, 0)
@@ -324,7 +336,7 @@ class CursesUI(object):
         """
         lines, cols = self.screen.getmaxyx()
         status_win = (1, cols, 0, 0)
-        progress_win = (ceil(lines/3), cols, 1, 0)
+        progress_win = (ceil(lines / 3), cols, 1, 0)
         log_win = (lines - 1 - progress_win[0], cols, progress_win[0] + progress_win[2], 0)
         return [status_win, progress_win, log_win]
 
@@ -350,6 +362,7 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
     :param kwargs:
     :return: return code for sys.exit
     """
+
     def main(screen) -> int:
         global _CURSESUI, _CURSESUI_LAST_RESIZE
         screen.refresh()

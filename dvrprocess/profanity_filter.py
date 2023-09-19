@@ -2135,7 +2135,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                 continue
             missing_duration = original_duration_ms[event_idx] - event.duration()
             if missing_duration > 600000:
-                raise "missing_duration > 600000"
+                raise ValueError("missing_duration > 600000")
             if missing_duration <= 0:
                 continue
             if event.is_sound_effect():
