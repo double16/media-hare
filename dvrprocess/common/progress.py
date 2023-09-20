@@ -148,7 +148,7 @@ class Gauge(object):
         self.normal_range: tuple[float, float] = None
         self.warning_range: tuple[float, float] = None
         self.critical_range: tuple[float, float] = None
-        self.last_value: float = None
+        self.last_value: Union[None, float] = None
         """ The last time a value was received. """
         self._last_value_time: Union[None, float] = None
         """ The last time we reported, used to keep the noise down. """
@@ -529,11 +529,63 @@ class ComputeGauges(object):
                 self.gmem_percent.value(gmem_pct)
 
 
+class LinuxIOWaitGauge(object):
+    def __init__(self):
+        self.gauge = gauge('IO', 0, 100)
+        self.gauge.renderer = _percent_renderer
+        self.gauge.warning_range = (20, 50)
+        self.gauge.critical_range = (50, 101)
+
+        self._last_stats = self._stats()
+
+    def _stats(self) -> Union[dict[str, int], None]:
+        try:
+            with open("/proc/stat", "rt") as f:
+                for line in f.readlines():
+                    if line.startswith("cpu "):
+                        parts = line.split()
+                        return {
+                            'usr': int(parts[1]),
+                            'nice': int(parts[2]),
+                            'sys': int(parts[3]),
+                            'idle': int(parts[4]),
+                            'iowait': int(parts[5]),
+                            'irq': int(parts[6]),
+                            'softirq': int(parts[7]),
+                            'steal': int(parts[8]),
+                            'guest': int(parts[9]),
+                        }
+        except Exception as e:
+            logging.root.warning("reading /proc/stat", e)
+            return None
+
+    def _total(self, stats: dict[str, int]):
+        return sum(stats.values())
+
+    def update(self):
+        current_stats = self._stats()
+        if current_stats is None:
+            return
+
+        if self._last_stats is not None:
+            iowait_pct = ((current_stats['iowait'] - self._last_stats['iowait']) * 100) / (
+                    self._total(current_stats) - self._total(self._last_stats))
+            self.gauge.value(iowait_pct)
+
+        self._last_stats = current_stats
+
+
 def start_compute_gauges(interval=30):
     gauges = ComputeGauges()
+    if os.path.exists("/proc/stat"):
+        io_gauge = LinuxIOWaitGauge()
+    else:
+        io_gauge = None
 
     def update():
         gauges.update()
+        if io_gauge:
+            io_gauge.update()
         t = threading.Timer(interval, update)
         t.daemon = True
         t.start()
