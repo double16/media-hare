@@ -86,6 +86,7 @@ COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
 COPY tvshow-summary.sh /etc/cron.daily/tvshow-summary
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
+COPY langtool-cleanup.sh /etc/cron.daily/langtool-cleanup
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail

@@ -1,0 +1,15 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y build-essential python3 python3-pip python3-dev default-jdk hunspell libhunspell-dev hunspell-en-us
+
+COPY requirements.txt dev_requirements.txt /tmp
+RUN pip install -r /tmp/requirements.txt && \
+    pip install -r /tmp/dev_requirements.txt
+
+RUN python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')"
+
+VOLUME /src
+WORKDIR /src/dvrprocess
