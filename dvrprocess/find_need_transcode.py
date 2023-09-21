@@ -46,7 +46,7 @@ List files needing transcode from the Plex database. There are two output format
 -t, --terminator="\\n"
     Set the output terminator, defaults to null (0).
 -d, --dir=
-    Directory containing media. Defaults to {common.get_media_base()}
+    Directory containing media. Defaults to {common.get_media_roots()}
 -v, --video=
     Desired video codecs. Defaults to {video_codecs}
 -a, --audio=
@@ -63,7 +63,7 @@ List files needing transcode from the Plex database. There are two output format
 def find_need_transcode_cli(argv):
     plex_url = common.get_plex_url()
     media_paths = None
-    host_home = common.get_media_base()
+    roots = []
     terminator = '\0'
     desired_video_codecs = None
     desired_audio_codecs = None
@@ -85,7 +85,7 @@ def find_need_transcode_cli(argv):
         elif opt in ("-u", "--url"):
             plex_url = arg
         elif opt in ("-d", "--dir"):
-            host_home = arg
+            roots.append(arg)
         elif opt in ("-v", "--video"):
             desired_video_codecs = arg.split(',')
         elif opt in ("-a", "--audio"):
@@ -104,6 +104,9 @@ def find_need_transcode_cli(argv):
             else:
                 terminator = arg
 
+    if not roots:
+        roots = common.get_media_roots()
+
     if args:
         media_paths = args
         plex_url = None
@@ -115,7 +118,7 @@ def find_need_transcode_cli(argv):
         runtime_minutes = 0
         transcode_minutes = 0
         transcode_details = []
-        for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, host_home=host_home,
+        for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, media_roots=roots,
                                                   desired_video_codecs=desired_video_codecs,
                                                   desired_audio_codecs=desired_audio_codecs,
                                                   max_resolution=max_resolution,
@@ -145,7 +148,7 @@ def find_need_transcode_cli(argv):
             print(e)
         return code
     else:
-        for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, host_home=host_home,
+        for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, media_roots=roots,
                                                   desired_video_codecs=desired_video_codecs,
                                                   desired_audio_codecs=desired_audio_codecs,
                                                   max_resolution=max_resolution,
@@ -242,7 +245,7 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 def need_transcode_generator(
         plex_url=common.get_plex_url(),
         media_paths=None,
-        host_home=None,
+        media_roots=None,
         desired_video_codecs: list[str] = None,
         desired_audio_codecs: list[str] = None,
         desired_subtitle_codecs: list[str] = None,
@@ -250,9 +253,9 @@ def need_transcode_generator(
         desired_frame_rate: Union[None, float] = None,
 ):
     logger.debug(
-        "need_transcode_generator(plex_url=%s, media_paths=%s, host_home=%s, desired_video_codecs=%s, "
+        "need_transcode_generator(plex_url=%s, media_paths=%s, media_roots=%s, desired_video_codecs=%s, "
         "desired_audio_codecs=%s, desired_subtitle_codecs=%s, max_resolution=%s, desired_frame_rate=%s)",
-        plex_url, media_paths, host_home, desired_video_codecs, desired_audio_codecs, desired_subtitle_codecs,
+        plex_url, media_paths, media_roots, desired_video_codecs, desired_audio_codecs, desired_subtitle_codecs,
         max_resolution, desired_frame_rate)
 
     if desired_video_codecs is None and desired_audio_codecs is None and desired_frame_rate is None:
@@ -270,8 +273,8 @@ def need_transcode_generator(
     if not plex_url:
         raise Exception("No plex URL, configure in media-hare.ini, section plex, option url")
 
-    if host_home is None:
-        host_home = common.get_media_base()
+    if not media_roots:
+        media_roots = common.get_media_roots()
 
     file_names = set()
 
@@ -284,7 +287,7 @@ def need_transcode_generator(
             section_response = requests.get(
                 f'{plex_url}/library/sections/{library.attrib["key"]}/all')
             yield from _process_videos(desired_audio_codecs, desired_video_codecs, desired_subtitle_codecs, file_names,
-                                       host_home,
+                                       media_roots,
                                        section_response,
                                        max_resolution,
                                        desired_frame_rate,
@@ -300,7 +303,7 @@ def need_transcode_generator(
                 show_response = requests.get(
                     f'{plex_url}{show.attrib["key"].replace("/children", "/allLeaves")}')
                 yield from _process_videos(desired_audio_codecs, desired_video_codecs, desired_subtitle_codecs,
-                                           file_names, host_home,
+                                           file_names, media_roots,
                                            show_response,
                                            max_resolution,
                                            desired_frame_rate,
@@ -308,7 +311,7 @@ def need_transcode_generator(
 
 
 def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[str],
-                    desired_subtitle_codecs: list[str], file_names, host_home,
+                    desired_subtitle_codecs: list[str], file_names, media_roots: list[str],
                     show_response, max_resolution: Union[None, int], desired_frame_rate: Union[None, float],
                     library: Union[None, str] = None):
     episodes = list(filter(
@@ -375,7 +378,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                 max_resolution is None or (video_resolution is not None and int(video_resolution) <= max_resolution)):
 
             # Verify file hasn't changed
-            host_file_path, file_name = _plex_host_name_to_local(file_name, host_home)
+            host_file_path, file_name = _plex_host_name_to_local(file_name, media_roots)
             if host_file_path is None:
                 continue
 
@@ -393,21 +396,22 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                                                 framerate=framerate, runtime=duration, library=library)
 
 
-def _plex_host_name_to_local(file_name: str, host_home: str) -> Tuple[str, str]:
+def _plex_host_name_to_local(file_name: str, media_roots: list[str]) -> Tuple[str, str]:
     """
     Try to find a file referenced by the Plex host name to the local host name.
     :param file_name: the file name on the host running Plex
-    :param host_home: the current host media home
+    :param media_roots: roots where media is stored
     :return: valid file name or None
     """
     paths = config.get_global_config_option('media', 'paths').split(',')
     for path in paths:
         i = file_name.find(path)
         if i >= 0:
-            f = os.path.join(host_home, file_name[i:])
-            logger.debug(f"Checking if %s is a valid path for %s", f, file_name)
-            if os.path.isfile(f):
-                return f, file_name[i:]
+            for root in media_roots:
+                f = os.path.join(root, file_name[i:])
+                logger.debug(f"Checking if %s is a valid path for %s", f, file_name)
+                if os.path.isfile(f):
+                    return f, file_name[i:]
     return None, None
 
 
