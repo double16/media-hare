@@ -5,6 +5,7 @@ import atexit
 import curses
 import logging
 import re
+import threading
 import time
 from math import ceil, floor
 from typing import Union, Dict
@@ -18,6 +19,7 @@ LOG_MSG_CLEAN = re.compile("[\r\n]+")
 
 _CURSESUI = None
 _CURSESUI_LAST_RESIZE = 0
+_curses_ui_lock = threading.RLock()
 
 
 def _check_resize():
@@ -50,6 +52,7 @@ class CursesLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         _check_resize()
         try:
+            _curses_ui_lock.acquire()
             max_y, max_x = self.pad.getmaxyx()
             if self.y >= max_y:
                 self.pad.move(0, 0)
@@ -73,20 +76,30 @@ class CursesLogHandler(logging.Handler):
         except:
             # don't break the application because of a logging error
             pass
+        finally:
+            _curses_ui_lock.release()
 
     def refresh(self):
-        win_top, win_left = self.window.getbegyx()
-        win_top += 1
-        win_left += 1
-        win_height, win_width = self.window.getmaxyx()
-        win_bottom = win_top + win_height - 3
-        win_right = win_left + win_width - 3
-        self.pad.refresh(max(0, self.y - win_height + 2), 0, win_top, win_left, win_bottom, win_right)
+        try:
+            _curses_ui_lock.acquire()
+            win_top, win_left = self.window.getbegyx()
+            win_top += 1
+            win_left += 1
+            win_height, win_width = self.window.getmaxyx()
+            win_bottom = win_top + win_height - 3
+            win_right = win_left + win_width - 3
+            self.pad.refresh(max(0, self.y - win_height + 2), 0, win_top, win_left, win_bottom, win_right)
+        finally:
+            _curses_ui_lock.release()
 
     def resize(self):
-        self.window.clear()
-        self.window.border()
-        self.window.refresh()
+        try:
+            _curses_ui_lock.acquire()
+            self.window.clear()
+            self.window.border()
+            self.window.refresh()
+        finally:
+            _curses_ui_lock.release()
         self.refresh()
 
 
@@ -135,12 +148,16 @@ class ProgressWindow(CursesProgressListener):
         self.window.refresh()
 
     def resize(self):
-        lines, cols = self.window.getmaxyx()
-        for task in list(self.tasks.values()):
-            if task.relative_row >= lines:
-                task.relative_row = -1
-            else:
-                self._draw(task, task.last_position)
+        try:
+            _curses_ui_lock.acquire()
+            lines, cols = self.window.getmaxyx()
+            for task in list(self.tasks.values()):
+                if task.relative_row >= lines:
+                    task.relative_row = -1
+                else:
+                    self._draw(task, task.last_position)
+        finally:
+            _curses_ui_lock.release()
 
     def _allocate_row(self, task: ProgressCurses):
         if task.relative_row >= 0:
@@ -206,32 +223,44 @@ class ProgressWindow(CursesProgressListener):
 
     def start(self, task: ProgressCurses):
         _check_resize()
-        existing_task = self.tasks.get(task.task, None)
-        if existing_task:
-            task.relative_row = existing_task.relative_row
-        else:
-            self._allocate_row(task)
-        self.tasks[task.task] = task
-        if task.relative_row >= 0:
-            self._draw(task)
-            self.refresh()
+        try:
+            _curses_ui_lock.acquire()
+            existing_task = self.tasks.get(task.task, None)
+            if existing_task:
+                task.relative_row = existing_task.relative_row
+            else:
+                self._allocate_row(task)
+            self.tasks[task.task] = task
+            if task.relative_row >= 0:
+                self._draw(task)
+                self.refresh()
+        finally:
+            _curses_ui_lock.release()
 
     def progress(self, task: ProgressCurses, position: int, msg: str):
         _check_resize()
-        if task.relative_row < 0:
-            self._allocate_row(task)
+        try:
+            _curses_ui_lock.acquire()
             if task.relative_row < 0:
-                return
-        self._draw(task, position, msg)
-        self.refresh()
+                self._allocate_row(task)
+                if task.relative_row < 0:
+                    return
+            self._draw(task, position, msg)
+            self.refresh()
+        finally:
+            _curses_ui_lock.release()
 
     def stop(self, task: ProgressCurses):
         _check_resize()
-        self.tasks.pop(task.task, None)
-        if task.relative_row >= 0:
-            self.window.move(task.relative_row, 0)
-            self.window.clrtoeol()
-            self.refresh()
+        try:
+            _curses_ui_lock.acquire()
+            self.tasks.pop(task.task, None)
+            if task.relative_row >= 0:
+                self.window.move(task.relative_row, 0)
+                self.window.clrtoeol()
+                self.refresh()
+        finally:
+            _curses_ui_lock.release()
 
 
 class CursesGaugeListener(object):
@@ -263,6 +292,7 @@ class GaugeWindow(CursesGaugeListener):
         self.window.erase()
         self.window.move(self.window.getbegyx()[0], self.window.getbegyx()[1])
         try:
+            _curses_ui_lock.acquire()
             for idx, gauge in enumerate(self.gauges.values()):
                 if idx > 0:
                     self.window.addstr(" | ")
@@ -275,6 +305,8 @@ class GaugeWindow(CursesGaugeListener):
         except curses.error:
             # outside the window
             pass
+        finally:
+            _curses_ui_lock.release()
 
         self.window.refresh()
 
