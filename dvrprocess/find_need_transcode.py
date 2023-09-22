@@ -416,5 +416,5 @@ def _plex_host_name_to_local(file_name: str, media_roots: list[str]) -> Tuple[st
 
 
 if __name__ == '__main__':
-    common.setup_cli(level=logging.ERROR)
+    common.setup_cli(level=logging.ERROR, start_gauges=False)
     sys.exit(find_need_transcode_cli(sys.argv[1:]))

@@ -568,8 +568,12 @@ class LinuxIOWaitGauge(object):
             return
 
         if self._last_stats is not None:
+            current_total = self._total(current_stats)
+            last_total = self._total(self._last_stats)
+            if current_total == last_total:
+                return
             iowait_pct = ((current_stats['iowait'] - self._last_stats['iowait']) * 100) / (
-                    self._total(current_stats) - self._total(self._last_stats))
+                    current_total - last_total)
             self.gauge.value(iowait_pct)
 
         self._last_stats = current_stats

@@ -166,5 +166,5 @@ def tvshow_suspicious_cli(argv) -> int:
 
 
 if __name__ == '__main__':
-    common.setup_cli(level=logging.ERROR)
+    common.setup_cli(level=logging.ERROR, start_gauges=False)
     sys.exit(tvshow_suspicious_cli(sys.argv[1:]))

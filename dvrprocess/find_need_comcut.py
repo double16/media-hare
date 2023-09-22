@@ -124,14 +124,14 @@ def need_comcut_generator(media_paths: list[str], media_roots: list[str]) -> Ite
                 cut_length = uncut_length - sum(map(lambda e: e.length(), edl))
                 file_info = ComcutPendingFileInfo(
                     file_name=common.get_media_file_relative_to_root(filepath, media_roots)[0],
-                                                  host_file_path=filepath,
-                                                  size=os.stat(filepath).st_size,
-                                                  uncut_length=uncut_length,
-                                                  cut_length=cut_length,
-                                                  cut_count=len(edl))
+                    host_file_path=filepath,
+                    size=os.stat(filepath).st_size,
+                    uncut_length=uncut_length,
+                    cut_length=cut_length,
+                    cut_count=len(edl))
                 yield file_info
 
 
 if __name__ == '__main__':
-    common.setup_cli(level=logging.ERROR)
+    common.setup_cli(level=logging.ERROR, start_gauges=False)
     sys.exit(find_need_comcut_cli(sys.argv[1:]))

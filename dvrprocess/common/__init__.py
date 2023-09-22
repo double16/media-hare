@@ -966,10 +966,11 @@ def setup_logging(level=logging.INFO):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=level, force=True)
 
 
-def setup_cli(level=logging.INFO):
+def setup_cli(level=logging.INFO, start_gauges=True):
     setup_logging(level)
     setup_debugging()
-    progress.start_compute_gauges()
+    if start_gauges:
+        progress.start_compute_gauges()
 
 
 def cli_wrapper(func):
