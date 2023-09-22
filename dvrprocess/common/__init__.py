@@ -33,46 +33,85 @@ TEMPFILENAMES = []
 ANALYZE_DURATION = '20000000'
 PROBE_SIZE = '20000000'
 
-MEDIA_BASE = None
+MEDIA_ROOTS: Union[list[str], None] = None
 
 
-def get_media_base():
-    global MEDIA_BASE
-    if MEDIA_BASE is None:
+def get_media_roots() -> list[str]:
+    global MEDIA_ROOTS
+    if MEDIA_ROOTS is None:
         _once_lock.acquire()
         try:
-            if MEDIA_BASE is None:
-                MEDIA_BASE = find_media_base()
+            if MEDIA_ROOTS is None:
+                MEDIA_ROOTS = _find_media_roots()
         finally:
             _once_lock.release()
-    return MEDIA_BASE
+    return MEDIA_ROOTS
 
 
-def find_media_base() -> str:
+def _find_media_roots() -> list[str]:
     try:
         paths = config.get_global_config_option('media', 'paths').split(',')
         if len(paths) > 0:
-            for p in psutil.disk_partitions(all=True):
-                if os.path.isdir(os.path.join(p.mountpoint, paths[0])):
-                    return p.mountpoint
+            mount_points = []
+            for part in psutil.disk_partitions(all=True):
+                if any([os.path.isdir(os.path.join(part.mountpoint, path)) for path in paths]):
+                    mount_points.append(part.mountpoint)
+            if mount_points:
+                return mount_points
     except KeyError:
         logger.debug('No media.paths in config')
     try:
+        roots = []
         for root in config.get_global_config_option('media', 'root').split(','):
             root = root.replace('$HOME', os.environ['HOME'])
             if os.path.isdir(root):
-                return root
+                roots.append(root)
+        if roots:
+            return roots
     except KeyError:
         logger.debug('No media.root in config')
     logger.info('No valid media.root found, returning user home')
-    return os.environ['HOME']
+    return [os.environ['HOME']]
 
 
-def get_media_paths(base=None):
-    if base is None:
-        base = get_media_base()
-    paths = config.get_global_config_option('media', 'paths').split(',')
-    return list(map(lambda e: os.path.join(base, e), paths))
+def get_media_paths(roots=None, paths=None):
+    if roots is None:
+        roots = get_media_roots()
+    elif isinstance(roots, (list, set)):
+        roots = list(roots)
+    else:
+        roots = [roots]
+
+    if paths is None:
+        paths = config.get_global_config_option('media', 'paths').split(',')
+    elif isinstance(paths, (list, set)):
+        paths = list(paths)
+    else:
+        paths = [paths]
+
+    result = set()
+    for root in roots:
+        for path in paths:
+            if os.path.isabs(path):
+                joined = path
+            else:
+                joined = os.path.join(root, path)
+            if os.path.exists(joined):
+                result.add(joined)
+    return list(result)
+
+
+def get_media_file_relative_to_root(file_name: str, roots: list[str]) -> tuple[str, str]:
+    if not roots:
+        return file_name, '/'
+    for root in roots:
+        if root.endswith('/'):
+            prefix = root
+        else:
+            prefix = root + '/'
+        if file_name.startswith(prefix):
+            return file_name[len(prefix):], prefix
+    return file_name, '/'
 
 
 def fatal(message):
@@ -927,10 +966,11 @@ def setup_logging(level=logging.INFO):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s:%(lineno)d %(message)s', level=level, force=True)
 
 
-def setup_cli(level=logging.INFO):
+def setup_cli(level=logging.INFO, start_gauges=True):
     setup_logging(level)
     setup_debugging()
-    progress.start_compute_gauges()
+    if start_gauges:
+        progress.start_compute_gauges()
 
 
 def cli_wrapper(func):

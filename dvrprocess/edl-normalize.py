@@ -41,5 +41,5 @@ def edl_normalize_cli(args):
 
 
 if __name__ == '__main__':
-    common.setup_cli(level=logging.ERROR)
+    common.setup_cli(level=logging.ERROR, start_gauges=False)
     sys.exit(edl_normalize_cli(sys.argv[1:]))

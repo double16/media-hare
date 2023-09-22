@@ -7,7 +7,6 @@ requests==2.31.0
 pygad==3.1.0
 # specific version of numpy required for pygad 2023-01-18
 # numpy==1.23.5
-dropbox==11.36.2
 vosk==0.3.44
 websockets==11.0.3
 IMDbPY==2022.7.9

@@ -26,14 +26,14 @@ List files needing commercials cut.
 -t, --terminator="\\n"
     Set the output terminator, defaults to null (0).
 -d, --dir=
-    Directory containing media. Defaults to {common.get_media_base()}
+    Directory containing media. Defaults to {common.get_media_roots()}
 --nagios
     Output for Nagios monitoring. Also human readable with statistics and estimates of transcode time.
 """, file=sys.stderr)
 
 
 def find_need_comcut_cli(argv):
-    host_home = common.get_media_base()
+    roots = []
     terminator = '\0'
     nagios_output = False
 
@@ -48,7 +48,7 @@ def find_need_comcut_cli(argv):
             usage()
             return 2
         elif opt in ("-d", "--dir"):
-            host_home = arg
+            roots.append(arg)
         elif opt == '--nagios':
             nagios_output = True
         elif opt in ("-t", "--terminator"):
@@ -59,14 +59,17 @@ def find_need_comcut_cli(argv):
             else:
                 terminator = arg
 
+    if not roots:
+        roots = common.get_media_roots()
+
     if args:
-        media_paths = list(map(lambda e: e if os.path.isabs(e) else os.path.join(host_home, e), args))
+        media_paths = common.get_media_paths(roots, args)
     else:
-        media_paths = list(filter(lambda path: 'Movies' in path, common.get_media_paths(host_home)))
+        media_paths = list(filter(lambda path: 'Movies' in path, common.get_media_paths(roots)))
     logger.debug("media_paths = %s", media_paths)
 
     if nagios_output:
-        pending_files = list(need_comcut_generator(media_paths=media_paths, host_home=host_home))
+        pending_files = list(need_comcut_generator(media_paths=media_paths, media_roots=roots))
         pending_files.sort(key=lambda e: e.size, reverse=True)
         uncut_length = sum(map(lambda e: e.uncut_length, pending_files))
         cut_length = sum(map(lambda e: e.cut_length, pending_files))
@@ -81,7 +84,7 @@ def find_need_comcut_cli(argv):
                 f"{e.file_name};{e.size};{common.seconds_to_timespec(e.uncut_length)};{common.seconds_to_timespec(e.cut_length)};{e.cut_count}")
         return code
     else:
-        for e in need_comcut_generator(media_paths=media_paths, host_home=host_home):
+        for e in need_comcut_generator(media_paths=media_paths, media_roots=roots):
             sys.stdout.write(e.file_name)
             sys.stdout.write(terminator)
         return 0
@@ -99,7 +102,7 @@ class ComcutPendingFileInfo(object):
         self.cut_count = cut_count
 
 
-def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[ComcutPendingFileInfo]:
+def need_comcut_generator(media_paths: list[str], media_roots: list[str]) -> Iterable[ComcutPendingFileInfo]:
     for media_path in media_paths:
         for root, dirs, files in os.walk(media_path, topdown=True):
             files_set = set(files)
@@ -119,15 +122,16 @@ def need_comcut_generator(media_paths: list[str], host_home: str) -> Iterable[Co
                 input_info = common.find_input_info(filepath)
                 uncut_length = float(input_info[constants.K_FORMAT][constants.K_DURATION])
                 cut_length = uncut_length - sum(map(lambda e: e.length(), edl))
-                file_info = ComcutPendingFileInfo(file_name=filepath.replace(host_home + '/', ''),
-                                                  host_file_path=filepath,
-                                                  size=os.stat(filepath).st_size,
-                                                  uncut_length=uncut_length,
-                                                  cut_length=cut_length,
-                                                  cut_count=len(edl))
+                file_info = ComcutPendingFileInfo(
+                    file_name=common.get_media_file_relative_to_root(filepath, media_roots)[0],
+                    host_file_path=filepath,
+                    size=os.stat(filepath).st_size,
+                    uncut_length=uncut_length,
+                    cut_length=cut_length,
+                    cut_count=len(edl))
                 yield file_info
 
 
 if __name__ == '__main__':
-    common.setup_cli(level=logging.ERROR)
+    common.setup_cli(level=logging.ERROR, start_gauges=False)
     sys.exit(find_need_comcut_cli(sys.argv[1:]))
