@@ -1407,7 +1407,6 @@ class TextToTranscribed(object):
 
 
 class FancyQuotesTranscribed(TextToTranscribed):
-
     fancy_pattern = re.compile(r"[\u0060\u00B4\u2018\u2019\u201C\u201D]")
 
     def __init__(self, lang: str):
@@ -1858,7 +1857,8 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
         progress_task_name = filename + ' '
     else:
         progress_task_name = ''
-    align_progress = progress.progress(f"{progress_task_name}subtitle alignment", 0, (len(min_fuzz_ratios) + 3) * passes)
+    align_progress = progress.progress(f"{progress_task_name}subtitle alignment", 0,
+                                       (len(min_fuzz_ratios) + 3) * passes)
 
     # TODO: original event that is too quiet to be picked up by transcribing
     # TODO: omitted event that transcribing picked up that should be combined with existing event
@@ -2473,7 +2473,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     return changed, stats_str
 
 
-def profanity_filter_cli(argv):
+def profanity_filter_cli(argv) -> int:
     global debug
 
     dry_run = False
@@ -2493,11 +2493,11 @@ def profanity_filter_cli(argv):
              "mute-voice-channels", "mute-all-channels", "verbose"])
     except getopt.GetoptError:
         usage()
-        sys.exit(CMD_RESULT_ERROR)
+        return CMD_RESULT_ERROR
     for opt, arg in opts:
         if opt == '--help':
             usage()
-            sys.exit(CMD_RESULT_ERROR)
+            return CMD_RESULT_ERROR
         elif opt in ("-n", "--dry-run"):
             dry_run = True
         elif opt in ("-k", "--keep"):
@@ -2523,16 +2523,15 @@ def profanity_filter_cli(argv):
 
     if len(args) == 0:
         usage()
-        sys.exit(CMD_RESULT_ERROR)
+        return CMD_RESULT_ERROR
 
     input_file = args[0]
 
     atexit.register(common.finish)
 
-    sys.exit(
-        profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
-                         mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
-                         mute_channels=mute_channels, language=language))
+    return profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
+                            mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
+                            mute_channels=mute_channels, language=language)
 
 
 if __name__ == '__main__':
