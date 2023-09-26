@@ -309,6 +309,7 @@ def do_dvr_post_process(input_file,
     if not width:
         logger.error(f"Could not get width info from {filename}: {video_info}")
         return 255
+    depth = common.get_video_depth(video_info)
     frame_rate = common.get_frame_rate(video_info)
     input_video_codec = common.resolve_video_codec(video_info['codec_name'])
 
@@ -342,7 +343,7 @@ def do_dvr_post_process(input_file,
         adjust_frame_rate = common.should_adjust_frame_rate(current_frame_rate=frame_rate,
                                                             desired_frame_rate=desired_frame_rate, tolerance=0.05)
 
-    crf, bitrate, qp = common.recommended_video_quality(target_height, target_video_codec)
+    crf, bitrate, qp = common.recommended_video_quality(target_height, target_video_codec, depth)
 
     # h264_vaapi wasn't a good idea, the bitrate is much higher than software encoding
     # check if either bitrate is too high or vaapi encoding and re-encode
@@ -521,7 +522,7 @@ def do_dvr_post_process(input_file,
         encoding_options, encoding_method = hwaccel.hwaccel_encoding(output_stream=str(current_output_stream),
                                                                      codec=target_video_codec, output_type=output_type,
                                                                      tune=tune, preset=preset, crf=crf, qp=qp,
-                                                                     target_bitrate=bitrate)
+                                                                     target_bitrate=bitrate, bit_depth=depth)
         video_encoder_options_tag_value.extend(encoding_options)
 
         filter_stage = 0

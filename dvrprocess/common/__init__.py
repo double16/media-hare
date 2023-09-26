@@ -277,7 +277,7 @@ def find_input_info(filename):
     return input_info
 
 
-def get_video_height(video_info) -> [None, int]:
+def get_video_height(video_info: dict) -> [None, int]:
     """
     Get the height of the video considering symbolic names like 'sd'.
     :param video_info: can be all of the input_info to use default video stream, or a single video stream
@@ -297,7 +297,7 @@ def get_video_height(video_info) -> [None, int]:
     return height
 
 
-def get_video_width(video_info) -> [None, int]:
+def get_video_width(video_info: dict) -> [None, int]:
     """
     Get the width of the video considering symbolic names.
     :param video_info: can be all of the input_info to use default video stream, or a single video stream
@@ -309,6 +309,22 @@ def get_video_width(video_info) -> [None, int]:
     if not width:
         return None
     return width
+
+
+def get_video_depth(video_info: dict) -> [None, int]:
+    """
+    Get the bit depth of the video.
+    :param video_info: can be all of the input_info to use default video stream, or a single video stream
+    :return: int: 8, 10, etc. or None
+    """
+    if 'streams' in video_info:
+        video_info = find_video_stream(video_info)
+    profile = video_info.get('profile', None)
+    if not profile:
+        return None
+    if '10' in profile:
+        return 10
+    return 8
 
 
 def get_frame_rate(video_info):
@@ -657,7 +673,7 @@ def is_codec_available(codec: str) -> bool:
     return True
 
 
-def recommended_video_quality(target_height: int, target_video_codec: str) -> (int, int, int):
+def recommended_video_quality(target_height: int, target_video_codec: str, bit_depth: Union[int, None]) -> (int, int, int):
     """
     CRF
     https://slhck.info/video/2017/02/24/crf-guide.html

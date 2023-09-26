@@ -30,13 +30,14 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         self.time_matcher = re.compile(r'\btime=\s*([0-9][0-9]:[0-9][0-9]:[0-9][0-9])')
 
     def _run(self, arguments: list[str], kwargs) -> int:
-        if kwargs.get('capture_output', None) is True or kwargs.get('stderr', None) in [subprocess.PIPE, subprocess.STDOUT]:
+        if kwargs.get('capture_output', None) is True or kwargs.get('stderr', None) in [subprocess.PIPE,
+                                                                                        subprocess.STDOUT]:
             return super()._run(arguments, kwargs)
 
         task_name = None
         for idx, arg in enumerate(arguments):
-            if arg == '-i' and (task_name is None or '.mkv' in arguments[idx+1]):
-                task_name = os.path.basename(arguments[idx+1]) + ' ' + self.command_basename
+            if arg == '-i' and (task_name is None or '.mkv' in arguments[idx + 1]):
+                task_name = os.path.basename(arguments[idx + 1]) + ' ' + self.command_basename
         if task_name is None:
             task_name = self.command_basename
 
@@ -72,6 +73,7 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
 
 
 ffmpeg = FFmpegProcInvoker()
+
 
 def _ffprobe_version_parser(path):
     _maybe_version = float(

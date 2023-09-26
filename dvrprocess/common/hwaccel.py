@@ -309,8 +309,7 @@ def hwaccel_required_hwupload_filter() -> bool:
 
 
 def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [None, str], preset: str, crf: int,
-                     qp: int,
-                     target_bitrate: int) -> (list[str], HWAccelMethod):
+                     qp: int, target_bitrate: int, bit_depth: Union[int, None]) -> (list[str], HWAccelMethod):
     """
     Return ffmpeg options for using hwaccel for encoding.
     :param output_stream: ffmpeg output stream spec, '1', ...
@@ -321,6 +320,7 @@ def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [No
     :param crf: 23, 31, ...
     :param qp: 28, 34, ...
     :param target_bitrate: in kbps, such as 1200, 3500, ...
+    :param bit_depth: color bit depth: 8, 10, None for default selection
     """
     if preset == "copy":
         return [f"-c:{output_stream}", "copy"], HWAccelMethod.NONE
@@ -329,24 +329,27 @@ def hwaccel_encoding(output_stream: str, codec: str, output_type: str, tune: [No
     if hwaccel_requested in [HWAccelRequest.FULL,
                              HWAccelRequest.NVENC] and method == HWAccelMethod.NVENC and has_hw_codec(codec):
         return (_nvenc_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
-                                preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.NVENC)
+                                preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate, bit_depth=bit_depth),
+                HWAccelMethod.NVENC)
     elif hwaccel_requested in [HWAccelRequest.FULL,
                                HWAccelRequest.VAAPI] and method == HWAccelMethod.VAAPI and has_hw_codec(codec):
         return (_vaapi_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
-                                preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.VAAPI)
+                                preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate, bit_depth=bit_depth),
+                HWAccelMethod.VAAPI)
     elif hwaccel_requested in [HWAccelRequest.FULL,
                                HWAccelRequest.VIDEO_TOOLBOX] and method == HWAccelMethod.VIDEO_TOOLBOX and has_hw_codec(
         codec):
         return (_video_toolbox_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
-                                        preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate),
+                                        preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate, bit_depth=bit_depth),
                 HWAccelMethod.VIDEO_TOOLBOX)
     else:
         return (_sw_encoding(output_stream=output_stream, codec=codec, output_type=output_type, tune=tune,
-                             preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate), HWAccelMethod.NONE)
+                             preset=preset, crf=crf, qp=qp, target_bitrate=target_bitrate, bit_depth=bit_depth),
+                HWAccelMethod.NONE)
 
 
 def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
-                    target_bitrate: int):
+                    target_bitrate: int, bit_depth: Union[int, None]):
     # https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/
 
     options = [f"-c:{output_stream}"]
@@ -400,19 +403,23 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
     if codec in ['h264']:
         options.extend((f"-profile:{output_stream}", "high"))
     elif codec in ['h265', 'hevc']:
-        # TODO: if 10-bit depth, use 'main-10'
-        options.extend((f"-profile:{output_stream}", "main"))
+        if bit_depth and bit_depth >= 10:
+            options.extend((f"-profile:{output_stream}", "main10"))
+        else:
+            options.extend((f"-profile:{output_stream}", "main"))
 
     return options
 
 
 def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
-                    target_bitrate: int):
+                    target_bitrate: int, bit_depth: Union[int, None]):
     options = [f"-c:{output_stream}"]
     if codec in ['h265']:
         options.extend(["hevc_vaapi"])
     else:
         options.extend([f"{codec}_vaapi"])
+
+    options.extend(["-compression_level", "1"])
 
     if codec in ['h264', 'h265', 'hevc']:
         options.extend([f"-rc_mode:{output_stream}", "VBR",
@@ -424,12 +431,17 @@ def _vaapi_encoding(output_stream: str, codec: str, output_type: str, tune: str,
     if codec in ['h264']:
         options.extend([f"-profile:{output_stream}", "high"])
         options.extend([f"-quality:{output_stream}", "0"])
+    elif codec in ['h265', 'hevc']:
+        if bit_depth and bit_depth >= 10:
+            options.extend((f"-profile:{output_stream}", "main10"))
+        else:
+            options.extend((f"-profile:{output_stream}", "main"))
 
     return options
 
 
 def _video_toolbox_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
-                            target_bitrate: int):
+                            target_bitrate: int, bit_depth: Union[int, None]):
     options = [f"-c:{output_stream}"]
     if codec in ['h265']:
         options.extend(["hevc_videotoolbox"])
@@ -446,7 +458,11 @@ def _video_toolbox_encoding(output_stream: str, codec: str, output_type: str, tu
         if output_type != 'ts':
             options.extend([f'-a53cc:{output_stream}', 'false'])
 
-    if codec == 'h265':
+    if codec in ['h265', 'hevc']:
+        if bit_depth and bit_depth >= 10:
+            options.extend((f"-profile:{output_stream}", "main10"))
+        else:
+            options.extend((f"-profile:{output_stream}", "main"))
         # https://trac.ffmpeg.org/wiki/Encode/H.265
         options.extend([f'-tag:{output_stream}', 'hvc1'])
 
@@ -454,7 +470,7 @@ def _video_toolbox_encoding(output_stream: str, codec: str, output_type: str, tu
 
 
 def _sw_encoding(output_stream: str, codec: str, output_type: str, tune: str, preset: str, crf: int, qp: int,
-                 target_bitrate: int):
+                 target_bitrate: int, bit_depth: Union[int, None]):
     options = [f"-c:{output_stream}", ffmpeg_sw_codec(codec),
                f"-crf:{output_stream}", str(crf),
                f"-preset:{output_stream}", preset]
@@ -463,7 +479,11 @@ def _sw_encoding(output_stream: str, codec: str, output_type: str, tune: str, pr
     # Do not copy Closed Captions, they will be extracted into a subtitle stream
     if codec == 'h264' and output_type != 'ts':
         options.extend([f"-a53cc:{output_stream}", '0'])
-    if codec == 'h265':
+    if codec in ['h265', 'hevc']:
+        if bit_depth and bit_depth >= 10:
+            options.extend((f"-profile:{output_stream}", "main10"))
+        else:
+            options.extend((f"-profile:{output_stream}", "main"))
         # https://trac.ffmpeg.org/wiki/Encode/H.265
         options.extend([f'-tag:{output_stream}', 'hvc1'])
     return options

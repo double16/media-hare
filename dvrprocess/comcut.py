@@ -367,6 +367,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     video_info = common.find_video_stream(input_info)
     height = common.get_video_height(video_info)
+    depth = common.get_video_depth(video_info)
     target_video_codec = common.resolve_video_codec(desired_video_codecs, height, video_info)
 
     if len(video_filters) > 0 or len(keyframes) == 0 or force_encode:
@@ -417,7 +418,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     for stream in common.sort_streams(input_info[constants.K_STREAMS]):
         if common.is_video_stream(stream) and (len(video_filters) > 0 or len(keyframes) == 0 or force_encode):
             height = common.get_video_height(stream)
-            crf, bitrate, qp = common.recommended_video_quality(height, target_video_codec)
+            crf, bitrate, qp = common.recommended_video_quality(height, target_video_codec, depth)
 
             # adjust frame rate
             desired_frame_rate = config.get_global_config_frame_rate('post_process', 'frame_rate', None)
@@ -431,7 +432,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             encoding_options, encoding_method = hwaccel.hwaccel_encoding(output_stream=str(output_stream_idx),
                                                                          codec=target_video_codec, output_type="mkv",
                                                                          tune=None, preset=preset, crf=crf, qp=qp,
-                                                                         target_bitrate=bitrate)
+                                                                         target_bitrate=bitrate, bit_depth=depth)
 
             # add common video filters if we are doing filtering
             video_filters.append('format=nv12')

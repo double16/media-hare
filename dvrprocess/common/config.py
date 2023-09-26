@@ -35,7 +35,7 @@ def find_config(filename: str) -> str:
     """
     sources = _get_config_sources(filename)
     for f in sources:
-        if os.access(f, os.R_OK):
+        if os.path.isfile(f) and os.access(f, os.R_OK):
             return f
     raise OSError(f"Cannot find {filename} in any of {','.join(sources)}")
 
