@@ -75,7 +75,7 @@ def resolution_generator(paths: list[str]):
                              cause="original has latest filter hash")
 
 
-def dropbox_conflict_resolve(argv: list[str]):
+def conflict_resolve(argv: list[str]):
     if not argv:
         argv = ['.']
     for resolution in resolution_generator(argv):
@@ -97,4 +97,4 @@ def has_words(input_info) -> bool:
 
 if __name__ == '__main__':
     common.setup_cli()
-    sys.exit(dropbox_conflict_resolve(sys.argv[1:]))
+    sys.exit(conflict_resolve(sys.argv[1:]))
