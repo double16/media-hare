@@ -81,6 +81,8 @@ class Progress(object):
 
     def progress(self, position: int, msg: Union[None, str] = None, start: Union[None, int] = None,
                  end: Union[None, int] = None) -> None:
+        if position is None:
+            return
         self._last_progress_time = time.time()
         self.last_position = position
         if start is not None:
@@ -92,7 +94,7 @@ class Progress(object):
             self.eta = None
         else:
             self.pct = ceil(100 * (position / (self._end - self._start)))
-            if self.pct <= 100 and (self.pct >= 10 or (time.time() - self._start_time) > 60):
+            if self.pct <= 100 and (self.pct >= 10 or (self.pct >= 2 and (time.time() - self._start_time) > 60)):
                 remaining_s = (time.time() - self._start_time) / self.pct * (100.0 - self.pct)
                 # TODO: save time for each 10% and use weighed calculation
                 self.eta = time.time() + remaining_s

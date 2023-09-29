@@ -22,7 +22,7 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
     get_comskip_hwassist_options
-from common import tools, config, constants, edl_util
+from common import tools, config, constants, edl_util, progress
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
 
@@ -305,7 +305,8 @@ def edl_tempfile(infile, workdir):
 
 
 def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_genes=False, check_compute=True,
-              comskip_defaults: configparser.ConfigParser = None):
+              num_generations=0, comskip_defaults: configparser.ConfigParser = None) ->\
+        (object, list, list, list, progress.progress):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
     :param pool:
@@ -335,6 +336,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
     # ffprobe info for videos that are uncut from DVR
     dvr_infos = []
     durations = []
+    input_dirs = set()
     for file_path in files:
         video_info = common.find_input_info(file_path)
         if not video_info:
@@ -349,6 +351,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                 logger.info("Not considering %s because it's not from DVR", file_path)
         else:
             logger.info("Not considering %s because it has %d episodes", file_path, episode_count)
+        input_dirs.add(os.path.dirname(file_path))
 
     if len(dvr_infos) == 0:
         raise UserWarning("No files look like they have commercials")
@@ -427,7 +430,9 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                                             + '.ini')
     shutil.copyfile(comskip_ini_path, comskip_fitness_ini_path)
 
-    def f(gad, solution, solution_idx):
+    tuning_progress = progress.progress(f"{input_dirs.pop()} tuning", 0, num_generations)
+
+    def f(gad: pygad.GA, solution, solution_idx):
         write_ini_from_solution(comskip_fitness_ini_path, genes, solution)
         logger.debug(f"Calculating fitness for {solution_repl(genes, solution)}")
 
@@ -510,9 +515,12 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             f"expected_adjusted_duration_diff = {common.seconds_to_timespec(expected_adjusted_duration_diff)}, "
             f"count_of_non_defaults = {count_of_non_defaults}"
         )
+
+        tuning_progress.progress(gad.generations_completed)
+
         return fitness_value(sigma, expected_adjusted_duration_diff, count_of_non_defaults, episode_common_duration)
 
-    return f, genes, gene_space, gene_type
+    return f, genes, gene_space, gene_type, tuning_progress
 
 
 def csv_and_comchap_generate(file_path, comskip_ini_path, comskip_fitness_ini_path, csvfile, workdir, video_info,
@@ -578,14 +586,15 @@ def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, 
     infile_base, csv_path, _ = paths(infile, workdir, infile_base=infile_base)
     if not force and os.path.isfile(csv_path):
         return
-    command = ["-v", "9"]
+    command = []
+    # command.extend(["-v", "9"])
     command.extend(get_comskip_hwassist_options())
     command.extend(["--quiet", "--csvout",
                     f"--ini={comskip_ini}",
                     f"--output={workdir}", f"--output-filename={infile_base}", infile])
     logger.info(tools.comskip.array_as_command(command))
     if not dry_run:
-        tools.comskip.run(command, check=True, capture_output=True)
+        tools.comskip.run(command, check=True)
 
 
 def get_comskip_starter_ini_sources():
@@ -603,7 +612,7 @@ def find_comskip_starter_ini():
     raise OSError(f"Cannot find comskip-starter.ini in any of {','.join(get_comskip_starter_ini_sources())}")
 
 
-def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True):
+def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True, processes=0):
     if len(files) < 5:
         logger.warning("too few video files %d to tune %s, need 5", len(files), season_dir)
         return
@@ -620,18 +629,19 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
     comskip_defaults.read(comskip_defaults_file)
     os.remove(comskip_defaults_file)
 
+    # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
+    num_generations = 50
+    num_parents_mating = 6
+    sol_per_pop = 12
+
     try:
-        fitness_func, genes, gene_space, gene_type = setup_gad(pool, files, workdir=workdir, dry_run=dry_run,
-                                                               force=force, comskip_defaults=comskip_defaults,
-                                                               expensive_genes=expensive_genes,
-                                                               check_compute=check_compute)
+        fitness_func, genes, gene_space, gene_type, tuning_progress = setup_gad(
+            pool, files, workdir=workdir, dry_run=dry_run, force=force, comskip_defaults=comskip_defaults,
+            expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations)
     except UserWarning as e:
         logger.warning(e.args[0])
         return
 
-    num_generations = 50
-    num_parents_mating = 6
-    sol_per_pop = 12
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     ga_instance = pygad.GA(num_generations=num_generations,
                            num_parents_mating=num_parents_mating,
@@ -643,8 +653,10 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
                            mutation_type="adaptive",
                            mutation_percent_genes=[25, 12],
                            parent_selection_type="sss",
-                           save_best_solutions=True)
+                           save_best_solutions=True,
+                           suppress_warnings=True)
     ga_instance.run()
+    tuning_progress.stop()
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
 
     logger.info(
@@ -797,7 +809,7 @@ def comtune_cli(argv):
                             else:
                                 tune_show(season_dir=season_dir, pool=pool, files=video_files, workdir=workdir,
                                           dry_run=dry_run, force=force, expensive_genes=expensive_genes,
-                                          check_compute=check_compute)
+                                          check_compute=check_compute, processes=processes)
                         except BaseException as e:
                             logger.error(f"Skipping show {season_dir}, uncaught exception", exc_info=e)
                     else:

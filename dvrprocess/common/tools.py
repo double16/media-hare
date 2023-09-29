@@ -3,6 +3,7 @@ import os.path
 import re
 import subprocess
 import threading
+import time
 from math import ceil
 from multiprocessing import Semaphore
 from typing import Union
@@ -34,12 +35,14 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
                                                                                         subprocess.STDOUT]:
             return super()._run(arguments, kwargs)
 
-        task_name = None
-        for idx, arg in enumerate(arguments):
-            if arg == '-i' and (task_name is None or '.mkv' in arguments[idx + 1]):
-                task_name = os.path.basename(arguments[idx + 1]) + ' ' + self.command_basename
-        if task_name is None:
-            task_name = self.command_basename
+        task_name = self.command_basename
+        task_filename = super()._find_filename_in_arguments(arguments)
+        if 'concat' in arguments:
+            task_name = 'cut'
+            if task_filename:
+                task_filename = task_filename.replace('.ffmeta', '')
+        if task_filename:
+            task_name = task_filename + ' ' + task_name
 
         kwargs2 = kwargs.copy()
         check = kwargs.get('check', False)
@@ -94,20 +97,19 @@ ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
 
 
 class SubtitleEditProcInvoker(SubprocessProcInvoker):
+    pct_matcher = re.compile(r'([0-9]{1,3})\s*%')
+
     def __init__(self):
         super().__init__('subtitle-edit', version_target=['3.6.8'])
-        self.pct_matcher = re.compile(r'([0-9]{1,3})\s*%')
 
     def _run(self, arguments: list[str], kwargs) -> int:
         if kwargs.get('capture_output', None) is True:
             return super()._run(arguments, kwargs)
 
-        task_name = None
-        for idx, arg in enumerate(arguments[1:]):
-            if task_name is None:
-                task_name = os.path.basename(arg) + ' ' + self.command_basename
-        if task_name is None:
-            task_name = self.command_basename
+        task_name = self.command_basename
+        task_filename = super()._find_filename_in_arguments(arguments)
+        if task_filename:
+            task_name = task_filename + ' ' + task_name
 
         kwargs2 = kwargs.copy()
         check = kwargs.get('check', False)
@@ -139,26 +141,66 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
 subtitle_edit = SubtitleEditProcInvoker()
 
 
-# TODO: add progress, see ffmpeg for example
 class ComskipProcInvoker(SubprocessProcInvoker):
+    pct_matcher = re.compile(r',\s+([0-9]{1,2})[%]')
+
     def __init__(self):
         super().__init__('comskip')
 
     def _run(self, arguments: list[str], kwargs) -> int:
-        check = kwargs.get('check', False)
-        kwargs_nocheck = kwargs.copy()
-        kwargs_nocheck['check'] = False
-        result = subprocess.run(arguments, **kwargs_nocheck)
-        if result.returncode == 1:
-            if 'Commercials were not found' in (str(result.stdout) + str(result.stderr)):
+        if kwargs.get('capture_output', None) is True or kwargs.get('stderr', None) in [subprocess.PIPE,
+                                                                                        subprocess.STDOUT]:
+            return super()._run(arguments, kwargs)
+
+        task_name = self.command_basename
+        task_filename = super()._find_filename_in_arguments(arguments)
+        if task_filename:
+            task_name = task_filename + ' ' + task_name
+
+        kwargs2 = kwargs.copy()
+        check = kwargs2.pop('check', None)
+        kwargs2['stderr'] = subprocess.PIPE
+        kwargs2['stdout'] = subprocess.PIPE
+        kwargs2['encoding'] = 'ascii'
+        kwargs2['bufsize'] = 1
+        stdout = []
+        stderr = []
+        if '.csv' in task_name:
+            # csv is very fast, it slows things down to flash a progress bar
+            comskip_progress = None
+        else:
+            comskip_progress = progress.progress(task_name, 0, 100)
+        proc = subprocess.Popen(arguments, **kwargs2)
+        os.set_blocking(proc.stdout.fileno(), False)
+        os.set_blocking(proc.stderr.fileno(), False)
+        while proc.poll() is None:
+            line_err = proc.stderr.readline()
+            if line_err:
+                stderr.append(line_err)
+                if comskip_progress:
+                    pct_match = self.pct_matcher.search(line_err)
+                    if pct_match:
+                        pct = int(pct_match.group(1))
+                        comskip_progress.progress(pct)
+            line_out = proc.stdout.readline()
+            if line_out:
+                stdout.append(line_out)
+            if not line_err and not line_out:
+                time.sleep(0.2)
+
+        proc.wait()
+        if comskip_progress:
+            comskip_progress.stop()
+        if proc.returncode == 1:
+            if 'Commercials were not found' in (''.join(proc.stdout) + ''.join(stderr)):
                 # edl_file = infile_base + ".edl"
                 # if not os.path.exists(edl_file):
                 #     with open(edl_file, "w") as f:
                 #         f.write("")
                 return 0
-        if check:
-            result.check_returncode()
-        return result.returncode
+        if check and proc.returncode:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args, ''.join(stdout), ''.join(stderr))
+        return proc.returncode
 
 
 comskip = ComskipProcInvoker()

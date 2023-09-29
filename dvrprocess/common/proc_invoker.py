@@ -180,6 +180,30 @@ class SubprocessProcInvoker(BaseProcInvoker):
         command_path = self._get_command()
         return command_path is not None and os.access(command_path, os.X_OK)
 
+    def _is_filename(self, filename: str) -> bool:
+        if not filename:
+            return False
+        if os.path.exists(filename):
+            return True
+        has_ext = len(os.path.splitext(filename)[1]) > 0
+        return has_ext
+
+    def _find_filename_in_arguments(self, args: list[str]) -> Union[str, None]:
+        primary_filename = None
+        secondary_filename = None
+        for idx, arg in enumerate(args[1:]):
+            if arg.startswith('-'):
+                if '=' in arg:
+                    value = arg.split('=')[1]
+                    if self._is_filename(value):
+                        secondary_filename = value
+            elif self._is_filename(arg) or '.mkv' in arg:
+                primary_filename = primary_filename or arg
+        result = primary_filename or secondary_filename
+        if result:
+            return os.path.basename(result)
+        return result
+
 
 class MockProcInvoker(BaseProcInvoker):
 

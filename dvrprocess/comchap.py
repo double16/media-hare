@@ -388,7 +388,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             comskip_command.append(infile)
 
         logger.debug(' '.join(comskip_command))
-        ret = comskip_invoker.run(comskip_command, check=False, capture_output=not verbose)
+        ret = comskip_invoker.run(comskip_command, check=False)
         if not os.path.isfile(hidden_edlfile):
             logger.fatal(f"Error running comskip. EDL File not found: {hidden_edlfile}")
             return ret.returncode

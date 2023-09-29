@@ -202,7 +202,7 @@ class ProgressWindow(CursesProgressListener):
             if task.pct is None:
                 bar_complete = ""
             else:
-                bar_complete = "=" * ceil((bar_width - 2) * (task.pct / 100))
+                bar_complete = "=" * ceil((bar_width - 2) * (min(task.pct, 100) / 100))
             bar_incomplete = " " * (bar_width - 2 - len(bar_complete))
             bar = f"[{bar_complete}{bar_incomplete}]"
 

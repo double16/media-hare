@@ -571,6 +571,9 @@ def get_media_title_from_filename(input_info: dict) -> [None, str]:
     return ".".join(base_filename.split('.')[0:-1]).replace('_', ' ')
 
 
+year_matcher = re.compile(r'\(\d{4}\)')
+
+
 def should_replace_media_title(input_info: dict) -> bool:
     if constants.K_FORMAT not in input_info:
         # do not replace title if we didn't query for format
@@ -581,8 +584,7 @@ def should_replace_media_title(input_info: dict) -> bool:
     current_title = get_media_title_from_tags(input_info)
     if not current_title:
         return True
-    year_matcher = r'\(\d{4}\)'
-    if re.search(year_matcher, filename_title) and not re.search(year_matcher, current_title):
+    if year_matcher.search(filename_title) and not year_matcher.search(current_title):
         return True
     if '_' in current_title:
         return True
