@@ -692,9 +692,14 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
         "Parameters of the adjusted solution : {solution}".format(solution=solution_repl(genes, solution)))
 
     write_ini_from_solution(os.path.join(season_dir, 'comskip.ini'), genes, solution)
-    # TODO: run in parallel
+
+    return_code = common.ReturnCodeReducer()
     for filepath in files:
-        comchap(filepath, filepath, force=True, delete_edl=False, workdir=workdir)
+        pool.apply_async(common.pool_apply_wrapper(comchap), (filepath, filepath),
+                         {'force': True,
+                          'delete_edl': False,
+                          'workdir': workdir}, return_code.callback,
+                         common.error_callback_dump)
 
 
 def comtune_cli(argv):
