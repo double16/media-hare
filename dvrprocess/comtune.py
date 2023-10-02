@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from math import ceil
 from multiprocessing import Pool
 from statistics import stdev, mean
 
@@ -757,6 +758,9 @@ def comtune_cli(argv):
     atexit.register(common.finish)
 
     time_start = time.time()
+    time_progress = progress.progress("time limit", 0, time_limit)
+    time_progress.renderer = common.s_to_ts
+
     return_code = common.ReturnCodeReducer()
     pool = Pool(processes=processes)
 
@@ -776,6 +780,7 @@ def comtune_cli(argv):
     def should_stop() -> bool:
         if time_start is not None:
             duration = time.time() - time_start
+            time_progress.progress(ceil(duration))
             if 0 < time_limit < duration:
                 logger.info(
                     f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
@@ -832,6 +837,7 @@ def comtune_cli(argv):
         pool.terminate()
     finally:
         pool.join()
+        time_progress.stop()
 
     return return_code.code()
 

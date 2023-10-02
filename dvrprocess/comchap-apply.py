@@ -5,12 +5,13 @@ import os
 import random
 import sys
 import time
+from math import ceil
 from multiprocessing import Pool
 from subprocess import CalledProcessError
 
 import common
 from comchap import comchap, find_comskip_ini, compute_comskip_ini_hash
-from common import config, constants
+from common import config, constants, progress
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,11 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
 
     # Limit the number of bytes we change to prevent overloading the upload bandwidth
     bytes_processed = 0
+    bytes_progress = progress.progress("byte limit", 0, size_limit)
+    bytes_progress.renderer = config.bytes_to_human_str
     time_start = None
+    time_progress = progress.progress("time limit", 0, time_limit)
+    time_progress.renderer = common.s_to_ts
 
     with Pool(processes=processes) as pool:
         random.shuffle(media_paths)
@@ -131,6 +136,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                         if return_code == 0:
                             # processed
                             bytes_processed += os.stat(filepath).st_size
+                            bytes_progress.progress(bytes_processed)
                             if time_start is None:
                                 time_start = time.time()
                         elif return_code == 255:
@@ -143,6 +149,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                                 break
                             if time_start is not None:
                                 duration = time.time() - time_start
+                                time_progress.progress(ceil(duration))
                                 if 0 < time_limit < duration:
                                     break
 
@@ -153,6 +160,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
 
                 if time_start is not None:
                     duration = time.time() - time_start
+                    time_progress.progress(ceil(duration))
                     if 0 < time_limit < duration:
                         logger.info(
                             f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
@@ -161,6 +169,9 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                 if check_compute and common.should_stop_processing():
                     logger.info(f"INFO: not enough compute available")
                     return 0
+
+    bytes_progress.stop()
+    time_progress.stop()
 
     logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes")
     return 0

@@ -197,7 +197,9 @@ class SubprocessProcInvoker(BaseProcInvoker):
                     value = arg.split('=')[1]
                     if self._is_filename(value):
                         secondary_filename = value
-            elif self._is_filename(arg) or '.mkv' in arg:
+            elif '.mkv' in arg:
+                primary_filename = arg
+            elif self._is_filename(arg):
                 primary_filename = primary_filename or arg
         result = primary_filename or secondary_filename
         if result:

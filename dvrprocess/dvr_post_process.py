@@ -417,7 +417,7 @@ def do_dvr_post_process(input_file,
             # ccextractor creates additional subtitle files that we don't use
             for cc_root, cc_dirs, cc_files in os.walk(dir_filename):
                 for file in cc_files:
-                    if file.startswith(f".~{base_filename}.cc.") and file.endswith(".srt") and not file.endswith('.cc.srt'):
+                    if file.startswith(f".~{base_filename}.") and file.endswith(".srt") and not file.endswith('.cc.srt'):
                         os.remove(os.path.join(cc_root, file))
                     elif file.startswith(f".~{base_filename}.cc."):
                         common.match_owner_and_perm(target_path=os.path.join(cc_root, file), source_path=filename)
@@ -621,7 +621,7 @@ def do_dvr_post_process(input_file,
         return 0
 
     if dry_run:
-        logger.info(f"{tools.ffmpeg.array_as_command(arguments)}")
+        logger.info(tools.ffmpeg.array_as_command(arguments))
         return 0
 
     #

@@ -88,12 +88,56 @@ def _ffprobe_version_parser(path):
 
 ffprobe = SubprocessProcInvoker('ffprobe', _ffprobe_version_parser, ffmpeg.version_target)
 
-# TODO: add progress, see ffmpeg for example
+
 #  99%  |  21:42
 # 100%  |  21:42
-ccextractor = SubprocessProcInvoker('ccextractor', lambda path: float(
-    re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[
-        1]))
+class CCExtractorProcInvoker(SubprocessProcInvoker):
+    pct_matcher = re.compile(r'([0-9]{1,3})%\s+[|]')
+
+    @classmethod
+    def version_parser(cls, path):
+        return re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[1]
+
+    def __init__(self):
+        super().__init__('ccextractor', CCExtractorProcInvoker.version_parser)
+
+    def _run(self, arguments: list[str], kwargs) -> int:
+        if kwargs.get('capture_output', None) is True:
+            return super()._run(arguments, kwargs)
+
+        task_name = self.command_basename
+        task_filename = super()._find_filename_in_arguments(arguments)
+        if task_filename:
+            task_name = task_filename + ' ' + task_name
+
+        kwargs2 = kwargs.copy()
+        check = kwargs.get('check', False)
+        kwargs2.pop('check', None)
+        kwargs2['stdout'] = subprocess.PIPE
+        kwargs2['encoding'] = 'ascii'
+        kwargs2['bufsize'] = 1
+        stdout = []
+        proc = subprocess.Popen(arguments, **kwargs2)
+        se_progress = None
+        for l in proc.stdout:
+            stdout.append(l)
+            pct_match = self.pct_matcher.search(l)
+            if pct_match:
+                if se_progress is None:
+                    se_progress = progress.progress(task_name, 0, 100)
+                se_progress.progress(int(pct_match.group(1)))
+        proc.wait()
+        if se_progress:
+            se_progress.stop()
+        if check and proc.returncode:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args,
+                                                ''.join(stdout),
+                                                None if proc.stderr is None else proc.stderr.read()
+                                                )
+        return proc.returncode
+
+
+ccextractor = CCExtractorProcInvoker()
 
 
 class SubtitleEditProcInvoker(SubprocessProcInvoker):

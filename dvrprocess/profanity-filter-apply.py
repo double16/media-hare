@@ -213,6 +213,8 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
         pool.close()
         logger.info("Waiting for pool workers to finish")
         pool.join()
+        bytes_progress.stop()
+        time_progress.stop()
 
     logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes")
     return 0
