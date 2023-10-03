@@ -319,6 +319,8 @@ class StreamCapture(object):
         self.captured = state[3]
 
     def isatty(self) -> bool:
+        if self.save and hasattr(self.save, 'isatty'):
+            return self.save.isatty()
         return False
 
     def write(self, data):
