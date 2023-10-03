@@ -218,10 +218,10 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                     if not video_codecs.issubset(set(desired_video_codecs)):
                         need_transcode = True
 
+                audio_streams = list(
+                    filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO,
+                           input_info['streams']))
                 if desired_audio_codecs is not None:
-                    audio_streams = list(
-                        filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO,
-                               input_info['streams']))
                     audio_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], audio_streams))
                     if not audio_codecs.issubset(set(desired_audio_codecs)):
                         need_transcode = True
@@ -232,7 +232,7 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                                input_info['streams']))
                     subtitle_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], subtitle_streams))
                     if len(subtitle_codecs) == 0:
-                        need_transcode = False
+                        need_transcode = len(audio_streams) > 0
                     elif not subtitle_codecs.intersection(set(desired_subtitle_codecs)):
                         need_transcode = True
 
@@ -360,8 +360,8 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                         subtitle_codec = subtitle_stream.attrib.get('codec')
 
         # if we want subtitles but there is no subtitle stream of any kind, there is no way to transcode, so skip it
-        if desired_subtitle_codecs is not None and subtitle_codec is None:
-            logger.info(f"{file_name}; Skipping because there are no subtitle streams")
+        if desired_subtitle_codecs is not None and audio_codec in [None, "?"]:
+            logger.info("%s: Skipping because there are no subtitle nor audio streams", file_name)
             continue
 
         # if we want specific audio codecs but there is no audio stream, there is no way to transcode, so skip it
