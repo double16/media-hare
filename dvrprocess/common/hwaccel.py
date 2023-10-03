@@ -196,15 +196,13 @@ def _find_nvenc_method() -> HWAccelMethod:
     :return:
     """
 
-    global nvenc_encoders
-
-    if not tools.nvidia_smi.present():
-        return HWAccelMethod.NONE
-
     # shortcut to prevent possible deadlock with concurrent use of nvidia libraries
     if os.path.exists("/proc/driver/nvidia/gpus"):
         for _ in os.walk("/proc/driver/nvidia/gpus"):
             return HWAccelMethod.NVENC
+        return HWAccelMethod.NONE
+
+    if not tools.nvidia_smi.present():
         return HWAccelMethod.NONE
 
     _is_nvidia_tool_running(wait_timeout=5)

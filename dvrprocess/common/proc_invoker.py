@@ -318,6 +318,9 @@ class StreamCapture(object):
         self.level = state[2]
         self.captured = state[3]
 
+    def isatty(self) -> bool:
+        return False
+
     def write(self, data):
         if self.logger:
             self.logger.log(self.level, data)
