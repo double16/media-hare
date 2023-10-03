@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import signal
+import sys
 import threading
 import time
 from math import ceil
@@ -498,7 +499,10 @@ class ComputeGauges(object):
         self.mem.renderer = _percent_renderer
         self.mem.critical_range = (90, 101)
 
-        gpu_pct, gmem_pct = hwaccel.hwaccel_gpustat()
+        if sys.stdout.isatty():
+            gpu_pct, gmem_pct = hwaccel.hwaccel_gpustat()
+        else:
+            gpu_pct, gmem_pct = None, None
         if gpu_pct is None:
             self.gpu_percent = None
         else:

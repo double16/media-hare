@@ -14,6 +14,7 @@ cmd.extend(hwaccel_encoding(output_stream='1', codec='h264', output_type='mkv', 
 import _thread
 import json
 import logging
+import os
 import re
 import subprocess
 import time
@@ -198,6 +199,12 @@ def _find_nvenc_method() -> HWAccelMethod:
     global nvenc_encoders
 
     if not tools.nvidia_smi.present():
+        return HWAccelMethod.NONE
+
+    # shortcut to prevent possible deadlock with concurrent use of nvidia libraries
+    if os.path.exists("/proc/driver/nvidia/gpus"):
+        for _ in os.walk("/proc/driver/nvidia/gpus"):
+            return HWAccelMethod.NVENC
         return HWAccelMethod.NONE
 
     _is_nvidia_tool_running(wait_timeout=5)
