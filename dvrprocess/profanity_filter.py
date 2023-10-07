@@ -478,10 +478,15 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 event.text = ASSA_TYPEFACE_REMOVE.sub('', event.text)
             if subtitle_words_filename:
                 ass_data_aligned = copy.deepcopy(ass_data)
-                aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
-                                                                      pysrt.open(subtitle_words_filename),
-                                                                      lang=language,
-                                                                      filename=base_filename)
+                try:
+                    aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
+                                                                          pysrt.open(subtitle_words_filename),
+                                                                          lang=language,
+                                                                          filename=base_filename)
+                except ValueError as e:
+                    logger.error("Cannot using aligned subtitle", e)
+                    aligned = False
+                    aligned_stats = None
                 if debug:
                     write_ass(ass_data, Path(f"{debug_base}.aligned.{subtitle_codec}"))
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
@@ -511,9 +516,14 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             srt_data = pysrt.open(subtitle_original_filename)
             if subtitle_words_filename:
                 srt_data_aligned = copy.deepcopy(srt_data)
-                aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
-                                                                      lang=language,
-                                                                      filename=base_filename)
+                try:
+                    aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
+                                                                          lang=language,
+                                                                          filename=base_filename)
+                except ValueError as e:
+                    logger.error("Cannot using aligned subtitle", e)
+                    aligned = False
+                    aligned_stats = None
                 if debug:
                     srt_data.save(Path(f"{debug_base}.aligned.{subtitle_codec}"), 'utf-8')
                     shutil.copy(subtitle_original_filename, f"{debug_base}.original.{subtitle_codec}")
