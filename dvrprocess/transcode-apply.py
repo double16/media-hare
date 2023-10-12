@@ -61,7 +61,7 @@ def transcode_apply(plex_url, media_paths=None, dry_run=False, desired_video_cod
         try:
             original_size = os.stat(file_info.host_file_path).st_size
             post_process_code = dvr_post_process(file_info.host_file_path, dry_run=dry_run, verbose=verbose,
-                                                 profanity_filter=True)
+                                                 profanity_filter=True, rerun=False)
         except CalledProcessError as e:
             post_process_code = e.returncode
         except FileExistsError:
@@ -102,7 +102,7 @@ def should_transcode_run():
     return common.should_start_processing()
 
 
-def transcode_apply_cli(argv):
+def transcode_apply_cli(argv) -> int:
     plex_url = common.get_plex_url()
     media_paths = None
     desired_video_codecs = None
@@ -112,13 +112,14 @@ def transcode_apply_cli(argv):
     dry_run = False
     check_compute = True
     verbose = False
+    no_curses = False
     limit = None
 
     try:
         opts, args = getopt.getopt(list(argv),
                                    "hnu:v:a:f:",
                                    ["dry-run", "ignore-compute", "url=", "video=", "audio=", "maxres=", "framerate=",
-                                    "verbose", "limit="])
+                                    "verbose", "limit=", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 2
@@ -128,6 +129,7 @@ def transcode_apply_cli(argv):
             return 2
         elif opt in ("-n", "--dry-run"):
             dry_run = True
+            no_curses = True
         elif opt in ("-u", "--url"):
             plex_url = arg
         elif opt in ("-v", "--video"):
@@ -138,6 +140,8 @@ def transcode_apply_cli(argv):
             desired_frame_rate = arg
         elif opt == '--maxres':
             max_resolution = int(arg)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt == '--verbose':
             verbose = True
             logging.root.setLevel(logging.DEBUG)
@@ -156,14 +160,16 @@ def transcode_apply_cli(argv):
         return 0
 
     if check_compute and not should_transcode_run():
-        logger.warning(f"not enough compute available for transcoding")
+        print("not enough compute available for transcoding", file=sys.stderr)
         return 255
 
-    transcode_apply(plex_url, media_paths=media_paths, dry_run=dry_run, desired_video_codecs=desired_video_codecs,
-                    desired_audio_codecs=desired_audio_codecs, desired_frame_rate=desired_frame_rate,
-                    max_resolution=max_resolution, verbose=verbose, limit=limit)
+    common.cli_wrapper(transcode_apply, plex_url, media_paths=media_paths, dry_run=dry_run,
+                       desired_video_codecs=desired_video_codecs, desired_audio_codecs=desired_audio_codecs,
+                       desired_frame_rate=desired_frame_rate, max_resolution=max_resolution, verbose=verbose,
+                       limit=limit,
+                       no_curses=no_curses)
     return 0
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(transcode_apply_cli)
+    sys.exit(transcode_apply_cli(sys.argv[1:]))

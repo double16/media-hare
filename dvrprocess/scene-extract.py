@@ -102,10 +102,11 @@ def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
 def scene_extract_cli(argv):
     verbose = False
     dry_run = False
+    no_curses = False
 
     try:
         opts, args = getopt.getopt(argv, "n",
-                                   ["dry-run", "verbose"])
+                                   ["dry-run", "verbose", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -116,39 +117,45 @@ def scene_extract_cli(argv):
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt in ["-n", "--dry-run"]:
             dry_run = True
+            no_curses = True
 
     if not args:
         usage()
         sys.exit(255)
 
-    atexit.register(common.finish)
+    def scene_extract_cli_run() -> int:
+        atexit.register(common.finish)
 
-    if len(args) == 2:
-        # check special case of input file and output file
-        if os.path.isfile(args[0]) and (os.path.isfile(args[1]) or not os.path.exists(args[1])):
-            return scene_extract(args[0], args[1], verbose=verbose, dry_run=dry_run)
+        if len(args) == 2:
+            # check special case of input file and output file
+            if os.path.isfile(args[0]) and (os.path.isfile(args[1]) or not os.path.exists(args[1])):
+                return scene_extract(args[0], args[1], verbose=verbose, dry_run=dry_run)
 
-    return_code = 0
-    for arg in args:
-        if os.path.isfile(arg):
-            this_file_return_code = scene_extract(arg, arg, verbose=verbose, dry_run=dry_run)
-            if this_file_return_code != 0 and return_code == 0:
-                return_code = this_file_return_code
-        for root, dirs, files in os.walk(arg):
-            for file in files:
-                filepath = os.path.join(root, file)
-                filename = os.path.basename(filepath)
-                if not filename.endswith(".mkv") or filename.startswith('.'):
-                    continue
-                if os.path.isfile(filepath.replace('.mkv', '.edl')):
-                    this_file_return_code = scene_extract(filepath, verbose=verbose, dry_run=dry_run)
-                    if this_file_return_code != 0 and return_code == 0:
-                        return_code = this_file_return_code
+        return_code = 0
+        for arg in args:
+            if os.path.isfile(arg):
+                this_file_return_code = scene_extract(arg, arg, verbose=verbose, dry_run=dry_run)
+                if this_file_return_code != 0 and return_code == 0:
+                    return_code = this_file_return_code
+            for root, dirs, files in os.walk(arg):
+                for file in files:
+                    filepath = os.path.join(root, file)
+                    filename = os.path.basename(filepath)
+                    if not filename.endswith(".mkv") or filename.startswith('.'):
+                        continue
+                    if os.path.isfile(filepath.replace('.mkv', '.edl')):
+                        this_file_return_code = scene_extract(filepath, verbose=verbose, dry_run=dry_run)
+                        if this_file_return_code != 0 and return_code == 0:
+                            return_code = this_file_return_code
 
-    return return_code
+        return return_code
+
+    common.cli_wrapper(scene_extract_cli_run, no_curses=no_curses)
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(scene_extract_cli)
+    sys.exit(scene_extract_cli(sys.argv[1:]))

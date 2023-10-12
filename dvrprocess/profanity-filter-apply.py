@@ -220,8 +220,9 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
     return 0
 
 
-def profanity_filter_apply_cli(argv):
+def profanity_filter_apply_cli(argv) -> int:
     workdir = config.get_work_dir()
+    no_curses = False
     dry_run = False
     bytes_limit = config.get_global_config_bytes('background_limits', 'size_limit')
     time_limit = config.get_global_config_time_seconds('background_limits', 'time_limit')
@@ -237,7 +238,7 @@ def profanity_filter_apply_cli(argv):
         opts, args = getopt.getopt(list(argv),
                                    "fnb:t:p:u:s:",
                                    ["force", "dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=",
-                                    "url=", "selector=", "verbose"])
+                                    "url=", "selector=", "verbose", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -247,6 +248,7 @@ def profanity_filter_apply_cli(argv):
             return 255
         elif opt in ["-n", "--dry-run"]:
             dry_run = True
+            no_curses = True
         elif opt in ["-f", "--force"]:
             force = True
         elif opt == "--work-dir":
@@ -265,13 +267,15 @@ def profanity_filter_apply_cli(argv):
                 plex_url = arg
         elif opt == "--verbose":
             logging.getLogger().setLevel(logging.DEBUG)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt in ["-s", "--selector"]:
             selectors = set()
             for selector_str in arg.split(','):
                 selectors.add(ProfanityFilterSelector.__members__[selector_str.lower()])
 
     if not config.get_global_config_boolean('profanity_filter', 'enable', False) and not force:
-        logger.info("profanity filter not enabled, set profanity_filter.enable to true or use --force")
+        print("profanity filter not enabled, set profanity_filter.enable to true or use --force", file=sys.stderr)
         return 0
 
     if args:
@@ -282,7 +286,7 @@ def profanity_filter_apply_cli(argv):
         media_paths = common.get_media_paths()
 
     if not plex_url and not media_paths:
-        logger.error("No plex URL, configure in media-hare.ini, section plex, option url")
+        print("No plex URL, configure in media-hare.ini, section plex, option url", file=sys.stderr)
         return 255
 
     if selectors is None:
@@ -292,14 +296,15 @@ def profanity_filter_apply_cli(argv):
         return 0
 
     if check_compute and not common.should_start_processing():
-        logger.warning(f"not enough compute available")
+        print("not enough compute available", file=sys.stderr)
         return 0
 
-    return profanity_filter_apply(media_paths, plex_url=plex_url, dry_run=dry_run, workdir=workdir,
-                                  size_limit=bytes_limit,
-                                  time_limit=time_limit, processes=processes, check_compute=check_compute,
-                                  selectors=selectors)
+    return common.cli_wrapper(
+        profanity_filter_apply, media_paths, plex_url=plex_url, dry_run=dry_run, workdir=workdir,
+        size_limit=bytes_limit,
+        time_limit=time_limit, processes=processes, check_compute=check_compute,
+        selectors=selectors, no_curses=no_curses)
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(profanity_filter_apply_cli)
+    sys.exit(profanity_filter_apply_cli(sys.argv[1:]))

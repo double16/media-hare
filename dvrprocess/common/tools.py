@@ -1,15 +1,13 @@
 import logging
-import os.path
 import re
 import subprocess
 import threading
-import time
 from math import ceil
 from multiprocessing import Semaphore
 from typing import Union
 
 from . import config, progress, edl_util
-from .proc_invoker import SubprocessProcInvoker, MockProcInvoker
+from .proc_invoker import SubprocessProcInvoker, MockProcInvoker, ProcessStreamGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +46,14 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         check = kwargs.get('check', False)
         kwargs2.pop('check', None)
         kwargs2['stderr'] = subprocess.PIPE
+        kwargs2['stdout'] = subprocess.PIPE
         kwargs2['encoding'] = 'ascii'
         kwargs2['bufsize'] = 1
-        stderr = []
         proc = subprocess.Popen(arguments, **kwargs2)
         duration = None
         ffmpeg_progress = None
-        for l in proc.stderr:
-            stderr.append(l)
+        stream_gen = ProcessStreamGenerator(proc)
+        for _, l in stream_gen.generator():
             duration_match = self.duration_matcher.search(l)
             if duration_match:
                 duration = ceil(edl_util.parse_edl_ts(duration_match.group(1)))
@@ -69,9 +67,8 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
             ffmpeg_progress.stop()
         if check and proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, proc.args,
-                                                None if proc.stdout is None else proc.stdout.read(),
-                                                ''.join(stderr)
-                                                )
+                                                stream_gen.stdout_str(),
+                                                stream_gen.stderr_str())
         return proc.returncode
 
 
@@ -114,13 +111,13 @@ class CCExtractorProcInvoker(SubprocessProcInvoker):
         check = kwargs.get('check', False)
         kwargs2.pop('check', None)
         kwargs2['stdout'] = subprocess.PIPE
+        kwargs2['stderr'] = subprocess.PIPE
         kwargs2['encoding'] = 'ascii'
         kwargs2['bufsize'] = 1
-        stdout = []
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
-        for l in proc.stdout:
-            stdout.append(l)
+        stream_gen = ProcessStreamGenerator(proc)
+        for l, _ in stream_gen.generator():
             pct_match = self.pct_matcher.search(l)
             if pct_match:
                 if se_progress is None:
@@ -131,9 +128,8 @@ class CCExtractorProcInvoker(SubprocessProcInvoker):
             se_progress.stop()
         if check and proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, proc.args,
-                                                ''.join(stdout),
-                                                None if proc.stderr is None else proc.stderr.read()
-                                                )
+                                                stream_gen.stdout_str(),
+                                                stream_gen.stderr_str())
         return proc.returncode
 
 
@@ -159,13 +155,13 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         check = kwargs.get('check', False)
         kwargs2.pop('check', None)
         kwargs2['stdout'] = subprocess.PIPE
+        kwargs2['stderr'] = subprocess.PIPE
         kwargs2['encoding'] = 'ascii'
         kwargs2['bufsize'] = 1
-        stdout = []
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
-        for l in proc.stdout:
-            stdout.append(l)
+        stream_gen = ProcessStreamGenerator(proc)
+        for l, _ in stream_gen.generator():
             pct_match = self.pct_matcher.search(l)
             if pct_match:
                 if se_progress is None:
@@ -176,9 +172,8 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
             se_progress.stop()
         if check and proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, proc.args,
-                                                ''.join(stdout),
-                                                None if proc.stderr is None else proc.stderr.read()
-                                                )
+                                                stream_gen.stdout_str(),
+                                                stream_gen.stderr_str())
         return proc.returncode
 
 
@@ -207,43 +202,32 @@ class ComskipProcInvoker(SubprocessProcInvoker):
         kwargs2['stdout'] = subprocess.PIPE
         kwargs2['encoding'] = 'ascii'
         kwargs2['bufsize'] = 1
-        stdout = []
-        stderr = []
         if '.csv' in task_name:
             # csv is very fast, it slows things down to flash a progress bar
             comskip_progress = None
         else:
             comskip_progress = progress.progress(task_name, 0, 100)
         proc = subprocess.Popen(arguments, **kwargs2)
-        os.set_blocking(proc.stdout.fileno(), False)
-        os.set_blocking(proc.stderr.fileno(), False)
-        while proc.poll() is None:
-            line_err = proc.stderr.readline()
-            if line_err:
-                stderr.append(line_err)
-                if comskip_progress:
-                    pct_match = self.pct_matcher.search(line_err)
-                    if pct_match:
-                        pct = int(pct_match.group(1))
-                        comskip_progress.progress(pct)
-            line_out = proc.stdout.readline()
-            if line_out:
-                stdout.append(line_out)
-            if not line_err and not line_out:
-                time.sleep(0.2)
-
-        proc.wait()
+        stream_gen = ProcessStreamGenerator(proc)
+        for _, line_err in stream_gen.generator():
+            if line_err and comskip_progress:
+                pct_match = self.pct_matcher.search(line_err)
+                if pct_match:
+                    pct = int(pct_match.group(1))
+                    comskip_progress.progress(pct)
         if comskip_progress:
             comskip_progress.stop()
         if proc.returncode == 1:
-            if 'Commercials were not found' in (''.join(proc.stdout) + ''.join(stderr)):
+            if 'Commercials were not found' in (stream_gen.stdout_str() + stream_gen.stderr_str()):
                 # edl_file = infile_base + ".edl"
                 # if not os.path.exists(edl_file):
                 #     with open(edl_file, "w") as f:
                 #         f.write("")
                 return 0
         if check and proc.returncode:
-            raise subprocess.CalledProcessError(proc.returncode, proc.args, ''.join(stdout), ''.join(stderr))
+            raise subprocess.CalledProcessError(proc.returncode, proc.args,
+                                                stream_gen.stdout_str(),
+                                                stream_gen.stderr_str())
         return proc.returncode
 
 

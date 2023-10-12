@@ -199,6 +199,7 @@ def _find_nvenc_method() -> HWAccelMethod:
     # shortcut to prevent possible deadlock with concurrent use of nvidia libraries
     if os.path.exists("/proc/driver/nvidia/gpus"):
         for _ in os.walk("/proc/driver/nvidia/gpus"):
+            logger.info("NVENC found using /proc")
             return HWAccelMethod.NVENC
         return HWAccelMethod.NONE
 
@@ -208,7 +209,11 @@ def _find_nvenc_method() -> HWAccelMethod:
     _is_nvidia_tool_running(wait_timeout=5)
     try:
         gpus = tools.nvidia_smi.check_output(["--list-gpus"], text=True)
-        return HWAccelMethod.NVENC if 'GPU ' in gpus else HWAccelMethod.NONE
+        if 'GPU ' in gpus:
+            logger.info("NVENC found using %s", tools.nvidia_smi.command_basename)
+            return HWAccelMethod.NVENC
+        else:
+            return HWAccelMethod.NONE
     except subprocess.CalledProcessError:
         return HWAccelMethod.NONE
 

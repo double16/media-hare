@@ -110,6 +110,7 @@ def parse_args(argv) -> (list[str], dict):
     profanity_filter = config.get_global_config_boolean('post_process', 'profanity_filter')
     crop_frame_op = crop_frame.CropFrameOperation.NONE
     verbose = None
+    no_curses = None
 
     try:
         opts, args = getopt.getopt(common.get_arguments_from_config(argv, '.dvrconfig') + list(argv),
@@ -117,7 +118,8 @@ def parse_args(argv) -> (list[str], dict):
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
                                     "prevent-larger=", "stereo", "rerun", "no-rerun", "forgiving",
-                                    "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "verbose"])
+                                    "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "verbose",
+                                    "no-curses"])
     except getopt.GetoptError:
         return None
     for opt, arg in opts:
@@ -135,6 +137,9 @@ def parse_args(argv) -> (list[str], dict):
             tune = arg
         elif opt in ("-n", "--dry-run"):
             dry_run = True
+            no_curses = True
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt in ("-k", "--keep"):
             keep = True
         elif opt in ("-l", "--prevent-larger"):
@@ -191,6 +196,8 @@ def parse_args(argv) -> (list[str], dict):
     }
     if verbose is not None:
         options['verbose'] = verbose
+    if no_curses is not None:
+        options['no_curses'] = no_curses
 
     return args, options
 
@@ -237,6 +244,7 @@ def do_dvr_post_process(input_file,
                         crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
                         forgiving=False,
                         verbose=False,
+                        no_curses=False,
                         require_audio=True,
                         ):
     if preset is None:
@@ -704,27 +712,31 @@ def dvr_post_process_cli(argv):
 
     args = parsed[0]
     parsed[1]['verbose'] = True
+    no_curses = parsed[1].pop('no_curses', False)
 
-    atexit.register(common.finish)
+    def dvr_post_process_cli_run() -> int:
+        atexit.register(common.finish)
 
-    return_code = 0
-    for infile, outfile in common.generate_video_files(args, suffix=None, fail_on_missing=True):
-        # TODO: allow a different outfile
-        try:
-            this_file_return_code = do_dvr_post_process(infile, **parsed[1])
-        except subprocess.CalledProcessError as e:
-            if not parsed[1].get('forgiving', False) and e.returncode in [-8]:
-                logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
-                merged_args = parsed[1].copy()
-                merged_args['forgiving'] = True
-                this_file_return_code = do_dvr_post_process(infile, **merged_args)
-            else:
-                raise e
-        if this_file_return_code != 0 and return_code == 0:
-            return_code = this_file_return_code
+        return_code = 0
+        for infile, outfile in common.generate_video_files(args, suffix=None, fail_on_missing=True):
+            # TODO: allow a different outfile
+            try:
+                this_file_return_code = do_dvr_post_process(infile, **parsed[1])
+            except subprocess.CalledProcessError as e:
+                if not parsed[1].get('forgiving', False) and e.returncode in [-8]:
+                    logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
+                    merged_args = parsed[1].copy()
+                    merged_args['forgiving'] = True
+                    this_file_return_code = do_dvr_post_process(infile, **merged_args)
+                else:
+                    raise e
+            if this_file_return_code != 0 and return_code == 0:
+                return_code = this_file_return_code
 
-    return return_code
+        return return_code
+
+    common.cli_wrapper(dvr_post_process_cli_run, no_curses=no_curses)
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(dvr_post_process_cli)
+    sys.exit(dvr_post_process_cli(sys.argv[1:]))

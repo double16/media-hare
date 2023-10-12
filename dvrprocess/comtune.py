@@ -703,9 +703,10 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
                          common.error_callback_dump)
 
 
-def comtune_cli(argv):
+def comtune_cli(argv) -> int:
     # TODO: Use Plex API to get candidates to improve performance
 
+    no_curses = False
     verbose = False
     workdir = config.get_work_dir()
     force = 0
@@ -720,7 +721,7 @@ def comtune_cli(argv):
     try:
         opts, args = getopt.getopt(list(argv), "hfnep:t:",
                                    ["help", "verbose", "work-dir=", "force", "dry-run", "processes=", "time-limit=",
-                                    "expensive"])
+                                    "expensive", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -731,12 +732,15 @@ def comtune_cli(argv):
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt == "--work-dir":
             workdir = arg
         elif opt in ["-f", "--force"]:
             force += 1
         elif opt in ["-n", "--dry-run"]:
             dry_run = True
+            no_curses = True
         elif opt in ["-t", "--time-limit"]:
             time_limit = config.parse_seconds(arg)
         elif opt in ["-p", "--processes"]:
@@ -747,13 +751,20 @@ def comtune_cli(argv):
             expensive_genes = True
 
     if check_compute and not common.should_start_processing():
-        logger.warning(f"not enough compute available")
+        print("not enough compute available", file=sys.stderr)
         return 255
-
-    logger.debug("work_dir is %s, processes is %s", workdir, processes)
 
     if not args:
         args = common.get_media_paths()
+
+    common.cli_wrapper(comtune_cli_run, media_paths=args, verbose=verbose, workdir=workdir, force=force,
+                       dry_run=dry_run, expensive_genes=expensive_genes, check_compute=check_compute,
+                       time_limit=time_limit, processes=processes, no_curses=no_curses)
+
+
+def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, dry_run: bool, expensive_genes: bool,
+                    check_compute: bool, time_limit: int, processes: int) -> int:
+    logger.debug("work_dir is %s, processes is %s", workdir, processes)
 
     atexit.register(common.finish)
 
@@ -793,15 +804,15 @@ def comtune_cli(argv):
         return False
 
     try:
-        random.shuffle(args)
-        for arg in args:
-            arg = os.path.abspath(arg)
-            if os.path.isfile(arg):
-                filepath = arg
+        random.shuffle(media_paths)
+        for media_path in media_paths:
+            media_path = os.path.abspath(media_path)
+            if os.path.isfile(media_path):
+                filepath = media_path
                 if common.is_video_file(filepath):
                     single_file_tune(filepath)
             else:
-                for root, dirs, files in os.walk(arg):
+                for root, dirs, files in os.walk(media_path):
                     if should_stop():
                         pool.close()
                         return return_code.code()
@@ -843,4 +854,4 @@ def comtune_cli(argv):
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(comtune_cli)
+    sys.exit(comtune_cli(sys.argv[1:]))

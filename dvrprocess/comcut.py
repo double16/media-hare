@@ -547,6 +547,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 def comcut_cli(argv):
     delete_edl = not config.get_global_config_boolean('general', 'keep_edl')
     delete_meta = not config.get_global_config_boolean('general', 'keep_meta')
+    no_curses = False
     verbose = False
     debug = False
     comskipini = None
@@ -564,7 +565,7 @@ def comcut_cli(argv):
         opts, args = getopt.getopt(dvrconfig + list(argv), "pnv:",
                                    ["keep-edl", "keep-meta", "verbose", "debug", "comskip-ini=", "work-dir=",
                                     "preset=", "force-encode", "dry-run", "crop-frame", "crop-frame-ntsc",
-                                    "crop-frame-pal", "vcodec="])
+                                    "crop-frame-pal", "vcodec=", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -579,6 +580,8 @@ def comcut_cli(argv):
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt == "--debug":
             debug = True
         elif opt == "--comskip-ini":
@@ -591,6 +594,7 @@ def comcut_cli(argv):
             preset = arg
         elif opt in ("-n", "--dry-run"):
             dry_run = True
+            no_curses = True
         elif opt == "--crop-frame":
             crop_frame_op = crop_frame.CropFrameOperation.DETECT
         elif opt == "--crop-frame-ntsc":
@@ -606,6 +610,15 @@ def comcut_cli(argv):
 
     if not preset or preset == 'copy':
         preset = os.environ.get('PRESET', config.get_global_config_option('ffmpeg', 'preset'))
+
+    common.cli_wrapper(comcut_cli_run, args=args, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
+                       debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
+                       force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op,
+                       desired_video_codecs=desired_video_codecs, no_curses=no_curses)
+
+
+def comcut_cli_run(args: list, delete_edl, delete_meta, verbose, debug, comskipini, workdir, preset, force_encode,
+                   dry_run, crop_frame_op, desired_video_codecs):
 
     atexit.register(common.finish)
 
@@ -623,4 +636,4 @@ def comcut_cli(argv):
 
 if __name__ == '__main__':
     os.nice(12)
-    common.cli_wrapper(comcut_cli)
+    sys.exit(comcut_cli(sys.argv[1:]))

@@ -11,7 +11,7 @@ from math import ceil, floor
 from typing import Union, Dict
 
 from . import progress
-from .proc_invoker import StreamCapture
+from .proc_invoker import StreamCapture, pre_flight_check
 
 logger = logging.getLogger(__name__)
 
@@ -394,6 +394,7 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
     :param kwargs:
     :return: return code for sys.exit
     """
+    pre_flight_check()
 
     def main(screen) -> int:
         global _CURSESUI, _CURSESUI_LAST_RESIZE

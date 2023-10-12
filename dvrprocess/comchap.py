@@ -212,7 +212,8 @@ def build_comskip_ini(comskip_ini, leaf_comskip_ini=None, video_path=None, input
 
 
 def write_chapter_metadata(metafd, start_seconds, end_seconds, title, min_seconds=1) -> bool:
-    logger.debug(f"write_chapter_metadata({common.s_to_ts(start_seconds)}, {common.s_to_ts(end_seconds)}, {title}, {min_seconds})")
+    logger.debug(
+        f"write_chapter_metadata({common.s_to_ts(start_seconds)}, {common.s_to_ts(end_seconds)}, {title}, {min_seconds})")
     if start_seconds >= 0 and (end_seconds - start_seconds) >= min_seconds:
         metafd.write(f"""
 [CHAPTER]
@@ -573,11 +574,13 @@ def comchap_cli(argv):
     force = False
     debug = False
     mark_skip = False
+    no_curses = False
 
     try:
         opts, args = getopt.getopt(list(argv), "fk",
                                    ["keep-edl", "only-edl", "keep-meta", "keep-log", "keep-ini", "keep-all", "verbose",
-                                    "comskip-ini=", "debug", "work-dir=", "force", "backup-edl", "mark-skip"])
+                                    "comskip-ini=", "debug", "work-dir=", "force", "backup-edl", "mark-skip",
+                                    "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -608,6 +611,8 @@ def comchap_cli(argv):
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt == "--debug":
             debug = True
         elif opt == "--comskip-ini":
@@ -625,6 +630,16 @@ def comchap_cli(argv):
     if not args:
         usage()
         return 255
+
+    common.cli_wrapper(comchap_cli_run, args=args, mark_skip=mark_skip, delete_edl=delete_edl, delete_meta=delete_meta,
+                       delete_log=delete_log, delete_logo=delete_logo, delete_txt=delete_txt,
+                       delete_ini=delete_ini, verbose=verbose, workdir=workdir,
+                       comskipini=comskipini, modify_video=modify_video, force=force, debug=debug,
+                       backup_edl=backup_edl, no_curses=no_curses)
+
+
+def comchap_cli_run(args: list, mark_skip, delete_edl, delete_meta, delete_log, delete_logo, delete_txt,
+                    delete_ini, verbose, workdir, comskipini, modify_video, force, debug, backup_edl) -> int:
 
     atexit.register(common.finish)
 
@@ -646,4 +661,4 @@ def comchap_cli(argv):
 
 if __name__ == '__main__':
     os.nice(12)
-    common.cli_wrapper(comchap_cli)
+    sys.exit(comchap_cli(sys.argv[1:]))

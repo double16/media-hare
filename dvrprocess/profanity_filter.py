@@ -473,7 +473,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         filtered_spans = []
         stopped_spans = []
         if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
-            ass_data = read_ass(Path(subtitle_original_filename))
+            ass_data = read_ass(subtitle.clean_ssa(Path(subtitle_original_filename)))
             for event in ass_data.events:
                 event.text = ASSA_TYPEFACE_REMOVE.sub('', event.text)
             if subtitle_words_filename:
@@ -2486,6 +2486,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
 def profanity_filter_cli(argv) -> int:
     global debug
 
+    no_curses = False
     dry_run = False
     keep = False
     force = False
@@ -2500,7 +2501,7 @@ def profanity_filter_cli(argv) -> int:
         opts, args = getopt.getopt(
             list(argv), "nkdrf",
             ["dry-run", "keep", "debug", "remove", "mark-skip", "unmark-skip", "force", "work-dir=",
-             "mute-voice-channels", "mute-all-channels", "verbose"])
+             "mute-voice-channels", "mute-all-channels", "verbose", "no-curses"])
     except getopt.GetoptError:
         usage()
         return CMD_RESULT_ERROR
@@ -2510,12 +2511,15 @@ def profanity_filter_cli(argv) -> int:
             return CMD_RESULT_ERROR
         elif opt in ("-n", "--dry-run"):
             dry_run = True
+            no_curses = True
         elif opt in ("-k", "--keep"):
             keep = True
         elif opt in ("-d", "--debug"):
             debug = True
         elif opt == "--verbose":
             logging.root.setLevel(logging.DEBUG)
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt in ("-r", "--remove"):
             filter_skip = True
         elif opt == "--mark-skip":
@@ -2539,10 +2543,10 @@ def profanity_filter_cli(argv) -> int:
 
     atexit.register(common.finish)
 
-    return profanity_filter(input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
-                            mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
-                            mute_channels=mute_channels, language=language)
+    common.cli_wrapper(profanity_filter, input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
+                       mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
+                       mute_channels=mute_channels, language=language, no_curses=no_curses)
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(profanity_filter_cli)
+    sys.exit(profanity_filter_cli(sys.argv[1:]))

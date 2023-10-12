@@ -171,7 +171,7 @@ def load_keyframes_by_seconds(filepath) -> list[float]:
     keyframes = list(map(lambda s: float(re.search(r'[\d.]+', s)[0]),
                          filter(lambda s: len(s) > 0,
                                 tools.ffprobe.check_output(ffprobe_keyframes, universal_newlines=True,
-                                                           text=True).splitlines())))
+                                                           text=True, stderr=subprocess.DEVNULL).splitlines())))
     if len(keyframes) == 0:
         raise ChildProcessError("No key frames returned, suspect ffprobe command line is broken")
 
@@ -985,20 +985,42 @@ def setup_logging(level=logging.INFO):
 
 
 def setup_cli(level=logging.INFO, start_gauges=True):
+    proc_invoker.pre_flight_check()
     setup_logging(level)
     setup_debugging()
     if start_gauges:
         progress.start_compute_gauges()
 
 
-def cli_wrapper(func):
-    argv = list(filter(lambda e: e != '--no-curses', sys.argv[1:]))
-    use_curses = len(argv) == (len(sys.argv)-1) and sys.stdout.isatty()
+def cli_wrapper(func, *args, **kwargs):
+    if not args and not kwargs:
+        cli = True
+        args = sys.argv[1:]
+    else:
+        cli = False
+
+    no_curses_opt = False
+    if '--no-curses' in args:
+        no_curses_opt = True
+        args = list(filter(lambda e: e != '--no-curses', args))
+    if kwargs:
+        no_curses_opt = kwargs.get('no_curses', False) or kwargs.get('no-curses', False)
+        kwargs = kwargs.copy()
+        kwargs.pop('no_curses', '')
+        kwargs.pop('no-curses', '')
+
+    def wrapped_func() -> int:
+        if cli:
+            return func(args)
+        else:
+            return func(*args, **kwargs)
+
+    use_curses = sys.stdout.isatty() and not no_curses_opt
     if use_curses:
-        sys.exit(terminalui_wrapper(func, argv))
+        sys.exit(terminalui_wrapper(wrapped_func))
     else:
         setup_cli()
-        sys.exit(func(argv))
+        sys.exit(wrapped_func())
 
 
 class PoolApplyWrapper:

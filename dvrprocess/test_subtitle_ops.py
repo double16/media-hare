@@ -1,7 +1,7 @@
 import logging
 import unittest
 from typing import Union
-
+from ass_parser import read_ass
 from common import subtitle, edl_util, constants
 
 
@@ -333,6 +333,14 @@ Dialogue: 0,0:00:30.16,0:00:32.65,Default,,0,0,0,,{TIME:30160,32650}The the
         self.assertTrue('six' in se.normalized_start_words())
         self.assertFalse('seven' in se.normalized_start_words())
         self.assertFalse('eight' in se.normalized_start_words())
+
+    def test_clean_ssa_valid(self):
+        ssa = read_ass(subtitle.clean_ssa('../fixtures/bones-s02e01-original.ssa'))
+        self.assertEqual(len(ssa.events), 860)
+
+    def test_clean_ssa_invalid(self):
+        ssa = read_ass(subtitle.clean_ssa('../fixtures/subtitle_invalid.ssa'))
+        self.assertEqual(len(ssa.events), 559)
 
 
 if __name__ == '__main__':

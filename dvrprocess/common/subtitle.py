@@ -28,7 +28,7 @@ def subtitle_codec_from_filename(f, subtitle_codec_hint: [None, str]):
 def read_subtitle_data(subtitle_codec, f):
     subtitle_codec = subtitle_codec_from_filename(f, subtitle_codec)
     if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
-        return read_ass(Path(f))
+        return read_ass(clean_ssa(Path(f)))
     elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
         return pysrt.open(f)
     else:
@@ -54,7 +54,7 @@ def read_subtitle_text(subtitle_codec: [None, str], f):
     subtitle_codec = subtitle_codec_from_filename(f, subtitle_codec)
     lines = []
     if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
-        ass_data = read_ass(Path(f))
+        ass_data = read_ass(clean_ssa(Path(f)))
         for event in list(ass_data.events):
             lines.append(event.text)
     elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
@@ -356,6 +356,23 @@ def open_subtitle_file_facade(file: Path) -> SubtitleFileFacade:
     if file.match("*.srt") or file.match("*.srt.txt"):
         return new_subtitle_file_facade(pysrt.open(file))
     elif file.match("*.ass") or file.match("*.ssa") or file.match("*.ass.txt") or file.match("*.ssa.txt"):
-        return new_subtitle_file_facade(read_ass(file))
+        return new_subtitle_file_facade(read_ass(clean_ssa(file)))
     else:
         raise NotImplementedError("Unsupported subtitle %s" % file)
+
+
+PROPER_SSA_LINE = re.compile(r'^\[.+]|^[A-za-z0-9]+:|^$')
+
+
+def clean_ssa(filename) -> str:
+    """
+    Read an SSA subtitle and cleans up bad syntax.
+    :param filename:
+    :return: string
+    """
+
+    def is_proper_ssa_line(line: str) -> bool:
+        return bool(PROPER_SSA_LINE.match(line))
+
+    with open(filename, "rt") as f:
+        return ''.join(filter(is_proper_ssa_line, f))

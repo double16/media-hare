@@ -181,6 +181,7 @@ def comchap_apply_cli(argv):
     workdir = config.get_work_dir()
     comskipini = None
     dry_run = False
+    no_curses = False
     force = False
     bytes_limit = config.get_global_config_bytes('background_limits', 'size_limit')
     time_limit = config.get_global_config_time_seconds('background_limits', 'time_limit')
@@ -193,7 +194,7 @@ def comchap_apply_cli(argv):
     try:
         opts, args = getopt.getopt(list(argv), "nfb:t:p:",
                                    ["dry-run", "force", "comskip-ini=", "work-dir=", "bytes-limit=", "time-limit=",
-                                    "processes=", "keep-log"])
+                                    "processes=", "keep-log", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -208,7 +209,7 @@ def comchap_apply_cli(argv):
         elif opt == "--comskip-ini":
             comskipini = arg
             if not os.access(comskipini, os.R_OK):
-                logger.fatal(f"Cannot find comskip.ini at {comskipini}")
+                print(f"Cannot find comskip.ini at {comskipini}", file=sys.stderr)
                 return 255
         elif opt == "--work-dir":
             workdir = arg
@@ -221,6 +222,8 @@ def comchap_apply_cli(argv):
             check_compute = False
         elif opt == "--keep-log":
             delete_log = False
+        elif opt == "--no-curses":
+            no_curses = True
 
     if args:
         media_paths = args
@@ -231,13 +234,14 @@ def comchap_apply_cli(argv):
         return 0
 
     if check_compute and not common.should_start_processing():
-        logger.warning(f"not enough compute available")
+        print("not enough compute available", file=sys.stderr)
         return 255
 
-    return comchap_apply(media_paths, dry_run=dry_run, force=force, comskip_ini=comskipini, workdir=workdir,
-                         size_limit=bytes_limit, time_limit=time_limit, processes=processes,
-                         check_compute=check_compute, delete_log=delete_log)
+    common.cli_wrapper(comchap_apply, media_paths, dry_run=dry_run, force=force, comskip_ini=comskipini,
+                       workdir=workdir,
+                       size_limit=bytes_limit, time_limit=time_limit, processes=processes,
+                       check_compute=check_compute, delete_log=delete_log, no_curses=no_curses)
 
 
 if __name__ == '__main__':
-    common.cli_wrapper(comchap_apply_cli)
+    sys.exit(comchap_apply_cli(sys.argv[1:]))

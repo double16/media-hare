@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 from io import StringIO, BytesIO
 from multiprocessing import Semaphore
 from shutil import which
@@ -340,3 +341,45 @@ class StreamCapture(object):
                 target.write(line)
             target.flush()
 
+
+class ProcessStreamGenerator(object):
+
+    def __init__(self, proc: subprocess.Popen):
+        self.proc = proc
+        self.stdout = []
+        self.stderr = []
+
+    def stdout_str(self) -> str:
+        return ''.join(self.stdout)
+
+    def stderr_str(self) -> str:
+        return ''.join(self.stderr)
+
+    def generator(self) -> tuple[Union[str, None], Union[str, None]]:
+        is_stdout = self.proc.stdout is not None
+        is_stderr = self.proc.stderr is not None
+        if not is_stdout and not is_stderr:
+            return
+        if is_stdout:
+            os.set_blocking(self.proc.stdout.fileno(), False)
+        if is_stderr:
+            os.set_blocking(self.proc.stderr.fileno(), False)
+        while self.proc.poll() is None:
+            if is_stderr:
+                line_err = self.proc.stderr.readline()
+                if line_err:
+                    self.stderr.append(line_err)
+            else:
+                line_err = None
+
+            if is_stdout:
+                line_out = self.proc.stdout.readline()
+                if line_out:
+                    self.stdout.append(line_out)
+            else:
+                line_out = None
+
+            if not line_err and not line_out:
+                time.sleep(0.2)
+            else:
+                yield line_out, line_err

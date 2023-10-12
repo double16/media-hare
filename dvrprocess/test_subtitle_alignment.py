@@ -32,7 +32,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
         if filename.endswith('.srt'):
             return pysrt.open(p)
         else:
-            return read_ass(p)
+            return read_ass(subtitle.clean_ssa(p))
 
     def _read_words_srt(self, filename: str) -> SubRipFile:
         subtitle = pysrt.open(f"../fixtures/{filename}")

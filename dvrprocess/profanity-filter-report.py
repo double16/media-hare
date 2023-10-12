@@ -11,7 +11,7 @@ import pysrt
 from ass_parser import read_ass, errors
 
 import common
-from common import tools, constants
+from common import tools, constants, subtitle
 
 logger = logging.getLogger(__name__)
 
@@ -72,9 +72,11 @@ def extract_pf_data(mkv):
     try:
         if subtitle_codec == constants.CODEC_SUBTITLE_ASS:
             parsed_original = list(
-                map(lambda e: {'when': e.start, 'text': e.text}, read_ass(Path(file_original)).events))
+                map(lambda e: {'when': e.start, 'text': e.text},
+                    read_ass(subtitle.clean_ssa(Path(file_original))).events))
             parsed_filtered = list(
-                map(lambda e: {'when': e.start, 'text': e.text}, read_ass(Path(file_filtered)).events))
+                map(lambda e: {'when': e.start, 'text': e.text},
+                    read_ass(subtitle.clean_ssa(Path(file_filtered))).events))
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             parsed_original = list(map(lambda e: {'when': e.start.ordinal, 'text': e.text}, pysrt.open(file_original)))
             parsed_filtered = list(map(lambda e: {'when': e.start.ordinal, 'text': e.text}, pysrt.open(file_filtered)))
@@ -90,6 +92,7 @@ def extract_pf_data(mkv):
             os.remove(file_filtered)
 
     print(f"INFO: {mkv} {len(parsed_filtered)} subtitle events", file=sys.stderr)
+    # FIXME: this break with subtitle alignment / new events
     for i, val in enumerate(parsed_filtered):
         if '***' in val['text']:
             data['changes'].append({

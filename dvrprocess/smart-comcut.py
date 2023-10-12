@@ -76,8 +76,9 @@ class CommercialBreakStats(object):
         return f"({self.start}, {self.end}) duration {self.duration}"
 
 
-def smart_comcut(argv):
+def smart_comcut_cli(argv):
     dry_run = False
+    no_curses = False
     commercial_details = False
     strict = False
     all_videos = False
@@ -96,7 +97,7 @@ def smart_comcut(argv):
         opts, args = getopt.getopt(dvrconfig + list(argv), "nkcav:",
                                    ["help", "dry-run", "keep", "commercial-details", "strict", "all", "work-dir=",
                                     "verbose", "sigma=", "preset=", "force-encode", "crop-frame", "crop-frame-ntsc",
-                                    "crop-frame-pal", "vcodec="])
+                                    "crop-frame-pal", "vcodec=", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -106,6 +107,9 @@ def smart_comcut(argv):
             return 255
         elif opt in ("-n", "--dry-run"):
             dry_run = True
+            no_curses = True
+        elif opt == "--no-curses":
+            no_curses = True
         elif opt in ("-k", "--keep"):
             keep = True
         elif opt in ("-c", "--commercial-details"):
@@ -140,6 +144,15 @@ def smart_comcut(argv):
     if not workdir:
         workdir = config.get_work_dir()
 
+    common.cli_wrapper(smart_comcut_cli_run, args=args, dry_run=dry_run, keep=keep, workdir=workdir, preset=preset,
+                       force_encode=force_encode, crop_frame_op=crop_frame_op,
+                       desired_video_codecs=desired_video_codecs,
+                       commercial_details=commercial_details, strict=strict, all_videos=all_videos, sigma=sigma,
+                       no_curses=no_curses)
+
+
+def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encode,
+                         crop_frame_op, desired_video_codecs, commercial_details, strict, all_videos, sigma) -> int:
     for arg in args:
         for root, dirs, files in os.walk(arg, topdown=True):
             dirs.sort()
@@ -209,7 +222,7 @@ def smart_comcut(argv):
             if len(videos) == 0:
                 continue
             if len(videos) < VIDEO_MIN_COUNT:
-                logger.warning(f"{show_label}: Need at least {VIDEO_MIN_COUNT} videos to compute average")
+                logger.error(f"{show_label}: Need at least {VIDEO_MIN_COUNT} videos to compute average")
                 continue
 
             # Sort and ignore top and bottom durations numbers for average. Probably should use sigma instead.
@@ -253,7 +266,7 @@ def smart_comcut(argv):
             target_commercial_breaks = dict(
                 filter(lambda x: x[1] >= commercial_break_count_min, commercial_break_histo.items()))
             if len(target_commercial_breaks) != 1:
-                logger.warning(
+                logger.log(logging.ERROR if commercial_details else logging.WARNING,
                     f"{show_label}: Cannot find consistent commercial break counts, min histo count = {commercial_break_count_min}")
                 if commercial_details:
                     continue
@@ -288,12 +301,12 @@ def smart_comcut(argv):
                 abort = False
                 if (average_adjusted_duration - stdev_adjusted_duration < accepted_range[
                     0] or average_adjusted_duration + stdev_adjusted_duration > accepted_range[1]):
-                    logger.warning("%s: σ%s outside of accepted range", show_label,
+                    logger.error("%s: σ%s outside of accepted range", show_label,
                                    common.seconds_to_timespec(stdev_adjusted_duration))
                     abort = True
                 expected_adjusted_duration_diff = abs(average_adjusted_duration - expected_adjusted_duration)
                 if expected_adjusted_duration_diff > (error_range[1] * 2):
-                    logger.warning("%s: %s adjusted duration outside of accepted range", show_label,
+                    logger.error("%s: %s adjusted duration outside of accepted range", show_label,
                                    common.seconds_to_timespec(expected_adjusted_duration_diff))
                     abort = True
                 if abort:
@@ -336,7 +349,7 @@ def smart_comcut(argv):
                         cut(filepath, keep=keep, workdir=workdir, preset=preset, force_encode=force_encode,
                             crop_frame_op=crop_frame_op, desired_video_codecs=desired_video_codecs)
                 else:
-                    logger.warning(
+                    logger.error(
                         f"{filepath} comskip FAILURE, {common.seconds_to_timespec(adjusted_duration)}"
                         f", {common.seconds_to_timespec(adjusted_duration - average_adjusted_duration)}"
                         f", {this_commercial_break_count} commercials")
@@ -399,4 +412,4 @@ def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
 
 if __name__ == '__main__':
     os.nice(12)
-    common.cli_wrapper(smart_comcut)
+    sys.exit(smart_comcut_cli(sys.argv[1:]))
