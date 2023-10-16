@@ -14,6 +14,7 @@ import time
 from math import ceil
 from multiprocessing import Pool
 from statistics import stdev, mean
+from typing import Union
 
 import numpy
 import pygad
@@ -154,13 +155,15 @@ def do_comtune(infile, verbose=False, workdir=None, force=0, dry_run=False):
     return 0
 
 
-def compute_black_frame_tunings(infile, workdir):
+def compute_black_frame_tunings(infile, workdir) -> tuple[Union[int, None], Union[int, None], Union[int, None]]:
     """
     Compute the tuning values for determining black frames.
     :return: max_avg_brightness, max_volume, non_uniformity
     """
     infile_base, csv_path, video_ini = paths(infile, workdir,
                                              infile_base=os.path.basename(infile) + CSV_SUFFIX_BLACKFRAME)
+    if not os.path.exists(csv_path):
+        return None, None, None
     data = numpy.genfromtxt(csv_path, skip_header=2, delimiter=',')
     logger.info(f"{infile}: Loaded data {len(data)} frames")
 
@@ -391,18 +394,25 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             except [subprocess.CalledProcessError, KeyboardInterrupt] as e:
                 pool.terminate()
                 raise e
-        for result in framearray_results:
-            if check_compute and common.should_stop_processing():
-                pool.terminate()
-                raise StopIteration('over loaded')
-            try:
-                result.wait()
-                result.get()
-            except subprocess.CalledProcessError as e:
-                return e.returncode
-            except KeyboardInterrupt as e:
-                pool.terminate()
-                raise e
+        video_stats_progress = progress.progress('blackframe tuning', 0, len(framearray_results) - 1)
+        video_stats_progress.progress(0)
+        try:
+            for result_idx, result in enumerate(framearray_results):
+                if check_compute and common.should_stop_processing():
+                    pool.terminate()
+                    raise StopIteration('over loaded')
+                try:
+                    result.wait()
+                    result.get()
+                    video_stats_progress.progress(result_idx)
+                except subprocess.CalledProcessError as e:
+                    # generate with the files we have
+                    pass
+                except KeyboardInterrupt as e:
+                    pool.terminate()
+                    raise e
+        finally:
+            video_stats_progress.stop()
         framearray_results.clear()
 
         max_avg_brightness_list = []
@@ -457,6 +467,9 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             csvfile = common.replace_extension(
                 os.path.join(workdir, common.remove_extension(os.path.basename(file_path)) + csv_suffix),
                 'csv')
+            edlfile = edl_tempfile(file_path, workdir)
+            if os.path.exists(edlfile):
+                os.remove(edlfile)
             results.append(pool.apply_async(common.pool_apply_wrapper(csv_and_comchap_generate), (),
                                             {
                                                 'file_path': file_path,
@@ -465,30 +478,36 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                                                 'csvfile': csvfile,
                                                 'workdir': workdir,
                                                 'video_info': video_info,
-                                                'edlfile': edl_tempfile(file_path, workdir),
+                                                'edlfile': edlfile,
                                                 'dry_run': dry_run,
                                                 'force_csv_regen': (force > 1 or not black_frame_tuning_done)
                                             },
                                             error_callback=common.error_callback_dump))
 
-        for result in results:
-            if check_compute and common.should_stop_processing():
-                pool.terminate()
-                raise StopIteration('over loaded')
-            try:
-                result.wait()
-                result.get()
-            except subprocess.CalledProcessError as e:
-                os.remove(comskip_fitness_ini_path)
-                return e.returncode
-            except KeyboardInterrupt as e:
-                pool.terminate()
-                os.remove(comskip_fitness_ini_path)
-                raise e
+        video_stats_progress = progress.progress('video stats', 0, len(results) - 1)
+        try:
+            for result_idx, result in enumerate(results):
+                if check_compute and common.should_stop_processing():
+                    pool.terminate()
+                    raise StopIteration('over loaded')
+                try:
+                    result.wait()
+                    result.get()
+                    video_stats_progress.progress(result_idx)
+                except subprocess.CalledProcessError:
+                    # generate fitness with the files we have
+                    pass
+                except KeyboardInterrupt as e:
+                    pool.terminate()
+                    os.remove(comskip_fitness_ini_path)
+                    raise e
+        finally:
+            video_stats_progress.stop()
 
         os.remove(comskip_fitness_ini_path)
 
         adjusted_durations = []
+        # if we want to ignore already cut files, iterate over dvr_infos instead of video_infos
         for video_info in video_infos:
             file_path = video_info[constants.K_FORMAT]['filename']
             episode_count, episode_duration, video_duration = common.episode_info(video_info)
@@ -498,7 +517,6 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                 for event in edl_util.parse_edl_cuts(edl_path):
                     this_duration = (event.end - event.start)
                     adjusted_duration -= this_duration
-            # if we want to ignore already cut files, iterate over dvr_infos instead of video_infos
             adjusted_durations.append(adjusted_duration / episode_count)
 
         count_of_non_defaults = 0
@@ -699,8 +717,9 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
         pool.apply_async(common.pool_apply_wrapper(comchap), (filepath, filepath),
                          {'force': True,
                           'delete_edl': False,
-                          'workdir': workdir}, return_code.callback,
-                         common.error_callback_dump)
+                          'workdir': workdir},
+                         callback=return_code.callback,
+                         error_callback=common.error_callback_dump)
 
 
 def comtune_cli(argv) -> int:
@@ -785,8 +804,9 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
                              {'verbose': verbose,
                               'workdir': workdir,
                               'force': force,
-                              'dry_run': dry_run}, return_code.callback,
-                             common.error_callback_dump)
+                              'dry_run': dry_run},
+                             callback=return_code.callback,
+                             error_callback=common.error_callback_dump)
 
     def should_stop() -> bool:
         if time_start is not None:
@@ -831,8 +851,10 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
                                 tune_show(season_dir=season_dir, pool=pool, files=video_files, workdir=workdir,
                                           dry_run=dry_run, force=force, expensive_genes=expensive_genes,
                                           check_compute=check_compute, processes=processes)
+                        except KeyboardInterrupt as e:
+                            raise e
                         except BaseException as e:
-                            logger.error(f"Skipping show {season_dir}, uncaught exception", exc_info=e)
+                            logger.error(f"Skipping show {season_dir}, uncaught exception: {str(e)}", exc_info=e)
                     else:
                         for filepath in video_files:
                             if should_stop():
@@ -845,6 +867,8 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
 
         pool.close()
     except KeyboardInterrupt:
+        logger.info("User interrupt, waiting for pool to finish")
+        return_code.set_code(130)
         pool.terminate()
     finally:
         pool.join()

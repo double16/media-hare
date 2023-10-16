@@ -120,6 +120,9 @@ def fatal(message):
 
 
 def exception_hook(exctype, value, traceback_obj):
+    if isinstance(value, KeyboardInterrupt):
+        logger.critical("user interrupt")
+        sys.exit(130)
     if isinstance(value, subprocess.CalledProcessError):
         logger.critical("subprocess error", exc_info=(exctype, value, traceback_obj))
         if value.stdout:
@@ -1148,12 +1151,17 @@ class ReturnCodeReducer:
     def code(self) -> int:
         return self._code
 
+    def set_code(self, c: int):
+        self._code = c
+
 
 def error_callback_dump(e):
-    if type(e) == KeyboardInterrupt:
+    if isinstance(e, KeyboardInterrupt):
         logger.error("User interrupt")
-    elif type(e) == StopIteration:
+    elif isinstance(e, StopIteration):
         logger.error("Stopped: %s", str(e))
+    elif isinstance(e, subprocess.CalledProcessError):
+        logger.error("%s\n%s\n%s", str(e), e.stdout, e.stderr, exc_info=e)
     else:
         logger.error(str(e), exc_info=e)
 

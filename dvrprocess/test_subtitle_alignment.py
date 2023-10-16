@@ -9,7 +9,8 @@ from typing import Union
 import pysrt
 import pytest
 from pysrt import SubRipFile
-from ass_parser import read_ass, write_ass, AssFile
+from ass_parser import read_ass, AssFile
+from thefuzz import fuzz
 from common import s_to_ts, subtitle
 
 import profanity_filter
@@ -25,7 +26,7 @@ class SubtitleAlignmentTest(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
-        self._caplog.set_level(logging.DEBUG)
+        self._caplog.set_level(logging.INFO)
 
     def _read_subtitle(self, filename: str) -> Union[AssFile, SubRipFile]:
         p = Path(f"../fixtures/{filename}")
@@ -74,7 +75,8 @@ class SubtitleAlignmentTest(unittest.TestCase):
                         s_to_ts(actual_event.start() / 1000),
                         expected_start_diff, f"Event mismatch {idx}: '{actual_event.text()}' != '{expected_event.text()}'")
                     )
-                    break
+                    if fuzz.ratio(actual_event.text(), expected_event.text()) < 96:
+                        break
                 if expected_start_diff > 400:
                     failed.append((
                         s_to_ts(expected_event.start() / 1000),

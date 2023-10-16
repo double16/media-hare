@@ -10,6 +10,7 @@ import random
 import sys
 import time
 import xml.etree.ElementTree as ET
+from typing import Union
 
 import imdb
 import requests
@@ -23,7 +24,8 @@ from common import config
 #   dict: key=show title, value=list of tuple (library, show title, year, season, episode, duration in minutes, video_codec, audio_codec, videoResolution, bitrate)
 #
 
-ia = imdb.IMDb()
+# ia = imdb.IMDb()
+ia: Union[imdb.IMDb, None] = None
 
 
 def usage():
@@ -145,7 +147,10 @@ def read_cached_json(cache_dir, cache_filename, consider_expiry=True):
     seconds_in_day = 86400
     expiry_days = 30
     expiry_span_days = 2
-    if ('year' in cached_data) and int(cached_data['year']) > 1900 and 'expected' in cached_data:
+    if (('year' in cached_data)
+            and int(cached_data['year']) > 1900
+            and 'expected' in cached_data
+            and len(cached_data['expected'].get('seasons', []) > 0)):
         last_year = int(cached_data['year']) + int(max(cached_data['expected']['seasons']))
         if last_year < (datetime.datetime.now().date().year - 2):
             expiry_days = 180
@@ -185,7 +190,7 @@ def imdb_get_movie_id(show, cache_dir: str):
     else:
         search_text = name
     # print(f"INFO: Calling IMDb for {search_text}")
-    results = ia.search_movie(search_text, 1)
+    results = ia.search_movie(search_text, 1) if ia else None
     if not results or len(results) == 0:
         movie_id = None
     else:
@@ -244,7 +249,7 @@ def get_show_stats(show, cache_dir):
         if not imdb_id:
             cached_data['expected'] = infer_show_stats(show)
         else:
-            movie = ia.get_movie(imdb_id, ('main', 'plot', 'episodes'))
+            movie = ia.get_movie(imdb_id, ('main', 'plot', 'episodes')) if ia else None
             if movie and 'episodes' in movie:
                 # Remove seasons less than 0. Not sure what "-1" indicates.
                 cached_data['expected'] = {

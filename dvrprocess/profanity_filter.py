@@ -1116,19 +1116,19 @@ def words_to_subtitle_srt(input_info: dict, words_filename: str, workdir, langua
     return subtitle_srt_filename
 
 
-def get_spell_checker(language: str):
-    try:
-        import hunspell
+class LangToolSpellchecker(object):
+    def __init__(self, lang_tool: language_tool_python.LanguageTool):
+        self._lang_tool = lang_tool
 
-        # verify with spell checker (hunspell) that text looks like English
-        if language in [constants.LANGUAGE_ENGLISH, 'en']:
-            hobj = hunspell.HunSpell('/usr/share/hunspell/en_US.dic', '/usr/share/hunspell/en_US.aff')
-        else:
-            hobj = hunspell.HunSpell(f'/usr/share/hunspell/{language[0:2]}.dic',
-                                     f'/usr/share/hunspell/{language[0:2]}.aff')
-        return hobj
-    except (ImportError, ModuleNotFoundError):
-        return None
+    def spell(self, word: str) -> bool:
+        for match in self._lang_tool.check(word):
+            if match.ruleIssueType == 'misspelling' and match.ruleId.startswith('MORFOLOGIK_RULE'):
+                return False
+        return True
+
+
+def get_spell_checker(language: str):
+    return LangToolSpellchecker(_get_lang_tool(language))
 
 
 PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
@@ -1137,7 +1137,7 @@ PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
 def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
     spellchecker = get_spell_checker(language)
     if spellchecker is None:
-        logger.warning("hunspell not found, skipping dictionary check")
+        logger.warning("spell checker not found, skipping dictionary check")
         return 100.0
 
     word_count = 0
@@ -1289,7 +1289,7 @@ def get_allow_range(m: re.Match[str]) -> tuple[tuple[int, int], str]:
     while begin < (end - 1) and original[end - 1].isspace():
         end -= 1
     # print(f"get_allow_range(): begin = {begin}, end = {end}")
-    return ((begin, end), original[begin:end])
+    return (begin, end), original[begin:end]
 
 
 PHRASE_FANCY_WORD_BREAKS = re.compile(r'([^\s^$]+)\s*', flags=re.IGNORECASE)
@@ -1641,8 +1641,10 @@ _LANG_TOOLS = {}
 def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
     global _LANG_TOOLS
     lang_tool_lang = 'en-US'
+    # TODO: normalize language
     if language and not language.startswith('en'):
-        lang_tool_lang = language
+        if len(language) > 2:
+            lang_tool_lang = language[0:2]
     if lang_tool_lang in _LANG_TOOLS:
         return _LANG_TOOLS[lang_tool_lang]
     try:

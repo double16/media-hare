@@ -620,6 +620,15 @@ class ProfanityFilterTest(unittest.TestCase):
         self.assertEqual(expected, filtered)
         self.assertFalse(stopped)
 
+    def test_spellchecker_en(self):
+        spell_checker = profanity_filter.get_spell_checker('en')
+        self.assertTrue(spell_checker.spell('dog'), 'dog')
+        self.assertTrue(spell_checker.spell('cat'), 'cat')
+        self.assertFalse(spell_checker.spell('dron'), 'dron')
+        self.assertTrue(spell_checker.spell('peloton'), 'peloton')
+        self.assertTrue(spell_checker.spell('activewear'), 'activewear')
+        self.assertTrue(spell_checker.spell('amongst'), 'amongst')
+
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
