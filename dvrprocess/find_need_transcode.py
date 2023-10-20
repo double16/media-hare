@@ -12,6 +12,7 @@ import requests
 
 import common
 from common import config, constants
+from dvr_post_process import parse_args as transcode_parse_args
 
 #
 # Developer notes:
@@ -74,7 +75,7 @@ def find_need_transcode_cli(argv):
     try:
         opts, args = getopt.getopt(argv, "hu:t:d:v:a:f:",
                                    ["url=", "terminator=", "dir=", "video=", "audio=", "nagios", "maxres=",
-                                    "framerate="])
+                                    "framerate=", "verbose"])
     except getopt.GetoptError:
         usage()
         return 2
@@ -103,6 +104,8 @@ def find_need_transcode_cli(argv):
                 terminator = '\0'
             else:
                 terminator = arg
+        elif opt == "--verbose":
+            logger.root.setLevel(logging.DEBUG)
 
     if not roots:
         roots = common.get_media_roots()
@@ -196,6 +199,12 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 
             for file in common.filter_for_mkv(files):
                 filepath = os.path.join(root, file)
+
+                # check the transcode overrides based on the folder structure
+                _, transcode_options = transcode_parse_args([filepath])
+                if transcode_options.get('preset', '') == 'copy':
+                    continue
+
                 input_info = common.find_input_info(filepath)
                 if not input_info:
                     continue
@@ -211,19 +220,22 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                 min_framerate = min(map(lambda e: float(eval(e['avg_frame_rate'])), video_streams))
                 if common.should_adjust_frame_rate(current_frame_rate=min_framerate,
                                                    desired_frame_rate=desired_frame_rate):
+                    logger.debug("need frame rate adjustment %s -> %s", min_framerate, desired_frame_rate)
                     need_transcode = True
 
                 if desired_video_codecs is not None:
-                    video_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], video_streams))
+                    video_codecs = set(map(lambda e: common.resolve_human_codec(e[constants.K_CODEC_NAME]), video_streams))
                     if not video_codecs.issubset(set(desired_video_codecs)):
+                        logger.debug("need video codec transcode %s -> %s", video_codecs, desired_video_codecs)
                         need_transcode = True
 
                 audio_streams = list(
                     filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO,
                            input_info['streams']))
                 if desired_audio_codecs is not None:
-                    audio_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], audio_streams))
+                    audio_codecs = set(map(lambda e: common.resolve_human_codec(e[constants.K_CODEC_NAME]), audio_streams))
                     if not audio_codecs.issubset(set(desired_audio_codecs)):
+                        logger.debug("need audio codec transcode %s -> %s", audio_codecs, desired_audio_codecs)
                         need_transcode = True
 
                 if desired_subtitle_codecs is not None:
@@ -232,8 +244,11 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                                input_info['streams']))
                     subtitle_codecs = set(map(lambda e: e[constants.K_CODEC_NAME], subtitle_streams))
                     if len(subtitle_codecs) == 0:
-                        need_transcode = len(audio_streams) > 0
+                        if len(audio_streams) > 0:
+                            logger.debug("need subtitle transcription")
+                            need_transcode = True
                     elif not subtitle_codecs.intersection(set(desired_subtitle_codecs)):
+                        logger.debug("need subtitle transcode %s -> %s", subtitle_codecs, desired_subtitle_codecs)
                         need_transcode = True
 
                 if need_transcode:
@@ -380,6 +395,11 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
             # Verify file hasn't changed
             host_file_path, file_name = _plex_host_name_to_local(file_name, media_roots)
             if host_file_path is None:
+                continue
+
+            # check the transcode overrides based on the folder structure
+            _, transcode_options = transcode_parse_args([host_file_path])
+            if transcode_options.get('preset', '') == 'copy':
                 continue
 
             if os.path.isfile(host_file_path):

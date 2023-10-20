@@ -46,7 +46,7 @@ Cuts commercials only when a season fits closely within the average of length po
     Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
--v, --vcodec=h264[,hvec,...]
+-v, --vcodec=h264[,hevc,...]
     The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 """, file=sys.stderr)
 

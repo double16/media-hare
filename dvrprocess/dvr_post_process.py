@@ -40,7 +40,7 @@ The file closest to the input file will be taken. Comments start with '#'.
     Output command that would be used but do nothing.
 -k, --keep
     Keep original file in a backup prefixed by ".~".
--v, --vcodec=h264[,hvec,...]
+-v, --vcodec=h264[,hevc,...]
     The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 -a, --acodec=opus[,aac,...]
     The audio codec: {config.get_global_config_option('audio', 'codecs')} (default), aac, ac3, ...
@@ -97,7 +97,7 @@ def parse_args(argv) -> (list[str], dict):
     desired_audio_codecs = None
     desired_frame_rate = None
     desired_height = None
-    preset = None
+    preset = os.environ.get('PRESET', config.get_global_config_option('ffmpeg', 'preset'))
     prevent_larger_file = config.get_global_config_boolean('post_process', 'prevent_larger')
     output_type = "mkv"
     tune = None
