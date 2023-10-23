@@ -554,7 +554,6 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                             constants.K_FILTER_VERSION: str(profanity_filter.FILTER_VERSION),
                             constants.K_FILTER_HASH: profanity_filter.compute_filter_hash()})
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
-            self._mock_ffmpeg_extract_subtitle_transcribe_check("transcribed.srt.txt"),
             self._mock_ffmpeg_extract_subtitle_original_words('needs_filtered.srt.txt'),
             self._mock_ffmpeg_extract_subtitle_filtered_words('needs_filtered.srt.txt',
                                                               'needs_filtered.srt.txt'),
@@ -570,9 +569,9 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         os.close(fd)
         self._mock_ffprobe('media_state_unfiltered_sub_orig_transcribed_noversion.json')
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
-            self._mock_ffmpeg_extract_subtitle_transcribe_check("transcribed.srt.txt"),
             self._mock_ffmpeg_extract_audio_for_transcribing("s16le_filtered.raw"),
-            self._mock_ffmpeg_create_with_filtered_streams(5, mapped_stream_count=8),
+            self._mock_ffmpeg_extract_subtitle_original('needs_filtered.srt.txt'),
+            self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 

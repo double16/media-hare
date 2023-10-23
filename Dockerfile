@@ -51,10 +51,10 @@ RUN apt-get -q update && \
     rm -rf /var/lib/apt/lists/* &&\
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
     mkdir /root/.cache/vosk &&\
-    curl -o /tmp/vosk-model-en-us-0.22-lgraph.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-en-us-0.22-lgraph.zip &&\
-    unzip -d /root/.cache/vosk /tmp/vosk-model-en-us-0.22-lgraph.zip &&\
-    curl -o /tmp/vosk-model-small-es-0.22.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-small-es-0.22.zip &&\
-    unzip -d /root/.cache/vosk /tmp/vosk-model-small-es-0.22.zip &&\
+    curl -o /tmp/vosk-model-en-us-0.22.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip &&\
+    unzip -d /root/.cache/vosk /tmp/vosk-model-en-us-0.22.zip &&\
+    curl -o /tmp/vosk-model-es-0.42 -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-es-0.42.zip &&\
+    unzip -d /root/.cache/vosk /tmp/vosk-model-es-0.42 &&\
     python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')" &&\
     rm -rf /tmp/*
 

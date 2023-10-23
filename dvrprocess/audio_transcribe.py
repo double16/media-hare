@@ -20,8 +20,10 @@ from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit
 
 import common
 from common import tools, constants, edl_util, progress
-from profanity_filter import srt_words_to_sentences, SUBTITLE_TEXT_TO_PLAIN_WS, SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS
+from profanity_filter import srt_words_to_sentences, vosk_model, SUBTITLE_TEXT_TO_PLAIN_WS, \
+    SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS
 
+DEFAULT_MODEL = vosk_model('en-us')
 DEFAULT_FREQ = 16000
 DEFAULT_BUFFER_SIZE = 4000
 
@@ -77,6 +79,8 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     GpuInit()
     GpuThreadInit()
 
+    model_name = model_name or DEFAULT_MODEL
+
     words_path, text_path = compute_file_paths(
         input_path=input_path,
         audio_filter=audio_filter,
@@ -91,7 +95,7 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     if no_clobber and os.path.exists(words_path) and os.path.exists(text_path):
         return 0
 
-    model = Model(model_name=model_name or "vosk-model-en-us-0.22-lgraph", lang="en-us")
+    model = Model(model_name=model_name, lang="en-us")
     rec = KaldiRecognizer(model, freq)
     rec.SetWords(True)
     if max_alternatives is not None:
@@ -245,7 +249,7 @@ def audio_transcribe_cli(argv):
             if not line or line.startswith("#"):
                 continue
             if '","' in line:
-                audio_filter, model_name = tuple(map(lambda e: e.strip('"'), line.split('","')))
+                audio_filter, model_name = tuple(map(lambda e: e.strip('"').strip(), line.split('","')))
             else:
                 audio_filter = line.strip()
                 model_name = None
@@ -255,6 +259,7 @@ def audio_transcribe_cli(argv):
     input_info = common.find_input_info(input_path)
     audio_filter_list_progress = progress.progress("audio filters", 1, len(audio_filter_list))
     for af_idx, (audio_filter, model_name) in enumerate(audio_filter_list):
+        model_name = model_name or DEFAULT_MODEL
         logger.info("transcribing: audio_filter=%s, model_name=%s", audio_filter, model_name)
         audio_transcribe(input_path, input_info=input_info, freq=freq, duration=duration,
                          buffer_size=buffer_size, audio_filter=audio_filter, model_name=model_name,
@@ -271,6 +276,7 @@ def audio_transcribe_cli(argv):
     r = fuzz.ratio(expected_text, expected_text)
     print(f"{r}: sanity check expected vs. expected")
     for af_idx, (audio_filter, model_name) in enumerate(audio_filter_list):
+        model_name = model_name or DEFAULT_MODEL
         _, text_path = compute_file_paths(
             input_path=input_path,
             audio_filter=audio_filter,
@@ -336,11 +342,15 @@ def read_text_from_mkv(input_info: dict, duration: float) -> str:
     subtitle = list(filter(lambda e: e.get('tags', {}).get(constants.K_STREAM_TITLE) == constants.TITLE_ORIGINAL, subtitles))
     if not subtitle:
         subtitle = subtitles
-    args = ['-nostdin', "-loglevel", "error",
-            '-i', input_info['format']['filename'],
-            '-map', f'0:{subtitle[0][constants.K_STREAM_INDEX]}',
-            '-c', 'srt',
-            '-f', 'srt', '-']
+    args = ['-nostdin', '-loglevel', 'error',
+            '-i', input_info['format']['filename']]
+    if duration is not None:
+        args.extend(['-to', str(duration + 1)])
+    args.extend([
+        '-map', f'0:{subtitle[0][constants.K_STREAM_INDEX]}',
+        '-c', 'srt',
+        '-f', 'srt', '-'
+    ])
     logger.info('ffmpeg %s', ' '.join(args))
     proc = tools.ffmpeg.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=1, text=True)
     srt = pysrt.stream(proc.stdout)

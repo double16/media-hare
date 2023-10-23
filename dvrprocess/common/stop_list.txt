@@ -34,16 +34,18 @@ cock’s
 cocksucker's
 cocksucker’s
 cock[\s-]?suckers?
-a dick
-real dick
-stupid dick
-his dick
-big dick
-huge dick
-small dick
-hairy dick
-tiny dick
-pencil dick
+a (dick|pecker)
+real (dick|pecker)
+stupid (dick|pecker)
+his (dick|pecker|cock)
+your (dick|pecker|cock)
+my (dick|pecker|cock)
+big (dick|pecker|cock)
+huge (dick|pecker|cock)
+small (dick|pecker|cock)
+hairy (dick|pecker|cock)
+tiny (dick|pecker|cock)
+pencil (dick|pecker|cock)
 dicks
 suck my
 sucks .* my

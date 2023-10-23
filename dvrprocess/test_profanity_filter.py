@@ -620,6 +620,28 @@ class ProfanityFilterTest(unittest.TestCase):
         self.assertEqual(expected, filtered)
         self.assertFalse(stopped)
 
+    def test_regex_pipe(self):
+        text = r'your dick'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertTrue(stopped)
+        text = r'your pecker'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertTrue(stopped)
+        text = r'dickhead'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertFalse(stopped)
+        text = r'pecker-head'
+        expected = r'***'
+        filtered, stopped = profanity_filter.filter_text(self.censor_list, self.stop_list, self.allow_list, text)
+        self.assertEqual(expected, filtered)
+        self.assertFalse(stopped)
+
     def test_spellchecker_en(self):
         spell_checker = profanity_filter.get_spell_checker('en')
         self.assertTrue(spell_checker.spell('dog'), 'dog')

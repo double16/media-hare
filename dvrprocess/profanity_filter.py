@@ -31,8 +31,8 @@ from common import subtitle, tools, config, constants, progress, edl_util
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 12
-AUDIO_TO_TEXT_VERSION = 3
-AUDIO_TO_TEXT_SUBTITLE_VERSION = 4
+AUDIO_TO_TEXT_VERSION = 4
+AUDIO_TO_TEXT_SUBTITLE_VERSION = 5
 
 # exit code for content had filtering applied, file has been significantly changed
 CMD_RESULT_FILTERED = 0
@@ -274,9 +274,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
             if audio_channels > 2:
-                audio_to_text_filter = 'pan=1c|FC<0.3*FL+FC+0.3*FR,anlmdn'
+                audio_to_text_filter = 'pan=1c|FC<0.3*FL+FC+0.3*FR'
             else:
-                audio_to_text_filter = 'anlmdn'
+                audio_to_text_filter = None
             subtitle_srt_words = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
             if subtitle_srt_words and os.stat(subtitle_srt_words).st_size > 0:
                 audio_to_text_version = AUDIO_TO_TEXT_VERSION
@@ -1295,13 +1295,15 @@ def get_allow_range(m: re.Match[str]) -> tuple[tuple[int, int], str]:
 PHRASE_FANCY_WORD_BREAKS = re.compile(r'([^\s^$]+)\s*', flags=re.IGNORECASE)
 PHRASE_BEGINNING_MARKER = re.compile(r'[\^]')
 PHRASE_STARTING_WORD_BREAK = re.compile(r'.')
+PHRASE_GROUPING = re.compile(r'\(')
 
 
 def phrase_to_pattern(phrase):
     """
     Transforms a phrase, which is roughly a regex, into something that will match both SRT and ASS markup.
     """
-    phrase_fancy_word_breaks = PHRASE_FANCY_WORD_BREAKS.sub(r'(\1)' + WORD_BREAKS, phrase)
+    phrase_grouping = PHRASE_GROUPING.sub('(?:', phrase)
+    phrase_fancy_word_breaks = PHRASE_FANCY_WORD_BREAKS.sub(r'(\1)' + WORD_BREAKS, phrase_grouping)
     phrase_beginning_marker = PHRASE_BEGINNING_MARKER.sub(NO_PREVIOUS_WORD, phrase_fancy_word_breaks)
     phrase_starting_word_break = PHRASE_STARTING_WORD_BREAK.sub(WORD_BREAKS, '.') + phrase_beginning_marker
     return phrase_starting_word_break
@@ -1330,13 +1332,17 @@ def vosk_language(language: str) -> str:
 def vosk_model(language: str) -> Union[None, str]:
     """
     Get the Vosk transcriber model to use from the three character language code.
+    See https://alphacephei.com/vosk/models
     :param language: three character language code
     :returns: model name or None to let Vosk choose a model based on the language
     """
-    if language == 'en-us':
-        return 'vosk-model-en-us-0.22-lgraph'
+    if not language:
+        return None
+    if language in ['en-us', 'en']:
+        # vosk-model-en-us-daanzu-20200905 sometimes is better, but not for the average case
+        return 'vosk-model-en-us-0.22'
     elif language == 'es':
-        return 'vosk-model-small-es-0.22'
+        return 'vosk-model-es-0.42'
     return None
 
 
@@ -1662,9 +1668,21 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     Collects words into "sentences". There may be multiple sentences per language rules, but we're calling
     sentences a collection of words.
     Use https://pypi.org/project/language-tool-python/ to correct assembled sentences.
+    Guidelines:
+    https://www.capitalcaptions.com/services/closed-captioning-services/closed-captioning-guidelines/
+    - ... maximum 40 characters.
+    - Maximum two lines.
+    - Adult’s closed caption reading speed set to maximum 250 words per minute/20 characters per second.
+    - Children’s closed caption reading speed set to maximum 200 words per minute/17 characters per second.
+    - Minimum caption display time 1 second.
+    - Maximum caption display time 8 seconds.
+    - Caption timings should be set to sync exactly with the start and stop of audio.
+    - Where caption timings need to be lengthened to allow for reading speed, extension time should be added after speech finishes and never before it starts.
     """
     chars_per_sentence = 40
     linebreaks_per_sentence = 2
+    min_duration_ms = 1000
+    max_duration_ms = 8000
     newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
     sentences: list[SubRipItem] = []
@@ -1677,16 +1695,12 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
         if s is not None:
             if word.start.ordinal - s.end.ordinal > SILENCE_FOR_NEW_SENTENCE:
                 s.text = _add_punctuation(s.text, language)
-                s = None
                 new_s = True
-            elif len(s.text) + 1 + len(word.text) > chars_per_sentence * linebreaks_per_sentence:
+            if word.end.ordinal - s.start.ordinal > max_duration_ms and word.start.ordinal - s.end.ordinal > min_duration_ms:
                 s = None
-                # split = (s.text + ' ' + word.text).split(newline)
-                # if len(split[-1]) > chars_per_sentence:
-                #     if len(split) >= linebreaks_per_sentence:
-                #         s = None
-                #     else:
-                #         s.text = s.text + newline
+            elif s.end.ordinal - s.start.ordinal > min_duration_ms:
+                if len(s.text) + 1 + len(word.text) > chars_per_sentence * linebreaks_per_sentence:
+                    s = None
 
         if s is None:
             if new_s:
