@@ -201,9 +201,10 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                 filepath = os.path.join(root, file)
 
                 # check the transcode overrides based on the folder structure
-                _, transcode_options = transcode_parse_args([filepath])
-                if transcode_options.get('preset', '') == 'copy':
-                    continue
+                if desired_video_codecs != ['all']:
+                    _, transcode_options = transcode_parse_args([filepath])
+                    if transcode_options.get('preset', '') == 'copy':
+                        continue
 
                 input_info = common.find_input_info(filepath)
                 if not input_info:
@@ -398,9 +399,10 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                 continue
 
             # check the transcode overrides based on the folder structure
-            _, transcode_options = transcode_parse_args([host_file_path])
-            if transcode_options.get('preset', '') == 'copy':
-                continue
+            if desired_video_codecs != ['all']:
+                _, transcode_options = transcode_parse_args([host_file_path])
+                if transcode_options.get('preset', '') == 'copy':
+                    continue
 
             if os.path.isfile(host_file_path):
                 current_file_size = os.path.getsize(host_file_path)

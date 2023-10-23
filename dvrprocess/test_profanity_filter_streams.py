@@ -580,7 +580,6 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         os.close(fd)
         self._mock_ffprobe('media_state_unfiltered_sub_orig_transcribed_noversion.json')
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
-            self._mock_ffmpeg_extract_subtitle_transcribe_check("needs_filtered.srt.txt"),
             self._mock_ffmpeg_extract_audio_for_transcribing("s16le_not_filtered.raw"),
             self._mock_ffmpeg_extract_subtitle_original('not_filtered.ssa.txt'),
             self._mock_ffmpeg_create_with_nofiltered_streams(4, mapped_stream_count=5),
