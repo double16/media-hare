@@ -29,6 +29,76 @@ RUN cd ccextractor/linux &&\
     ./ccextractor --version &&\
     cp ccextractor /usr/local/bin
 
+#FROM ubuntu:23.04 as voskbuild
+FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 as voskbuild
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TZ=Etc/UTC
+
+RUN apt-get -q update &&\
+#    apt-get install -y curl &&\
+#    curl -o /tmp/cuda-keyring_1.1-1_all.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb &&\
+#    dpkg -i /tmp/cuda-keyring_1.1-1_all.deb &&\
+#    apt-get update &&\
+    apt-get install -y --no-install-recommends \
+#        cuda-toolkit \
+#        build-essential \
+        wget \
+        bzip2 \
+        unzip \
+        xz-utils \
+        g++ \
+        make \
+        cmake \
+        git \
+        python3 \
+        python3-dev \
+        python3-pip \
+        zlib1g-dev \
+        automake \
+        autoconf \
+        libtool \
+        pkg-config \
+        ca-certificates
+
+RUN git clone -b vosk --single-branch https://github.com/alphacep/kaldi /opt/kaldi \
+    && git clone https://github.com/alphacep/vosk-api /opt/vosk-api \
+#    && git clone -c feature.manyFiles=true --single-branch https://github.com/spack/spack.git /opt/spack \
+    && true
+
+#ENV SPACK_GCC_VER=11.4.0
+#ENV SPACK_GCC_LOAD=". /opt/spack/share/spack/setup-env.sh && spack install gcc@${SPACK_GCC_VER}"
+#RUN . /opt/spack/share/spack/setup-env.sh \
+#    && spack install gcc@${SPACK_GCC_VER}
+
+ENV SPACK_GCC_LOAD="true"
+
+RUN cd /opt/kaldi/tools \
+    && ${SPACK_GCC_LOAD} \
+    && sed -i 's:status=0:exit 0:g' extras/check_dependencies.sh \
+    && sed -i 's:--enable-ngram-fsts:--enable-ngram-fsts --disable-bin:g' Makefile \
+    && make -j $(nproc) openfst cub
+
+RUN cd /opt/kaldi/tools \
+    && ${SPACK_GCC_LOAD} \
+    && extras/install_openblas_clapack.sh
+
+RUN cd /opt/kaldi/src \
+    && ${SPACK_GCC_LOAD} \
+    && ./configure --mathlib=OPENBLAS_CLAPACK --shared \
+    && sed -i 's:-msse -msse2:-msse -msse2:g' kaldi.mk \
+    && sed -i 's: -O1 : -O3 :g' kaldi.mk \
+    && make -j $(nproc) online2 lm rnnlm cudafeat cudadecoder
+
+RUN ${SPACK_GCC_LOAD} \
+    && pip3 install --upgrade websockets cffi \
+    && cd /opt/vosk-api/src \
+    && HAVE_CUDA=1 HAVE_MKL=0 KALDI_ROOT=/opt/kaldi make -j $(nproc)
+
+RUN ${SPACK_GCC_LOAD} \
+    && cd /opt/vosk-api/python \
+    && python3 ./setup.py install
+
 FROM ubuntu:23.04
 
 ARG SYSTEMCTL_VER=1.5.4505
@@ -44,7 +114,11 @@ RUN apt-get -q update && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat59 libsdl1.2-compat libatomic1 &&\
-    pip --no-input install --break-system-packages --compile --ignore-installed -r /tmp/requirements.txt && \
+    curl -o /tmp/cuda-keyring_1.1-1_all.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb &&\
+    dpkg -i /tmp/cuda-keyring_1.1-1_all.deb &&\
+    apt-get update &&\
+    apt-get install -y cuda-toolkit &&\
+    pip --no-input install --break-system-packages --compile --ignore-installed -r /tmp/requirements.txt &&\
     apt-get remove -y python3-pip software-properties-common &&\
     apt-get autoremove -y &&\
     apt-get clean &&\
@@ -77,6 +151,8 @@ COPY SubtitleEdit-Settings.xml /usr/share/subtitle-edit/Settings.xml
 ADD subtitle-edit /usr/local/bin/
 COPY --from=comskipbuild /usr/local/bin/comskip /usr/local/bin
 COPY --from=ccbuild /usr/local/bin/ccextractor /usr/local/bin
+RUN rm -rf /usr/local/lib/python3.11/dist-packages/vosk*
+COPY --from=voskbuild /usr/local/lib/python3.10/dist-packages/vosk-0.3.45-py3.10.egg /usr/local/lib/python3.11/dist-packages/
 ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
