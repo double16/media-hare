@@ -484,7 +484,10 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                                             },
                                             error_callback=common.error_callback_dump))
 
-        video_stats_progress = progress.progress('video stats', 0, len(results) - 1)
+        csv_config_d = dict(zip(csv_configs, csv_values))
+        video_stats_progress = progress.progress(
+            'video stats '+','.join(map(lambda k: f"{k[1]}={csv_config_d[k]}", csv_config_d.keys())),
+            0, len(results) - 1)
         try:
             for result_idx, result in enumerate(results):
                 if check_compute and common.should_stop_processing():

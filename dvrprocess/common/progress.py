@@ -127,7 +127,7 @@ class ProgressLog(Progress):
     def stop(self, msg: Union[str, None] = None) -> None:
         super().stop(msg)
         if msg is None:
-            msg = "stopped"
+            msg = "complete"
         _logger.info("%s: %s, elapsed %s", self.task, msg, self.elapsed_human_duration())
 
     def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None, end: Union[int, None] = None) -> None:

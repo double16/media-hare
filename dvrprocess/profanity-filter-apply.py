@@ -37,6 +37,8 @@ This program will run only if configuration profanity_filter.enable is set to tr
 -t, --time-limit={config.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 -p, --processes=2
+--ignore-compute
+    Ignore current compute availability.
 -s, --selector={','.join(ProfanityFilterSelector.__members__.keys())}
     Limit which media files will be updated.
         unfiltered: only media that has never been filtered
@@ -238,7 +240,7 @@ def profanity_filter_apply_cli(argv) -> int:
         opts, args = getopt.getopt(list(argv),
                                    "fnb:t:p:u:s:",
                                    ["force", "dry-run", "work-dir=", "bytes-limit=", "time-limit=", "processes=",
-                                    "url=", "selector=", "verbose", "no-curses"])
+                                    "url=", "selector=", "verbose", "no-curses", "ignore-compute"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -259,6 +261,8 @@ def profanity_filter_apply_cli(argv) -> int:
             time_limit = config.parse_seconds(arg)
         elif opt in ["-p", "--processes"]:
             processes = int(arg)
+            check_compute = False
+        elif opt == '--ignore-compute':
             check_compute = False
         elif opt in ["-u", "--url"]:
             if arg == '.' or len(arg) == 0:

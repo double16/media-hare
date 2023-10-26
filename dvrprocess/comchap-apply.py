@@ -189,7 +189,7 @@ def comchap_apply_cli(argv):
     delete_log = True
 
     processes = config.get_global_config_int('background_limits', 'processes',
-                                             fallback=max(1, int(common.core_count() / 3) - 1))
+                                             fallback=max(1, int(common.core_count() / 2) - 1))
 
     try:
         opts, args = getopt.getopt(list(argv), "nfb:t:p:",

@@ -4,7 +4,7 @@ set -e
 
 [ -z "${TVSHOW_SUMMARY_PATH}" ] && exit 0
 
-# random sleep to prevent multiple containers running at the exact same time
+# random sleep to prevent multiple programs running at the exact same time
 sleep $((5 + RANDOM % 30))
 
 mkdir -p "${TVSHOW_SUMMARY_PATH}"
