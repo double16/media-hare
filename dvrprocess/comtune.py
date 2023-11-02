@@ -72,12 +72,26 @@ class ComskipGene(object):
 
 
 GENES: list[ComskipGene] = [
-    # 43 - uniform frame, logo, fuzzy logic, aspect ratio (plex 1.25 value)
-    # 47 - uniform frame, logo, scene change, fuzzy logic, aspect ratio
-    # 111 - uniform frame, logo, scene change, fuzzy logic, aspect ratio, silence
-    # 175 - uniform frame, logo, scene change, fuzzy logic, aspect ratio, cut scenes
-    # 239 - uniform frame, logo, scene change, fuzzy logic, aspect ratio, silence, cut scenes
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'detect_method'), True, "", False, [43, 47, 111, 239], int, 239),
+    # Detection Methods
+    # 	  1 - Uniform Frame
+    # 	  2 - Logo
+    # 	  4 - Scene Change
+    # 	  8 - Resolution Change
+    # 	 16 - Closed Captions
+    # 	 32 - Aspect Ratio
+    # 	 64 - Silence
+    # 	128 - CutScenes
+    # 	255 - USE ALL AVAILABLE
+    #
+    # 41 - uniform frame, resolution change, aspect ratio
+    # 43 - uniform frame, logo, resolution change, aspect ratio (plex 1.25 value)
+    # 47 - uniform frame, logo, scene change, resolution change, aspect ratio
+    # 111 - uniform frame, logo, scene change, resolution change, aspect ratio, silence
+    # 175 - uniform frame, logo, scene change, resolution change, aspect ratio, cut scenes
+    # 237 - uniform frame, scene change, resolution change, aspect ratio, silence, cut scenes
+    # 239 - uniform frame, logo, scene change, resolution change, aspect ratio, silence, cut scenes
+    # 255 - everything
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'detect_method'), True, "", False, [41, 43, 47, 111, 237, 239, 255], int, 239),
     ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_threshold'), False, "", True, [0.70, 0.75, 0.90], [float, 2],
                 0.75),
     ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_filter'), False, "", True, [0, 2, 4], int, 0),

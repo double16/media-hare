@@ -361,11 +361,15 @@ def duration_error_range_seconds(average_duration, strict=False, sigma=None):
     if sigma is not None:
         return [sigma, sigma]
 
-    if average_duration < 1850:
-        if strict:
-            return [30, 30]
-        else:
-            return [60, 60]
+    # It seems reasonable a short show should have less deviation. That isn't the case in practice. Some of the
+    # deviation is from the DVR start/stop time, which is based on minute accuracy. Average commercial length time
+    # doesn't deviate much based on show length, but rather the number of commercials.
+    #
+    # if average_duration < 1850:
+    #     if strict:
+    #         return [30, 30]
+    #     else:
+    #         return [60, 60]
 
     if strict:
         return [60, 60]
