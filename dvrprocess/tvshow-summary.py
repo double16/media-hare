@@ -150,7 +150,7 @@ def read_cached_json(cache_dir, cache_filename, consider_expiry=True):
     if (('year' in cached_data)
             and int(cached_data['year']) > 1900
             and 'expected' in cached_data
-            and len(cached_data['expected'].get('seasons', []) > 0)):
+            and len(cached_data['expected'].get('seasons', [])) > 0):
         last_year = int(cached_data['year']) + int(max(cached_data['expected']['seasons']))
         if last_year < (datetime.datetime.now().date().year - 2):
             expiry_days = 180

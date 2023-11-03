@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import getopt
+import json
 import logging
 import os
 import random
@@ -11,7 +12,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 import common
-from common import config, constants
+from common import config, constants, tools
 from dvr_post_process import parse_args as transcode_parse_args
 
 #
@@ -20,13 +21,6 @@ from dvr_post_process import parse_args as transcode_parse_args
 # Shows for a section: /library/sections/2/all from Directory.key in section
 # All Episodes: /library/metadata/83179/allLeaves from Directory.key in show
 #
-
-# TODO: These time multipliers are very specific to my hardware. They should be based on the number of cores,
-#  configured preset, codec, and will probably be wildly inaccurate :p
-TRANSCODE_MULTIPLER_480 = 2.0
-TRANSCODE_MULTIPLER_720 = 0.8
-TRANSCODE_MULTIPLER_1080 = 0.5
-TRANSCODE_MULTIPLER_4K = 0.2
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +113,6 @@ def find_need_transcode_cli(argv):
     if nagios_output:
         file_names = set()
         runtime_minutes = 0
-        transcode_minutes = 0
         transcode_details = []
         for file_info in need_transcode_generator(plex_url=plex_url, media_paths=media_paths, media_roots=roots,
                                                   desired_video_codecs=desired_video_codecs,
@@ -128,17 +121,16 @@ def find_need_transcode_cli(argv):
                                                   desired_frame_rate=desired_frame_rate):
             file_names.update([file_info.file_name])
             runtime_minutes += file_info.runtime
-            transcode_minutes += file_info.transcode_time
             transcode_details.extend(
                 [
-                    f"{file_info.file_name};{file_info.video_resolution};{file_info.framerate};{file_info.transcode_time};{file_info.runtime}"])
+                    f"{file_info.file_name};{file_info.video_resolution};{file_info.framerate};{file_info.runtime}"])
 
         # one week
-        if transcode_minutes > 10080:
+        if runtime_minutes > 10080:
             level = "CRITICAL"
             code = 2
         # two days
-        elif transcode_minutes > 2880:
+        elif runtime_minutes > 2880:
             level = "WARNING"
             code = 1
         else:
@@ -146,7 +138,8 @@ def find_need_transcode_cli(argv):
             code = 0
 
         print(
-            f"TRANSCODE_PENDING {level}: {round(transcode_minutes / 60, 2)}h, runtime: {round(runtime_minutes / 60, 2)}h, files: {len(file_names)} | TRANSCODE_PENDING;{transcode_minutes};{runtime_minutes};{len(file_names)}")
+            f"TRANSCODE_PENDING {level}: {round(runtime_minutes / 60, 2)}h, files: {len(file_names)}"
+            f" | TRANSCODE_PENDING;{runtime_minutes};{len(file_names)}")
         for e in transcode_details:
             print(e)
         return code
@@ -165,27 +158,28 @@ class TranscodeFileInfo(object):
 
     def __init__(self, file_name: str, host_file_path: str, item_key: Union[str, None], video_resolution: int,
                  runtime: int,
-                 framerate: Union[None, float] = None, library: Union[None, str] = None):
+                 framerate: Union[None, float] = None, library: Union[None, str] = None,
+                 tags: Union[None, dict] = None):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.item_key = item_key
         self.video_resolution = video_resolution
         self.runtime = runtime
-        self.transcode_time = runtime
         self.framerate = framerate
         self.library = library
+        self._tags = tags
 
-        if video_resolution is not None and runtime is not None:
-            if video_resolution <= 480:
-                multiplier = TRANSCODE_MULTIPLER_480
-            elif video_resolution <= 720:
-                multiplier = TRANSCODE_MULTIPLER_720
-            elif video_resolution <= 1080:
-                multiplier = TRANSCODE_MULTIPLER_1080
+    @property
+    def tags(self):
+        if self._tags is None:
+            if self.host_file_path and os.path.isfile(self.host_file_path):
+                self._tags = json.loads(tools.ffprobe.check_output(
+                    ['-v', 'quiet', '-print_format', 'json', '-show_format', self.host_file_path])).get(
+                    'format', {}).get('tags', {})
             else:
-                multiplier = TRANSCODE_MULTIPLER_4K
-            # TODO: base upon available compute, codec and preset
-            self.transcode_time = int(runtime / multiplier)
+                self._tags = {}
+            logger.debug("%s: found tags %s", self.host_file_path, self._tags)
+        return self._tags
 
 
 def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desired_video_codecs: list[str],
@@ -255,7 +249,8 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                 if need_transcode:
                     yield TranscodeFileInfo(file_name=file, host_file_path=filepath, video_resolution=min_height,
                                             runtime=int(float(input_info[constants.K_FORMAT]['duration'])),
-                                            framerate=min_framerate, item_key=None)
+                                            framerate=min_framerate, item_key=None,
+                                            tags=input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}))
 
 
 def need_transcode_generator(

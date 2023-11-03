@@ -146,7 +146,7 @@ def parse_args(argv) -> (list[str], dict):
             prevent_larger_file = arg != "false"
         elif opt in ("-w", "--hwaccel"):
             if arg == "false":
-                hwaccel_requested = None
+                hwaccel_requested = hwaccel.HWAccelRequest.NONE.name
             else:
                 hwaccel_requested = arg
         elif opt in ("-s", "--stereo"):
@@ -271,6 +271,7 @@ def do_dvr_post_process(input_file,
     # Temporary File Name for transcoding, we want to keep on the same filesystem as the input
     temp_filename = os.path.join(dir_filename,
                                        f".~{'.'.join(base_filename.split('.')[0:-1])}.transcoded.{output_type}")
+    common.TEMPFILENAMES.append(temp_filename)
     # Hides filename from user UI and Dropbox
     hidden_filename = os.path.join(dir_filename, f".~{base_filename}")
     output_filename = os.path.join(dir_filename, f"{'.'.join(base_filename.split('.')[0:-1])}.{output_type}")
@@ -727,6 +728,7 @@ def dvr_post_process_cli(argv):
                     logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
                     merged_args = parsed[1].copy()
                     merged_args['forgiving'] = True
+                    common.finish()
                     this_file_return_code = do_dvr_post_process(infile, **merged_args)
                 else:
                     raise e

@@ -265,7 +265,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                                   force=force):
         subtitle_srt_generated = ocr_subtitle_bitmap_to_srt(input_info, temp_base, language, verbose=verbose)
 
-    if audio_original:
+    if audio_original and (not filter_skip or current_audio2text_subtitle_version):
         if detect_transcribed_by_version_3(current_audio2text_version, input_info, subtitle_original):
             subtitle_original[constants.K_TAGS][constants.K_AUDIO_TO_TEXT_VERSION] = "3"
             audio_to_text_subtitle_version = "3"
@@ -817,6 +817,28 @@ def compute_filter_hash(censor_list=None, stop_list=None, allow_list=None):
     filter_hash = hashlib.sha512(hash_input.encode("utf-8")).hexdigest()
     logger.info(f"expected filter hash = {filter_hash}, expected filter version = {FILTER_VERSION}")
     return filter_hash
+
+
+def is_filter_version_outdated(tags: dict[str, str]) -> bool:
+    """
+    Determines if the filter version is out of date, indicating more work than usual to update the filter.
+    :param tags:
+    :return: True if the version is out of date or missing.
+    """
+    if tags is None:
+        return True
+    current_filter_version = int(tags.get(constants.K_FILTER_VERSION, "0"))
+    if current_filter_version < FILTER_VERSION:
+        return True
+    if constants.K_AUDIO_TO_TEXT_VERSION in tags:
+        current_audio2text_version = int(tags.get(constants.K_AUDIO_TO_TEXT_VERSION))
+        if current_audio2text_version < AUDIO_TO_TEXT_VERSION:
+            return True
+    if constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION in tags:
+        current_audio2text_subtitle_version = int(tags.get(constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION))
+        if current_audio2text_subtitle_version < AUDIO_TO_TEXT_SUBTITLE_VERSION:
+            return True
+    return False
 
 
 def need_original_subtitle_ocr(subtitle_original: dict, media_duration: float, force: bool) -> bool:
@@ -1646,6 +1668,7 @@ _LANG_TOOLS = {}
 
 def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
     global _LANG_TOOLS
+    # TODO: use the client-server model to reduce resource usage
     lang_tool_lang = 'en-US'
     # TODO: normalize language
     if language and not language.startswith('en'):

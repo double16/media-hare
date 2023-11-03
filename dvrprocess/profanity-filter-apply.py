@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import getopt
-import json
 import logging
 import os
 import sys
@@ -13,9 +12,9 @@ from subprocess import CalledProcessError
 import requests
 
 import common
-from common import tools, constants, config, progress
+from common import constants, config, progress
 from find_need_transcode import need_transcode_generator
-from profanity_filter import profanity_filter, FILTER_VERSION
+from profanity_filter import profanity_filter, is_filter_version_outdated, compute_filter_hash
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ Searches for content on which to apply the profanity filter.
 Usage: {sys.argv[0]} [options] [media_paths|--url=.]
 
 This program will run only if configuration profanity_filter.enable is set to true, or --force is used.
- 
+
 -n, --dry-run
 -f, --force
     Override configuration profanity_filter.enable
@@ -67,28 +66,46 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
     :param selectors:
     :return: generator with same types as input, filtered by arguments
     """
+
+    filter_hash = compute_filter_hash()
+
     if selectors is None:
         selectors = set(ProfanityFilterSelector)
 
+    queue_max_size = 500
+    queue_new_version = []
+    queue_config_change = []
+
+    def lighten_queue(queue: list):
+        count = max(5, ceil(queue_max_size / 10))
+        while count > 0 and queue:
+            count -= 1
+            yield queue.pop(0)
+
     for item in generator:
-        if ProfanityFilterSelector.config_change in selectors:
-            yield item
+        if common.is_truthy(item.tags.get(constants.K_FILTER_SKIP, None)):
             continue
 
-        tags = json.loads(tools.ffprobe.check_output(
-            ['-v', 'quiet', '-print_format', 'json', '-show_format', item.host_file_path])).get(
-            'format', {}).get('tags', {})
+        if constants.K_FILTER_HASH not in item.tags:
+            if ProfanityFilterSelector.unfiltered in selectors:
+                yield item
 
-        if common.is_truthy(tags.get(constants.K_FILTER_SKIP, None)):
-            continue
+        elif is_filter_version_outdated(item.tags):
+            if ProfanityFilterSelector.new_version in selectors:
+                queue_new_version.append(item)
+                if len(queue_new_version) > queue_max_size:
+                    yield from lighten_queue(queue_new_version)
 
-        if ProfanityFilterSelector.unfiltered in selectors and constants.K_FILTER_HASH not in tags:
-            yield item
-            continue
-        if ProfanityFilterSelector.new_version in selectors and constants.K_FILTER_VERSION in tags and int(
-                tags.get(constants.K_FILTER_VERSION)) < FILTER_VERSION:
-            yield item
-            continue
+        elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
+            if ProfanityFilterSelector.config_change in selectors:
+                queue_config_change.append(item)
+                if len(queue_config_change) > queue_max_size:
+                    yield from lighten_queue(queue_config_change)
+
+    while queue_new_version:
+        yield queue_new_version.pop(0)
+    while queue_config_change:
+        yield queue_config_change.pop(0)
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
@@ -118,6 +135,11 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                                          # ensures there is a subtitle stream
                                          desired_subtitle_codecs=['all'])
     generator = __profanity_filter_selector(generator, selectors)
+
+    if dry_run:
+        for tfi in generator:
+            logger.info("Processing %s", tfi.host_file_path)
+        return 0
 
     pool = Pool(processes=processes)
     try:
