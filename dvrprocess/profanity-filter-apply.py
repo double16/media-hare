@@ -76,10 +76,14 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
     queue_new_version = []
     queue_config_change = []
 
+    item_progress = progress.progress("files", 0, 0)
+    item_progress.renderer = lambda pos: f"{pos}/{item_progress.range()[1]}"
+
     def lighten_queue(queue: list):
         count = max(5, ceil(queue_max_size / 10))
         while count > 0 and queue:
             count -= 1
+            item_progress.progress_inc()
             yield queue.pop(0)
 
     for item in generator:
@@ -88,24 +92,31 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
 
         if constants.K_FILTER_HASH not in item.tags:
             if ProfanityFilterSelector.unfiltered in selectors:
+                item_progress.progress_inc(value=1, end_inc=1)
                 yield item
 
         elif is_filter_version_outdated(item.tags):
             if ProfanityFilterSelector.new_version in selectors:
                 queue_new_version.append(item)
+                item_progress.end_inc()
                 if len(queue_new_version) > queue_max_size:
                     yield from lighten_queue(queue_new_version)
 
         elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
             if ProfanityFilterSelector.config_change in selectors:
                 queue_config_change.append(item)
+                item_progress.end_inc()
                 if len(queue_config_change) > queue_max_size:
                     yield from lighten_queue(queue_config_change)
 
     while queue_new_version:
+        item_progress.progress_inc()
         yield queue_new_version.pop(0)
     while queue_config_change:
+        item_progress.progress_inc()
         yield queue_config_change.pop(0)
+
+    item_progress.stop()
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,

@@ -82,12 +82,12 @@ RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -O
 ADD xorg-dummy.conf /etc/
 COPY dvrprocess/comskip*.ini /etc/
 COPY dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini /etc/
-COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
 COPY tvshow-summary.sh /etc/cron.daily/tvshow-summary
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
 COPY langtool-cleanup.sh /etc/cron.daily/langtool-cleanup
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
+COPY profanity-filter-apply.sh /etc/cron.hourly/profanity-filter-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/

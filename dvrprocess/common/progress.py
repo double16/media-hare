@@ -102,12 +102,29 @@ class Progress(object):
             else:
                 self.eta = None
 
+    def progress_inc(self, value: int = 1, msg: Union[None, str] = None, start_inc: Union[None, int] = None,
+                     end_inc: Union[None, int] = None) -> None:
+        if value > 0:
+            start = self._start
+            if start_inc is not None:
+                start += start_inc
+            end = self._end
+            if end_inc is not None:
+                end += end_inc
+            self.progress(self.last_position + value, msg=msg, start=start, end=end)
+
+    def end_inc(self, value: int = 1, msg: Union[None, str] = None):
+        self.progress(self.last_position, msg=msg, end=self._end + value)
+
     def position_str(self, position: int) -> str:
         if self.renderer is None:
             if self.pct is not None and 0 < self.pct <= 100:
                 return f"{self.pct:>3}%"
             return ""
         return self.renderer(position)
+
+    def range(self) -> tuple[int, int]:
+        return self._start, self._end
 
 
 class ProgressLog(Progress):
@@ -133,10 +150,14 @@ class ProgressLog(Progress):
     def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None, end: Union[int, None] = None) -> None:
         super().progress(position, msg, start, end)
         if self.update_reporting():
-            if msg:
-                _logger.info("%s %s%% %s - %s", self.task, self.pct, self.remaining_human_duration(), msg)
+            if self.renderer is None:
+                rendered = str(self.pct) + "%"
             else:
-                _logger.info("%s %s%% %s", self.task, self.pct, self.remaining_human_duration())
+                rendered = self.renderer(position)
+            if msg:
+                _logger.info("%s %s %s - %s", self.task, rendered, self.remaining_human_duration(), msg)
+            else:
+                _logger.info("%s %s %s", self.task, rendered, self.remaining_human_duration())
 
 
 class Gauge(object):
