@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Iterable
+from typing import Iterable, Union
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
@@ -61,6 +61,8 @@ Usage: {sys.argv[0]} infile [outfile]
     Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+--crop-frame-fixed=w:h[:x:y]
+    Crop frame to specified values. If x:y are omitted, the frame is centered.
 -v, --vcodec=h264[,hevc,...]
     The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 -n, --dry-run
@@ -73,6 +75,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
            comskipini=None,
            workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False,
            crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
+           crop_frame_fixed: Union[str, None] = None,
            desired_video_codecs: Iterable[str] = None):
 
     if desired_video_codecs is None:
@@ -201,7 +204,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir)
     video_encoder_options_tag_value = []
 
-    crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, common.get_frame_rate(input_info))
+    crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, common.get_frame_rate(input_info), crop_frame_fixed)
     if crop_frame_filter:
         video_filters.append(crop_frame_filter)
 
@@ -556,6 +559,7 @@ def comcut_cli(argv):
     force_encode = False
     dry_run = False
     crop_frame_op = crop_frame.CropFrameOperation.NONE
+    crop_frame_fixed = None
     desired_video_codecs = None
 
     dvrconfig = list(
@@ -565,7 +569,7 @@ def comcut_cli(argv):
         opts, args = getopt.getopt(dvrconfig + list(argv), "pnv:",
                                    ["keep-edl", "keep-meta", "verbose", "debug", "comskip-ini=", "work-dir=",
                                     "preset=", "force-encode", "dry-run", "crop-frame", "crop-frame-ntsc",
-                                    "crop-frame-pal", "vcodec=", "no-curses"])
+                                    "crop-frame-pal", "crop-frame-fixed=", "vcodec=", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -601,6 +605,9 @@ def comcut_cli(argv):
             crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
             crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt == "--crop-frame-fixed":
+            crop_frame_op = crop_frame.CropFrameOperation.FIXED
+            crop_frame_fixed = arg
         elif opt in ("-v", "--vcodec"):
             desired_video_codecs = arg.split(',')
 
@@ -614,6 +621,7 @@ def comcut_cli(argv):
     common.cli_wrapper(comcut_cli_run, args=args, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
                        debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
                        force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op,
+                       crop_frame_fixed=crop_frame_fixed,
                        desired_video_codecs=desired_video_codecs, no_curses=no_curses)
 
 

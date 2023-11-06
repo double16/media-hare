@@ -11,6 +11,7 @@ import tempfile
 from collections.abc import Iterable
 from pathlib import Path
 from tempfile import mkstemp
+from typing import Union
 
 from ass_parser import CorruptAssLineError
 
@@ -70,6 +71,8 @@ The file closest to the input file will be taken. Comments start with '#'.
     Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+--crop-frame-fixed=w:h[:x:y]
+    Crop frame to specified values. If x:y are omitted, the frame is centered.
 -f, --framerate={','.join(constants.FRAME_RATE_NAMES.keys())},24,30000/1001,...
     Adjust the frame rate. If the current frame rate is close, i.e. 30000/1001 vs. 30, the option is ignored.
 -c, --forgiving
@@ -109,6 +112,7 @@ def parse_args(argv) -> (list[str], dict):
     forgiving = None
     profanity_filter = config.get_global_config_boolean('post_process', 'profanity_filter')
     crop_frame_op = crop_frame.CropFrameOperation.NONE
+    crop_frame_fixed = None
     verbose = None
     no_curses = None
 
@@ -118,7 +122,9 @@ def parse_args(argv) -> (list[str], dict):
                                    ["vcodec=", "acodec=", "height=", "output-type=", "tune=", "preset=", "framerate=",
                                     "hwaccel=", "dry-run", "keep",
                                     "prevent-larger=", "stereo", "rerun", "no-rerun", "forgiving",
-                                    "profanity-filter", "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "verbose",
+                                    "profanity-filter",
+                                    "crop-frame", "crop-frame-ntsc", "crop-frame-pal", "crop-frame-fixed=",
+                                    "verbose",
                                     "no-curses"])
     except getopt.GetoptError:
         return None
@@ -169,6 +175,9 @@ def parse_args(argv) -> (list[str], dict):
             crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
             crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt == "--crop-frame-fixed":
+            crop_frame_op = crop_frame.CropFrameOperation.FIXED
+            crop_frame_fixed = arg
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
@@ -192,6 +201,7 @@ def parse_args(argv) -> (list[str], dict):
         'rerun': rerun,
         'profanity_filter': profanity_filter,
         'crop_frame_op': crop_frame_op,
+        'crop_frame_fixed': crop_frame_fixed,
         'forgiving': forgiving,
     }
     if verbose is not None:
@@ -242,6 +252,7 @@ def do_dvr_post_process(input_file,
                         rerun=None,
                         profanity_filter=config.get_global_config_boolean('post_process', 'profanity_filter'),
                         crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
+                        crop_frame_fixed: Union[str, None] = None,
                         forgiving=False,
                         verbose=False,
                         no_curses=False,
@@ -335,7 +346,7 @@ def do_dvr_post_process(input_file,
         if crop_frame_op != crop_frame.CropFrameOperation.NONE:
             logger.warning("Disabling crop frame due to forgiving mode")
     else:
-        crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, frame_rate)
+        crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, frame_rate, crop_frame_fixed)
 
     logger.debug("input video codec = %s, target video codec = %s", input_video_codec, target_video_codec)
     copy_video = not scale_height and crop_frame_filter is None and (
