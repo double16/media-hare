@@ -626,7 +626,7 @@ def comcut_cli(argv):
 
 
 def comcut_cli_run(args: list, delete_edl, delete_meta, verbose, debug, comskipini, workdir, preset, force_encode,
-                   dry_run, crop_frame_op, desired_video_codecs):
+                   dry_run, crop_frame_op, crop_frame_fixed, desired_video_codecs):
 
     atexit.register(common.finish)
 
@@ -635,6 +635,7 @@ def comcut_cli_run(args: list, delete_edl, delete_meta, verbose, debug, comskipi
         this_file_return_code = comcut(infile, outfile, delete_edl=delete_edl, delete_meta=delete_meta, verbose=verbose,
                                        debug=debug, comskipini=comskipini, workdir=workdir, preset=preset,
                                        force_encode=force_encode, dry_run=dry_run, crop_frame_op=crop_frame_op,
+                                       crop_frame_fixed=crop_frame_fixed,
                                        desired_video_codecs=desired_video_codecs)
         if this_file_return_code != 0 and return_code == 0:
             return_code = this_file_return_code
