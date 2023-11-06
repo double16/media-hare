@@ -6,11 +6,12 @@ import math
 import os
 import sys
 from statistics import stdev, mean
+from typing import Union
 
 import common
 from comchap import comchap, get_expected_adjusted_duration
 from comcut import comcut
-from common import crop_frame, config, edl_util
+from common import crop_frame, config, edl_util, progress
 
 VIDEO_MIN_COUNT = 5
 
@@ -46,6 +47,8 @@ Cuts commercials only when a season fits closely within the average of length po
     Detect and crop surrounding frame to one of the NTSC (and HD) common resolutions.
 --crop-frame-pal
     Detect and crop surrounding frame to one of the PAL (and HD) common resolutions.
+--crop-frame-fixed=w:h[:x:y]
+    Crop frame to specified values. If x:y are omitted, the frame is centered.
 -v, --vcodec=h264[,hevc,...]
     The video codec: {config.get_global_config_option('video', 'codecs')} (default), h265, mpeg2.
 """, file=sys.stderr)
@@ -88,6 +91,7 @@ def smart_comcut_cli(argv):
     preset = None
     force_encode = False
     crop_frame_op = crop_frame.CropFrameOperation.NONE
+    crop_frame_fixed = None
     desired_video_codecs = None
 
     dvrconfig = list(
@@ -97,7 +101,7 @@ def smart_comcut_cli(argv):
         opts, args = getopt.getopt(dvrconfig + list(argv), "nkcav:",
                                    ["help", "dry-run", "keep", "commercial-details", "strict", "all", "work-dir=",
                                     "verbose", "sigma=", "preset=", "force-encode", "crop-frame", "crop-frame-ntsc",
-                                    "crop-frame-pal", "vcodec=", "no-curses"])
+                                    "crop-frame-pal", "crop-frame-fixed=", "vcodec=", "no-curses"])
     except getopt.GetoptError:
         usage()
         return 255
@@ -134,6 +138,9 @@ def smart_comcut_cli(argv):
             crop_frame_op = crop_frame.CropFrameOperation.NTSC
         elif opt == "--crop-frame-pal":
             crop_frame_op = crop_frame.CropFrameOperation.PAL
+        elif opt == "--crop-frame-fixed":
+            crop_frame_op = crop_frame.CropFrameOperation.FIXED
+            crop_frame_fixed = arg
         elif opt in ("-v", "--vcodec"):
             desired_video_codecs = arg.split(',')
 
@@ -145,14 +152,14 @@ def smart_comcut_cli(argv):
         workdir = config.get_work_dir()
 
     common.cli_wrapper(smart_comcut_cli_run, args=args, dry_run=dry_run, keep=keep, workdir=workdir, preset=preset,
-                       force_encode=force_encode, crop_frame_op=crop_frame_op,
+                       force_encode=force_encode, crop_frame_op=crop_frame_op, crop_frame_fixed=crop_frame_fixed,
                        desired_video_codecs=desired_video_codecs,
                        commercial_details=commercial_details, strict=strict, all_videos=all_videos, sigma=sigma,
                        no_curses=no_curses)
 
 
 def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encode,
-                         crop_frame_op, desired_video_codecs, commercial_details, strict, all_videos, sigma) -> int:
+                         crop_frame_op, crop_frame_fixed, desired_video_codecs, commercial_details, strict, all_videos, sigma) -> int:
     for arg in args:
         for root, dirs, files in os.walk(arg, topdown=True):
             dirs.sort()
@@ -313,7 +320,9 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                     continue
 
             videos.sort(key=lambda v: v['filepath'])
-            for video in filter(lambda v: v['has_com'], videos):
+            videos_with_com = list(filter(lambda v: v['has_com'], videos))
+            videos_progress = progress.progress("files", 0, len(videos_with_com))
+            for video_idx, video in enumerate(videos_with_com):
                 adjusted_duration = video['adjusted_duration']
                 filepath = video['filepath']
                 this_commercial_break_count = video['commercial_break_count']
@@ -347,12 +356,15 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                         logger.info("cut %s", filepath)
                     else:
                         cut(filepath, keep=keep, workdir=workdir, preset=preset, force_encode=force_encode,
-                            crop_frame_op=crop_frame_op, desired_video_codecs=desired_video_codecs)
+                            crop_frame_op=crop_frame_op, crop_frame_fixed=crop_frame_fixed,
+                            desired_video_codecs=desired_video_codecs)
                 else:
                     logger.error(
                         f"{filepath} comskip FAILURE, {common.seconds_to_timespec(adjusted_duration)}"
                         f", {common.seconds_to_timespec(adjusted_duration - average_adjusted_duration)}"
                         f", {this_commercial_break_count} commercials")
+                videos_progress.progress(video_idx)
+            videos_progress.stop()
 
     return 0
 
@@ -379,6 +391,7 @@ def duration_error_range_seconds(average_duration, strict=False, sigma=None):
 
 def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
         crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
+        crop_frame_fixed: Union[str, None] = None,
         desired_video_codecs=None):
     filepath_stat = os.stat(filepath)
     dirname = os.path.dirname(filepath)
@@ -388,6 +401,7 @@ def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
         return
     cut_return_code = comcut(filepath, tempfilename, delete_edl=False, force_clear_edl=True, workdir=workdir,
                              preset=preset, force_encode=force_encode, crop_frame_op=crop_frame_op,
+                             crop_frame_fixed=crop_frame_fixed,
                              desired_video_codecs=desired_video_codecs)
     if cut_return_code != 0:
         if os.path.exists(tempfilename):
