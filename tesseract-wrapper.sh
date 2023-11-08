@@ -13,11 +13,11 @@ OEM=3
 
 function finish() {
     if [[ -z "${COMPLETE}" ]] || [[ -n "${ABORT}" ]] || [[ -z "${INJECTED}" ]]; then
-        echo "${REAL_TESSERACT}" --oem ${OEM} "${ORIG_OPTS[@]}" >> /var/log/tesseract.log 2>&1
-        exec "${REAL_TESSERACT}" --oem ${OEM} "${ORIG_OPTS[@]}" >> /var/log/tesseract.log 2>&1
+        echo "$(date -Iseconds) ${REAL_TESSERACT}" --oem ${OEM} "${ORIG_OPTS[@]}" >> /var/log/tesseract.log
+        exec "${REAL_TESSERACT}" --oem ${OEM} "${ORIG_OPTS[@]}" > >(tee -a /var/log/tesseract.log) 2> >(tee -a /var/log/tesseract-err.log >&2)
     else
-        echo "${REAL_TESSERACT}" "${ENGINE_OPTS[@]}" >> /var/log/tesseract.log 2>&1
-        exec "${REAL_TESSERACT}" "${ENGINE_OPTS[@]}" >> /var/log/tesseract.log 2>&1
+        echo "$(date -Iseconds) ${REAL_TESSERACT}" "${ENGINE_OPTS[@]}" >> /var/log/tesseract.log
+        exec "${REAL_TESSERACT}" "${ENGINE_OPTS[@]}" > >(tee -a /var/log/tesseract.log) 2> >(tee -a /var/log/tesseract-err.log >&2)
     fi
 }
 trap finish EXIT
@@ -25,7 +25,7 @@ trap finish EXIT
 # Check version
 VERSION="$("${REAL_TESSERACT}" --version 2>&1 | head -n 1 | cut -d ' ' -f 2)"
 if [[ "${VERSION}" =~ ^3[.].* ]]; then
-    exec "${REAL_TESSERACT}" "$@" >> /var/log/tesseract.log 2>&1
+    exec "${REAL_TESSERACT}" "$@" > >(tee -a /var/log/tesseract.log) 2> >(tee -a /var/log/tesseract-err.log >&2)
 fi
 
 # Flag to mark than we found options we are not compatible with
@@ -50,7 +50,7 @@ for OPT in "$@"; do
 
     if [[ -f "${OPT}" ]]; then
       if identify -verbose "${OPT}" | grep -i transpar | grep -v none | grep -q .; then
-        echo "Transparency found" >> /var/log/tesseract.log
+        echo "$(date -Iseconds) Transparency found" >> /var/log/tesseract.log
         identify -verbose "${OPT}" >> /var/log/tesseract.log 2>&1
         exit 255
       fi
