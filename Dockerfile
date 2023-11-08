@@ -65,7 +65,7 @@ RUN apt-get -q update && \
 # This is version 4.1.0, but it doesn't make things better
 # ADD https://github.com/tesseract-ocr/tessdata/raw/4767ea922bcc460e70b87b1d303ebdfed0897da8/eng.traineddata /usr/share/tesseract-ocr/4.00/tessdata/
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.8/SE368.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.13/SE3613.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
     curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/v${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
