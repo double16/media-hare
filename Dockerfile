@@ -51,6 +51,7 @@ RUN apt-get -q update && \
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
+    python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')" &&\
     rm -rf /tmp/*
 
 RUN adduser --system --disabled-password --disabled-login --shell /bin/false --home /home/langtool langtool
@@ -64,7 +65,7 @@ USER root
 # This is version 4.1.0, but it doesn't make things better
 # ADD https://github.com/tesseract-ocr/tessdata/raw/4767ea922bcc460e70b87b1d303ebdfed0897da8/eng.traineddata /usr/share/tesseract-ocr/4.00/tessdata/
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/3.6.13/SE3613.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.1/SE401.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
     curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/v${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
