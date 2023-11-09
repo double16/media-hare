@@ -33,6 +33,7 @@ FROM ubuntu:23.04
 
 ARG SYSTEMCTL_VER=1.5.4505
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANGUAGE_TOOL_PORT=8100
 
 COPY requirements.txt /tmp/
 
@@ -56,8 +57,12 @@ RUN apt-get -q update && \
     unzip -d /root/.cache/vosk /tmp/vosk-model-en-us-0.22.zip &&\
     curl -o /tmp/vosk-model-es-0.42 -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-es-0.42.zip &&\
     unzip -d /root/.cache/vosk /tmp/vosk-model-es-0.42 &&\
-    python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')" &&\
     rm -rf /tmp/*
+
+RUN adduser --system --disabled-password --disabled-login --shell /bin/false --home /home/langtool langtool
+USER langtool
+RUN /usr/bin/python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')"
+USER root
 
 # It appears Ubuntu does not include tesseract models for all OCR engines
 # All of the 4.1.0 training data is available at https://github.com/tesseract-ocr/tessdata/archive/refs/tags/4.1.0.tar.gz
@@ -81,12 +86,10 @@ COPY --from=ccbuild /usr/local/bin/ccextractor /usr/local/bin
 ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
-COPY dvrprocess/comskip*.ini /etc/
-COPY dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini /etc/
+COPY dvrprocess/comskip*.ini dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini language-tool.properties /etc/
 COPY tvshow-summary.sh /etc/cron.daily/tvshow-summary
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
-COPY langtool-cleanup.sh /etc/cron.daily/langtool-cleanup
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
 COPY profanity-filter-apply.sh /etc/cron.hourly/profanity-filter-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
@@ -119,9 +122,11 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/bin/hwaccel-drivers-wrapper /etc/cron.daily/1hwaccel-drivers &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
+    systemctl enable language-tool &&\
     systemctl enable localtime &&\
     systemctl enable hwaccel-drivers &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
+    echo "LANGUAGE_TOOL_PORT=${LANGUAGE_TOOL_PORT}" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 
 CMD [ "/usr/bin/systemctl", "default" ]

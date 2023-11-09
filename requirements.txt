@@ -1,6 +1,6 @@
 ass-parser==1.0
 pysrt==1.1.2
-plexapi==4.15.4
+plexapi==4.15.5
 psutil==5.9.6
 requests==2.31.0
 pygad==3.1.0

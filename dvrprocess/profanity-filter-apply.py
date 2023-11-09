@@ -143,7 +143,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
             logger.info("Processing %s", tfi.host_file_path)
         return 0
 
-    pool = Pool(processes=processes)
+    pool = Pool(processes=processes, maxtasksperchild=10)
     try:
         results = []
         # load the initial workers

@@ -63,7 +63,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
     time_progress = progress.progress("time limit", 0, time_limit)
     time_progress.renderer = common.s_to_ts
 
-    with Pool(processes=processes) as pool:
+    with Pool(processes=processes, maxtasksperchild=10) as pool:
         random.shuffle(media_paths)
         for media_path in media_paths:
             for root, dirs, files in os.walk(media_path, topdown=True):
