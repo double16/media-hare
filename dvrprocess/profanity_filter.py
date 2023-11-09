@@ -1677,8 +1677,15 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
     if lang_tool_lang in _LANG_TOOLS:
         return _LANG_TOOLS[lang_tool_lang]
     try:
-        lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
-        atexit.register(lambda: lang_tool.close())
+        if 'LANGUAGE_TOOL_PORT' in os.environ:
+            lang_tool = language_tool_python.LanguageTool(
+                lang_tool_lang,
+                remote_server=f"http://127.0.0.1:{os.environ['LANGUAGE_TOOL_PORT']}"
+            )
+        else:
+            lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
+            atexit.register(lambda: lang_tool.close())
+
         _LANG_TOOLS[lang_tool_lang] = lang_tool
         return lang_tool
     except Exception as e:

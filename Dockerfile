@@ -33,6 +33,7 @@ FROM ubuntu:23.04
 
 ARG SYSTEMCTL_VER=1.5.4505
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANGUAGE_TOOL_PORT=8100
 
 COPY requirements.txt /tmp/
 
@@ -81,12 +82,10 @@ COPY --from=ccbuild /usr/local/bin/ccextractor /usr/local/bin
 ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
-COPY dvrprocess/comskip*.ini /etc/
-COPY dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini /etc/
+COPY dvrprocess/comskip*.ini dvrprocess/media-hare.defaults.ini dvrprocess/media-hare.ini language-tool.properties /etc/
 COPY tvshow-summary.sh /etc/cron.daily/tvshow-summary
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
-COPY langtool-cleanup.sh /etc/cron.daily/langtool-cleanup
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
 COPY profanity-filter-apply.sh /etc/cron.hourly/profanity-filter-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
@@ -119,9 +118,11 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/bin/hwaccel-drivers-wrapper /etc/cron.daily/1hwaccel-drivers &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
+    systemctl enable language-tool &&\
     systemctl enable localtime &&\
     systemctl enable hwaccel-drivers &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
+    echo "LANGUAGE_TOOL_PORT=${LANGUAGE_TOOL_PORT}" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 
 CMD [ "/usr/bin/systemctl", "default" ]
