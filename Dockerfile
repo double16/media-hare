@@ -57,8 +57,12 @@ RUN apt-get -q update && \
     unzip -d /root/.cache/vosk /tmp/vosk-model-en-us-0.22.zip &&\
     curl -o /tmp/vosk-model-es-0.42 -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-es-0.42.zip &&\
     unzip -d /root/.cache/vosk /tmp/vosk-model-es-0.42 &&\
-    python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')" &&\
     rm -rf /tmp/*
+
+RUN adduser --system --disabled-password --disabled-login --shell /bin/false --home /home/langtool langtool
+USER langtool
+RUN /usr/bin/python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')"
+USER root
 
 # It appears Ubuntu does not include tesseract models for all OCR engines
 # All of the 4.1.0 training data is available at https://github.com/tesseract-ocr/tessdata/archive/refs/tags/4.1.0.tar.gz

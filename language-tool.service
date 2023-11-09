@@ -5,12 +5,12 @@ After=
 [Service]
 Type=simple
 EnvironmentFile=/etc/environment
-ExecStart=/bin/bash -c '/usr/bin/java -Xmx512M -cp $(find /root/.cache/language_tool_python -name languagetool-server.jar) org.languagetool.server.HTTPServer --config /etc/language-tool.properties -p ${LANGUAGE_TOOL_PORT:-8100}'
+ExecStart=/bin/bash -c '/usr/bin/java -Xmx512M -cp $(find /home/langtool/.cache/language_tool_python -name languagetool-server.jar) org.languagetool.server.HTTPServer --config /etc/language-tool.properties -p ${LANGUAGE_TOOL_PORT:-8100}'
 ExecStop=/usr/bin/pkill -f languagetool-server
 StandardOutput=journal
 Restart=on-failure
-#User=nobody
-#Group=nogroup
+User=langtool
+Group=nogroup
 
 [Install]
 WantedBy=multi-user.target
