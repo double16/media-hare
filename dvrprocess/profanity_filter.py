@@ -830,11 +830,11 @@ def is_filter_version_outdated(tags: dict[str, str]) -> bool:
     current_filter_version = int(tags.get(constants.K_FILTER_VERSION, "0"))
     if current_filter_version < FILTER_VERSION:
         return True
-    if constants.K_AUDIO_TO_TEXT_VERSION in tags:
+    if tags.get(constants.K_AUDIO_TO_TEXT_VERSION, None):
         current_audio2text_version = int(tags.get(constants.K_AUDIO_TO_TEXT_VERSION))
         if current_audio2text_version < AUDIO_TO_TEXT_VERSION:
             return True
-    if constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION in tags:
+    if tags.get(constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION, None):
         current_audio2text_subtitle_version = int(tags.get(constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION))
         if current_audio2text_subtitle_version < AUDIO_TO_TEXT_SUBTITLE_VERSION:
             return True
@@ -1668,7 +1668,6 @@ _LANG_TOOLS = {}
 
 def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
     global _LANG_TOOLS
-    # TODO: use the client-server model to reduce resource usage
     lang_tool_lang = 'en-US'
     # TODO: normalize language
     if language and not language.startswith('en'):

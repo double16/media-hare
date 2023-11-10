@@ -462,6 +462,8 @@ def _progress_queue_feed(q: Queue):
             m.apply()
         except Exception as e:
             _logger.error("processing progress", e)
+        finally:
+            q.task_done()
 
 
 def setup_parent_progress() -> Queue:

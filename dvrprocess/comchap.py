@@ -11,6 +11,7 @@ import tempfile
 
 import common
 from common import hwaccel, tools, config, constants, edl_util
+import edl_normalize
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,8 @@ Usage: {sys.argv[0]} infile [outfile]
     Keep the edl in addition to adding chapters to the video
 --only-edl
     Only generate an edl file
+--backup-edl
+    Maintain a backup edl file with a '.bak.edl' extension
 --keep-meta
     Keep the meta data file used to add chapters to the video
 --keep-log
@@ -340,12 +343,14 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     run_comskip = force
     if not os.path.isfile(edlfile):
         if backup_edl and not force and os.path.isfile(edlbakfile):
-            shutil.copyfile(edlbakfile, edlfile)
+            edl_normalize.edl_simplify(edlbakfile, edlfile)
+            common.match_owner_and_perm(edlfile, infile)
         else:
             run_comskip = True
     elif backup_edl:
         if not os.path.isfile(edlbakfile):
-            shutil.copyfile(edlfile, edlbakfile)
+            edl_normalize.edl_normalize(edlfile, edlbakfile)
+            common.match_owner_and_perm(edlbakfile, infile)
 
     if modify_video:
         # the current hash is only available if we're allowed to modify the video
@@ -402,7 +407,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                 raise e
         common.match_owner_and_perm(edlfile, infile)
         if backup_edl or os.path.exists(edlbakfile):
-            shutil.copyfile(edlfile, edlbakfile)
+            edl_normalize.edl_normalize(edlfile, edlbakfile)
             common.match_owner_and_perm(edlbakfile, infile)
 
     if not modify_video:

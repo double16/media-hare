@@ -91,7 +91,7 @@ COPY tvshow-summary.sh /etc/cron.daily/tvshow-summary
 #COPY comchap-apply.sh /etc/cron.daily/comchap-apply
 COPY comtune-apply.sh /etc/cron.daily/comtune-apply
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
-COPY profanity-filter-apply.sh /etc/cron.hourly/profanity-filter-apply
+COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/
@@ -111,7 +111,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/comtune.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/scene-extract.py /usr/local/bin/ &&\
-    ln -s /usr/local/share/dvrprocess/edl-normalize.py /usr/local/bin/ &&\
+    ln -s /usr/local/share/dvrprocess/edl_normalize.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/find_need_transcode.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/find_need_comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/transcode-apply.py /usr/local/bin/ &&\
