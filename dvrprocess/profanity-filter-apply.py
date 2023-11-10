@@ -4,6 +4,8 @@ import logging
 import os
 import sys
 import time
+from concurrent.futures import ProcessPoolExecutor, Future, CancelledError
+from concurrent.futures.process import BrokenProcessPool
 from enum import Enum
 from math import ceil
 from multiprocessing import Pool, TimeoutError
@@ -13,7 +15,7 @@ import requests
 
 import common
 from common import constants, config, progress
-from find_need_transcode import need_transcode_generator
+from find_need_transcode import need_transcode_generator, TranscodeFileInfo
 from profanity_filter import profanity_filter, is_filter_version_outdated, compute_filter_hash
 
 logger = logging.getLogger(__name__)
@@ -124,7 +126,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
     if selectors is None:
         selectors = set(ProfanityFilterSelector)
 
-    bytes_processed = 0
+    bytes_processed = [0]
     bytes_progress = progress.progress("byte limit", 0, size_limit)
     bytes_progress.renderer = config.bytes_to_human_str
     time_start = time.time()
@@ -143,107 +145,88 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
             logger.info("Processing %s", tfi.host_file_path)
         return 0
 
-    pool = Pool(processes=processes, maxtasksperchild=10)
-    try:
-        results = []
-        # load the initial workers
-        for i in range(processes):
+    overall_return_code = [0]
+
+    with ProcessPoolExecutor(max_workers=processes, max_tasks_per_child=10) as executor:
+        def future_callback(future: Future, tfi: TranscodeFileInfo):
+            if future.cancelled():
+                return
+
+            filepath = tfi.host_file_path
             try:
-                tfi = next(generator)
-                results.append([tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter),
-                                                      (tfi.host_file_path,),
-                                                      {'dry_run': dry_run, 'workdir': workdir})])
-            except StopIteration:
-                break
+                return_code = future.result()
+            except CancelledError:
+                return
+            except UnicodeDecodeError as e:
+                # FIXME: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfe in position 1855: invalid start byte
+                logger.error(e.__repr__(), exc_info=e)
+                return_code = 255
+            except (KeyboardInterrupt, BrokenProcessPool):
+                return_code = 130
+            except CalledProcessError as e:
+                return_code = e.returncode
+            except Exception as e:
+                logger.error(e.__repr__(), exc_info=e)
+                executor.shutdown(wait=False, cancel_futures=True)
+                overall_return_code[0] = 255
+                return
 
-        while len(results) > 0:
-            for i in range(len(results)):
-                if i >= len(results):  # results may have changed
-                    break
-                result = results[i]
-                tfi = result[0]
-                filepath = tfi.host_file_path
-                try:
-                    return_code = result[1].get(3)
-                except TimeoutError:
-                    continue
-                except UnicodeDecodeError as e:
-                    # FIXME: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfe in position 1855: invalid start byte
-                    logger.error(e.__repr__(), exc_info=e)
-                    return_code = 255
-                except CalledProcessError as e:
-                    return_code = e.returncode
-                except Exception as e:
-                    logger.error(e.__repr__(), exc_info=e)
-                    pool.terminate()
-                    return 255
+            if return_code == 0:
+                # filtered
+                bytes_processed[0] += os.stat(filepath).st_size
+                bytes_progress.progress(bytes_processed[0])
+                # Run Plex analyze so playback works
+                if tfi.item_key and plex_url:
+                    logger.info(f'HTTP PUT: {plex_url}{tfi.item_key}/analyze')
+                    if not dry_run:
+                        try:
+                            requests.put(f'{plex_url}{tfi.item_key}/analyze')
+                        except requests.exceptions.ConnectTimeout:
+                            pass
+            elif return_code == 1:
+                # marked but content unchanged
+                pass
+            elif return_code == 2:
+                # unchanged
+                pass
+            elif return_code == 130:
+                # user cancelled
+                logger.info("Waiting for pool workers to finish, interrupt again to terminate")
+                executor.shutdown(wait=False, cancel_futures=True)
+            elif return_code == 255:
+                # error
+                pass
 
-                results.pop(i)
+            if 0 < size_limit < bytes_processed[0]:
+                logger.info(
+                    f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed[0])} bytes, size limit of {config.bytes_to_human_str(size_limit)} reached")
+                executor.shutdown(wait=False, cancel_futures=True)
+                return 0
 
-                if return_code == 0:
-                    # filtered
-                    bytes_processed += os.stat(filepath).st_size
-                    bytes_progress.progress(bytes_processed)
-                    # Run Plex analyze so playback works
-                    if tfi.item_key and plex_url:
-                        logger.info(f'HTTP PUT: {plex_url}{tfi.item_key}/analyze')
-                        if not dry_run:
-                            try:
-                                requests.put(f'{plex_url}{tfi.item_key}/analyze')
-                            except requests.exceptions.ConnectTimeout:
-                                pass
-                elif return_code == 1:
-                    # marked but content unchanged
-                    pass
-                elif return_code == 2:
-                    # unchanged
-                    pass
-                elif return_code == 255:
-                    # error
-                    pass
+            duration = time.time() - time_start
+            time_progress.progress(ceil(duration))
+            if 0 < time_limit < duration:
+                logger.info(
+                    f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
+                executor.shutdown(wait=False, cancel_futures=True)
+                return 0
 
-                if 0 < size_limit < bytes_processed:
-                    logger.info(
-                        f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes, size limit of {config.bytes_to_human_str(size_limit)} reached")
-                    return 0
+            if check_compute and common.should_stop_processing():
+                logger.info(f"not enough compute available")
+                executor.shutdown(wait=False, cancel_futures=True)
+                return 0
 
-                duration = time.time() - time_start
-                time_progress.progress(ceil(duration))
-                if 0 < time_limit < duration:
-                    logger.info(
-                        f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
-                    return 0
-
-                if check_compute and common.should_stop_processing():
-                    logger.info(f"not enough compute available")
-                    return 0
-
-                try:
-                    tfi = next(generator)
-                    results.append(
-                        [tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter), (tfi.host_file_path,),
-                                               {'dry_run': dry_run, 'workdir': workdir})])
-                except StopIteration:
-                    pass
-
-    except KeyboardInterrupt:
         try:
-            pool.close()
-            logger.info("Waiting for pool workers to finish, interrupt again to terminate")
-            pool.join()
-        except KeyboardInterrupt:
-            logger.info("Terminating due to user interrupt")
-            pool.terminate()
-            return 130
-    finally:
-        pool.close()
-        logger.info("Waiting for pool workers to finish")
-        pool.join()
-        bytes_progress.stop()
-        time_progress.stop()
+            for tfi in generator:
+                future = executor.submit(common.pool_apply_wrapper(profanity_filter), tfi.host_file_path,
+                                         {'dry_run': dry_run, 'workdir': workdir})
+                future.add_done_callback(lambda f: future_callback(f, tfi))
+        except RuntimeError as e:
+            # executor has been shutdown
+            logger.debug("stopped submitting work due to RuntimeError %s", e)
 
-    logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed)} bytes")
-    return 0
+    logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed[0])} bytes")
+    return overall_return_code[0]
 
 
 def profanity_filter_apply_cli(argv) -> int:
