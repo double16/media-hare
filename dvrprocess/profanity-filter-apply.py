@@ -78,38 +78,28 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
     queue_new_version = []
     queue_config_change = []
 
-    item_progress = progress.progress("files", 0, 0)
-    item_progress.renderer = lambda pos: f"{pos}/{item_progress.range()[1]}"
-
     for item in generator:
         if common.is_truthy(item.tags.get(constants.K_FILTER_SKIP, None)):
             continue
 
         if constants.K_FILTER_HASH not in item.tags:
             if ProfanityFilterSelector.unfiltered in selectors:
-                item_progress.progress_inc(value=1, end_inc=1)
                 yield item
 
         elif is_filter_version_outdated(item.tags):
             if ProfanityFilterSelector.new_version in selectors:
                 if len(queue_new_version) < queue_max_size:
                     queue_new_version.append(item)
-                    item_progress.end_inc()
 
         elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
             if ProfanityFilterSelector.config_change in selectors:
                 if len(queue_config_change) < queue_max_size:
                     queue_config_change.append(item)
-                    item_progress.end_inc()
 
     while queue_new_version:
-        item_progress.progress_inc()
         yield queue_new_version.pop(0)
     while queue_config_change:
-        item_progress.progress_inc()
         yield queue_config_change.pop(0)
-
-    item_progress.stop()
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
@@ -147,11 +137,15 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
     overall_return_code = [0]
 
-    with ProcessPoolExecutor(max_workers=processes, max_tasks_per_child=10) as executor:
+    item_progress = progress.progress("files", 0, 0)
+    item_progress.renderer = lambda pos: f"{pos}/{item_progress.range()[1]}"
+
+    with ProcessPoolExecutor(max_workers=processes) as executor:
         def future_callback(future: Future, tfi: TranscodeFileInfo):
             if future.cancelled():
                 return
 
+            item_progress.progress_inc()
             filepath = tfi.host_file_path
             try:
                 return_code = future.result()
@@ -161,8 +155,10 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 # FIXME: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfe in position 1855: invalid start byte
                 logger.error(e.__repr__(), exc_info=e)
                 return_code = 255
-            except (KeyboardInterrupt, BrokenProcessPool):
+            except KeyboardInterrupt:
                 return_code = 130
+            except BrokenProcessPool:
+                return_code = 255
             except CalledProcessError as e:
                 return_code = e.returncode
             except Exception as e:
@@ -193,6 +189,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 # user cancelled
                 logger.info("Waiting for pool workers to finish, interrupt again to terminate")
                 executor.shutdown(wait=False, cancel_futures=True)
+                overall_return_code[0] = 130
             elif return_code == 255:
                 # error
                 pass
@@ -221,9 +218,12 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 future = executor.submit(common.pool_apply_wrapper(profanity_filter), tfi.host_file_path,
                                          {'dry_run': dry_run, 'workdir': workdir})
                 future.add_done_callback(lambda f: future_callback(f, tfi))
+                item_progress.end_inc()
         except RuntimeError as e:
             # executor has been shutdown
-            logger.debug("stopped submitting work due to RuntimeError %s", e)
+            logger.info("stopped submitting work due to RuntimeError %s", e)
+
+    item_progress.stop()
 
     logger.info(f"Exiting normally after processing {config.bytes_to_human_str(bytes_processed[0])} bytes")
     return overall_return_code[0]
