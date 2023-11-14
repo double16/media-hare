@@ -23,7 +23,7 @@ import common
 from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_adjusted_duration, \
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
-    get_comskip_hwassist_options
+    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options
 from common import tools, config, constants, edl_util, progress
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
@@ -97,6 +97,10 @@ GENES: list[ComskipGene] = [
     ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_filter'), False, "", True, [0, 2, 4], int, 0),
     # ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'connect_blocks_with_logo'), True, "", True, [0, 1], int, 1),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'), True, "", True, [1, 3, 5], int, 1),
+    # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo'), True, "", True, [0, 1, 3, 5], int, 5),
+    # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo_tail'), True, "", True, [0, 1, 2, 3], int, 0),
+    # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'before_logo'), True, "", False, [0, 999, 1, 3], int, 0),
+    # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'after_logo'), True, "", False, [0, 999, 1, 3], int, 0),
     # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 20),
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_volume'), True, "", False, range(250, 1000, 50), int, 500),
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'non_uniformity'), True, "", False, range(250, 1000, 50), int, 500),
@@ -120,6 +124,8 @@ GENES: list[ComskipGene] = [
                 [float, 2], 2.0),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'logo_present_modifier'), True, "", True, numpy.arange(0.005, 0.0151, 0.005),
                 [float, 3], 0.01),
+    # punish bitmask: 1=brightness, 2=uniformity 4=volume, 8=silence amount, 16=scene change rate
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish'), True, "", True, [0, 4, 4+8, 16, 4+8+16], int, 0),
     ComskipGene((INI_GROUP_GLOBAL_REMOVES, 'delete_show_before_or_after_current'), True, "", False, [0, 1], int, 0),
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'), True, "", False, [0, 4], int, 0),
 ]
