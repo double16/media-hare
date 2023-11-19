@@ -320,6 +320,7 @@ jack ass
 jack asses
 jack-ass
 jack-asses
+jack[\s-]?weed
 dumbass
 dumbasses
 dumb ass

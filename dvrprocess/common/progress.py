@@ -7,6 +7,7 @@ import threading
 import time
 from math import ceil
 from multiprocessing import Queue
+from queue import Empty
 from typing import Union, Dict
 
 import psutil
@@ -147,7 +148,8 @@ class ProgressLog(Progress):
             msg = "complete"
         _logger.info("%s: %s, elapsed %s", self.task, msg, self.elapsed_human_duration())
 
-    def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None, end: Union[int, None] = None) -> None:
+    def progress(self, position: int, msg: Union[str, None] = None, start: Union[int, None] = None,
+                 end: Union[int, None] = None) -> None:
         super().progress(position, msg, start, end)
         if self.update_reporting():
             if self.renderer is None:
@@ -231,6 +233,9 @@ class Gauge(object):
         return self.critical_range[0] <= value <= self.critical_range[1]
 
 
+_GAUGES: list[Gauge] = []
+
+
 class GaugeLog(Gauge):
     """
     Gauge that logs the value.
@@ -238,16 +243,28 @@ class GaugeLog(Gauge):
 
     def __init__(self, name: str, low: float = None, high: float = None):
         super().__init__(name, low, high)
+        global _GAUGES
+        _GAUGES.append(self)
 
     def value(self, value: float):
         super().value(value)
-        if self.update_reporting():
-            level = logging.INFO
-            if self.is_critical(value):
-                level = logging.CRITICAL
-            elif self.is_warning(value):
-                level = logging.WARNING
-            _logger.log(level, "%s %s", self.name, self.value_str(value))
+        global _GAUGES
+        reporting_gauges = list(filter(lambda g: g.last_value is not None, _GAUGES))
+        updates = [g.update_reporting() for g in reporting_gauges]
+        if any(updates):
+            levels = [logging.INFO, logging.WARNING, logging.CRITICAL]
+            gauges: dict[int, list[Gauge]] = {level: list() for level in levels}
+            for gauge in reporting_gauges:
+                level = logging.INFO
+                if self.is_critical(value):
+                    level = logging.CRITICAL
+                elif self.is_warning(value):
+                    level = logging.WARNING
+                gauges[level].append(gauge)
+
+            for level in levels:
+                if len(gauges[level]) > 0:
+                    _logger.log(level, ", ".join(map(lambda g: f"{g.name} {g.value_str(g.last_value)}", gauges[level])))
 
 
 class ProgressReporter(object):
@@ -307,6 +324,7 @@ class ProgressStartMessage(object):
     """
     Object intended to be placed on the queue.
     """
+
     def __init__(self, task: str, start: int, end: int, msg: Union[None, str] = None):
         self.task = task
         self.start = start
@@ -321,6 +339,7 @@ class ProgressProgressMessage(object):
     """
     Object intended to be placed on the queue.
     """
+
     def __init__(self, task: str, position: int, msg: Union[None, str] = None, start: Union[None, int] = None,
                  end: Union[None, int] = None):
         self.task = task
@@ -340,6 +359,7 @@ class ProgressStopMessage(object):
     """
     Object intended to be placed on the queue.
     """
+
     def __init__(self, task: str, msg: Union[str, None] = None):
         self.task = task
         self.msg = msg
@@ -407,6 +427,7 @@ class SubprocessProgress(Progress):
     """
     Sends messages to the queue.
     """
+
     def __init__(self, task: str, queue: Queue):
         super().__init__(task)
         self.queue = queue
@@ -454,7 +475,9 @@ def _progress_queue_feed(q: Queue):
     """
     while True:
         try:
-            m = q.get(True)
+            m = q.get(block=False, timeout=60)
+        except Empty:
+            continue
         except (ValueError, EOFError, BrokenPipeError):
             # queue is closed
             return
@@ -474,8 +497,8 @@ def setup_parent_progress() -> Queue:
     if _PROGRESS_QUEUE is not None:
         return _PROGRESS_QUEUE
     _PROGRESS_QUEUE = multiprocessing.Manager().Queue()
-    thread = threading.Thread(target=_progress_queue_feed, args=(_PROGRESS_QUEUE,), name="Progress Processor")
-    thread.daemon = True
+    thread = threading.Thread(target=_progress_queue_feed, args=(_PROGRESS_QUEUE,), name="Progress Processor",
+                              daemon=True)
     thread.start()
     return _PROGRESS_QUEUE
 
