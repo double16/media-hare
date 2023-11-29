@@ -1062,6 +1062,9 @@ class LocalKaldiRecognizer(BaseKaldiRecognizer):
             self.rec = None
 
 
+REMOTE_KALDI_SERVER = None
+
+
 class RemoteKaldiRecognizer(BaseKaldiRecognizer):
     def __init__(self, vosk_language: str, freq: int):
         super().__init__(vosk_language, freq)
@@ -1096,7 +1099,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     2. --tasks is being set but so far it doesn't seem to yield more cores used
     :return: srt filename for words
     """
-    global debug
+    global debug, REMOTE_KALDI_SERVER
 
     freq = 16000
     chunk_size = ceil(freq * 0.4)
@@ -1120,9 +1123,13 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
 
     _vosk_language = vosk_language(language)
     try:
-        rec: BaseKaldiRecognizer = RemoteKaldiRecognizer(_vosk_language, freq)
+        if REMOTE_KALDI_SERVER is None or REMOTE_KALDI_SERVER:
+            rec: BaseKaldiRecognizer = RemoteKaldiRecognizer(_vosk_language, freq)
+        else:
+            rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
     except BaseException as e:
-        logger.info("Remote transcriber not available", e)
+        logger.debug("Remote transcriber not available")
+        REMOTE_KALDI_SERVER = False
         rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
 
     logger.debug(tools.ffmpeg.array_as_command(extract_command))

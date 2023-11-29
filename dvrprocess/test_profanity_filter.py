@@ -12,6 +12,7 @@ class ProfanityFilterTest(unittest.TestCase):
         self.censor_list = profanity_filter.load_censor_list()
         self.stop_list = profanity_filter.load_stop_list()
         self.allow_list = profanity_filter.load_allow_list()
+        profanity_filter.REMOTE_KALDI_SERVER = False
 
     def test_filter_text(self):
         """
