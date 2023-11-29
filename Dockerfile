@@ -39,7 +39,6 @@ COPY requirements.txt /tmp/
 
 # mono-* deps line must match Subtitle-Edit version
 # hunspell needed for Subtitle-Edit
-# vosk models: https://alphacephei.com/vosk/models
 # vosk doesn't install libatomic1 dep on aarch64
 RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
@@ -52,11 +51,6 @@ RUN apt-get -q update && \
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
-    mkdir /root/.cache/vosk &&\
-    curl -o /tmp/vosk-model-en-us-0.22.zip -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip &&\
-    unzip -d /root/.cache/vosk /tmp/vosk-model-en-us-0.22.zip &&\
-    curl -o /tmp/vosk-model-es-0.42 -L --silent --fail https://alphacephei.com/vosk/models/vosk-model-es-0.42.zip &&\
-    unzip -d /root/.cache/vosk /tmp/vosk-model-es-0.42 &&\
     rm -rf /tmp/*
 
 RUN adduser --system --disabled-password --disabled-login --shell /bin/false --home /home/langtool langtool

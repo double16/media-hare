@@ -17,6 +17,8 @@ from bisect import bisect_left, bisect_right
 from math import ceil, floor
 from pathlib import Path
 from typing import Tuple, Union
+from websockets.sync.client import connect as wsconnect
+from vosk import Model, KaldiRecognizer, SetLogLevel
 
 import language_tool_python
 import pysrt
@@ -53,8 +55,6 @@ SILENCE_FOR_NEW_SENTENCE = 1200
 SILENCE_FOR_SOUND_EFFECT = 500
 
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
-
-_VOSK_MODEL_CACHE = weakref.WeakValueDictionary()
 
 logger = logging.getLogger(__name__)
 
@@ -1020,6 +1020,74 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
     return subtitle_srt_filename
 
 
+class BaseKaldiRecognizer(object):
+    def __init__(self, vosk_language: str, freq: int):
+        self.vosk_language = vosk_language
+        self.freq = freq
+
+    def accept_waveform(self, data) -> int:
+        return 0
+
+    def result(self) -> dict:
+        return {}
+
+    def final_result(self) -> dict:
+        return {}
+
+
+class LocalKaldiRecognizer(BaseKaldiRecognizer):
+    vosk_model_cache = weakref.WeakValueDictionary()
+
+    def __init__(self, vosk_language: str, freq: int):
+        super().__init__(vosk_language, freq)
+        SetLogLevel(-99)
+        try:
+            model = self.vosk_model_cache[self.vosk_language]
+        except KeyError:
+            model = Model(model_name=vosk_model(self.vosk_language), lang=self.vosk_language)
+            self.vosk_model_cache[self.vosk_language] = model
+        self.rec = KaldiRecognizer(model, freq)
+        self.rec.SetWords(True)
+
+    def accept_waveform(self, data) -> int:
+        return self.rec.AcceptWaveform(data)
+
+    def result(self) -> dict:
+        return json.loads(self.rec.Result())
+
+    def final_result(self) -> dict:
+        try:
+            return json.loads(self.rec.FinalResult())
+        finally:
+            self.rec = None
+
+
+class RemoteKaldiRecognizer(BaseKaldiRecognizer):
+    def __init__(self, vosk_language: str, freq: int):
+        super().__init__(vosk_language, freq)
+        lang2 = vosk_language[0:2]
+        remote_host = os.getenv(f'KALDI_{lang2.upper()}_HOST', f'kaldi-{lang2.lower()}')
+        remote_port = os.getenv(f'KALDI_{lang2.upper()}_PORT', '2700')
+        remote_url = f'ws://{remote_host}:{remote_port}'
+        self.socket = wsconnect(remote_url)
+        self.socket.send('{ "config" : { "sample_rate" : %d } }' % freq)
+
+    def accept_waveform(self, data) -> int:
+        self.socket.send(data)
+        return 1
+
+    def result(self) -> dict:
+        return json.loads(self.socket.recv())
+
+    def final_result(self) -> dict:
+        try:
+            self.socket.send('{"eof" : 1}')
+            return json.loads(self.socket.recv())
+        finally:
+            self.socket.close()
+            self.socket = None
+
+
 def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None) \
         -> Union[str, None]:
     """
@@ -1030,17 +1098,8 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     """
     global debug
 
-    try:
-        from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit, SetLogLevel
-        GpuInit()
-        GpuThreadInit()
-        SetLogLevel(-99)
-    except ImportError as e:
-        logger.warning("Cannot transcribe audio, vosk missing")
-        return None
-
     freq = 16000
-    chunk_size = 4000
+    chunk_size = ceil(freq * 0.4)
 
     temp_fd, words_filename = tempfile.mkstemp(dir=workdir, suffix='.srt')
     os.close(temp_fd)
@@ -1061,12 +1120,10 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
 
     _vosk_language = vosk_language(language)
     try:
-        model = _VOSK_MODEL_CACHE[_vosk_language]
-    except KeyError:
-        model = Model(model_name=vosk_model(_vosk_language), lang=_vosk_language)
-        _VOSK_MODEL_CACHE[_vosk_language] = model
-    rec = KaldiRecognizer(model, freq)
-    rec.SetWords(True)
+        rec: BaseKaldiRecognizer = RemoteKaldiRecognizer(_vosk_language, freq)
+    except BaseException as e:
+        logger.info("Remote transcriber not available", e)
+        rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
 
     logger.debug(tools.ffmpeg.array_as_command(extract_command))
     audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -1079,15 +1136,15 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         data = audio_process.stdout.read(chunk_size)
         if len(data) == 0:
             break
-        if rec.AcceptWaveform(data):
-            result = json.loads(rec.Result())
+        if rec.accept_waveform(data):
+            result = rec.result()
             if 'result' in result:
                 results.append(result)
                 if len(result['result']) > 0:
                     audio_progress.progress(result['result'][-1]['end'])
                 if 'text' in result:
                     logger.debug("text: %s", result['text'])
-    result = json.loads(rec.FinalResult())
+    result = rec.final_result()
     if 'result' in result:
         results.append(result)
         if 'text' in result:
