@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import weakref
 from bisect import bisect_left, bisect_right
 from math import ceil, floor
 from pathlib import Path
@@ -52,6 +53,8 @@ SILENCE_FOR_NEW_SENTENCE = 1200
 SILENCE_FOR_SOUND_EFFECT = 500
 
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
+
+_VOSK_MODEL_CACHE = weakref.WeakValueDictionary()
 
 logger = logging.getLogger(__name__)
 
@@ -1056,14 +1059,17 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         extract_command.extend(['-ac', '1'])
     extract_command.extend(['-f', 's16le', '-'])
 
-    logger.debug(tools.ffmpeg.array_as_command(extract_command))
-    audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-
     _vosk_language = vosk_language(language)
-    model = Model(model_name=vosk_model(_vosk_language), lang=_vosk_language)
+    try:
+        model = _VOSK_MODEL_CACHE[_vosk_language]
+    except KeyError:
+        model = Model(model_name=vosk_model(_vosk_language), lang=_vosk_language)
+        _VOSK_MODEL_CACHE[_vosk_language] = model
     rec = KaldiRecognizer(model, freq)
     rec.SetWords(True)
 
+    logger.debug(tools.ffmpeg.array_as_command(extract_command))
+    audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     audio_process.stdout.read(44)  # skip header
     results = []
     audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0,

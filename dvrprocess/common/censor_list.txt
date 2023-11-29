@@ -278,12 +278,9 @@ arse
 ass's
 ass’s
 asses
-badass
-bad[\s-]ass
-badasses
-bad[\s-]asses
-big ass
-big-ass
+bad[\s-]?ass
+bad[\s-]?asses
+big[\s-]?ass
 kick[\s-]ass
 kicks[\s-]ass
 kicking[\s-]ass
@@ -356,6 +353,7 @@ ass[\s-]sniffer
 kiss[\s-]ass
 hard[\s-]ass
 stupid[\s-]ass
+dead[\s-]ass
 ass[\s-]wipe
 butt[\s-]?head
 butt[\s-]?sniffer

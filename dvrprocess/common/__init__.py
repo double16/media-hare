@@ -13,13 +13,14 @@ import threading
 import time
 import traceback
 from enum import Enum
+from multiprocessing import Pool
 from typing import Union
 from xml.etree import ElementTree as ET
 
 import psutil
 from psutil import AccessDenied, NoSuchProcess
 
-from . import hwaccel, tools, config, constants, progress
+from . import hwaccel, tools, config, constants, progress, procprofile
 from .terminalui import terminalui_wrapper
 from .proc_invoker import StreamCapture
 
@@ -167,7 +168,8 @@ def get_plex_url():
 
 
 def load_keyframes_by_seconds(filepath) -> list[float]:
-    ffprobe_keyframes = ["-loglevel", "error", "-skip_frame", "nointra", "-select_streams", "v:0",
+    # "-skip_frame nointra" brings in too many frames in mpeg2video
+    ffprobe_keyframes = ["-loglevel", "error", "-skip_frame", "nokey", "-select_streams", "v:0",
                          "-show_entries",
                          "frame=pkt_pts_time" if int(tools.ffprobe.version) == 4 else "frame=pts_time",
                          "-of", "csv=print_section=0", filepath]
@@ -403,7 +405,7 @@ def find_streams_by_codec_and_language(input_info, codec_type, codec_names=None,
     # select anything
     if len(streams) == 0:
         streams = list(filter(lambda stream: stream['codec_type'] == codec_type
-                              and (codec_names is None or stream['codec_name'] in codec_names),
+                                             and (codec_names is None or stream['codec_name'] in codec_names),
                               input_info['streams']))
     return streams
 
@@ -411,18 +413,21 @@ def find_streams_by_codec_and_language(input_info, codec_type, codec_names=None,
 def assert_not_transcoding(input_file, tempfilename=None, exit=True):
     global TEMPFILENAMES
     if tempfilename is None:
-        dir = os.path.dirname(os.path.abspath(input_file))
+        dirname = os.path.dirname(os.path.abspath(input_file))
         base = os.path.basename(input_file)
         parts = base.split('.')
-        tempfilename = os.path.join(dir, '.~' + '.'.join(parts[0:-1]) + '.transcoded.' + parts[-1])
-    if os.path.isfile(tempfilename) and (time.time() - os.path.getmtime(tempfilename)) < 172800:
-        logger.info(f"Already transcoding, skipping {input_file} ({tempfilename})")
-        # We don't want clean up to remove these files and mess up other processes
-        TEMPFILENAMES.clear()
-        if exit:
-            sys.exit(0)
+        tempfilename = os.path.join(dirname, '.~' + '.'.join(parts[0:-1]) + '.transcoded.' + parts[-1])
+    if os.path.isfile(tempfilename):
+        if (time.time() - os.path.getmtime(tempfilename)) < 172800:
+            logger.info(f"Already transcoding, skipping {input_file} ({tempfilename})")
+            # We don't want clean up to remove these files and mess up other processes
+            TEMPFILENAMES.remove(tempfilename)
+            if exit:
+                sys.exit(0)
+            else:
+                return 255
         else:
-            return 255
+            os.remove(tempfilename)
     return 0
 
 
@@ -445,7 +450,7 @@ def has_stream_with_language(input_info, codec_type, codec_names=None, language=
 def is_video_stream(stream_info: dict) -> bool:
     return stream_info[constants.K_CODEC_TYPE] == constants.CODEC_VIDEO and (
             not stream_info.get(constants.K_DISPOSITION) or stream_info.get(constants.K_DISPOSITION).get(
-                'attached_pic') != 1) and stream_info.get('avg_frame_rate') != '0/0'
+        'attached_pic') != 1) and stream_info.get('avg_frame_rate') != '0/0'
 
 
 def is_audio_stream(stream_info: dict) -> bool:
@@ -678,7 +683,8 @@ def is_codec_available(codec: str) -> bool:
     return True
 
 
-def recommended_video_quality(target_height: int, target_video_codec: str, bit_depth: Union[int, None]) -> (int, int, int):
+def recommended_video_quality(target_height: int, target_video_codec: str, bit_depth: Union[int, None]) -> (
+int, int, int):
     """
     CRF
     https://slhck.info/video/2017/02/24/crf-guide.html
@@ -1013,10 +1019,14 @@ def cli_wrapper(func, *args, **kwargs):
         kwargs.pop('no-curses', '')
 
     def wrapped_func() -> int:
-        if cli:
-            return func(args)
-        else:
-            return func(*args, **kwargs)
+        try:
+            procprofile.memory_monitor_start()
+            if cli:
+                return func(args)
+            else:
+                return func(*args, **kwargs)
+        finally:
+            procprofile.memory_monitor_stop()
 
     use_curses = sys.stdout.isatty() and not no_curses_opt
     if use_curses:
@@ -1037,11 +1047,13 @@ class PoolApplyWrapper:
         progress.setup_subprocess_progress(self.progress_queue, self.rootLogLevel)
         stdout = StreamCapture('stdout', logger, logging.INFO)
         stderr = StreamCapture('stderr', logger, logging.ERROR)
+        procprofile.memory_monitor_start()
         try:
             return self.func(*args, **kwargs)
         finally:
             stdout.finish()
             stderr.finish()
+            procprofile.memory_monitor_stop()
 
 
 def pool_apply_wrapper(func):
@@ -1051,6 +1063,10 @@ def pool_apply_wrapper(func):
     :return: func result
     """
     return PoolApplyWrapper(func)
+
+
+def pool_join_with_timeout(pool: Pool, timeout: float = 5 * 60):
+    pool.join()
 
 
 def remove_extension(path):
@@ -1371,12 +1387,12 @@ def should_adjust_frame_rate(current_frame_rate: Union[None, str, float], desire
     if current_frame_rate in [None, '', '0', '0/0'] or desired_frame_rate in [None, '', '0', '0/0']:
         return False
 
-    if type(current_frame_rate) == str:
+    if isinstance(current_frame_rate, str):
         current_frame_rate_f = eval(constants.FRAME_RATE_NAMES.get(current_frame_rate.lower(), current_frame_rate))
     else:
         current_frame_rate_f = current_frame_rate
 
-    if type(desired_frame_rate) == str:
+    if isinstance(desired_frame_rate, str):
         desired_frame_rate_f = eval(constants.FRAME_RATE_NAMES.get(desired_frame_rate.lower(), desired_frame_rate))
     else:
         desired_frame_rate_f = desired_frame_rate

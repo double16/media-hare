@@ -894,7 +894,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
         return_code.set_code(130)
         pool.terminate()
     finally:
-        pool.join()
+        common.pool_join_with_timeout(pool)
         time_progress.stop()
 
     return return_code.code()

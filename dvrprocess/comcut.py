@@ -82,6 +82,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         desired_video_codecs = config.get_global_config_option('video', 'codecs').split(',')
 
     input_info = common.find_input_info(infile)
+    video_info = common.find_video_stream(input_info)
     chapters = input_info.get(constants.K_CHAPTERS, []).copy()
     chapters.sort(key=lambda c: float(c['start_time']))
     if len(list(filter(lambda c: 'Commercial' in c.get("tags", {}).get('title', ''), chapters))) > 0:
@@ -134,6 +135,9 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     if USE_FIRST_KEYFRAME_FOR_START_TIME and len(keyframes) > 0:
         start_time = keyframes[0]
+    elif video_info and 'start_time' in video_info:
+        # The format start_time can be different from the video stream start_time
+        start_time = float(video_info['start_time'])
     else:
         start_time = float(input_info[constants.K_FORMAT].get('start_time', 0.0))
 
@@ -164,6 +168,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
     subtitle_data = {}
+    # FIXME: pts is different for video and subtitle, need to always extract subtitles and manage differently
+    # FIXME: when muting, cuts are not performed
     if len(list(filter(lambda e: e.event_type in [edl_util.EdlType.MUTE], edl_events))) > 0:
         # Extract all text based subtitles for masking
         extract_subtitle_command = ['-y', '-i', infile, '-c', 'copy']
@@ -368,7 +374,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     ffmpeg_command.extend(["-nostdin"])
 
-    video_info = common.find_video_stream(input_info)
     height = common.get_video_height(video_info)
     depth = common.get_video_depth(video_info)
     target_video_codec = common.resolve_video_codec(desired_video_codecs, height, video_info)

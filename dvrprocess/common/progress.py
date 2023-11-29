@@ -478,7 +478,7 @@ def _progress_queue_feed(q: Queue):
             m = q.get(block=False, timeout=60)
         except Empty:
             continue
-        except (ValueError, EOFError, BrokenPipeError):
+        except (KeyError, ValueError, EOFError, BrokenPipeError):
             # queue is closed
             return
         try:

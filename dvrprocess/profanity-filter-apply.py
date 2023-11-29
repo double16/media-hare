@@ -143,7 +143,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
             logger.info("Processing %s", tfi.host_file_path)
         return 0
 
-    pool = Pool(processes=processes, maxtasksperchild=10)
+    pool = Pool(processes=processes)
     try:
         results = []
         # load the initial workers
@@ -230,7 +230,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
         try:
             pool.close()
             logger.info("Waiting for pool workers to finish, interrupt again to terminate")
-            pool.join()
+            common.pool_join_with_timeout(pool)
         except KeyboardInterrupt:
             logger.info("Terminating due to user interrupt")
             pool.terminate()
@@ -238,7 +238,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
     finally:
         pool.close()
         logger.info("Waiting for pool workers to finish")
-        pool.join()
+        common.pool_join_with_timeout(pool)
         bytes_progress.stop()
         time_progress.stop()
 

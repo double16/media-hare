@@ -326,12 +326,19 @@ class StreamCapture(object):
 
     def write(self, data):
         if self.logger:
-            self.logger.log(self.level, data)
+            if data.endswith("\n"):
+                self.captured.append(data[:-1])
+                self.logger.log(self.level, ''.join(self.captured))
+                self.captured.clear()
+            else:
+                self.captured.append(data)
         else:
             self.captured.append(data)
 
     def flush(self):
-        pass
+        if self.logger and self.captured:
+            self.logger.log(self.level, ''.join(self.captured))
+            self.captured.clear()
 
     def finish(self, output=True):
         setattr(sys, self.name, self.save)
