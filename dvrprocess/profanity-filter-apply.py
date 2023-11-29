@@ -173,6 +173,9 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                     return_code = 255
                 except CalledProcessError as e:
                     return_code = e.returncode
+                except FileNotFoundError as e:
+                    logger.error(e.__repr__(), exc_info=e)
+                    return_code = 255
                 except Exception as e:
                     logger.error(e.__repr__(), exc_info=e)
                     pool.terminate()
