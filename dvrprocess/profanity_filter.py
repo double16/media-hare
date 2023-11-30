@@ -1073,19 +1073,27 @@ class RemoteKaldiRecognizer(BaseKaldiRecognizer):
         remote_port = os.getenv(f'KALDI_{lang2.upper()}_PORT', '2700')
         remote_url = f'ws://{remote_host}:{remote_port}'
         self.socket = wsconnect(remote_url)
-        self.socket.send('{ "config" : { "sample_rate" : %d } }' % freq)
+        self.socket.send('{ "config" : { "words" : true, "max_alternatives" : 0, "sample_rate" : %d } }' % freq)
 
     def accept_waveform(self, data) -> int:
         self.socket.send(data)
         return 1
 
     def result(self) -> dict:
-        return json.loads(self.socket.recv())
+        message = self.socket.recv()
+        if message:
+            return json.loads(message)
+        else:
+            return {}
 
     def final_result(self) -> dict:
         try:
             self.socket.send('{"eof" : 1}')
-            return json.loads(self.socket.recv())
+            final_message = self.socket.recv()
+            if final_message:
+                return json.loads(final_message)
+            else:
+                return {}
         finally:
             self.socket.close()
             self.socket = None
