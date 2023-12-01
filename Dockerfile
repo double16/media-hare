@@ -51,7 +51,6 @@ RUN apt-get -q update && \
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
-    python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')" &&\
     rm -rf /tmp/*
 
 RUN adduser --system --disabled-password --disabled-login --shell /bin/false --home /home/langtool langtool
