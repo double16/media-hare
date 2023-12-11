@@ -1062,7 +1062,8 @@ class LocalKaldiRecognizer(BaseKaldiRecognizer):
             self.rec = None
 
 
-REMOTE_KALDI_SERVER = None
+# map from language to whether server is available
+REMOTE_KALDI_SERVER: dict[str, bool] = {}
 
 
 class RemoteKaldiRecognizer(BaseKaldiRecognizer):
@@ -1131,13 +1132,14 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
 
     _vosk_language = vosk_language(language)
     try:
-        if REMOTE_KALDI_SERVER is None or REMOTE_KALDI_SERVER:
+        if _vosk_language not in REMOTE_KALDI_SERVER or REMOTE_KALDI_SERVER[_vosk_language]:
             rec: BaseKaldiRecognizer = RemoteKaldiRecognizer(_vosk_language, freq)
+            REMOTE_KALDI_SERVER[_vosk_language] = True
         else:
             rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
     except BaseException as e:
         logger.debug("Remote transcriber not available")
-        REMOTE_KALDI_SERVER = False
+        REMOTE_KALDI_SERVER[_vosk_language] = False
         rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
 
     logger.debug(tools.ffmpeg.array_as_command(extract_command))
@@ -1181,9 +1183,10 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
                            text=word['word'])
             subs_words.append(s)
 
+    # allow for no words, some videos don't have speech
     if len(subs_words) == 0:
         logger.warning("audio-to-text transcription empty")
-        return None
+        # return None
 
     srt_words = SubRipFile(items=subs_words, path=words_filename)
     srt_words.save(Path(words_filename), 'utf-8')

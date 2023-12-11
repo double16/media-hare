@@ -7,6 +7,7 @@ import threading
 import time
 from math import ceil
 from multiprocessing import Queue
+from multiprocessing.managers import RemoteError
 from queue import Empty
 from typing import Union, Dict
 
@@ -480,7 +481,7 @@ def _progress_queue_feed(q: Queue):
                 return
         except Empty:
             continue
-        except (KeyError, ValueError, EOFError, BrokenPipeError):
+        except (RemoteError, KeyError, ValueError, EOFError, BrokenPipeError):
             # queue is closed
             return
         try:
