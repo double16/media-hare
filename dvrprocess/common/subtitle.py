@@ -232,10 +232,10 @@ class AssElementFacade(SubtitleElementFacade):
         self.event = event
 
     def text(self) -> Union[str, None]:
-        return self.event.text
+        return self.event.get_text()
 
     def set_text(self, new_value: str):
-        self.event.text = new_value.replace('\n', '\\N')
+        self.event.set_text(new_value.replace('\n', '\\N'))
 
     def start(self) -> Union[int, None]:
         return self.event.start

@@ -79,7 +79,8 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.getLogger().setLevel(logging.DEBUG)
         tools.mock_all()
-        profanity_filter.REMOTE_KALDI_SERVER = False
+        profanity_filter.REMOTE_KALDI_SERVER['en-us'] = False
+        profanity_filter.REMOTE_KALDI_SERVER['es'] = False
         # This method will unnecessarily fail for our test cases
         profanity_filter.words_in_dictionary_pct = lambda a, b, c: 100.00
 

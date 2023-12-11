@@ -168,12 +168,16 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     # key is input stream index, value is filename
     subtitle_streams: dict[int, str] = {}
     subtitle_data = {}
-    # FIXME: pts is different for video and subtitle, need to always extract subtitles and manage differently
-    # FIXME: when muting, cuts are not performed
-    if len(list(filter(lambda e: e.event_type in [edl_util.EdlType.MUTE], edl_events))) > 0:
+    subtitle_muted_streams: list[dict] = []
+    # pts is different for video and subtitle, need to always extract subtitles and manage differently
+    if len(list(
+            filter(lambda e: e.event_type in [edl_util.EdlType.MUTE, edl_util.EdlType.CUT, edl_util.EdlType.COMMERCIAL],
+                   edl_events))) > 0:
         # Extract all text based subtitles for masking
         extract_subtitle_command = ['-y', '-i', infile, '-c', 'copy']
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[constants.K_STREAMS]):
+            if stream.get(constants.K_TAGS, {}).get(constants.K_STREAM_TITLE, '') != constants.TITLE_WORDS:
+                subtitle_muted_streams.append(stream)
             suffix = stream.get(constants.K_CODEC_NAME)
             if suffix == 'subrip':
                 suffix = 'srt'
@@ -205,7 +209,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     hascommercials = False
     video_filters: list[str] = []
     audio_filters: list[str] = []
-    subtitle_filters: list[(float, float)] = []
+    subtitle_filtered = False
     totalcutduration = 0.0
     comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir)
     video_encoder_options_tag_value = []
@@ -213,6 +217,25 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, common.get_frame_rate(input_info), crop_frame_fixed)
     if crop_frame_filter:
         video_filters.append(crop_frame_filter)
+
+    # modify subtitle events before cutting
+    for edl_event in filter(lambda e: e.event_type == edl_util.EdlType.MUTE, edl_events):
+        subtitle_filtered = True
+        # subtitle events are in milliseconds
+        mute_start = edl_event.start * 1000.0
+        mute_end = edl_event.end * 1000.0
+        for stream in subtitle_muted_streams:
+            data = subtitle_data[stream[constants.K_STREAM_INDEX]]
+            if stream[constants.K_CODEC_NAME] == constants.CODEC_SUBTITLE_ASS:
+                for event in data.events:
+                    if mute_start <= event.end and mute_end >= event.start:
+                        logger.debug("Masking subtitle event %s", event)
+                        event.set_text(MASK_STR)
+            else:
+                for event in data:
+                    if mute_start <= event.end.ordinal and mute_end >= event.start.ordinal:
+                        logger.debug("Masking subtitle event %s", event)
+                        event.text = MASK_STR
 
     with open(metafile, "w") as metafd:
         with open(partsfile, "w") as partsfd:
@@ -241,9 +264,6 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     audio_filters.append(f"volume=enable='between(t,"
                                          f"{edl_event.start - totalcutduration},{edl_event.end - totalcutduration})'"
                                          f":volume=0")
-                    # subtitle events are in milliseconds
-                    subtitle_filters.append(
-                        ((edl_event.start - totalcutduration) * 1000.0, (edl_event.end - totalcutduration) * 1000.0))
                     continue
                 elif edl_event.event_type == edl_util.EdlType.SCENE:
                     continue
@@ -318,8 +338,10 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                     partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                     partsfd.write(f"inpoint {start}\n")
                     partsfd.write(f"outpoint {end}\n")
-                    for data in subtitle_data.values():
-                        subtitle.subtitle_cut(data, end - totalcutduration, start_next - totalcutduration)
+
+                for data in subtitle_data.values():
+                    logger.debug("Cutting subtitle (%f, %f)", end - totalcutduration, start_next - totalcutduration)
+                    subtitle.subtitle_cut(data, end - totalcutduration, start_next - totalcutduration)
 
                 totalcutduration = totalcutduration + start_next - end
                 start = start_next
@@ -348,7 +370,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                 partsfd.write("file %s\n" % re.sub('([^A-Za-z0-9/])', r'\\\1', os.path.abspath(infile)))
                 partsfd.write(f"inpoint {start}\n")
 
-    if hascommercials or len(video_filters) > 0 or len(audio_filters) > 0 or len(subtitle_filters) > 0:
+    if hascommercials or len(video_filters) > 0 or len(audio_filters) > 0 or subtitle_filtered:
         # doing it this way to keep the ident level one less
         pass
     else:
@@ -389,25 +411,15 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
 
     input_stream_idx = 2
     subtitle_stream_idx_to_input_idx: dict[int, int] = {}
-    if len(subtitle_filters) > 0:
-        # Mask the subtitles for the muted ranges
-        logger.debug("subtitle_filters = %s", subtitle_filters)
+    if len(subtitle_data) > 0:
         for stream in filter(lambda s: common.is_subtitle_text_stream(s), input_info[constants.K_STREAMS]):
             data = subtitle_data[stream[constants.K_STREAM_INDEX]]
-            if stream.get(constants.K_TAGS, {}).get(constants.K_STREAM_TITLE, '') != constants.TITLE_WORDS:
-                if stream[constants.K_CODEC_NAME] == constants.CODEC_SUBTITLE_ASS:
-                    for subtitle_filter in subtitle_filters:
-                        for event in data.events:
-                            if subtitle_filter[0] <= event.end and subtitle_filter[1] >= event.start:
-                                logger.debug("Masking subtitle event %s", event)
-                                event.text = MASK_STR
-                else:
-                    for subtitle_filter in subtitle_filters:
-                        for event in data:
-                            if subtitle_filter[0] <= event.end.ordinal and subtitle_filter[1] >= event.start.ordinal:
-                                logger.debug("Masking subtitle event %s", event)
-                                event.text = MASK_STR
             subtitle_filename = subtitle_streams[stream[constants.K_STREAM_INDEX]]
+            logger.debug("Writing subtitle %s (%s) to %s",
+                         stream.get(constants.K_TAGS, {}).get(constants.K_STREAM_TITLE, ''),
+                         stream[constants.K_CODEC_NAME],
+                         subtitle_filename
+                         )
             subtitle.write_subtitle_data(stream[constants.K_CODEC_NAME], subtitle_filename, data)
             ffmpeg_command.extend(["-i", subtitle_filename])
             subtitle_stream_idx_to_input_idx[stream[constants.K_STREAM_INDEX]] = input_stream_idx
@@ -419,7 +431,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                            "-avoid_negative_ts", "1",
                            "-map_metadata", "0"])
 
-    # filters will re-order output streams so we need to map each individually
+    # filters will re-order output streams, so we need to map each individually
     output_file = 1
     output_stream_idx = 0
 
@@ -461,7 +473,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             video_encoder_options_tag_value.extend(encoding_options)
         elif common.is_audio_stream(stream) and len(audio_filters) > 0:
             common.map_opus_audio_stream(ffmpeg_command, stream, output_file, str(output_stream_idx), audio_filters)
-        elif common.is_subtitle_text_stream(stream) and len(subtitle_filters) > 0:
+        elif common.is_subtitle_text_stream(stream) and len(subtitle_data) > 0:
             ffmpeg_command.extend([
                 "-map", f"{subtitle_stream_idx_to_input_idx[stream[constants.K_STREAM_INDEX]]}:0",
                 f"-c:{output_stream_idx}", "copy"])
@@ -632,6 +644,8 @@ def comcut_cli(argv):
 
 def comcut_cli_run(args: list, delete_edl, delete_meta, verbose, debug, comskipini, workdir, preset, force_encode,
                    dry_run, crop_frame_op, crop_frame_fixed, desired_video_codecs):
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     atexit.register(common.finish)
 
