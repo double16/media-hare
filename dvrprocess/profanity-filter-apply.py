@@ -90,13 +90,21 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
 
         elif is_filter_version_outdated(item.tags):
             if ProfanityFilterSelector.new_version in selectors:
-                if len(queue_new_version) < queue_max_size:
+                # Don't queue if new_version is first priority
+                if ProfanityFilterSelector.unfiltered not in selectors:
+                    item_progress.progress_inc(value=1, end_inc=1)
+                    yield item
+                elif len(queue_new_version) < queue_max_size:
                     queue_new_version.append(item)
                     item_progress.end_inc()
 
         elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
             if ProfanityFilterSelector.config_change in selectors:
-                if len(queue_config_change) < queue_max_size:
+                # Don't queue if config_change is first priority
+                if len(selectors) == 1:
+                    item_progress.progress_inc(value=1, end_inc=1)
+                    yield item
+                elif len(queue_config_change) < queue_max_size:
                     queue_config_change.append(item)
                     item_progress.end_inc()
 
