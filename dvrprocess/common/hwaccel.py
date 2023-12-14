@@ -517,6 +517,9 @@ _nvenc_gpustat_cache_expire: float = time.time() - 1
 def _nvenc_gpustat() -> tuple[Union[float, None], Union[float, None]]:
     global _nvenc_gpustat_cache, _nvenc_gpustat_cache_expire
 
+    if os.getenv('GPUSTAT_ENABLE', 'false') not in ['True', 'true']:
+        return None, None
+
     if not tools.nvidia_gpustat.present():
         return None, None
 
