@@ -28,6 +28,7 @@ butt[\s-]sex
 booty[\s-]sex
 ass[\s-]sex
 gay[\s-]sex
+screwing (him|her|the)
 cocks?
 cock's
 cock’s
@@ -178,6 +179,7 @@ after some tail
 some \w+ tail
 piece of tail
 whore[\s-]?houses?
+cat[\s-]?houses?
 brothel
 trade sex
 swap sex

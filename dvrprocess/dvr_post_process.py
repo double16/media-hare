@@ -389,8 +389,8 @@ def do_dvr_post_process(input_file,
                             # opus is VBR and therefore doesn't advertise a bitrate, make assumptions
                             video_bitrate -= (s[constants.K_CHANNELS] * 48000)
 
-                # adjust video bitrate by 60 fps increments for comparison purposes
-                video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 60.0))
+                # adjust video bitrate by 24 fps increments for comparison purposes
+                video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 24.0))
 
                 bitrate_threshold = bitrate
                 # Increase threshold for short videos because there isn't enough content to compress to our expectations

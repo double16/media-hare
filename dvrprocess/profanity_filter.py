@@ -1760,7 +1760,7 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
         if 'LANGUAGE_TOOL_PORT' in os.environ:
             lang_tool = language_tool_python.LanguageTool(
                 lang_tool_lang,
-                remote_server=f"http://127.0.0.1:{os.environ['LANGUAGE_TOOL_PORT']}"
+                remote_server=f"http://{os.environ.get('LANGUAGE_TOOL_HOST', '127.0.0.1')}:{os.environ['LANGUAGE_TOOL_PORT']}"
             )
         else:
             lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
