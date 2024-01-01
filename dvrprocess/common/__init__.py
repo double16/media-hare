@@ -421,7 +421,10 @@ def assert_not_transcoding(input_file, tempfilename=None, exit=True):
         if (time.time() - os.path.getmtime(tempfilename)) < 172800:
             logger.info(f"Already transcoding, skipping {input_file} ({tempfilename})")
             # We don't want clean up to remove these files and mess up other processes
-            TEMPFILENAMES.remove(tempfilename)
+            try:
+                TEMPFILENAMES.remove(tempfilename)
+            except ValueError:
+                pass
             if exit:
                 sys.exit(0)
             else:
