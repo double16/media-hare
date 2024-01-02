@@ -67,6 +67,43 @@ Open a shell like Terminal or Powershell and run the following, replacing time z
 $ docker run -d -e "TZ=America/Chicago" --device /dev/dri --device /dev/nvidiactl --device /dev/nvidia0 --device /dev/nvidia-uvm -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
 ```
 
+## Language Tools as Services
+
+The audio transcriber service `alphacep/kaldi-` needs a service per language. It's necessary to name the service
+`kaldi-{lang}` for `media-hare` to find it. If no service exists, the transcriber will be run and stopped as needed.
+This is inefficient especially for memory usage.
+
+The LibreOffice language tool is used for spell checking and generating subtitles from audio. Only one is needed. The
+two environment variables `LANGUAGE_TOOL_HOST` and `LANGUAGE_TOOL_PORT` are used to configure it.
+
+```yaml
+version: "3.4"
+
+services:
+  kaldi-en:
+    image: alphacep/kaldi-en:latest
+    restart: unless-stopped
+    environment:
+      - "VOSK_SHOW_WORDS=true"
+      - "VOSK_ALTERNATIVES=0"
+    ports:
+      - "2700:2700/tcp"
+
+  langtool:
+    image: ghcr.io/double16/libreoffice-langtool:main
+    restart: unless-stopped
+    ports:
+      - "8100:8100/tcp"
+
+  media-hare:
+    image: ghcr.io/double16/media-hare:main
+    restart: unless-stopped
+    environment:
+      - "TZ=America/Chicago"
+      - "LANGUAGE_TOOL_HOST=langtool"
+      - "LANGUAGE_TOOL_PORT=8100"
+```
+
 ## Development Recommendation
 
 ### docker / Docker Desktop

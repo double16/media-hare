@@ -392,12 +392,13 @@ def do_dvr_post_process(input_file,
                 # adjust video bitrate by 24 fps increments for comparison purposes
                 video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 24.0))
 
-                bitrate_threshold = bitrate
+                # give some room to be above target bitrate
+                bitrate_threshold = bitrate * 1.2
                 # Increase threshold for short videos because there isn't enough content to compress to our expectations
                 if duration < SHORT_VIDEO_SECONDS:
                     bitrate_threshold *= 2
 
-                if bitrate and (video_bitrate_fps / 1024) > bitrate_threshold:
+                if bitrate and (video_bitrate_fps / 1024.0) > bitrate_threshold:
                     logger.info(
                         f"re-encoding {input_video_codec} due to high bitrate {video_bitrate_fps / 1024} > {bitrate_threshold}")
                     copy_video = False

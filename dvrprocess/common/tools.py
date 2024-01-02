@@ -9,6 +9,8 @@ from typing import Union
 from . import config, progress, edl_util
 from .proc_invoker import SubprocessProcInvoker, MockProcInvoker, ProcessStreamGenerator
 
+POPEN_ENCODING: Union[str, None] = None  # 'ascii'
+
 logger = logging.getLogger(__name__)
 
 disk_semaphore = Semaphore(config.get_global_config_int('background_limits', 'disk_processes', fallback=10))
@@ -47,7 +49,10 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         kwargs2.pop('check', None)
         kwargs2['stderr'] = subprocess.PIPE
         kwargs2['stdout'] = subprocess.PIPE
-        kwargs2['encoding'] = 'ascii'
+        if POPEN_ENCODING:
+            kwargs2['encoding'] = POPEN_ENCODING
+        else:
+            kwargs2['text'] = True
         kwargs2['bufsize'] = 1
         proc = subprocess.Popen(arguments, **kwargs2)
         duration = None
@@ -112,7 +117,10 @@ class CCExtractorProcInvoker(SubprocessProcInvoker):
         kwargs2.pop('check', None)
         kwargs2['stdout'] = subprocess.PIPE
         kwargs2['stderr'] = subprocess.PIPE
-        kwargs2['encoding'] = 'ascii'
+        if POPEN_ENCODING:
+            kwargs2['encoding'] = POPEN_ENCODING
+        else:
+            kwargs2['text'] = True
         kwargs2['bufsize'] = 1
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
@@ -156,7 +164,10 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         kwargs2.pop('check', None)
         kwargs2['stdout'] = subprocess.PIPE
         kwargs2['stderr'] = subprocess.PIPE
-        kwargs2['encoding'] = 'ascii'
+        if POPEN_ENCODING:
+            kwargs2['encoding'] = POPEN_ENCODING
+        else:
+            kwargs2['text'] = True
         kwargs2['bufsize'] = 1
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
@@ -200,7 +211,10 @@ class ComskipProcInvoker(SubprocessProcInvoker):
         check = kwargs2.pop('check', None)
         kwargs2['stderr'] = subprocess.PIPE
         kwargs2['stdout'] = subprocess.PIPE
-        kwargs2['encoding'] = 'ascii'
+        if POPEN_ENCODING:
+            kwargs2['encoding'] = POPEN_ENCODING
+        else:
+            kwargs2['text'] = True
         kwargs2['bufsize'] = 1
         if '.csv' in task_name:
             # csv is very fast, it slows things down to flash a progress bar
