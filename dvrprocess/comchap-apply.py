@@ -74,7 +74,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                 filepaths = []
                 for file in common.filter_for_mkv(files):
                     filepath = os.path.join(root, file)
-                    input_info = common.find_input_info(filepath)
+                    input_info = common.find_input_info(filepath, raise_errors=False)
                     if not input_info:
                         continue
 

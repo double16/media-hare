@@ -273,11 +273,17 @@ def fix_closed_caption_report(input_info, filename):
         video_info['closed_captions'] = 1
 
 
-def find_input_info(filename):
-    input_info = json.loads(tools.ffprobe.check_output(
-        ['-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
-         'json',
-         '-show_format', '-show_streams', '-show_chapters', filename]))
+def find_input_info(filename, raise_errors=True) -> dict:
+    try:
+        input_info = json.loads(tools.ffprobe.check_output(
+            ['-v', 'quiet', '-analyzeduration', ANALYZE_DURATION, '-probesize', PROBE_SIZE, '-print_format',
+             'json',
+             '-show_format', '-show_streams', '-show_chapters', filename]))
+    except subprocess.CalledProcessError as cpe:
+        if raise_errors:
+            raise cpe
+        else:
+            return dict()
     fix_closed_caption_report(input_info, filename)
     return input_info
 

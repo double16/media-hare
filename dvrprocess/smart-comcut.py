@@ -170,7 +170,7 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                 filename = os.path.basename(filepath)
                 if filename.startswith('.') or not filename.endswith(".mkv"):
                     continue
-                video_info = common.find_input_info(filepath)
+                video_info = common.find_input_info(filepath, raise_errors=False)
                 if not video_info:
                     continue
                 show_label = os.path.sep.join(os.path.abspath(filepath).split(os.path.sep)[-3:-1])

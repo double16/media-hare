@@ -200,7 +200,7 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
                     if transcode_options.get('preset', '') == 'copy':
                         continue
 
-                input_info = common.find_input_info(filepath)
+                input_info = common.find_input_info(filepath, raise_errors=False)
                 if not input_info:
                     continue
 

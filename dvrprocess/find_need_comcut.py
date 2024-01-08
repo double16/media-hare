@@ -119,7 +119,9 @@ def need_comcut_generator(media_paths: list[str], media_roots: list[str]) -> Ite
                 edl = edl_util.parse_edl_cuts(edl_filepath)
                 if len(edl) == 0:
                     continue
-                input_info = common.find_input_info(filepath)
+                input_info = common.find_input_info(filepath, raise_errors=False)
+                if not input_info:
+                    continue
                 uncut_length = float(input_info[constants.K_FORMAT][constants.K_DURATION])
                 cut_length = uncut_length - sum(map(lambda e: e.length(), edl))
                 file_info = ComcutPendingFileInfo(
