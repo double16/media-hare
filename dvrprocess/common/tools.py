@@ -148,7 +148,7 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
     pct_matcher = re.compile(r'([0-9]{1,3})\s*%')
 
     def __init__(self):
-        super().__init__('subtitle-edit', version_target=['3.6.8'])
+        super().__init__('subtitle-edit', version_target=['4.0.2'])
 
     def _run(self, arguments: list[str], kwargs) -> int:
         if kwargs.get('capture_output', None) is True:

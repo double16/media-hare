@@ -8,6 +8,7 @@ from multiprocessing import Semaphore
 from shutil import which
 from threading import Lock
 from typing import Union
+from . import config
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +284,8 @@ def pre_flight_check():
     Ensure all required invokers are available. Exit the process if not.
     :return:
     """
+    if not config.get_global_config_boolean('general', 'pre_flight_check', fallback=True):
+        return
     logger.info("verifying required tools")
     failed = False
     for invoker in _all_invokers:
