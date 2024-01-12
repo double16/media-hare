@@ -1,0 +1,9 @@
+[Unit]
+Description=Append environment from docker into /etc/environment
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "grep -q HOSTNAME /etc/environment || printenv >> /etc/environment"
+
+[Install]
+WantedBy=multi-user.target

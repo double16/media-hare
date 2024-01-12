@@ -103,6 +103,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     systemctl enable cron &&\
     systemctl enable xorg-dummy &&\
     systemctl enable localtime &&\
+    systemctl enable environment &&\
     systemctl enable hwaccel-drivers &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
