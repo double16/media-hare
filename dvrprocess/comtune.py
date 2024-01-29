@@ -35,7 +35,7 @@ COL_BRIGHTNESS = 1
 COL_UNIFORM = 4
 COL_SOUND = 5
 VERSION_VIDEO_STATS = "1"
-VERSION_GAD_TUNING = "2"
+VERSION_GAD_TUNING = "3"
 
 
 class ComskipGene(object):
@@ -529,7 +529,9 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
 
         os.remove(comskip_fitness_ini_path)
 
+        # TODO: Add commercial break alignment
         adjusted_durations = []
+        commercial_breaks: list[list[edl_util.EdlEvent]] = []
         # if we want to ignore already cut files, iterate over dvr_infos instead of video_infos
         for video_info in video_infos:
             file_path = video_info[constants.K_FORMAT]['filename']
@@ -537,9 +539,9 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             adjusted_duration = video_duration
             edl_path = edl_tempfile(file_path, workdir)
             if os.access(edl_path, os.R_OK):
-                for event in edl_util.parse_edl_cuts(edl_path):
-                    this_duration = (event.end - event.start)
-                    adjusted_duration -= this_duration
+                _, this_commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, video_duration)
+                adjusted_duration -= duration_adjustment
+                commercial_breaks.append(this_commercial_breaks)
             adjusted_durations.append(adjusted_duration / episode_count)
 
         count_of_non_defaults = 0
@@ -560,7 +562,8 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
 
         tuning_progress.progress(gad.generations_completed)
 
-        return fitness_value(sigma, expected_adjusted_duration_diff, count_of_non_defaults, episode_common_duration)
+        return fitness_value(sigma, expected_adjusted_duration_diff, count_of_non_defaults, episode_common_duration,
+                             commercial_breaks)
 
     return f, genes, gene_space, gene_type, tuning_progress
 
@@ -589,7 +592,8 @@ def csv_and_comchap_generate(file_path, comskip_ini_path, comskip_fitness_ini_pa
 
 
 def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of_non_defaults: float,
-                  episode_common_duration: int = 60):
+                  episode_common_duration: int = 60,
+                  commercial_breaks: list[list[edl_util.EdlEvent]] = None):
     # sigma good values 0 - 120
     # expected_adjusted_duration_diff good values 0 - 240
     # count_of_non_defaults good values 0 - 16
@@ -599,9 +603,14 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
     else:
         duration_tolerance = 60.0
 
+    commercial_break_score = 1000000  # closer to 0 is better
+    if commercial_breaks:
+        aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(commercial_breaks)
+
     return 1.1 / (sigma + 0.001) + \
            1.2 / max(0.001, abs(expected_adjusted_duration_diff) - duration_tolerance) + \
-           1.0 / (count_of_non_defaults + 1000.0)
+           1.0 / (count_of_non_defaults + 1000.0) + \
+           1.1 / commercial_break_score
 
 
 def paths(infile, workdir, infile_base=None):

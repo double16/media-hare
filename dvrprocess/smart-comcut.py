@@ -188,14 +188,9 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                         if cc_return_code == 255:
                             return cc_return_code
                     if os.access(edl_path, os.R_OK):
-                        cuts = edl_util.parse_edl_cuts(edl_path)
-                        for idx, event in enumerate(cuts):
-                            has_com = True
-                            this_duration = (event.end - event.start)
-                            if this_duration >= 20 or (event.start > 0 and idx < len(cuts) - 1):
-                                commercial_break_count += 1
-                                commercial_breaks.append(event)
-                            adjusted_duration -= this_duration
+                        has_com, commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, duration)
+                        commercial_break_count = len(commercial_breaks)
+                        adjusted_duration -= duration_adjustment
                 # remove the following else to consider already cut durations
                 else:
                     continue
@@ -256,6 +251,11 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
 
             # TODO: organize breaks into "slots" with similar start times. If there is a break starting at 0, use the
             # length to adjust start time
+            aligned_commercial_breaks, commercial_break_score = edl_util.align_commercial_breaks(list(map(lambda v: v['commercial_breaks'], videos)))
+            logger.info(
+                f"{show_label}: commercial break score = {commercial_break_score}\n"
+                f"{edl_util.pretty_print_commercial_breaks(aligned_commercial_breaks)}"
+            )
 
             # Compute the expected number of commercial breaks
             commercial_break_histo = {}
