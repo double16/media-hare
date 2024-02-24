@@ -21,8 +21,8 @@ import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants, progress, procprofile
-from .terminalui import terminalui_wrapper
 from .proc_invoker import StreamCapture
+from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
 _once_lock = _allocate_lock()
@@ -695,6 +695,7 @@ def is_codec_available(codec: str) -> bool:
 def recommended_video_quality(target_height: int, target_video_codec: str, bit_depth: Union[int, None]) -> (
 int, int, int):
     """
+    # FIXME: bit-rates need to be revisited
     CRF
     https://slhck.info/video/2017/02/24/crf-guide.html
     Defaults to H265 the upcoming standard (2022), specifics for H264 the current most compatible

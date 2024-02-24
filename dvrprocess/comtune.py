@@ -3,6 +3,7 @@ import atexit
 import configparser
 import getopt
 import hashlib
+import json
 import logging
 import os.path
 import random
@@ -604,13 +605,34 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
         duration_tolerance = 60.0
 
     commercial_break_score = 1000000  # closer to 0 is better
+    aligned_commercial_breaks = None
     if commercial_breaks:
         aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(commercial_breaks)
 
-    return 1.1 / (sigma + 0.001) + \
-           1.2 / max(0.001, abs(expected_adjusted_duration_diff) - duration_tolerance) + \
-           1.0 / (count_of_non_defaults + 1000.0) + \
-           1.1 / commercial_break_score
+    result = 1.1 / (sigma + 0.001) + \
+             1.2 / max(0.001, abs(expected_adjusted_duration_diff) - duration_tolerance) + \
+             1.0 / (count_of_non_defaults + 1000.0) + \
+             1.3 / commercial_break_score
+
+    if False:
+        with open("/tmp/fitness.json", "a") as f:
+            acb_primitive = list(map(lambda breaks1: list(
+                map(lambda event: None if event is None else [event.start, event.end], breaks1)),
+                                     aligned_commercial_breaks))
+            f.write(json.dumps(
+                {
+                    "sigma": sigma,
+                    "expected_adjusted_duration_diff": expected_adjusted_duration_diff,
+                    "duration_tolerance": duration_tolerance,
+                    "count_of_non_defaults": count_of_non_defaults,
+                    "commercial_break_score": commercial_break_score,
+                    "aligned_commercial_breaks": acb_primitive,
+                    "result": result,
+                }
+            ))
+            f.write('\n')
+
+    return result
 
 
 def paths(infile, workdir, infile_base=None):
@@ -682,8 +704,8 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
-    num_parents_mating = 6
-    sol_per_pop = 12
+    sol_per_pop = 50  # 50-100 for 22 genes
+    num_parents_mating = ceil(sol_per_pop / 2)
 
     try:
         fitness_func, genes, gene_space, gene_type, tuning_progress = setup_gad(
@@ -824,6 +846,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
     time_progress.renderer = common.s_to_ts
 
     return_code = common.ReturnCodeReducer()
+    # TODO: consider thread pool for improved performance
     pool = Pool(processes=processes)
 
     def single_file_tune(f):

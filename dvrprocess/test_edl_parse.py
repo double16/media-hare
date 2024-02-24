@@ -201,8 +201,9 @@ class EdlParseTest(unittest.TestCase):
         ]
         output, score, combined = edl_util.align_commercial_breaks(input)
         self.validated_align_commercial_breaks(input, output, combined)
+        self.assertEqual(3, len(combined))
         self.assertEqual(expected, output)
-        self.assertAlmostEqual(109.48, score, 2)
+        self.assertAlmostEqual(907.48, score, 2)
 
     def test_align_commercial_breaks_three_disjoint(self):
         input = [
@@ -239,8 +240,9 @@ class EdlParseTest(unittest.TestCase):
         ]
         output, score, combined = edl_util.align_commercial_breaks(input)
         self.validated_align_commercial_breaks(input, output, combined)
+        self.assertEqual(3, len(combined))
         self.assertEqual(expected, output)
-        self.assertAlmostEqual(140.10, score, 2)
+        self.assertAlmostEqual(938.10, score, 2)
 
     def test_align_commercial_breaks_three_equal(self):
         input = [
@@ -274,4 +276,5 @@ class EdlParseTest(unittest.TestCase):
                     input.append(commercial_breaks)
         output, score, combined = edl_util.align_commercial_breaks(input)
         self.validated_align_commercial_breaks(input, output, combined)
-        self.assertAlmostEqual(595.49, score, 2)
+        self.assertEqual(6, len(combined))
+        self.assertAlmostEqual(20666.52, score, 2)

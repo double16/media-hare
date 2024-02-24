@@ -6,8 +6,8 @@ import logging
 import os
 import random
 import sys
-from typing import Tuple, Union
 import xml.etree.ElementTree as ET
+from typing import Tuple, Union
 
 import requests
 
@@ -358,6 +358,7 @@ def _process_videos(desired_audio_codecs: list[str], desired_video_codecs: list[
                 file_name = part.attrib.get("file", "?")
                 file_size = int(part.attrib.get("size", "0"))
                 # TODO: stream info isn't coming back with this call, move to python-plexapi
+                # TODO: include stream info, such as type, codec, title, ... in result
                 # <Stream id="347880" streamType="3" default="1" codec="ass" index="2" bitrate="0" language="English" languageTag="en" languageCode="eng" title="Filtered" displayTitle="English (ASS)" extendedDisplayTitle="Filtered (English ASS)">
                 streams = list(filter(lambda el: el.tag == 'Stream', part))
                 if len(streams) == 0:

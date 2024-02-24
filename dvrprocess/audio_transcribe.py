@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import getopt
 import hashlib
-import json
 import logging
 import os
 import re
@@ -12,20 +11,20 @@ from statistics import mean, stdev
 from subprocess import PIPE, DEVNULL
 from typing import Union
 
-from thefuzz import fuzz
-
 import pysrt
 from pysrt import SubRipItem, SubRipFile, SubRipTime
-from vosk import Model, KaldiRecognizer, GpuInit, GpuThreadInit
+from thefuzz import fuzz
 
 import common
 from common import tools, constants, edl_util, progress
-from profanity_filter import srt_words_to_sentences, vosk_model, SUBTITLE_TEXT_TO_PLAIN_WS, \
+from common.vosk import kaldi_recognizer, vosk_model
+from profanity_filter import srt_words_to_sentences, SUBTITLE_TEXT_TO_PLAIN_WS, \
     SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS
 
 DEFAULT_MODEL = vosk_model('en-us')
 DEFAULT_FREQ = 16000
 DEFAULT_BUFFER_SIZE = 4000
+DEFAULT_NUM_CHANNELS = 1
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +42,20 @@ audio transcriber debugging
     limit duration using hh:mm:ss or number of seconds
 -b, --buffer={DEFAULT_BUFFER_SIZE}
     bytes to process at one time
+-c, --channels={DEFAULT_NUM_CHANNELS}
+    number of channels, 1 (mono) or 2 (stereo)
 -a, --audio-filter=
     ffmpeg audio filter, passed to option '-af', example: -a "anlmdn=s=.01"
 --audio-filter-file=
     audio filters, one per line
---max-alt=
+--max-alt=2
     set max alternatives
 """, file=sys.stderr)
 
 
 def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=None,
                      buffer_size: int = DEFAULT_BUFFER_SIZE,
+                     num_channels: int = DEFAULT_NUM_CHANNELS,
                      duration: [None, str] = None, audio_filter: [None, str] = None,
                      max_alternatives: [None, int] = None, no_clobber=True, input_info=None,
                      model_name: [None, str] = None):
@@ -76,8 +78,6 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     :param no_clobber: True to not run if the output file(s) already exist
     :return:
     """
-    GpuInit()
-    GpuThreadInit()
 
     model_name = model_name or DEFAULT_MODEL
 
@@ -89,17 +89,17 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
         words_path=words_path,
         text_path=text_path,
         freq=freq,
+        num_channels=num_channels,
         buffer_size=buffer_size,
     )
 
     if no_clobber and os.path.exists(words_path) and os.path.exists(text_path):
         return 0
 
-    model = Model(model_name=model_name, lang="en-us")
-    rec = KaldiRecognizer(model, freq)
-    rec.SetWords(True)
-    if max_alternatives is not None:
-        rec.SetMaxAlternatives(max_alternatives)
+    rec = kaldi_recognizer("en-us", freq, num_channels)
+    # FIXME:
+    # if max_alternatives is not None:
+    #     rec.SetMaxAlternatives(max_alternatives)
 
     if not input_info:
         input_info = common.find_input_info(input_path)
@@ -115,16 +115,19 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
 
     if audio_filter:
         if 'pan=' not in audio_filter:
-            ffmpeg_command.extend(['-ac', '1'])
+            ffmpeg_command.extend(['-ac', str(num_channels)])
         ffmpeg_command.extend(['-af', audio_filter])
     else:
         channels = int(audio_original.get(constants.K_CHANNELS, 0))
         if channels > 2:
-            ffmpeg_command.extend(['-af', 'pan=1c|FC<0.5*FL+FC+0.5*FR'])
+            if num_channels == 1:
+                ffmpeg_command.extend(['-af', 'pan=stereo|FL<FL+0.5*FC+0.5*BL|FR<FR+0.5*FC+0.5*BR'])
+            else:
+                ffmpeg_command.extend(['-af', 'pan=mono|FL=FC+0.5*FL+0.5*BL+0.5*BR|FR=FC+0.5*FR+0.5*BR+0.5*BL'])
         else:
-            ffmpeg_command.extend(['-ac', '1'])
+            ffmpeg_command.extend(['-ac', str(num_channels)])
 
-    ffmpeg_command.extend(['-f', 's16le', '-'])
+    ffmpeg_command.extend(['-f', 'wav', '-'])
     print(tools.ffmpeg.array_as_command(ffmpeg_command))
     ffmpeg = tools.ffmpeg.Popen(ffmpeg_command, stdout=PIPE, stderr=DEVNULL)
 
@@ -133,20 +136,19 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
                                        int(float(input_info[constants.K_FORMAT][constants.K_DURATION])))
 
     wf = ffmpeg.stdout
-    wf.read(44)  # skip header
 
     words = []
     while True:
         data = wf.read(buffer_size)
         if len(data) == 0:
             break
-        if rec.AcceptWaveform(data):
-            result = json.loads(rec.Result())
+        if rec.accept_waveform(data):
+            result = rec.result()
             if "result" in result:
                 words.extend(result["result"])
                 audio_progress.progress(result['result'][-1]['end'])
 
-    result = json.loads(rec.FinalResult())
+    result = rec.final_result()
     wf.close()
     ffmpeg_return_code = ffmpeg.wait()
     if ffmpeg_return_code != 0:
@@ -195,14 +197,16 @@ def audio_transcribe_cli(argv):
     text_path = None
     duration = None
     buffer_size = DEFAULT_BUFFER_SIZE
+    num_channels = DEFAULT_NUM_CHANNELS
     audio_filter = None
     audio_filter_file = None
     max_alternatives = None
 
     try:
         opts, args = getopt.getopt(
-            list(argv), "w:t:f:d:b:a:",
-            ["words=", "text=", "freq=", "duration=", "buffer=", 'audio-filter=', 'max-alt=', "audio-filter-file="])
+            list(argv), "w:t:f:d:b:a:c:",
+            ["words=", "text=", "freq=", "duration=", "buffer=", 'audio-filter=', 'max-alt=', "audio-filter-file=",
+             "channels="])
     except getopt.GetoptError:
         usage()
         sys.exit(255)
@@ -216,6 +220,8 @@ def audio_transcribe_cli(argv):
             text_path = arg
         elif opt in ("-f", "--freq"):
             freq = int(arg)
+        elif opt in ("-c", "--channels"):
+            num_channels = int(arg)
         elif opt in ("-d", "--duration"):
             duration = arg
         elif opt in ("-b", "--buffer"):
@@ -235,6 +241,7 @@ def audio_transcribe_cli(argv):
 
     if not audio_filter_file:
         audio_transcribe(input_path, words_path=words_path, text_path=text_path, freq=freq, duration=duration,
+                         num_channels=num_channels,
                          buffer_size=buffer_size, audio_filter=audio_filter, max_alternatives=max_alternatives,
                          no_clobber=False)
         return 0
@@ -298,6 +305,7 @@ def compute_file_paths(
         words_path: Union[None, str] = None,
         text_path: Union[None, str] = None,
         freq: int = DEFAULT_FREQ,
+        num_channels: int = DEFAULT_NUM_CHANNELS,
         buffer_size: int = DEFAULT_BUFFER_SIZE) -> tuple[str, str]:
     """
     :return: words_path, text_path
@@ -305,9 +313,10 @@ def compute_file_paths(
     hash_input = (audio_filter or 'none') + (model_name or 'none')
     af_hash = hashlib.sha512(hash_input.encode('utf-8')).hexdigest()[0:8]
     if duration is None:
-        file_prefix = input_path + "-" + af_hash + "-" + str(freq)
+        file_prefix = input_path + "-" + af_hash + "-" + str(freq) + "-" + str(num_channels)
     else:
-        file_prefix = input_path + "-" + af_hash + "-" + duration + "-" + str(freq) + "-" + str(buffer_size)
+        file_prefix = input_path + "-" + af_hash + "-" + duration + "-" + str(freq) + "-" + str(
+            num_channels) + "-" + str(buffer_size)
 
     if words_path is None:
         words_path = file_prefix + "-words.srt"

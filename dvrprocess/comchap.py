@@ -10,8 +10,8 @@ import sys
 import tempfile
 
 import common
-from common import hwaccel, tools, config, constants, edl_util
 import edl_normalize
+from common import hwaccel, tools, config, constants, edl_util
 
 logger = logging.getLogger(__name__)
 
@@ -371,6 +371,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             comskip_command.append("-w")
         else:
             comskip_invoker = tools.comskip
+            # TODO: only include hwassist when csv isn't available
             comskip_command.extend(get_comskip_hwassist_options())
 
         # check for csv and logo file which makes the process much faster

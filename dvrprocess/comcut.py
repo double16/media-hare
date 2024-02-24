@@ -421,9 +421,12 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
                          subtitle_filename
                          )
             subtitle.write_subtitle_data(stream[constants.K_CODEC_NAME], subtitle_filename, data)
-            ffmpeg_command.extend(["-i", subtitle_filename])
-            subtitle_stream_idx_to_input_idx[stream[constants.K_STREAM_INDEX]] = input_stream_idx
-            input_stream_idx += 1
+            if os.path.getsize(subtitle_filename) == 0:
+                logger.info("Subtitle %s is empty", subtitle_filename)
+            else:
+                ffmpeg_command.extend(["-i", subtitle_filename])
+                subtitle_stream_idx_to_input_idx[stream[constants.K_STREAM_INDEX]] = input_stream_idx
+                input_stream_idx += 1
 
     ffmpeg_command.extend(['-max_muxing_queue_size', '1024',
                            '-async', '1',
@@ -474,6 +477,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
         elif common.is_audio_stream(stream) and len(audio_filters) > 0:
             common.map_opus_audio_stream(ffmpeg_command, stream, output_file, str(output_stream_idx), audio_filters)
         elif common.is_subtitle_text_stream(stream) and len(subtitle_data) > 0:
+            if stream[constants.K_STREAM_INDEX] not in subtitle_stream_idx_to_input_idx:
+                continue
             ffmpeg_command.extend([
                 "-map", f"{subtitle_stream_idx_to_input_idx[stream[constants.K_STREAM_INDEX]]}:0",
                 f"-c:{output_stream_idx}", "copy"])

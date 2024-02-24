@@ -76,6 +76,7 @@ COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/
+COPY entrypoint.sh /
 COPY hwaccel-drivers.sh /usr/bin/hwaccel-drivers
 COPY hwaccel-drivers-wrapper.sh /usr/bin/hwaccel-drivers-wrapper
 COPY anacron.cron /etc/cron.d/anacron
@@ -105,9 +106,10 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     systemctl enable localtime &&\
     systemctl enable environment &&\
     systemctl enable hwaccel-drivers &&\
+    systemctl disable unattended-upgrades &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 
-CMD [ "/usr/bin/systemctl", "default" ]
+CMD [ "/entrypoint.sh" ]
 
 HEALTHCHECK CMD /usr/bin/healthcheck.sh

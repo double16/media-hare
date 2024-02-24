@@ -251,7 +251,8 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
 
             # TODO: organize breaks into "slots" with similar start times. If there is a break starting at 0, use the
             # length to adjust start time
-            aligned_commercial_breaks, commercial_break_score = edl_util.align_commercial_breaks(list(map(lambda v: v['commercial_breaks'], videos)))
+            aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(
+                list(map(lambda v: v['commercial_breaks'], videos)))
             logger.info(
                 f"{show_label}: commercial break score = {commercial_break_score}\n"
                 f"{edl_util.pretty_print_commercial_breaks(aligned_commercial_breaks)}"

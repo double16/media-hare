@@ -4,7 +4,6 @@ import atexit
 import copy
 import getopt
 import hashlib
-import json
 import logging
 import os
 import re
@@ -12,29 +11,27 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import weakref
 from bisect import bisect_left, bisect_right
 from math import ceil, floor
 from pathlib import Path
 from typing import Tuple, Union
-from websockets.sync.client import connect as wsconnect
-from vosk import Model, KaldiRecognizer, SetLogLevel
 
 import language_tool_python
 import pysrt
 from ass_parser import read_ass, write_ass, AssFile, AssEventList, CorruptAssLineError
+from num2words import num2words
 from numpy import loadtxt, average, concatenate
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from thefuzz import fuzz
 from thefuzz import process as fuzzprocess
-from num2words import num2words
 
 import common
 from common import subtitle, tools, config, constants, progress, edl_util
+from common.vosk import kaldi_recognizer
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 12
-AUDIO_TO_TEXT_VERSION = 4
+AUDIO_TO_TEXT_VERSION = 5
 AUDIO_TO_TEXT_SUBTITLE_VERSION = 5
 
 # exit code for content had filtering applied, file has been significantly changed
@@ -277,7 +274,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
             if audio_channels > 2:
-                audio_to_text_filter = 'pan=1c|FC<0.3*FL+FC+0.3*FR'
+                # audio_to_text_filter = 'pan=stereo|FL<FL+0.5*FC+0.5*BL|FR<FR+0.5*FC+0.5*BR'
+                audio_to_text_filter = 'pan=mono|FL=FC+0.5*FL+0.5*BL+0.5*BR|FR=FC+0.5*FR+0.5*BR+0.5*BL'
             else:
                 audio_to_text_filter = None
             subtitle_srt_words = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
@@ -1020,86 +1018,6 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
     return subtitle_srt_filename
 
 
-class BaseKaldiRecognizer(object):
-    def __init__(self, vosk_language: str, freq: int):
-        self.vosk_language = vosk_language
-        self.freq = freq
-
-    def accept_waveform(self, data) -> int:
-        return 0
-
-    def result(self) -> dict:
-        return {}
-
-    def final_result(self) -> dict:
-        return {}
-
-
-class LocalKaldiRecognizer(BaseKaldiRecognizer):
-    vosk_model_cache = weakref.WeakValueDictionary()
-
-    def __init__(self, vosk_language: str, freq: int):
-        super().__init__(vosk_language, freq)
-        SetLogLevel(-99)
-        try:
-            model = self.vosk_model_cache[self.vosk_language]
-        except KeyError:
-            model = Model(model_name=vosk_model(self.vosk_language), lang=self.vosk_language)
-            self.vosk_model_cache[self.vosk_language] = model
-        self.rec = KaldiRecognizer(model, freq)
-        self.rec.SetWords(True)
-
-    def accept_waveform(self, data) -> int:
-        return self.rec.AcceptWaveform(data)
-
-    def result(self) -> dict:
-        return json.loads(self.rec.Result())
-
-    def final_result(self) -> dict:
-        try:
-            return json.loads(self.rec.FinalResult())
-        finally:
-            self.rec = None
-
-
-# map from language to whether server is available
-REMOTE_KALDI_SERVER: dict[str, bool] = {}
-
-
-class RemoteKaldiRecognizer(BaseKaldiRecognizer):
-    def __init__(self, vosk_language: str, freq: int):
-        super().__init__(vosk_language, freq)
-        lang2 = vosk_language[0:2]
-        remote_host = os.getenv(f'KALDI_{lang2.upper()}_HOST', f'kaldi-{lang2.lower()}')
-        remote_port = os.getenv(f'KALDI_{lang2.upper()}_PORT', '2700')
-        remote_url = f'ws://{remote_host}:{remote_port}'
-        self.socket = wsconnect(remote_url)
-        self.socket.send('{ "config" : { "words" : true, "max_alternatives" : 0, "sample_rate" : %d } }' % freq)
-
-    def accept_waveform(self, data) -> int:
-        self.socket.send(data)
-        return 1
-
-    def result(self) -> dict:
-        message = self.socket.recv()
-        if message:
-            return json.loads(message)
-        else:
-            return {}
-
-    def final_result(self) -> dict:
-        try:
-            self.socket.send('{"eof" : 1}')
-            final_message = self.socket.recv()
-            if final_message:
-                return json.loads(final_message)
-            else:
-                return {}
-        finally:
-            self.socket.close()
-            self.socket = None
-
-
 def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None) \
         -> Union[str, None]:
     """
@@ -1108,10 +1026,11 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     2. --tasks is being set but so far it doesn't seem to yield more cores used
     :return: srt filename for words
     """
-    global debug, REMOTE_KALDI_SERVER
+    global debug
 
-    freq = 16000
-    chunk_size = ceil(freq * 0.4)
+    freq = 48000
+    chunk_size = ceil(freq * 1.0)  # coefficient is the number of seconds
+    num_channels = 1  # num_channels 2 doesn't work (2024-02-17), it takes the input as mono
 
     temp_fd, words_filename = tempfile.mkstemp(dir=workdir, suffix='.srt')
     os.close(temp_fd)
@@ -1123,28 +1042,23 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
                        '-map', f'0:{audio_original[constants.K_STREAM_INDEX]}',
                        '-ar', str(freq)]
     if audio_filter:
-        if 'pan=' not in audio_filter:
-            extract_command.extend(['-ac', '1'])
+        if 'pan=' in audio_filter:
+            if 'stereo' in audio_filter:
+                num_channels = 2
+            else:
+                num_channels = 1
+        else:
+            extract_command.extend(['-ac', str(num_channels)])
         extract_command.extend(['-af', audio_filter])
     else:
-        extract_command.extend(['-ac', '1'])
-    extract_command.extend(['-f', 's16le', '-'])
+        extract_command.extend(['-ac', str(num_channels)])
+    extract_command.extend(['-f', 'wav', '-'])
 
-    _vosk_language = vosk_language(language)
-    try:
-        if _vosk_language not in REMOTE_KALDI_SERVER or REMOTE_KALDI_SERVER[_vosk_language]:
-            rec: BaseKaldiRecognizer = RemoteKaldiRecognizer(_vosk_language, freq)
-            REMOTE_KALDI_SERVER[_vosk_language] = True
-        else:
-            rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
-    except BaseException as e:
-        logger.debug("Remote transcriber not available")
-        REMOTE_KALDI_SERVER[_vosk_language] = False
-        rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
+    rec = kaldi_recognizer(language, freq, num_channels)
 
     logger.debug(tools.ffmpeg.array_as_command(extract_command))
     audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    audio_process.stdout.read(44)  # skip header
+    # audio_process.stdout.read(44)  # skip header
     results = []
     audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0,
                                        int(float(
@@ -1417,36 +1331,6 @@ def phrase_list_accept_condition(e):
     if len(e) == 0:
         return False
     return e[0] != '#'
-
-
-def vosk_language(language: str) -> str:
-    """
-    Get the language code for the Vosk transcriber from the three character language code.
-    :param language: three character language code
-    :returns: language code appropriate for Vosk
-    """
-    if language == 'spa':
-        return 'es'
-    if language in ['eng', 'en']:
-        return 'en-us'
-    return language[0:2]
-
-
-def vosk_model(language: str) -> Union[None, str]:
-    """
-    Get the Vosk transcriber model to use from the three character language code.
-    See https://alphacephei.com/vosk/models
-    :param language: three character language code
-    :returns: model name or None to let Vosk choose a model based on the language
-    """
-    if not language:
-        return None
-    if language in ['en-us', 'en']:
-        # vosk-model-en-us-daanzu-20200905 sometimes is better, but not for the average case
-        return 'vosk-model-en-us-0.22'
-    elif language == 'es':
-        return 'vosk-model-es-0.42'
-    return None
 
 
 def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run: bool, debug: bool,
