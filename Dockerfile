@@ -1,4 +1,4 @@
-FROM ubuntu:23.04 as comskipbuild
+FROM ubuntu:23.10 as comskipbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -7,14 +7,14 @@ RUN apt-get -q update &&\
     apt-get install -y autoconf libtool git build-essential libargtable2-dev libavformat-dev libsdl1.2-dev libswscale-dev
 RUN git clone https://github.com/erikkaashoek/Comskip --branch master --single-branch
 RUN cd Comskip &&\
-    git reset 6e66de54358498aa276d233f5b3e7fa673526af1 --hard
+    git reset 109b5d10b086d299d7e43878ccc7951cb7133ed8 --hard
 RUN cd Comskip &&\
     ./autogen.sh &&\
     ./configure &&\
     make &&\
     make install
 
-FROM ubuntu:23.04 as ccbuild
+FROM ubuntu:23.10 as ccbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,7 +29,7 @@ RUN cd ccextractor/linux &&\
     ./ccextractor --version &&\
     cp ccextractor /usr/local/bin
 
-FROM ubuntu:23.04
+FROM ubuntu:23.10
 
 ARG SYSTEMCTL_VER=1.5.4505
 ENV DEBIAN_FRONTEND=noninteractive
@@ -43,7 +43,7 @@ RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
-    libargtable2-0 libavformat59 libsdl1.2-compat libatomic1 &&\
+    libargtable2-0 libavformat60 libsdl1.2-compat libatomic1 &&\
     pip --no-input install --break-system-packages --compile --ignore-installed -r /tmp/requirements.txt && \
     apt-get remove -y python3-pip software-properties-common &&\
     apt-get autoremove -y &&\
