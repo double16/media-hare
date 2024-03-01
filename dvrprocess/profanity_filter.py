@@ -14,6 +14,7 @@ import tempfile
 from bisect import bisect_left, bisect_right
 from math import ceil, floor
 from pathlib import Path
+from statistics import mean, stdev
 from typing import Tuple, Union
 
 import language_tool_python
@@ -193,6 +194,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         constants.K_AUDIO_TO_TEXT_VERSION)
     current_audio2text_subtitle_version = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
         constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION)
+    transcribe_notes = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+        constants.K_AUDIO_TO_TEXT_NOTES)
     logger.info("current filter hash = %s, current filter version = %s, current audio-to-text version = %s",
                 current_filter_hash, current_filter_version, current_audio2text_version)
 
@@ -276,7 +279,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 audio_to_text_filter = 'pan=mono|FL=FC+0.5*FL+0.5*BL+0.5*BR|FR=FC+0.5*FR+0.5*BR+0.5*BL'
             else:
                 audio_to_text_filter = None
-            subtitle_srt_words = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
+            subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
             if subtitle_srt_words and os.stat(subtitle_srt_words).st_size > 0:
                 audio_to_text_version = AUDIO_TO_TEXT_VERSION
             else:
@@ -310,6 +313,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     tags[constants.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
     tags[
         constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION] = audio_to_text_subtitle_version if audio_to_text_subtitle_version else ''
+    tags[
+        constants.K_AUDIO_TO_TEXT_NOTES] = transcribe_notes if transcribe_notes else ''
     if mute_channels:
         tags[constants.K_MUTE_CHANNELS] = mute_channels.name
     if common.should_replace_media_title(input_info):
@@ -396,6 +401,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                               f'{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_subtitle_version else ""}',
                               "-metadata:s:s:0",
                               f'{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={audio_to_text_subtitle_version if audio_to_text_subtitle_version else ""}',
+                              "-metadata:s:s:0",
+                              f'{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ""}',
                               "-disposition:s:0", "default"])
             subtitle_output_idx = 1
         else:
@@ -428,6 +435,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         arguments.extend(
             ["-metadata",
              f"{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={audio_to_text_subtitle_version if audio_to_text_subtitle_version else ''}"])
+        arguments.extend(
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ''}"])
         arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}="])
         if mark_skip:
             arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}=true"])
@@ -586,6 +596,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ["-metadata",
              f"{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         arguments.extend(
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ''}"])
+        arguments.extend(
             ["-metadata", f"{constants.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
         if len(stopped_spans) > 0:
             arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
@@ -651,6 +664,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 f'{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_subtitle_version else ""}',
                 f"-metadata:s:s:{subtitle_output_idx}",
                 f'{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={audio_to_text_subtitle_version if audio_to_text_subtitle_version else ""}',
+                f"-metadata:s:s:{subtitle_output_idx}",
+                f'{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ""}',
             ])
         elif subtitle_original_idx is not None:
             arguments.extend(["-map", f"{streams_file}:{subtitle_original_idx}"])
@@ -1017,7 +1032,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
 
 
 def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None) \
-        -> Union[str, None]:
+        -> (Union[str, None], Union[str, None]):
     """
     Create a SRT subtitle with an event for each word.
     1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
@@ -1085,10 +1100,12 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         logger.error("Cannot transcribe audio, ffmpeg returned %s", extract_return_code)
         return None
 
+    confs = []
     subs_words = []
     for i, res in enumerate(results):
         words = res['result']
         for word in words:
+            confs.append(word['conf'])
             s = SubRipItem(index=len(subs_words),
                            start=SubRipTime(seconds=word['start']),
                            end=SubRipTime(seconds=word['end']),
@@ -1103,7 +1120,16 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     srt_words = SubRipFile(items=subs_words, path=words_filename)
     srt_words.save(Path(words_filename), 'utf-8')
 
-    return words_filename
+    if len(confs) > 5:
+        conf_min = min(confs)
+        conf_max = max(confs)
+        conf_avg = mean(confs)
+        conf_stdev = stdev(confs)
+        conf_notes = f'freq {freq} buf {chunk_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
+    else:
+        conf_notes = ""
+
+    return words_filename, conf_notes
 
 
 def words_to_subtitle_srt(input_info: dict, words_filename: str, workdir, language=None) -> Union[str, None]:
