@@ -28,7 +28,6 @@ Usage: {sys.argv[0]} infile [outfile pattern]
 """, file=sys.stderr)
 
 
-@common.finisher
 def scene_extract(infile, outfile_pattern, verbose=False, dry_run=False):
     infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
     edlfile = f"{os.path.dirname(infile) or '.'}/{infile_base}.edl"

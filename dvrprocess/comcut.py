@@ -70,7 +70,6 @@ Usage: {sys.argv[0]} infile [outfile]
 """, file=sys.stderr)
 
 
-@common.finisher
 def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=True, verbose=False, debug=False,
            comskipini=None,
            workdir=None, preset=None, hwaccel_requested=None, force_encode=False, dry_run=False,
@@ -211,7 +210,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     audio_filters: list[str] = []
     subtitle_filtered = False
     totalcutduration = 0.0
-    comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir)
+    comskipini_hash = compute_comskip_ini_hash(comskipini, input_info=input_info, workdir=workdir, log_file=False)
     video_encoder_options_tag_value = []
 
     crop_frame_filter = crop_frame.find_crop_frame_filter(crop_frame_op, input_info, common.get_frame_rate(input_info), crop_frame_fixed)

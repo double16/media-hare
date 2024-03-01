@@ -204,6 +204,13 @@ class ComskipProcInvoker(SubprocessProcInvoker):
 
         task_name = self.command_basename
         task_filename = super()._find_filename_in_arguments(arguments)
+        if task_filename.endswith('.csv'):
+            # csv processing is fast, do not slow it down with processing pipes
+            kwargs2 = kwargs.copy()
+            kwargs2['stderr'] = subprocess.DEVNULL
+            kwargs2['stdout'] = subprocess.DEVNULL
+            return super()._run([arguments[0]] + ["--verbose=0", "--quiet"] + arguments[1:], kwargs2)
+
         if task_filename:
             task_name = task_filename + ' ' + task_name
 

@@ -149,6 +149,8 @@ class EdlParseTest(unittest.TestCase):
         self.assertEqual(len(input), len(output))
         for output_el in output:
             self.assertEqual(len(combined), len(output_el))
+        for idx in range(0, len(combined) - 1):
+            self.assertFalse(combined[idx].get_overlap(combined[idx + 1]) > 0, f"combined {idx} overlaps {idx + 1}")
 
     def test_align_commercial_breaks_single(self):
         input = [[
@@ -174,7 +176,7 @@ class EdlParseTest(unittest.TestCase):
         output, score, combined = edl_util.align_commercial_breaks(input)
         self.validated_align_commercial_breaks(input, output, combined)
         self.assertEqual(input, output)
-        self.assertAlmostEqual(55.86, score, 2)
+        self.assertAlmostEqual(15.88, score, 2)
 
     def test_align_commercial_breaks_two_disjoint(self):
         input = [
@@ -203,7 +205,7 @@ class EdlParseTest(unittest.TestCase):
         self.validated_align_commercial_breaks(input, output, combined)
         self.assertEqual(3, len(combined))
         self.assertEqual(expected, output)
-        self.assertAlmostEqual(907.48, score, 2)
+        self.assertAlmostEqual(879.67, score, 2)
 
     def test_align_commercial_breaks_three_disjoint(self):
         input = [
@@ -242,7 +244,7 @@ class EdlParseTest(unittest.TestCase):
         self.validated_align_commercial_breaks(input, output, combined)
         self.assertEqual(3, len(combined))
         self.assertEqual(expected, output)
-        self.assertAlmostEqual(938.10, score, 2)
+        self.assertAlmostEqual(643.42, score, 2)
 
     def test_align_commercial_breaks_three_equal(self):
         input = [
@@ -267,14 +269,35 @@ class EdlParseTest(unittest.TestCase):
         self.assertEqual(input, output)
         self.assertEqual(0.001, score)
 
-    def test_align_commercial_breaks_s02(self):
+    def test_align_commercial_breaks_s02_1(self):
         input = []
         for root, dirs, files in os.walk('../fixtures/combreaks/one'):
             for file in files:
                 if file.endswith(".edl"):
-                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3600)
+                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3597)
+                    input.append(commercial_breaks)
+        output, score, combined = edl_util.align_commercial_breaks(input)
+        # print()
+        # print(edl_util.pretty_print_commercial_breaks([combined]))
+        # print(edl_util.pretty_print_commercial_breaks(output))
+        self.validated_align_commercial_breaks(input, output, combined)
+        self.assertEqual(5, len(combined))
+        self.assertEqual(20, len(output))
+        for output_idx, output_item in enumerate(output):
+            self.assertEqual(5, len(output_item), f"unexpected length for edl item {output_idx}")
+        self.assertAlmostEqual(1312.84, score, 2)
+
+    def test_align_commercial_breaks_s02_2(self):
+        input = []
+        for root, dirs, files in os.walk('../fixtures/combreaks/two'):
+            for file in files:
+                if file.endswith(".edl"):
+                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3597)
                     input.append(commercial_breaks)
         output, score, combined = edl_util.align_commercial_breaks(input)
         self.validated_align_commercial_breaks(input, output, combined)
         self.assertEqual(6, len(combined))
-        self.assertAlmostEqual(20666.52, score, 2)
+        self.assertEqual(21, len(output))
+        for output_idx, output_item in enumerate(output):
+            self.assertEqual(6, len(output_item), f"unexpected length for edl item {output_idx}")
+        self.assertAlmostEqual(1588.33, score, 2)

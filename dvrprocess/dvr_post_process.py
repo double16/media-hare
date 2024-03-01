@@ -229,7 +229,6 @@ def dvr_post_process(*args, **kwargs):
         raise e
 
 
-@common.finisher
 def do_dvr_post_process(input_file,
                         # real video codec is resolved per stream and "None" indicates for us to pick the best
                         desired_video_codecs: Iterable[str] = None,
@@ -740,7 +739,6 @@ def dvr_post_process_cli(argv):
                     logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
                     merged_args = parsed[1].copy()
                     merged_args['forgiving'] = True
-                    common.finish()
                     this_file_return_code = do_dvr_post_process(infile, **merged_args)
                 else:
                     raise e

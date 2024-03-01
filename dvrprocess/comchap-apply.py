@@ -88,7 +88,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                             logger.info(f"{filepath}: Chapters from another source present")
                             continue
                         if current_comskip_hash == compute_comskip_ini_hash(comskip_ini, video_path=filepath,
-                                                                            workdir=workdir):
+                                                                            workdir=workdir, log_file=not delete_log):
                             # already done
                             logger.info(f"{filepath}: Already processed")
                             continue

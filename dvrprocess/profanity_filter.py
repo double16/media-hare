@@ -100,8 +100,6 @@ def profanity_filter(*args, **kwargs) -> int:
     except CorruptAssLineError:
         logger.error("Corrupt ASS subtitle in %s", args[0])
         return CMD_RESULT_ERROR
-    finally:
-        common.finish()
 
 
 def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,

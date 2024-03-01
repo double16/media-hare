@@ -5,6 +5,7 @@ import sys
 import tempfile
 import threading
 from enum import Enum
+from functools import lru_cache
 
 from . import constants
 
@@ -26,6 +27,7 @@ def _get_config_sources(filename: str):
             f"./{filename}"]
 
 
+@lru_cache(maxsize=None)
 def find_config(filename: str) -> str:
     """
     Locate a config file from a list of common locations. The first one found is returned.
@@ -150,6 +152,7 @@ def get_global_config_bytes(section: str, option: str, fallback: int = None):
     return parse_bytes(get_global_config().get(section, option))
 
 
+@lru_cache(maxsize=None)
 def get_work_dir() -> str:
     work_dir = get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
     if not os.path.exists(work_dir):
@@ -157,6 +160,7 @@ def get_work_dir() -> str:
     return work_dir
 
 
+@lru_cache(maxsize=None)
 def get_global_config_frame_rate(section: str, option: str, fallback: [None, str] = _UNSET) -> [None, str]:
     """
     Get the frame rate from the global config (i.e., media-hare.ini and media-hare.defaults.ini)

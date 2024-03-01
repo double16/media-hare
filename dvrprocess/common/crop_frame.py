@@ -25,6 +25,7 @@ CROP_FRAME_RESOLUTIONS = {
     CropFrameOperation.NTSC: [(640, 480), (704, 480), (720, 480)] + HD_RESOLUTIONS,
     CropFrameOperation.PAL: [(544, 576), (704, 576), (720, 576)] + HD_RESOLUTIONS
 }
+_CROP_DETECT_REGEX = re.compile(r't:([0-9.]+)\s+(crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+)\b')
 
 
 def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, frame_rate,
@@ -76,11 +77,10 @@ def find_crop_frame_filter(crop_frame_op: CropFrameOperation, input_info: dict, 
                            '-f', 'null', '/dev/null']
     crop_detect_process = tools.ffmpeg.Popen(crop_detect_command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                                              universal_newlines=True)
-    crop_detect_regex = r't:([0-9.]+)\s+(crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+)\b'
     crop_line_last_t = None
     crop_line_last_filter = None
     for line in crop_detect_process.stderr:
-        m = re.search(crop_detect_regex, line)
+        m = _CROP_DETECT_REGEX.search(line)
         if m:
             crop_line_this_t = float(m.group(1))
             crop_line_this_filter = m.group(2)

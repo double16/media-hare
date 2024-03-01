@@ -1,8 +1,9 @@
 import logging
 from copy import copy
 from enum import Enum
-from statistics import stdev, StatisticsError
 from typing import Union
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class EdlType(Enum):
 
 class EdlEvent(object):
 
-    def __init__(self, start, end, event_type: EdlType, title: str = None):
+    def __init__(self, start: float, end: float, event_type: EdlType, title: str = None):
         self.start = start
         self.end = end
         self.event_type = event_type
@@ -30,6 +31,8 @@ class EdlEvent(object):
             return f"{self.start} - {self.end}"
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.start == other.start and self.end == other.end and self.event_type == other.event_type
 
     def __copy__(self):
@@ -148,11 +151,19 @@ class CombinedEdlEvents(object):
         self._events: list[EdlEvent] = [event]
         self._reduced: Union[EdlEvent, None] = None
 
+    def get_events(self):
+        return self._events
+
     def is_overlap_within_percent(self, target: EdlEvent) -> bool:
         return any(map(lambda e: e.is_overlap_within_percent(target), self._events))
 
     def append(self, e: EdlEvent):
         self._events.append(e)
+        self._reduced = None
+
+    def append_all(self, events: list[EdlEvent]):
+        for e in events:
+            self._events.append(e)
         self._reduced = None
 
     def _average_without_extremes(self, numbers: list[int]):
@@ -177,13 +188,15 @@ def align_commercial_breaks(breaks_in: list[list[EdlEvent]]) -> tuple[
     :param breaks_in:
     :return: breaks, score, combined
     """
-    result: list[list[EdlEvent]] = []
+    result: list[list[Union[EdlEvent, None]]] = []
     if not breaks_in:
         return result, None, []
 
+    breaks_in_sorted = sorted(breaks_in, key=lambda b: b[0].start if b and b[0] else 0)
+
     # build array of combined breaks
     combined: list[CombinedEdlEvents] = list()
-    for break_in in breaks_in:
+    for break_in in breaks_in_sorted:
         for b in break_in:
             overlaps: list[tuple[int, CombinedEdlEvents]] = []
             for c in combined:
@@ -195,36 +208,46 @@ def align_commercial_breaks(breaks_in: list[list[EdlEvent]]) -> tuple[
                 overlaps.sort(key=lambda e: e[0])
                 overlaps[-1][1].append(b)
     combined.sort(key=lambda e: e.reduce().start)
-    # for c in range(0, len(combined) - 1):
-    #     if combined[c].reduce().get_overlap(combined[c + 1].reduce()) > 0:
-    #         print(f"combined overlap {c} {c + 1}")
-    # print("combined:")
-    # print(pretty_print_commercial_breaks([list(map(lambda c: c.reduce(), combined))]))
+    for c in range(len(combined) - 1, 0, -1):
+        if combined[c].reduce().get_overlap(combined[c - 1].reduce()) > 0:
+            combined[c - 1].append_all(combined.pop(c).get_events())
 
-    for break_in in breaks_in:
+    for break_in in breaks_in_sorted:
         resolved = []
+        break_in_todo = break_in.copy()
         for combined_event in combined:
             resolved_event = None
-            for event in break_in:
+            consumed_events = []
+            for event in break_in_todo:
                 if event.is_overlap_within_percent(combined_event.reduce()):
+                    consumed_events.append(event)
                     if resolved_event is None:
                         resolved_event = event
                     else:
                         resolved_event = resolved_event.union(event)
             resolved.append(resolved_event)
+            for event in consumed_events:
+                break_in_todo.remove(event)
 
         result.append(resolved)
 
-    score = 0.001
-    for i in range(0, len(combined)):
-        try:
-            score += stdev(map(lambda e: e.length(), [l[i] for l in result if l[i] is not None]))
-        except StatisticsError:
-            pass
+    if (len(combined) * len(result)) == 0:
+        score = 0.001
+    else:
+        # convert to matrices and compute the overall standard deviation
+        missing_value = -1
+        empty_count = 0
+        matrices = list()
+        for result_el in result:
+            matrices.append(np.array(
+                [[missing_value if x is None else x.start, missing_value if x is None else x.end] for x in result_el]))
+            empty_count += result_el.count(None)
+        stacked_matrices = np.stack(matrices, axis=-1)
+        score = 0.001 + np.mean(np.std(stacked_matrices, axis=-1, dtype=np.float64))
 
-        max_length = max(map(lambda e: e.length(), [l[i] for l in result if l[i] is not None]))
-        score += sum(map(lambda e: 400, [l[i] for l in result if l[i] is None]))
-
+        element_count = len(combined) * len(result)
+        sparsity_ratio = empty_count / max(1, element_count)
+        score += 2000 * sparsity_ratio
     return result, score, list(map(lambda c: c.reduce(), combined))
 
 
@@ -236,7 +259,7 @@ def pretty_print_commercial_breaks(breaks: list[list[EdlEvent]]) -> str:
         return f"{hour:02d}:{minute:02d}:{second:06.3f}"
 
     result = ""
-    for br in breaks:
+    for br in sorted(breaks, key=lambda b: b[0].start if b and b[0] else 0):
         for event in br:
             if event is None:
                 result += " " * 27 + ", "

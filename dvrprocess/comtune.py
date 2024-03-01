@@ -5,6 +5,7 @@ import getopt
 import hashlib
 import json
 import logging
+import math
 import os.path
 import random
 import shutil
@@ -12,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor, Future
 from math import ceil
 from multiprocessing import Pool
 from statistics import stdev, mean
@@ -37,7 +39,7 @@ COL_UNIFORM = 4
 COL_SOUND = 5
 VERSION_VIDEO_STATS = "1"
 VERSION_GAD_TUNING = "3"
-
+debug = False
 
 class ComskipGene(object):
     def __init__(self, config: tuple, use_csv: bool, description: str, exclude_if_default, space, data_type,
@@ -152,10 +154,7 @@ Usage: {sys.argv[0]} file | dir
 
 
 def comtune(*args, **kwargs):
-    try:
-        return do_comtune(*args, **kwargs)
-    finally:
-        common.finish()
+    return do_comtune(*args, **kwargs)
 
 
 def do_comtune(infile, verbose=False, workdir=None, force=0, dry_run=False):
@@ -329,12 +328,14 @@ def edl_tempfile(infile, workdir):
     return os.path.join(tempdir, f'.~{os.path.splitext(os.path.basename(infile))[0]}.edl')
 
 
-def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_genes=False, check_compute=True,
+def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdir, dry_run=False, force=0,
+              expensive_genes=False, check_compute=True,
               num_generations=0, comskip_defaults: configparser.ConfigParser = None) ->\
         (object, list, list, list, progress.progress):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
-    :param pool:
+    :param process_pool:
+    :param thread_pool:
     :param files:
     :param workdir:
     :param dry_run:
@@ -348,13 +349,14 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
     # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
 
     genes = list(filter(lambda g: g.space_has_elements() and (g.use_csv or expensive_genes), GENES))
-    logger.debug("fitting for genes: %s", list(map(lambda e: e.config, genes)))
+    permutations = math.prod(map(lambda g: len(g.space), genes))
+    logger.debug("fitting for genes: %s, permutations %d", list(map(lambda e: e.config, genes)), permutations)
     gene_space = list(map(lambda g: g.space, genes))
     gene_type = list(map(lambda g: g.data_type, genes))
 
     season_dir = os.path.dirname(files[0])
     comskip_ini_path = os.path.join(season_dir, 'comskip.ini')
-    framearray_results = []
+    framearray_results: list[Future] = []
 
     # ffprobe info for all videos
     video_infos = []
@@ -408,29 +410,28 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             file_path = video_info[constants.K_FORMAT]['filename']
             try:
                 framearray_results.append(
-                    pool.apply_async(common.pool_apply_wrapper(ensure_framearray), (
+                    thread_pool.submit(ensure_framearray,
                         file_path, os.path.basename(file_path) + CSV_SUFFIX_BLACKFRAME, comskip_starter_ini, workdir,
                         dry_run,
-                        True)))
+                                       True))
             except [subprocess.CalledProcessError, KeyboardInterrupt] as e:
-                pool.terminate()
+                thread_pool.shutdown(cancel_futures=True)
                 raise e
         video_stats_progress = progress.progress('blackframe tuning', 0, len(framearray_results) - 1)
         video_stats_progress.progress(0)
         try:
             for result_idx, result in enumerate(framearray_results):
                 if check_compute and common.should_stop_processing():
-                    pool.terminate()
+                    thread_pool.shutdown(cancel_futures=True)
                     raise StopIteration('over loaded')
                 try:
-                    result.wait()
-                    result.get()
+                    result.result()
                     video_stats_progress.progress(result_idx)
                 except subprocess.CalledProcessError as e:
                     # generate with the files we have
                     pass
                 except KeyboardInterrupt as e:
-                    pool.terminate()
+                    thread_pool.shutdown(cancel_futures=True)
                     raise e
         finally:
             video_stats_progress.stop()
@@ -462,7 +463,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
                                             + '.ini')
     shutil.copyfile(comskip_ini_path, comskip_fitness_ini_path)
 
-    tuning_progress = progress.progress(f"{input_dirs.pop()} tuning", 0, num_generations)
+    tuning_progress = progress.progress(f"{input_dirs.pop()} tuning", 0, num_generations + 1)
 
     def f(gad: pygad.GA, solution, solution_idx):
         write_ini_from_solution(comskip_fitness_ini_path, genes, solution)
@@ -482,7 +483,7 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
         else:
             csv_suffix = "-fitness"
 
-        results = []
+        results: list[Future] = []
         for video_info in dvr_infos:
             file_path = video_info[constants.K_FORMAT]['filename']
             csvfile = common.replace_extension(
@@ -491,19 +492,17 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
             edlfile = edl_tempfile(file_path, workdir)
             if os.path.exists(edlfile):
                 os.remove(edlfile)
-            results.append(pool.apply_async(common.pool_apply_wrapper(csv_and_comchap_generate), (),
-                                            {
-                                                'file_path': file_path,
-                                                'comskip_ini_path': comskip_ini_path,
-                                                'comskip_fitness_ini_path': comskip_fitness_ini_path,
-                                                'csvfile': csvfile,
-                                                'workdir': workdir,
-                                                'video_info': video_info,
-                                                'edlfile': edlfile,
-                                                'dry_run': dry_run,
-                                                'force_csv_regen': (force > 1 or not black_frame_tuning_done)
-                                            },
-                                            error_callback=common.error_callback_dump))
+            results.append(thread_pool.submit(csv_and_comchap_generate,
+                                              file_path=file_path,
+                                              comskip_ini_path=comskip_ini_path,
+                                              comskip_fitness_ini_path=comskip_fitness_ini_path,
+                                              csvfile=csvfile,
+                                              workdir=workdir,
+                                              video_info=video_info,
+                                              edlfile=edlfile,
+                                              dry_run=dry_run,
+                                              force_csv_regen=(force > 1 or not black_frame_tuning_done)
+                                              ))
 
         csv_config_d = dict(zip(csv_configs, csv_values))
         video_stats_progress = progress.progress(
@@ -512,17 +511,16 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
         try:
             for result_idx, result in enumerate(results):
                 if check_compute and common.should_stop_processing():
-                    pool.terminate()
+                    thread_pool.shutdown(cancel_futures=True)
                     raise StopIteration('over loaded')
                 try:
-                    result.wait()
-                    result.get()
+                    result.result()
                     video_stats_progress.progress(result_idx)
                 except subprocess.CalledProcessError:
                     # generate fitness with the files we have
                     pass
                 except KeyboardInterrupt as e:
-                    pool.terminate()
+                    thread_pool.shutdown(cancel_futures=True)
                     os.remove(comskip_fitness_ini_path)
                     raise e
         finally:
@@ -530,7 +528,6 @@ def setup_gad(pool: Pool, files, workdir, dry_run=False, force=0, expensive_gene
 
         os.remove(comskip_fitness_ini_path)
 
-        # TODO: Add commercial break alignment
         adjusted_durations = []
         commercial_breaks: list[list[edl_util.EdlEvent]] = []
         # if we want to ignore already cut files, iterate over dvr_infos instead of video_infos
@@ -595,10 +592,6 @@ def csv_and_comchap_generate(file_path, comskip_ini_path, comskip_fitness_ini_pa
 def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of_non_defaults: float,
                   episode_common_duration: int = 60,
                   commercial_breaks: list[list[edl_util.EdlEvent]] = None):
-    # sigma good values 0 - 120
-    # expected_adjusted_duration_diff good values 0 - 240
-    # count_of_non_defaults good values 0 - 16
-
     if episode_common_duration <= 30:
         duration_tolerance = 30.0
     else:
@@ -606,15 +599,28 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
 
     commercial_break_score = 1000000  # closer to 0 is better
     aligned_commercial_breaks = None
-    if commercial_breaks:
+    if len([item for sublist in commercial_breaks for item in sublist]) > 0:
         aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(commercial_breaks)
+        if commercial_break_score < 1:
+            logger.warning("Commercial break score < 1: %f", commercial_break_score)
+    else:
+        logger.info("No commercial breaks available for scoring")
 
-    result = 1.1 / (sigma + 0.001) + \
-             1.2 / max(0.001, abs(expected_adjusted_duration_diff) - duration_tolerance) + \
-             1.0 / (count_of_non_defaults + 1000.0) + \
-             1.3 / commercial_break_score
+    result = 0
 
-    if False:
+    # sigma good values 0 - 120
+    result += 1.1 / (sigma + 0.001)
+
+    # expected_adjusted_duration_diff good values 0 - 240
+    result += 8.0 / max(0.001, abs(abs(expected_adjusted_duration_diff) - duration_tolerance))
+
+    # count_of_non_defaults good values 0 - 16
+    result += 1.0 / (count_of_non_defaults + 10000.0)
+
+    # commercial_break_score, good values 0 - 800
+    result += 80.0 / (commercial_break_score + 0.001)
+
+    if debug:
         with open("/tmp/fitness.json", "a") as f:
             acb_primitive = list(map(lambda breaks1: list(
                 map(lambda event: None if event is None else [event.start, event.end], breaks1)),
@@ -685,7 +691,8 @@ def find_comskip_starter_ini():
     raise OSError(f"Cannot find comskip-starter.ini in any of {','.join(get_comskip_starter_ini_sources())}")
 
 
-def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True, processes=0):
+def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True,
+              processes=0):
     if len(files) < 5:
         logger.warning("too few video files %d to tune %s, need 5", len(files), season_dir)
         return
@@ -698,21 +705,24 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
     # We'll use the defaults to determine if we need to be specific about a property
     comskip_defaults = configparser.ConfigParser()
     comskip_defaults_file = build_comskip_ini(find_comskip_ini(), leaf_comskip_ini="comskip-none.ini",
-                                              video_path=files[0], workdir=tempfile.gettempdir())
+                                              video_path=files[0], workdir=tempfile.gettempdir(), log_file=False)
     comskip_defaults.read(comskip_defaults_file)
     os.remove(comskip_defaults_file)
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
-    sol_per_pop = 50  # 50-100 for 22 genes
+    sol_per_pop = 50  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
     num_parents_mating = ceil(sol_per_pop / 2)
 
+    thread_pool = ThreadPoolExecutor(max_workers=processes)
     try:
         fitness_func, genes, gene_space, gene_type, tuning_progress = setup_gad(
-            pool, files, workdir=workdir, dry_run=dry_run, force=force, comskip_defaults=comskip_defaults,
+            process_pool=process_pool, thread_pool=thread_pool, files=files, workdir=workdir, dry_run=dry_run,
+            force=force, comskip_defaults=comskip_defaults,
             expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations)
     except UserWarning as e:
         logger.warning(e.args[0])
+        thread_pool.shutdown(cancel_futures=True)
         return
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
@@ -731,6 +741,8 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
     ga_instance.run()
     tuning_progress.stop()
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
+
+    thread_pool.shutdown()
 
     logger.info(
         "Parameters of the best solution : {solution}".format(solution=solution_repl(genes, solution)))
@@ -768,7 +780,7 @@ def tune_show(season_dir, pool, files, workdir, dry_run, force, expensive_genes=
 
     return_code = common.ReturnCodeReducer()
     for filepath in files:
-        pool.apply_async(common.pool_apply_wrapper(comchap), (filepath, filepath),
+        process_pool.apply_async(common.pool_apply_wrapper(comchap), (filepath, filepath),
                          {'force': True,
                           'delete_edl': False,
                           'workdir': workdir},
@@ -846,8 +858,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
     time_progress.renderer = common.s_to_ts
 
     return_code = common.ReturnCodeReducer()
-    # TODO: consider thread pool for improved performance
-    pool = Pool(processes=processes)
+    process_pool = Pool(processes=processes)
 
     def single_file_tune(f):
         if is_tuned(f, workdir) and force == 0:
@@ -855,7 +866,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
         elif not common.is_from_dvr(common.find_input_info(f)):
             logger.info("Skipping %s because it does not look like a DVR", f)
         else:
-            pool.apply_async(common.pool_apply_wrapper(comtune), (f,),
+            process_pool.apply_async(common.pool_apply_wrapper(comtune), (f,),
                              {'verbose': verbose,
                               'workdir': workdir,
                               'force': force,
@@ -889,7 +900,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
             else:
                 for root, dirs, files in os.walk(media_path):
                     if should_stop():
-                        pool.close()
+                        process_pool.close()
                         return return_code.code()
                     random.shuffle(dirs)
                     random.shuffle(files)
@@ -903,7 +914,8 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
                             if is_tuned(season_dir, workdir) and force == 0:
                                 logger.info("%s already tuned, use --force to force tuning", season_dir)
                             else:
-                                tune_show(season_dir=season_dir, pool=pool, files=video_files, workdir=workdir,
+                                tune_show(season_dir=season_dir, process_pool=process_pool, files=video_files,
+                                          workdir=workdir,
                                           dry_run=dry_run, force=force, expensive_genes=expensive_genes,
                                           check_compute=check_compute, processes=processes)
                         except KeyboardInterrupt as e:
@@ -913,20 +925,20 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
                     else:
                         for filepath in video_files:
                             if should_stop():
-                                pool.close()
+                                process_pool.close()
                                 return return_code.code()
                             single_file_tune(filepath)
             if should_stop():
-                pool.close()
+                process_pool.close()
                 return return_code.code()
 
-        pool.close()
+        process_pool.close()
     except KeyboardInterrupt:
         logger.info("User interrupt, waiting for pool to finish")
         return_code.set_code(130)
-        pool.terminate()
+        process_pool.terminate()
     finally:
-        common.pool_join_with_timeout(pool)
+        common.pool_join_with_timeout(process_pool)
         time_progress.stop()
 
     return return_code.code()
