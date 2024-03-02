@@ -599,12 +599,16 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
 
     commercial_break_score = 1000000  # closer to 0 is better
     aligned_commercial_breaks = None
-    if len([item for sublist in commercial_breaks for item in sublist]) > 0:
-        aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(commercial_breaks)
-        if commercial_break_score < 1:
-            logger.warning("Commercial break score < 1: %f", commercial_break_score)
-    else:
-        logger.info("No commercial breaks available for scoring")
+    if commercial_breaks is not None:
+        # we care about removing commercials
+        if len([item for sublist in commercial_breaks for item in sublist]) > 0:
+            aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(commercial_breaks)
+            if commercial_break_score < 1:
+                logger.warning("Commercial break score < 1: %f", commercial_break_score)
+        else:
+            # we care about removing commercials, so do not consider solutions that found no commercials
+            logger.info("No commercial breaks available for scoring")
+            return 0
 
     result = 0
 
@@ -612,7 +616,7 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
     result += 1.1 / (sigma + 0.001)
 
     # expected_adjusted_duration_diff good values 0 - 240
-    result += 8.0 / max(0.001, abs(abs(expected_adjusted_duration_diff) - duration_tolerance))
+    result += 5.0 / max(1.0, abs(expected_adjusted_duration_diff) - duration_tolerance)
 
     # count_of_non_defaults good values 0 - 16
     result += 1.0 / (count_of_non_defaults + 10000.0)
@@ -725,6 +729,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         thread_pool.shutdown(cancel_futures=True)
         return
 
+    # TODO: add initial solutions for 1) recommended configurations and 2) various detect methods with defaults
+
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     ga_instance = pygad.GA(num_generations=num_generations,
                            num_parents_mating=num_parents_mating,
@@ -736,7 +742,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
                            mutation_type="adaptive",
                            mutation_percent_genes=[25, 12],
                            parent_selection_type="sss",
-                           save_best_solutions=True,
+                           save_best_solutions=False,
                            suppress_warnings=True)
     ga_instance.run()
     tuning_progress.stop()

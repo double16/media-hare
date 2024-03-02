@@ -158,6 +158,10 @@ def smart_comcut_cli(argv):
                        no_curses=no_curses)
 
 
+def _breaks_to_populated(breaks: list[edl_util.EdlEvent]) -> list[bool]:
+    return list(map(lambda e: e is not None, breaks))
+
+
 def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encode,
                          crop_frame_op, crop_frame_fixed, desired_video_codecs, commercial_details, strict, all_videos, sigma) -> int:
     for arg in args:
@@ -249,12 +253,11 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                         f"average adjusted = {common.seconds_to_timespec(average_adjusted_duration)} "
                         f"σ{common.seconds_to_timespec(stdev_adjusted_duration)}")
 
-            # TODO: organize breaks into "slots" with similar start times. If there is a break starting at 0, use the
-            # length to adjust start time
-            aligned_commercial_breaks, commercial_break_score, _ = edl_util.align_commercial_breaks(
-                list(map(lambda v: v['commercial_breaks'], videos)))
+            aligned_commercial_breaks, commercial_break_score, combined_commercial_breaks = edl_util.align_commercial_breaks(
+                list(map(lambda v: v['commercial_breaks'], filter(lambda v: v['has_com'], videos))))
             logger.info(
                 f"{show_label}: commercial break score = {commercial_break_score}\n"
+                f"{show_label}: commercial breaks combined = ({len(combined_commercial_breaks)}) {edl_util.pretty_print_commercial_breaks([combined_commercial_breaks])}\n"
                 f"{edl_util.pretty_print_commercial_breaks(aligned_commercial_breaks)}"
             )
 
