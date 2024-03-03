@@ -715,7 +715,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
-    sol_per_pop = 50  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
+    sol_per_pop = 200  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
     num_parents_mating = ceil(sol_per_pop / 2)
 
     thread_pool = ThreadPoolExecutor(max_workers=processes)
