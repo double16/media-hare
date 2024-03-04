@@ -787,8 +787,6 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     else:
         initial_population = initial_solutions
 
-    # TODO: https://pygad.readthedocs.io/en/latest/pygad_more.html#multi-objective-optimization
-
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     ga_instance = pygad.GA(num_generations=num_generations,
                            num_parents_mating=num_parents_mating,
