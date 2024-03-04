@@ -14,6 +14,8 @@ import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, Future
+from functools import lru_cache
+from itertools import product
 from math import ceil
 from multiprocessing import Pool
 from statistics import stdev, mean
@@ -42,7 +44,7 @@ VERSION_GAD_TUNING = "3"
 debug = False
 
 class ComskipGene(object):
-    def __init__(self, config: tuple, use_csv: bool, description: str, exclude_if_default, space, data_type,
+    def __init__(self, config: tuple[str, str], use_csv: bool, description: str, exclude_if_default, space, data_type,
                  default_value):
         """
         :param config: tuple of (group, item) for the comskip.ini file
@@ -680,6 +682,7 @@ def ensure_framearray(infile, infile_base, comskip_ini, workdir, dry_run=False, 
         tools.comskip.run(command, check=True)
 
 
+@lru_cache(maxsize=None)
 def get_comskip_starter_ini_sources():
     script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
     return [f"{os.environ['HOME']}/.comskip-starter.ini",
@@ -687,12 +690,41 @@ def get_comskip_starter_ini_sources():
             f"/etc/comskip-starter.ini"]
 
 
+@lru_cache(maxsize=None)
 def find_comskip_starter_ini():
     for f in get_comskip_starter_ini_sources():
         if os.access(f, os.R_OK):
             return f
 
     raise OSError(f"Cannot find comskip-starter.ini in any of {','.join(get_comskip_starter_ini_sources())}")
+
+
+@lru_cache(maxsize=None)
+def find_gene(section: str, name: str) -> ComskipGene:
+    config = (section, name)
+    for gene in GENES:
+        if gene.config == config:
+            return gene
+    raise ValueError(f"Unknown gene: {config}")
+
+
+def generate_initial_solutions(genes: list[ComskipGene], values: dict[ComskipGene, list]) -> list[list]:
+    permutation_values: list[list] = list()
+    for i in range(len(genes)):
+        permutation_values.append(list())
+
+    # Add initial values
+    for gene, gene_values in values.items():
+        idx = genes.index(gene)
+        permutation_values[idx] = gene_values
+    # Populate the remaining genes with defaults
+    for idx, values in enumerate(permutation_values):
+        if len(values) == 0:
+            permutation_values[idx].append(genes[idx].default_value)
+
+    permutation_tuples = list(product(*permutation_values))
+    solutions = [list(perm) for perm in permutation_tuples]
+    return solutions
 
 
 def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True,
@@ -729,20 +761,47 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         thread_pool.shutdown(cancel_futures=True)
         return
 
-    # TODO: add initial solutions for 1) recommended configurations and 2) various detect methods with defaults
+    # add initial solutions for 1) recommended configurations and 2) various detect methods with defaults
+    detect_method = find_gene(INI_GROUP_MAIN_SETTINGS, 'detect_method')
+    initial_solutions = generate_initial_solutions(genes, {
+        detect_method: detect_method.space,
+    })
+    for s in initial_solutions:
+        logger.info("Initial solution : {solution}".format(solution=solution_repl(genes, s)))
+
+    # ensure we have the desired population size
+    additional_solutions_needed = max(0, sol_per_pop - len(initial_solutions))
+    if additional_solutions_needed > 0:
+        # Generate additional random solutions
+        ga_temp = pygad.GA(num_generations=num_generations,
+                           num_parents_mating=num_parents_mating,
+                           fitness_func=fitness_func,
+                           sol_per_pop=additional_solutions_needed,
+                           num_genes=len(genes),
+                           gene_space=gene_space.copy(),
+                           gene_type=gene_type.copy())
+        additional_solutions = ga_temp.initial_population
+
+        # Concatenate the initial and additional solutions
+        initial_population = [numpy.array(sol, additional_solutions[0].dtype) for sol in initial_solutions] + list(additional_solutions)
+    else:
+        initial_population = initial_solutions
+
+    # TODO: https://pygad.readthedocs.io/en/latest/pygad_more.html#multi-objective-optimization
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     ga_instance = pygad.GA(num_generations=num_generations,
                            num_parents_mating=num_parents_mating,
                            fitness_func=fitness_func,
                            sol_per_pop=sol_per_pop,
+                           initial_population=initial_population,
                            num_genes=len(genes),
                            gene_space=gene_space,
                            gene_type=gene_type,
                            mutation_type="adaptive",
                            mutation_percent_genes=[25, 12],
                            parent_selection_type="sss",
-                           save_best_solutions=False,
+                           save_best_solutions=True,
                            suppress_warnings=True)
     ga_instance.run()
     tuning_progress.stop()
