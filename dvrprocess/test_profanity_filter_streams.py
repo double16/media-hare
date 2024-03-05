@@ -69,6 +69,8 @@ from common import tools, proc_invoker, constants, config, vosk
 #    - R -> M
 #    - S -> S, T -> T
 
+# TODO: filtered.wav doesn't have profanity, one word "shut" is mis-transcribed
+
 EMPTY_WAV: bytes = (
         b'RIFF' +
         b'\x24\x00\x00\x00' +  # Chunk Size (36 bytes after this)
@@ -431,7 +433,8 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             self._mock_ffmpeg_create_with_filtered_streams(
                 5, mapped_stream_count=8,
                 expected_args=[
-                    f"'-metadata:s:s:2', '{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={profanity_filter.AUDIO_TO_TEXT_SUBTITLE_VERSION}'"]),
+                    f"'-metadata:s:s:2', '{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={profanity_filter.AUDIO_TO_TEXT_SUBTITLE_VERSION}'",
+                ]),
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 
