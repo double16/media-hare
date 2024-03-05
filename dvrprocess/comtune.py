@@ -749,6 +749,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     num_generations = 50
     sol_per_pop = 200  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
     num_parents_mating = ceil(sol_per_pop / 2)
+    keep_elitism = 5
 
     thread_pool = ThreadPoolExecutor(max_workers=processes)
     try:
@@ -799,7 +800,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
                            mutation_type="adaptive",
                            mutation_percent_genes=[25, 12],
                            parent_selection_type="sss",
-                           save_best_solutions=True,
+                           keep_elitism=keep_elitism,
+                           save_best_solutions=False,  # 2024-03-05 results are better with False
                            suppress_warnings=True)
     ga_instance.run()
     tuning_progress.stop()
