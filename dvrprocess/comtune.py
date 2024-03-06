@@ -28,7 +28,7 @@ import common
 from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_adjusted_duration, \
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
-    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options
+    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_ASPECT_RATIO
 from common import tools, config, constants, edl_util, progress
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
@@ -43,13 +43,14 @@ VERSION_VIDEO_STATS = "1"
 VERSION_GAD_TUNING = "3"
 debug = False
 
+
 class ComskipGene(object):
     def __init__(self, config: tuple[str, str], use_csv: bool, description: str, exclude_if_default, space, data_type,
-                 default_value):
+                 default_value, exclude_by_default=False):
         """
         :param config: tuple of (group, item) for the comskip.ini file
         :param use_csv: True if the config can use the CSV to improve performance
-        :param description: human readable description
+        :param description: human-readable description
         :param exclude_if_default: True to exclude the config item if the optimal value is the default
         :param space: The configuration value space
         :param data_type: The python data type
@@ -61,6 +62,7 @@ class ComskipGene(object):
         self.exclude_if_default = exclude_if_default
         self.data_type = data_type
         self.default_value = default_value
+        self.exclude_by_default = exclude_by_default
         if type(space) in [range, numpy.ndarray]:
             self.space = list(space)
         else:
@@ -91,48 +93,109 @@ GENES: list[ComskipGene] = [
     # 41 - uniform frame, resolution change, aspect ratio
     # 43 - uniform frame, logo, resolution change, aspect ratio (plex 1.25 value)
     # 47 - uniform frame, logo, scene change, resolution change, aspect ratio
+    # 107 - uniform frame, logo, resolution change, aspect ratio, silence
     # 111 - uniform frame, logo, scene change, resolution change, aspect ratio, silence
     # 175 - uniform frame, logo, scene change, resolution change, aspect ratio, cut scenes
     # 237 - uniform frame, scene change, resolution change, aspect ratio, silence, cut scenes
     # 239 - uniform frame, logo, scene change, resolution change, aspect ratio, silence, cut scenes
     # 255 - everything
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'detect_method'), True, "", False, [41, 43, 47, 111, 237, 239, 255], int, 239),
-    ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_threshold'), False, "", True, [0.70, 0.75, 0.90], [float, 2],
-                0.75),
-    ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_filter'), False, "", True, [0, 2, 4], int, 0),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'detect_method'), True,
+                "",
+                False, [41, 43, 47, 107, 111, 237, 239, 255], int, 239),
+    ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_threshold'), False,
+                "",
+                True, [0.70, 0.75, 0.80, 0.90], [float, 2], 0.75),
+    ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_filter'), False,
+                "",
+                True, [0, 2, 4], int, 0),
     # ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'connect_blocks_with_logo'), True, "", True, [0, 1], int, 1),
-    ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'), True, "", True, [1, 3, 5], int, 1),
+    ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'), True,
+                "",
+                True, [1, 3, 5], int, 1),
     # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo'), True, "", True, [0, 1, 3, 5], int, 5),
     # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo_tail'), True, "", True, [0, 1, 2, 3], int, 0),
-    ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'before_logo'), True, "", False, [0, 999], int, 0),
-    ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'after_logo'), True, "", False, [0, 999], int, 0),
+    ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'before_logo'), True,
+                "",
+                False, [0, 999], int, 0),
+    ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'after_logo'), True,
+                "",
+                False, [0, 999], int, 0),
+    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_brightness'), False, "", True, range(15, 60, 5), int, 20),
+    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'test_brightness'), False, "", True, range(15, 60, 5), int, 20),
     # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 20),
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_volume'), True, "", False, range(250, 1000, 50), int, 500),
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'non_uniformity'), True, "", False, range(250, 1000, 50), int, 500),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'length_strict_modifier'), True, "", True, numpy.arange(2.0, 5.01, 0.5),
-                [float, 2], 3.0),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'length_nonstrict_modifier'), True, "", True, numpy.arange(1.0, 2.01, 0.25),
-                [float, 2], 1.5),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'combined_length_strict_modifier'), True, "", True,
-                numpy.arange(1.5, 2.51, 0.25), [float, 2], 2.0),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'combined_length_nonstrict_modifier'), True, "", True,
-                numpy.arange(1.0, 1.51, 0.25), [float, 2], 1.25),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'ar_wrong_modifier'), True, "", True, [2.0], [float, 2], 2.0),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'ac_wrong_modifier'), True, "", True, [1.0], [float, 2], 1.0),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'excessive_length_modifier'), True, "", True,
-                numpy.arange(0.005, 0.0151, 0.005), [float, 3], 0.01),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'dark_block_modifier'), True, "", True, numpy.arange(0.2, 0.51, 0.1),
-                [float, 2], 0.3),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'min_schange_modifier'), True, "", True, numpy.arange(0.25, 0.751, 0.05),
-                [float, 2], 0.5),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'max_schange_modifier'), True, "", True, numpy.arange(1, 3.01, 0.5),
-                [float, 2], 2.0),
-    ComskipGene((INI_GROUP_MAIN_SCORING, 'logo_present_modifier'), True, "", True, numpy.arange(0.005, 0.0151, 0.005),
-                [float, 3], 0.01),
+    # ComskipGene((INI_GROUP_MAIN_SETTINGS, 'maxbright'), False,
+    #             "Amount of pixels in a black frame allowed to be brighter than max_brightness",
+    #             False, range(1, 100, 20), int, 1, exclude_by_default=True),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'brightness_jump'), True,
+                "Any frame with a jump in average brightness compared to the previous frame is a candidate scene change cutpoint",
+                True, [100, 200, 300, 500], int, 200, exclude_by_default=True),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_volume'), True,
+                "",
+                False, range(250, 1000, 50), int, 500),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_silence'), True,
+                "The maximum sound volume allowed at or around a black frame, volume_slip determines the allowed offset in frames between sound and video",
+                False, [80, 100, 200, 300], int, 100, exclude_by_default=True),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'min_silence'), True,
+                "The minimum number of frames the volume has to be below the silence level to be regarded as a silence cutpoint",
+                False, [8, 12, 20], int, 12, exclude_by_default=True),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'non_uniformity'), True,
+                "The maximum fraction of pixels that are allowed to have more than noise_level brightness difference from the average brightness of a frame to be regarded as a uniform frame",
+                False, range(250, 750, 100), int, 500, exclude_by_default=True),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'noise_level'), True,
+                "The maximum deviation of the average brightness in a uniform frame that allows pixels not to be counted as non uniform",
+                False, [3, 5, 8, 10], int, 5, exclude_by_default=True),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'length_strict_modifier'), True,
+                "",
+                True, numpy.arange(2.0, 5.01, 0.5), [float, 2], 3.0),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'length_nonstrict_modifier'), True,
+                "",
+                True, numpy.arange(1.0, 2.01, 0.25), [float, 2], 1.5),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'combined_length_strict_modifier'), True,
+                "",
+                True, numpy.arange(1.5, 2.51, 0.25), [float, 2], 2.0),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'combined_length_nonstrict_modifier'), True,
+                "",
+                True, numpy.arange(1.0, 1.51, 0.25), [float, 2], 1.25),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'ar_wrong_modifier'), True,
+                "",
+                True, [2.0], [float, 2], 2.0),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'ac_wrong_modifier'), True,
+                "",
+                True, [1.0], [float, 2], 1.0),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'excessive_length_modifier'), True,
+                "",
+                True, numpy.arange(0.005, 0.0151, 0.005), [float, 3], 0.01),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'dark_block_modifier'), True,
+                "",
+                True, numpy.arange(0.2, 0.51, 0.1), [float, 2], 0.3),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'min_schange_modifier'), True,
+                "Used when a block has much less then average scene changes",
+                True, numpy.arange(0.25, 0.751, 0.05), [float, 2], 0.5),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'max_schange_modifier'), True,
+                "Used when a block has much more then average scene changes",
+                True, numpy.arange(1, 3.01, 0.5), [float, 2], 2.0),
+    ComskipGene((INI_GROUP_MAIN_SCORING, 'logo_present_modifier'), True,
+                "Used when a block has logo or use in reverse when there is no logo",
+                True, numpy.arange(0.005, 0.0151, 0.005), [float, 3], 0.01),
     # punish bitmask: 1=brightness, 2=uniformity 4=volume, 8=silence amount, 16=scene change rate
-    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish'), True, "", True, [0, 4, 4+8, 16, 4+8+16], int, 0),
-    ComskipGene((INI_GROUP_GLOBAL_REMOVES, 'delete_show_before_or_after_current'), True, "", False, [0, 1], int, 0),
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'), True, "", False, [0, 4], int, 0),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish'), True,
+                "Set the bitmask of the average audio/video aspects to monitor",
+                True, [0, 4, 4 + 8, 16, 4 + 8 + 16], int, 0),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish_threshold'), True,
+                "When the average is punish_threshold times above the average then it will be punished",
+                True, [1.0, 1.3, 1.5], [float, 1], 1.3),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish_modifier'), True,
+                "Used to modify the score when the punish is above the threshold",
+                True, [1, 2, 4], int, 2),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish_no_logo'), True,
+                "Do not modify the score of a block because it has no logo",
+                True, [0, 1], int, 1, exclude_by_default=True),
+    ComskipGene((INI_GROUP_GLOBAL_REMOVES, 'delete_show_before_or_after_current'), True,
+                "Any part of the show that comes before or after the actual show and is separated from the show by a small commercial block less then min_commercial_break is deleted when that part is shorter then added_recording (1) or the amount of seconds set (2 or more).",
+                False, [0, 1], int, 0),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'), True,
+                "",
+                False, [0, 4], int, 0),
 ]
 
 
@@ -160,6 +223,7 @@ def comtune(*args, **kwargs):
 
 
 def do_comtune(infile, verbose=False, workdir=None, force=0, dry_run=False):
+    # TODO: use pypad with fitness function that fits for sigma on commercial lengths and sigma on show lengths
     if workdir is None:
         workdir = os.path.dirname(os.path.abspath(infile))
     comskip_ini = find_comskip_starter_ini()
@@ -332,7 +396,7 @@ def edl_tempfile(infile, workdir):
 
 def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdir, dry_run=False, force=0,
               expensive_genes=False, check_compute=True,
-              num_generations=0, comskip_defaults: configparser.ConfigParser = None) ->\
+              num_generations=0, comskip_defaults: configparser.ConfigParser = None) -> \
         (object, list, list, list, progress.progress):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
@@ -350,7 +414,8 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
 
     # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
 
-    genes = list(filter(lambda g: g.space_has_elements() and (g.use_csv or expensive_genes), GENES))
+    genes = list(
+        filter(lambda g: not g.exclude_by_default and g.space_has_elements() and (g.use_csv or expensive_genes), GENES))
     permutations = math.prod(map(lambda g: len(g.space), genes))
     logger.debug("fitting for genes: %s, permutations %d", list(map(lambda e: e.config, genes)), permutations)
     gene_space = list(map(lambda g: g.space, genes))
@@ -413,8 +478,9 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
             try:
                 framearray_results.append(
                     thread_pool.submit(ensure_framearray,
-                        file_path, os.path.basename(file_path) + CSV_SUFFIX_BLACKFRAME, comskip_starter_ini, workdir,
-                        dry_run,
+                                       file_path, os.path.basename(file_path) + CSV_SUFFIX_BLACKFRAME,
+                                       comskip_starter_ini, workdir,
+                                       dry_run,
                                        True))
             except [subprocess.CalledProcessError, KeyboardInterrupt] as e:
                 thread_pool.shutdown(cancel_futures=True)
@@ -508,7 +574,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
 
         csv_config_d = dict(zip(csv_configs, csv_values))
         video_stats_progress = progress.progress(
-            'video stats '+','.join(map(lambda k: f"{k[1]}={csv_config_d[k]}", csv_config_d.keys())),
+            'video stats ' + ','.join(map(lambda k: f"{k[1]}={csv_config_d[k]}", csv_config_d.keys())),
             0, len(results) - 1)
         try:
             for result_idx, result in enumerate(results):
@@ -708,7 +774,13 @@ def find_gene(section: str, name: str) -> ComskipGene:
     raise ValueError(f"Unknown gene: {config}")
 
 
-def generate_initial_solutions(genes: list[ComskipGene], values: dict[ComskipGene, list]) -> list[list]:
+def generate_initial_solutions(genes: list[ComskipGene], values_in: dict[ComskipGene, list]) -> list[list]:
+    # remove values that are not in the list of genes
+    values: dict[ComskipGene, list] = dict()
+    for gene, gene_values in values_in.items():
+        if gene in genes:
+            values[gene] = gene_values
+
     permutation_values: list[list] = list()
     for i in range(len(genes)):
         permutation_values.append(list())
@@ -747,7 +819,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
-    sol_per_pop = 200  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
+    sol_per_pop = 50  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
     num_parents_mating = ceil(sol_per_pop / 2)
     keep_elitism = 5
 
@@ -767,6 +839,47 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     initial_solutions = generate_initial_solutions(genes, {
         detect_method: detect_method.space,
     })
+    # https://www.kaashoek.com/comskip/viewtopic.php?f=7&t=1741
+    initial_solutions += generate_initial_solutions(genes, {
+        detect_method: [107],
+        # Calculated: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_brightness'): [60],
+        # Calculated: find_gene(INI_GROUP_MAIN_SETTINGS, 'test_brightness'): [40],
+        # Calculated: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'): [25],
+        # Expensive? find_gene(INI_GROUP_MAIN_SETTINGS, 'maxbright'): [1],
+        # Expensive? find_gene(INI_GROUP_DETAILED_SETTINGS, 'brightness_jump'): [200],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_commercialbreak'): [600],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_commercialbreak'): [4],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_commercial_size'): [140],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_commercial_size'): [4],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_show_segment_length'): [250],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'non_uniformity'): [500],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'max_volume'): [500],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'max_silence'): [100],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'min_silence'): [12],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'noise_level'): [5],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish'): [1],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_threshold'): [1.3],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_modifier'): [4],
+        # Expensive: find_gene(INI_GROUP_MAIN_SETTINGS, 'logo_percentile'): [0.92],
+        find_gene(INI_GROUP_LOGO_FINDING, 'logo_threshold'): [0.80],
+        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'): [1],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_no_logo'): [1],
+        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'aggressive_logo_rejection'): [0],
+        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'connect_blocks_with_logo'): [1],
+        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'delay_logo_search'): [0],
+        find_gene(INI_GROUP_LOGO_FINDING, 'logo_filter'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_after_last_commercial'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_before_first_commercial'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_before_or_after_current'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_block_after_commercial'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'remove_before'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'remove_after'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'shrink_logo'): [5],
+        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'after_logo'): [0],
+        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'before_logo'): [0],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'): [4],
+    })
+
     for s in initial_solutions:
         logger.info("Initial solution : {solution}".format(solution=solution_repl(genes, s)))
 
@@ -784,7 +897,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         additional_solutions = ga_temp.initial_population
 
         # Concatenate the initial and additional solutions
-        initial_population = [numpy.array(sol, additional_solutions[0].dtype) for sol in initial_solutions] + list(additional_solutions)
+        initial_population = [numpy.array(sol, additional_solutions[0].dtype) for sol in initial_solutions] + list(
+            additional_solutions)
     else:
         initial_population = initial_solutions
 
@@ -846,11 +960,11 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     return_code = common.ReturnCodeReducer()
     for filepath in files:
         process_pool.apply_async(common.pool_apply_wrapper(comchap), (filepath, filepath),
-                         {'force': True,
-                          'delete_edl': False,
-                          'workdir': workdir},
-                         callback=return_code.callback,
-                         error_callback=common.error_callback_dump)
+                                 {'force': True,
+                                  'delete_edl': False,
+                                  'workdir': workdir},
+                                 callback=return_code.callback,
+                                 error_callback=common.error_callback_dump)
 
 
 def comtune_cli(argv) -> int:
@@ -932,12 +1046,12 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
             logger.info("Skipping %s because it does not look like a DVR", f)
         else:
             process_pool.apply_async(common.pool_apply_wrapper(comtune), (f,),
-                             {'verbose': verbose,
-                              'workdir': workdir,
-                              'force': force,
-                              'dry_run': dry_run},
-                             callback=return_code.callback,
-                             error_callback=common.error_callback_dump)
+                                     {'verbose': verbose,
+                                      'workdir': workdir,
+                                      'force': force,
+                                      'dry_run': dry_run},
+                                     callback=return_code.callback,
+                                     error_callback=common.error_callback_dump)
 
     def should_stop() -> bool:
         if time_start is not None:
