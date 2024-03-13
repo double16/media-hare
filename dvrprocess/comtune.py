@@ -28,7 +28,7 @@ import common
 from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_adjusted_duration, \
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
-    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_ASPECT_RATIO
+    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_ASPECT_RATIO, INI_GROUP_INPUT_CORRECTION
 from common import tools, config, constants, edl_util, progress
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
@@ -46,7 +46,7 @@ debug = False
 
 class ComskipGene(object):
     def __init__(self, config: tuple[str, str], use_csv: bool, description: str, exclude_if_default, space, data_type,
-                 default_value, exclude_by_default=False):
+                 default_value, experimental=False):
         """
         :param config: tuple of (group, item) for the comskip.ini file
         :param use_csv: True if the config can use the CSV to improve performance
@@ -62,7 +62,7 @@ class ComskipGene(object):
         self.exclude_if_default = exclude_if_default
         self.data_type = data_type
         self.default_value = default_value
-        self.exclude_by_default = exclude_by_default
+        self.experimental = experimental
         if type(space) in [range, numpy.ndarray]:
             self.space = list(space)
         else:
@@ -100,73 +100,76 @@ GENES: list[ComskipGene] = [
     # 239 - uniform frame, logo, scene change, resolution change, aspect ratio, silence, cut scenes
     # 255 - everything
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'detect_method'), True,
-                "",
+                "the sum of the values for which kind of frames comskip will consider as possible cutpoints",
                 False, [41, 43, 47, 107, 111, 237, 239, 255], int, 239),
     ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_threshold'), False,
-                "",
+                "A logo is search using a logo mask. The logo threshold determines how much of the logo mask must match the video.",
                 True, [0.70, 0.75, 0.80, 0.90], [float, 2], 0.75),
     ComskipGene((INI_GROUP_LOGO_FINDING, 'logo_filter'), False,
-                "",
+                "With a very noisy logo you can use this setting to enable a temporal filter on the logo detection.",
                 True, [0, 2, 4], int, 0),
-    # ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'connect_blocks_with_logo'), True, "", True, [0, 1], int, 1),
+    # Always enable: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'connect_blocks_with_logo'), True, "", True, [0, 1], int, 1),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'), True,
                 "",
                 True, [1, 3, 5], int, 1),
     # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo'), True, "", True, [0, 1, 3, 5], int, 5),
     # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo_tail'), True, "", True, [0, 1, 2, 3], int, 0),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'before_logo'), True,
-                "",
+                "Cutpoints can be inserted just before the logo appears. Set value set is the amount of seconds to start a search for a silence before the logo appears.",
                 False, [0, 999], int, 0),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'after_logo'), True,
-                "",
+                "Cutpoints can be inserted just after the logo disappears. Set value set is the amount of seconds to start a search for a silence after the logo disappears.",
                 False, [0, 999], int, 0),
-    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_brightness'), False, "", True, range(15, 60, 5), int, 20),
-    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'test_brightness'), False, "", True, range(15, 60, 5), int, 20),
-    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 20),
-    # ComskipGene((INI_GROUP_MAIN_SETTINGS, 'maxbright'), False,
-    #             "Amount of pixels in a black frame allowed to be brighter than max_brightness",
-    #             False, range(1, 100, 20), int, 1, exclude_by_default=True),
+    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_brightness'), False, "", True, range(15, 60, 5), int, 60),
+    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'test_brightness'), False, "", True, range(15, 60, 5), int, 40),
+    # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 25),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'maxbright'), False,
+                "Amount of pixels in a black frame allowed to be brighter than max_brightness",
+                False, range(1, 100, 20), int, 1, experimental=True),
     ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'brightness_jump'), True,
                 "Any frame with a jump in average brightness compared to the previous frame is a candidate scene change cutpoint",
-                True, [100, 200, 300, 500], int, 200, exclude_by_default=True),
+                True, [100, 200, 300, 500], int, 200, experimental=True),
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_volume'), True,
-                "",
-                False, range(250, 1000, 50), int, 500),
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_silence'), True,
                 "The maximum sound volume allowed at or around a black frame, volume_slip determines the allowed offset in frames between sound and video",
-                False, [80, 100, 200, 300], int, 100, exclude_by_default=True),
-    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'min_silence'), True,
+                False, range(250, 1000, 50), int, 500),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_silence'), False,
+                "The maximum sound volume allowed at or around a black frame, volume_slip determines the allowed offset in frames between sound and video",
+                False, [80, 100, 200, 300], int, 100, experimental=True),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'min_silence'), False,
                 "The minimum number of frames the volume has to be below the silence level to be regarded as a silence cutpoint",
-                False, [8, 12, 20], int, 12, exclude_by_default=True),
-    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'non_uniformity'), True,
+                False, [8, 12, 20], int, 12, experimental=True),
+    ComskipGene((INI_GROUP_INPUT_CORRECTION, 'volume_slip'), True,
+                "Maximum number of frames the silence is allowed to be misaligned with a blackframe to be regarded as a cut-point. When the broadcast has transmission errors and bad PTS a value of up to 200 can be required. A higher value increases the chance of false positives on black frames.",
+                True, [40, 100, 200, 300], int, 40),
+    ComskipGene((INI_GROUP_MAIN_SETTINGS, 'non_uniformity'), False,
                 "The maximum fraction of pixels that are allowed to have more than noise_level brightness difference from the average brightness of a frame to be regarded as a uniform frame",
-                False, range(250, 750, 100), int, 500, exclude_by_default=True),
-    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'noise_level'), True,
+                False, [0, 250, 500, 750], int, 500, experimental=True),
+    ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'noise_level'), False,
                 "The maximum deviation of the average brightness in a uniform frame that allows pixels not to be counted as non uniform",
-                False, [3, 5, 8, 10], int, 5, exclude_by_default=True),
+                False, [3, 5, 8, 10], int, 5, experimental=True),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'length_strict_modifier'), True,
-                "",
+                "Used when the block adheres to some strict criteria for commercials",
                 True, numpy.arange(2.0, 5.01, 0.5), [float, 2], 3.0),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'length_nonstrict_modifier'), True,
-                "",
+                "Used when the block adheres to some lesser used criteria for commercials",
                 True, numpy.arange(1.0, 2.01, 0.25), [float, 2], 1.5),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'combined_length_strict_modifier'), True,
-                "",
+                "used when a short number of sequential blocks adhere to the strict criteria for commercials",
                 True, numpy.arange(1.5, 2.51, 0.25), [float, 2], 2.0),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'combined_length_nonstrict_modifier'), True,
-                "",
+                "used when a short number of sequential blocks adhere to the lesser used criteria for commercials",
                 True, numpy.arange(1.0, 1.51, 0.25), [float, 2], 1.25),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'ar_wrong_modifier'), True,
-                "",
-                True, [2.0], [float, 2], 2.0),
+                "Used when the aspect ratio of a block is different from the dominant aspect ratio",
+                True, [2.0, 100.0], [float, 2], 2.0),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'ac_wrong_modifier'), True,
-                "",
+                "Used when the number of audio channels versus the dominant number of audio channels, 1.0 means inactive",
                 True, [1.0], [float, 2], 1.0),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'excessive_length_modifier'), True,
-                "",
+                "Used when the length of a block exceeds min_show_segment",
                 True, numpy.arange(0.005, 0.0151, 0.005), [float, 3], 0.01),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'dark_block_modifier'), True,
-                "",
+                "Used when a block is darker then the average",
                 True, numpy.arange(0.2, 0.51, 0.1), [float, 2], 0.3),
     ComskipGene((INI_GROUP_MAIN_SCORING, 'min_schange_modifier'), True,
                 "Used when a block has much less then average scene changes",
@@ -189,13 +192,80 @@ GENES: list[ComskipGene] = [
                 True, [1, 2, 4], int, 2),
     ComskipGene((INI_GROUP_DETAILED_SETTINGS, 'punish_no_logo'), True,
                 "Do not modify the score of a block because it has no logo",
-                True, [0, 1], int, 1, exclude_by_default=True),
+                True, [0, 1], int, 1, experimental=True),
     ComskipGene((INI_GROUP_GLOBAL_REMOVES, 'delete_show_before_or_after_current'), True,
                 "Any part of the show that comes before or after the actual show and is separated from the show by a small commercial block less then min_commercial_break is deleted when that part is shorter then added_recording (1) or the amount of seconds set (2 or more).",
                 False, [0, 1], int, 0),
+    #  (1) H1: Deletes short show blocks between two commercial blocks
+    #  (2) H2: Deletes short show blocks before or after commercials for various reasons
+    #  (4) H3: Deletes or adds short blocks based on Logo interpretation
+    #  (8) H4: Adds short blocks because of various reasons
+    # (16) H5: Deletes show block before the first or after the last commercial
+    # (32) H6: Deletes too short or too long commercials and too short commercials at the start of the end of the recording
+    #       Related settings
+    #         max_commercialbreak=600
+    #         min_commercialbreak=20
+    #         min_commercial_break_at_start_or_end=39
+    # (64) H7: Tries to find the start of the show and deletes the short part of the previous show.
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'), True,
-                "",
-                False, [0, 4], int, 0),
+                "Bit pattern for disabling heuristics",
+                False, [0, 1, 2, 4, 8, 16, 20, 32, 64, 255], int, 0),
+]
+
+
+@lru_cache(maxsize=None)
+def find_gene(section: str, name: str) -> ComskipGene:
+    config = (section, name)
+    for gene in GENES:
+        if gene.config == config:
+            return gene
+    raise ValueError(f"Unknown gene: {config}")
+
+
+GENE_DETECT_METHOD = find_gene(INI_GROUP_MAIN_SETTINGS, 'detect_method')
+
+# initial solutions for 1) recommended configurations and 2) various detect methods with defaults
+GENE_INITIAL_SOLUTION_VALUES: list[dict[ComskipGene: list]] = [
+    {
+        GENE_DETECT_METHOD: GENE_DETECT_METHOD.space,
+    },
+    # https://www.kaashoek.com/comskip/viewtopic.php?f=7&t=1741
+    {
+        GENE_DETECT_METHOD: [107],
+        # Calculated, Expensive: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_brightness'): [60],
+        # Calculated, Expensive: find_gene(INI_GROUP_MAIN_SETTINGS, 'test_brightness'): [40],
+        # Calculated, Expensive: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'): [25],
+        # Default: Expensive? find_gene(INI_GROUP_MAIN_SETTINGS, 'maxbright'): [1],
+        # Default: Expensive? find_gene(INI_GROUP_DETAILED_SETTINGS, 'brightness_jump'): [200],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_commercialbreak'): [600],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_commercialbreak'): [4],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_commercial_size'): [140],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_commercial_size'): [4],
+        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_show_segment_length'): [250],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'non_uniformity'): [500],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'max_volume'): [500],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'max_silence'): [100],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'min_silence'): [12],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'noise_level'): [5],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish'): [1],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_threshold'): [1.3],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_modifier'): [4],
+        find_gene(INI_GROUP_LOGO_FINDING, 'logo_threshold'): [0.80],
+        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'): [1],
+        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_no_logo'): [1],
+        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'aggressive_logo_rejection'): [0],
+        find_gene(INI_GROUP_LOGO_FINDING, 'logo_filter'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_after_last_commercial'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_before_first_commercial'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_before_or_after_current'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_block_after_commercial'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'remove_before'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'remove_after'): [0],
+        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'shrink_logo'): [5],
+        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'after_logo'): [0],
+        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'before_logo'): [0],
+        find_gene(INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'): [4],
+    }
 ]
 
 
@@ -396,7 +466,7 @@ def edl_tempfile(infile, workdir):
 
 def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdir, dry_run=False, force=0,
               expensive_genes=False, check_compute=True,
-              num_generations=0, comskip_defaults: configparser.ConfigParser = None) -> \
+              num_generations=0, comskip_defaults: configparser.ConfigParser = None, experimental=False) -> \
         (object, list, list, list, progress.progress):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
@@ -415,7 +485,8 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
     # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
 
     genes = list(
-        filter(lambda g: not g.exclude_by_default and g.space_has_elements() and (g.use_csv or expensive_genes), GENES))
+        filter(lambda g: (experimental or not g.experimental) and g.space_has_elements() and (
+                    g.use_csv or expensive_genes), GENES))
     permutations = math.prod(map(lambda g: len(g.space), genes))
     logger.debug("fitting for genes: %s, permutations %d", list(map(lambda e: e.config, genes)), permutations)
     gene_space = list(map(lambda g: g.space, genes))
@@ -765,15 +836,6 @@ def find_comskip_starter_ini():
     raise OSError(f"Cannot find comskip-starter.ini in any of {','.join(get_comskip_starter_ini_sources())}")
 
 
-@lru_cache(maxsize=None)
-def find_gene(section: str, name: str) -> ComskipGene:
-    config = (section, name)
-    for gene in GENES:
-        if gene.config == config:
-            return gene
-    raise ValueError(f"Unknown gene: {config}")
-
-
 def generate_initial_solutions(genes: list[ComskipGene], values_in: dict[ComskipGene, list]) -> list[list]:
     # remove values that are not in the list of genes
     values: dict[ComskipGene, list] = dict()
@@ -800,7 +862,7 @@ def generate_initial_solutions(genes: list[ComskipGene], values_in: dict[Comskip
 
 
 def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True,
-              processes=0):
+              processes=0, experimental=False):
     if len(files) < 5:
         logger.warning("too few video files %d to tune %s, need 5", len(files), season_dir)
         return
@@ -828,57 +890,16 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         fitness_func, genes, gene_space, gene_type, tuning_progress = setup_gad(
             process_pool=process_pool, thread_pool=thread_pool, files=files, workdir=workdir, dry_run=dry_run,
             force=force, comskip_defaults=comskip_defaults,
-            expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations)
+            expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations,
+            experimental=experimental)
     except UserWarning as e:
         logger.warning(e.args[0])
         thread_pool.shutdown(cancel_futures=True)
         return
 
-    # add initial solutions for 1) recommended configurations and 2) various detect methods with defaults
-    detect_method = find_gene(INI_GROUP_MAIN_SETTINGS, 'detect_method')
-    initial_solutions = generate_initial_solutions(genes, {
-        detect_method: detect_method.space,
-    })
-    # https://www.kaashoek.com/comskip/viewtopic.php?f=7&t=1741
-    initial_solutions += generate_initial_solutions(genes, {
-        detect_method: [107],
-        # Calculated: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_brightness'): [60],
-        # Calculated: find_gene(INI_GROUP_MAIN_SETTINGS, 'test_brightness'): [40],
-        # Calculated: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'): [25],
-        # Expensive? find_gene(INI_GROUP_MAIN_SETTINGS, 'maxbright'): [1],
-        # Expensive? find_gene(INI_GROUP_DETAILED_SETTINGS, 'brightness_jump'): [200],
-        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_commercialbreak'): [600],
-        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_commercialbreak'): [4],
-        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'max_commercial_size'): [140],
-        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_commercial_size'): [4],
-        # Config, maybe gene?: find_gene(INI_GROUP_MAIN_SETTINGS, 'min_show_segment_length'): [250],
-        find_gene(INI_GROUP_MAIN_SETTINGS, 'non_uniformity'): [500],
-        find_gene(INI_GROUP_MAIN_SETTINGS, 'max_volume'): [500],
-        find_gene(INI_GROUP_MAIN_SETTINGS, 'max_silence'): [100],
-        find_gene(INI_GROUP_DETAILED_SETTINGS, 'min_silence'): [12],
-        find_gene(INI_GROUP_DETAILED_SETTINGS, 'noise_level'): [5],
-        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish'): [1],
-        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_threshold'): [1.3],
-        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_modifier'): [4],
-        # Expensive: find_gene(INI_GROUP_MAIN_SETTINGS, 'logo_percentile'): [0.92],
-        find_gene(INI_GROUP_LOGO_FINDING, 'logo_threshold'): [0.80],
-        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'): [1],
-        find_gene(INI_GROUP_DETAILED_SETTINGS, 'punish_no_logo'): [1],
-        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'aggressive_logo_rejection'): [0],
-        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'connect_blocks_with_logo'): [1],
-        # Default: find_gene(INI_GROUP_MAIN_SETTINGS, 'delay_logo_search'): [0],
-        find_gene(INI_GROUP_LOGO_FINDING, 'logo_filter'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_after_last_commercial'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_before_first_commercial'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_show_before_or_after_current'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'delete_block_after_commercial'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'remove_before'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'remove_after'): [0],
-        # Arbitrary: find_gene(INI_GROUP_MAIN_SETTINGS, 'shrink_logo'): [5],
-        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'after_logo'): [0],
-        find_gene(INI_GROUP_LOGO_INTERPRETATION, 'before_logo'): [0],
-        find_gene(INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'): [4],
-    })
+    initial_solutions = [item for sublist in
+                         map(lambda s: generate_initial_solutions(genes, s), GENE_INITIAL_SOLUTION_VALUES) for item in
+                         sublist]
 
     for s in initial_solutions:
         logger.info("Initial solution : {solution}".format(solution=solution_repl(genes, s)))
@@ -1096,7 +1117,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
                                 tune_show(season_dir=season_dir, process_pool=process_pool, files=video_files,
                                           workdir=workdir,
                                           dry_run=dry_run, force=force, expensive_genes=expensive_genes,
-                                          check_compute=check_compute, processes=processes)
+                                          check_compute=check_compute, processes=processes, experimental=False)
                         except KeyboardInterrupt as e:
                             raise e
                         except BaseException as e:
