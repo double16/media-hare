@@ -969,8 +969,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     additional_solutions_needed = max(0, sol_per_pop - len(initial_solutions))
     if additional_solutions_needed > 0:
         # Generate additional random solutions
-        ga_temp = pygad.GA(num_generations=num_generations,
-                           num_parents_mating=num_parents_mating,
+        ga_temp = pygad.GA(num_generations=1,
+                           num_parents_mating=1,
                            fitness_func=fitness_func,
                            sol_per_pop=additional_solutions_needed,
                            num_genes=len(genes),
