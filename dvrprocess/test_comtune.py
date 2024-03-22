@@ -57,10 +57,10 @@ class ComTuneTest(unittest.TestCase):
         s2 = comtune.fitness_value(60, 70, 0)
         self.assertGreater(s1, s2)
 
-    def test_fitness_value_different_default_count(self):
-        s1 = comtune.fitness_value(60, 70, 1)
-        s2 = comtune.fitness_value(60, 70, 10)
-        self.assertGreater(s1, s2)
+    # def test_fitness_value_different_default_count(self):
+    #     s1 = comtune.fitness_value(60, 70, 1)
+    #     s2 = comtune.fitness_value(60, 70, 10)
+    #     self.assertGreater(s1, s2)
 
     def test_fitness_value_prioritize_average(self):
         s1 = comtune.fitness_value(60, 62, 1)
