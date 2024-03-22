@@ -69,6 +69,9 @@ class ComskipGene(object):
         else:
             self.space = space
 
+    def __str__(self):
+        return str(self.config)
+
     def space_has_elements(self):
         """
         Check if the gene space has more than 1 element, i.e. we have options to try.
