@@ -392,7 +392,7 @@ def do_dvr_post_process(input_file,
                 video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 24.0))
 
                 # give some room to be above target bitrate
-                bitrate_threshold = bitrate * 1.2
+                bitrate_threshold = bitrate * 1.5
                 # Increase threshold for short videos because there isn't enough content to compress to our expectations
                 if duration < SHORT_VIDEO_SECONDS:
                     bitrate_threshold *= 2
