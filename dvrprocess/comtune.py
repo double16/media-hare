@@ -886,6 +886,32 @@ def generate_initial_solutions(genes: list[ComskipGene], values_in: dict[Comskip
     return solutions
 
 
+def initial_solution_values_from_ini(path) -> dict[ComskipGene, list]:
+    result = {}
+    if not os.path.exists(path):
+        return result
+
+    config = configparser.ConfigParser()
+    config.read(path)
+
+    for section in config.sections():
+        for item, value in config.items(section):
+            try:
+                gene = find_gene(section, item)
+                try:
+                    result[gene] = [int(value)]
+                except ValueError:
+                    try:
+                        result[gene] = [float(value)]
+                    except ValueError:
+                        result[gene] = [value]
+            except ValueError:
+                # no gene defined for this item
+                pass
+
+    return result
+
+
 def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True,
               processes=0, experimental=False):
     if len(files) < 5:
@@ -903,6 +929,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
                                               video_path=files[0], workdir=tempfile.gettempdir(), log_file=False)
     comskip_defaults.read(comskip_defaults_file)
     os.remove(comskip_defaults_file)
+
+    target_comskip_ini = os.path.join(season_dir, 'comskip.ini')
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
@@ -922,8 +950,13 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         thread_pool.shutdown(cancel_futures=True)
         return
 
+    initial_solution_values = GENE_INITIAL_SOLUTION_VALUES
+    initial_solution_values_existing = initial_solution_values_from_ini(target_comskip_ini)
+    if initial_solution_values_existing:
+        logger.info("Initial solution values from comskip.ini: {solution}".format(solution=initial_solution_values_existing))
+        initial_solution_values = initial_solution_values + [initial_solution_values_existing]
     initial_solutions = [item for sublist in
-                         map(lambda s: generate_initial_solutions(genes, s), GENE_INITIAL_SOLUTION_VALUES) for item in
+                         map(lambda s: generate_initial_solutions(genes, s), initial_solution_values) for item in
                          sublist]
 
     for s in initial_solutions:
@@ -1001,7 +1034,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     logger.info(
         "Parameters of the adjusted solution : {solution}".format(solution=solution_repl(genes, solution)))
 
-    write_ini_from_solution(os.path.join(season_dir, 'comskip.ini'), genes, solution,
+    write_ini_from_solution(target_comskip_ini, genes, solution,
                             comskip_defaults=comskip_defaults,
                             write_complete_config=True)
 
