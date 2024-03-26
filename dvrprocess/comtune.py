@@ -953,11 +953,17 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         thread_pool.shutdown(cancel_futures=True)
         return
 
-    initial_solution_values = GENE_INITIAL_SOLUTION_VALUES
-    initial_solution_values_existing = initial_solution_values_from_ini(target_comskip_ini)
-    if initial_solution_values_existing:
-        logger.info("Initial solution values from comskip.ini: {solution}".format(solution=initial_solution_values_existing))
-        initial_solution_values = initial_solution_values + [initial_solution_values_existing]
+    initial_solution_values = GENE_INITIAL_SOLUTION_VALUES.copy()
+
+    # scan for other seasons to include comskip.ini as initial solutions
+    for root, dirs, files in os.walk(os.path.dirname(season_dir)):
+        for file in filter(lambda f: f == 'comskip.ini', files):
+            comskip_ini_path = os.path.join(root, file)
+            initial_solution_values_existing = initial_solution_values_from_ini(comskip_ini_path)
+            if initial_solution_values_existing:
+                logger.info(f"Initial solution values from {comskip_ini_path}: {initial_solution_values_existing}")
+                initial_solution_values.append(initial_solution_values_existing)
+
     initial_solutions = [item for sublist in
                          map(lambda s: generate_initial_solutions(genes, s), initial_solution_values) for item in
                          sublist]
@@ -969,8 +975,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     additional_solutions_needed = max(0, sol_per_pop - len(initial_solutions))
     if additional_solutions_needed > 0:
         # Generate additional random solutions
-        ga_temp = pygad.GA(num_generations=1,
-                           num_parents_mating=1,
+        ga_temp = pygad.GA(num_generations=num_generations,
+                           num_parents_mating=ceil(additional_solutions_needed / 2),
                            fitness_func=fitness_func,
                            sol_per_pop=additional_solutions_needed,
                            num_genes=len(genes),
