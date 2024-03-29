@@ -275,8 +275,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
             if audio_channels > 2:
-                # audio_to_text_filter = 'pan=stereo|FL<FL+0.5*FC+0.5*BL|FR<FR+0.5*FC+0.5*BR'
-                audio_to_text_filter = 'pan=mono|FL=FC+0.5*FL+0.5*BL+0.5*BR|FR=FC+0.5*FR+0.5*BR+0.5*BL'
+                # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC'
+                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR'
             else:
                 audio_to_text_filter = None
             subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
@@ -491,7 +491,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                     aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
                                                                           pysrt.open(subtitle_words_filename),
                                                                           lang=language,
-                                                                          filename=base_filename)
+                                                                          filename=base_filename,
+                                                                          input_info=input_info)
                 except ValueError as e:
                     logger.error("Cannot using aligned subtitle", e)
                     aligned = False
@@ -528,7 +529,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 try:
                     aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
                                                                           lang=language,
-                                                                          filename=base_filename)
+                                                                          filename=base_filename,
+                                                                          input_info=input_info)
                 except ValueError as e:
                     logger.error("Cannot using aligned subtitle", e)
                     aligned = False
@@ -1097,8 +1099,10 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     audio_progress.stop()
     extract_return_code = audio_process.wait()
     if extract_return_code != 0:
-        logger.error("Cannot transcribe audio, ffmpeg returned %s", extract_return_code)
-        return None
+        logger.error("Cannot transcribe audio, ffmpeg returned %s, command: %s",
+                     extract_return_code,
+                     tools.ffmpeg.array_as_command(extract_command))
+        return None, None
 
     confs = []
     subs_words = []
@@ -1125,7 +1129,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         conf_max = max(confs)
         conf_avg = mean(confs)
         conf_stdev = stdev(confs)
-        conf_notes = f'freq {freq} buf {chunk_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
+        conf_notes = f'freq {freq} buf {chunk_size} af {audio_filter} conf [{conf_min:.3f},{conf_max:.3f}] {conf_avg:.3f}σ{conf_stdev:.3f}'
     else:
         conf_notes = ""
 
@@ -1769,7 +1773,8 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
 
 
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
-                                 should_add_new_events=True, filename: str = None) -> tuple[bool, str]:
+                                 should_add_new_events=True, filename: str = None, input_info: dict = None) -> tuple[
+    bool, str]:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
     :param subtitle_inout: the subtitle to align, srt or ssa
@@ -1790,6 +1795,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     unclaimed_word_capture_duration_max_ms = 1800
     # multiple runs work, it would be better to fix so a single pass works *shrug
     passes = 2
+    # for non-DVR source, passes = 0, so we don't move events but we still capture missing words
+    if common.is_ripped_from_media(input_info):
+        passes = 0
 
     subtitle_facade = subtitle.new_subtitle_file_facade(subtitle_inout)
 
@@ -2483,7 +2491,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             event_idx += 1
             last_word_idx = end_word_idx + 1
 
-        # ensure monotonically increasing indicies
+        # ensure monotonically increasing indices
         for event_idx, event in enumerate(events):
             event.set_index(event_idx + 1)
 
@@ -2493,7 +2501,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     logger.info(
         "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
         max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, new_events_count)
-    stats_str = f"max_start_adj {max_start_adjustment}ms, max_end_adj {max_end_adjustment}ms, ave_start_adj {ave_start_adjustment}ms, ave_end_adj {ave_end_adjustment}ms, new_events {new_events_count}"
+    stats_str = f"max_start_adj {max_start_adjustment:.1f}ms, max_end_adj {max_end_adjustment:.1f}ms, ave_start_adj {ave_start_adjustment:.1f}ms, ave_end_adj {ave_end_adjustment:.1f}ms, new_events {new_events_count}"
     for event_idx, adjustment in enumerate(adjustments):
         adjustment_log_level = 0
         if adjustment[0] > max_start_adjustment / 2 or adjustment[1] > max_end_adjustment / 2:

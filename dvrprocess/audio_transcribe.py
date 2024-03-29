@@ -121,9 +121,9 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
         channels = int(audio_original.get(constants.K_CHANNELS, 0))
         if channels > 2:
             if num_channels == 1:
-                ffmpeg_command.extend(['-af', 'pan=stereo|FL<FL+0.5*FC+0.5*BL|FR<FR+0.5*FC+0.5*BR'])
+                ffmpeg_command.extend(['-af', 'pan=mono|FC<FC+0.5*FL+0.5*FR'])
             else:
-                ffmpeg_command.extend(['-af', 'pan=mono|FL=FC+0.5*FL+0.5*BL+0.5*BR|FR=FC+0.5*FR+0.5*BR+0.5*BL'])
+                ffmpeg_command.extend(['-af', 'pan=stereo|FL<FL+FC|FR<FR+FC'])
         else:
             ffmpeg_command.extend(['-ac', str(num_channels)])
 

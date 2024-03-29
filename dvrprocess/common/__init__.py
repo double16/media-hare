@@ -1251,6 +1251,18 @@ def is_from_dvr(input_info):
     return not already_cut
 
 
+def is_ripped_from_media(input_info: dict) -> bool:
+    if not input_info:
+        return False
+    tag_values = list()
+    tag_values.extend(input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).values())
+    for stream in input_info[constants.K_STREAMS]:
+        tag_values.extend(stream.get(constants.K_TAGS, {}).values())
+    if any(filter(lambda v: 'makemkv' in v.lower(), tag_values)):
+        return True
+    return False
+
+
 def get_arguments_from_config(argv, filename) -> list[str]:
     """
     Read command line arguments from files stored in the filename searching:

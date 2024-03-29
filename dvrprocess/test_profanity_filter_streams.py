@@ -7,7 +7,7 @@ import unittest
 from xml.etree import ElementTree as ET
 
 import profanity_filter
-from common import tools, proc_invoker, constants, config, vosk
+from common import tools, proc_invoker, constants, config, vosk, is_ripped_from_media
 
 #
 # Testing scenarios:
@@ -725,3 +725,13 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             self._mock_subtitle_edit('needs_filtered.srt.txt')
         ])
         profanity_filter.do_profanity_filter(mkv_path, mute_channels=config.MuteChannels.VOICE)
+
+    def test_is_ripped_from_media_true(self):
+        with open(f"../fixtures/media_state_ripped.json", "rt") as f:
+            input_info_json = json.load(f)
+        self.assertTrue(is_ripped_from_media(input_info_json))
+
+    def test_is_ripped_from_media_false(self):
+        with open(f"../fixtures/media_state_unfiltered_sub_orig_image.json", "rt") as f:
+            input_info_json = json.load(f)
+        self.assertFalse(is_ripped_from_media(input_info_json))

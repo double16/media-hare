@@ -40,14 +40,6 @@
             "tags": {
                 "language": "eng",
                 "title": "Filtered",
-                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
-                "BPS-eng": "448000",
-                "DURATION-eng": "02:18:17.376000000",
-                "NUMBER_OF_FRAMES-eng": "259293",
-                "NUMBER_OF_BYTES-eng": "464653056",
-                "SOURCE_ID-eng": "0180BD",
-                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
-                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
                 "ENCODER": "Lavc58.134.100 libopus",
                 "DURATION": "02:18:17.394000000"
             }
@@ -92,14 +84,6 @@
             "tags": {
                 "language": "eng",
                 "title": "Original",
-                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
-                "BPS-eng": "448000",
-                "DURATION-eng": "02:18:17.376000000",
-                "NUMBER_OF_FRAMES-eng": "259293",
-                "NUMBER_OF_BYTES-eng": "464653056",
-                "SOURCE_ID-eng": "0180BD",
-                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
-                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
                 "DURATION": "02:18:17.393000000"
             }
         },
@@ -217,14 +201,6 @@
             "tags": {
                 "language": "eng",
                 "title": "Original",
-                "BPS-eng": "82",
-                "DURATION-eng": "02:17:13.022000000",
-                "NUMBER_OF_FRAMES-eng": "1676",
-                "NUMBER_OF_BYTES-eng": "84811",
-                "SOURCE_ID-eng": "0100E0",
-                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
-                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
-                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
                 "DURATION": "02:17:24.318000000"
             }
         },
@@ -266,14 +242,6 @@
             },
             "tags": {
                 "language": "eng",
-                "BPS-eng": "2011",
-                "DURATION-eng": "02:16:45.953300000",
-                "NUMBER_OF_FRAMES-eng": "1180",
-                "NUMBER_OF_BYTES-eng": "2063552",
-                "SOURCE_ID-eng": "0120BD",
-                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
-                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
-                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
                 "DURATION": "02:18:15.293000000"
             }
         },
@@ -327,14 +295,6 @@
             },
             "tags": {
                 "language": "eng",
-                "BPS-eng": "5434757",
-                "DURATION-eng": "02:18:17.622666666",
-                "NUMBER_OF_FRAMES-eng": "198944",
-                "NUMBER_OF_BYTES-eng": "5636945924",
-                "SOURCE_ID-eng": "0100E0",
-                "_STATISTICS_WRITING_APP-eng": "MakeMKV v1.16.7 darwin(x64-release)",
-                "_STATISTICS_WRITING_DATE_UTC-eng": "2022-04-30 01:29:19",
-                "_STATISTICS_TAGS-eng": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES SOURCE_ID",
                 "DURATION": "02:18:17.539000000"
             },
             "side_data_list": [
