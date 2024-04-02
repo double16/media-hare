@@ -489,7 +489,7 @@ def edl_tempfile(infile, workdir):
 def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdir, dry_run=False, force=0,
               expensive_genes=False, check_compute=True,
               num_generations=0, comskip_defaults: configparser.ConfigParser = None, experimental=False) -> \
-        (object, list, list, list, progress.progress):
+        (object, list, list, list, progress.progress, str):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
     :param process_pool:
@@ -501,7 +501,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
     :param expensive_genes: True to use genes that require generating the CSV from video for each solution
     :param check_compute: True to stop processing if compute is too high
     :param comskip_defaults: 
-    :return: fitness_func, genes, gene_space, gene_type
+    :return: fitness_func, genes, gene_space, gene_type, fitness_json_path
     """
 
     # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
@@ -618,11 +618,13 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
                   )
 
     # create fitness function
-    comskip_fitness_ini_path = os.path.join(workdir, 'comskip-fitness-'
-                                            + hashlib.sha512(
-        ",".join(filter(lambda e: os.path.basename(e), files)).encode("utf-8")).hexdigest()
-                                            + '.ini')
+    filename_hash = hashlib.sha512(",".join(filter(lambda e: os.path.basename(e), files)).encode("utf-8")).hexdigest()
+    comskip_fitness_ini_path = os.path.join(workdir, 'comskip-fitness-' + filename_hash + '.ini')
     shutil.copyfile(comskip_ini_path, comskip_fitness_ini_path)
+
+    fitness_json_path = os.path.join(workdir, 'comskip-fitness-' + filename_hash + '.json')
+    if os.path.exists(fitness_json_path):
+        os.remove(fitness_json_path)
 
     tuning_progress = progress.progress(f"{input_dirs.pop()} tuning", 0, num_generations + 1)
 
@@ -722,9 +724,9 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
         tuning_progress.progress(gad.generations_completed)
 
         return fitness_value(sigma, expected_adjusted_duration_diff, count_of_non_defaults, episode_common_duration,
-                             commercial_breaks)
+                             commercial_breaks, fitness_json_path=fitness_json_path)
 
-    return f, genes, gene_space, gene_type, tuning_progress
+    return f, genes, gene_space, gene_type, tuning_progress, fitness_json_path
 
 
 def csv_and_comchap_generate(file_path, comskip_ini_path, comskip_fitness_ini_path, csvfile, workdir, video_info,
@@ -752,7 +754,8 @@ def csv_and_comchap_generate(file_path, comskip_ini_path, comskip_fitness_ini_pa
 
 def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of_non_defaults: float,
                   episode_common_duration: int = 60,
-                  commercial_breaks: list[list[edl_util.EdlEvent]] = None):
+                  commercial_breaks: list[list[edl_util.EdlEvent]] = None,
+                  fitness_json_path=None):
     if episode_common_duration <= 30:
         duration_tolerance = 30.0
     else:
@@ -769,12 +772,12 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
         else:
             # we care about removing commercials, so do not consider solutions that found no commercials
             logger.info("No commercial breaks available for scoring")
-            return 0
+            return -9999
 
     result = 0
 
     # sigma good values 0 - 120
-    result += 1.1 / (sigma + 0.001)
+    result += 1.1 / (sigma + 0.00001)
 
     # expected_adjusted_duration_diff good values 0 - 240
     # If the numerator is too great, less ideal results occur to fit the expected duration
@@ -786,10 +789,10 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
     # result += 1.0 / (count_of_non_defaults + 10000.0)
 
     # commercial_break_score, good values 0 - 800
-    result += 80.0 / (commercial_break_score + 0.001)
+    result += 80.0 / (commercial_break_score + 0.00001)
 
-    if debug:
-        with open("/tmp/fitness.json", "a") as f:
+    if fitness_json_path:
+        with open(fitness_json_path, "a") as f:
             acb_primitive = list(map(lambda breaks1: list(
                 map(lambda event: None if event is None else [event.start, event.end], breaks1)),
                                      aligned_commercial_breaks))
@@ -943,7 +946,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
 
     thread_pool = ThreadPoolExecutor(max_workers=processes)
     try:
-        fitness_func, genes, gene_space, gene_type, tuning_progress = setup_gad(
+        fitness_func, genes, gene_space, gene_type, tuning_progress, fitness_json_path = setup_gad(
             process_pool=process_pool, thread_pool=thread_pool, files=files, workdir=workdir, dry_run=dry_run,
             force=force, comskip_defaults=comskip_defaults,
             expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations,
@@ -1046,6 +1049,9 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     write_ini_from_solution(target_comskip_ini, genes, solution,
                             comskip_defaults=comskip_defaults,
                             write_complete_config=True)
+
+    if fitness_json_path and os.path.exists(fitness_json_path):
+        shutil.move(fitness_json_path, os.path.join(season_dir, 'fitness.json'))
 
     return_code = common.ReturnCodeReducer()
     for filepath in files:
