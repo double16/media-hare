@@ -401,7 +401,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         ret = comskip_invoker.run(comskip_command, check=False)
         if not os.path.isfile(hidden_edlfile):
             logger.fatal(f"Error running comskip. EDL File not found: {hidden_edlfile}")
-            return ret.returncode
+            return ret
         try:
             if hidden_edlfile != edlfile:
                 shutil.move(hidden_edlfile, edlfile)
