@@ -3,7 +3,7 @@ pysrt==1.1.2
 plexapi==4.15.7
 psutil==5.9.7
 requests==2.31.0
-pygad==3.1.0
+pygad==3.3.0
 # specific version of numpy required for pygad 2023-01-18
 # numpy==1.23.5
 vosk==0.3.44

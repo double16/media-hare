@@ -229,7 +229,6 @@ def dvr_post_process(*args, **kwargs):
         raise e
 
 
-@common.finisher
 def do_dvr_post_process(input_file,
                         # real video codec is resolved per stream and "None" indicates for us to pick the best
                         desired_video_codecs: Iterable[str] = None,
@@ -393,7 +392,7 @@ def do_dvr_post_process(input_file,
                 video_bitrate_fps = float(video_bitrate) / (max(1.0, eval(frame_rate) / 24.0))
 
                 # give some room to be above target bitrate
-                bitrate_threshold = bitrate * 1.2
+                bitrate_threshold = bitrate * 1.5
                 # Increase threshold for short videos because there isn't enough content to compress to our expectations
                 if duration < SHORT_VIDEO_SECONDS:
                     bitrate_threshold *= 2
@@ -740,7 +739,6 @@ def dvr_post_process_cli(argv):
                     logger.warning("Received signal %s, trying with forgiving setting", -e.returncode)
                     merged_args = parsed[1].copy()
                     merged_args['forgiving'] = True
-                    common.finish()
                     this_file_return_code = do_dvr_post_process(infile, **merged_args)
                 else:
                     raise e

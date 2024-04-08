@@ -1,4 +1,5 @@
 import _thread
+import atexit
 import code
 import datetime
 import json
@@ -21,8 +22,8 @@ import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants, progress, procprofile
-from .terminalui import terminalui_wrapper
 from .proc_invoker import StreamCapture
+from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
 _once_lock = _allocate_lock()
@@ -140,31 +141,20 @@ sys.excepthook = exception_hook
 
 def finish():
     global TEMPFILENAMES
-    for FN in TEMPFILENAMES:
-        if os.path.isfile(FN):
+    while TEMPFILENAMES:
+        fn = TEMPFILENAMES.pop()
+        if os.path.isfile(fn):
             try:
-                os.remove(FN)
+                os.remove(fn)
             except FileNotFoundError:
                 pass
-    TEMPFILENAMES.clear()
-
-
-def finisher(func):
-    """
-    Calls finish() after execution.
-    """
-
-    def inner1(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        finally:
-            finish()
-
-    return inner1
 
 
 def get_plex_url():
     return config.get_global_config_option('plex', 'url', fallback=None)
+
+
+_KEYFRAMES_PATTERN = re.compile(r'[\d.]+')
 
 
 def load_keyframes_by_seconds(filepath) -> list[float]:
@@ -173,7 +163,7 @@ def load_keyframes_by_seconds(filepath) -> list[float]:
                          "-show_entries",
                          "frame=pkt_pts_time" if int(tools.ffprobe.version) == 4 else "frame=pts_time",
                          "-of", "csv=print_section=0", filepath]
-    keyframes = list(map(lambda s: float(re.search(r'[\d.]+', s)[0]),
+    keyframes = list(map(lambda s: float(_KEYFRAMES_PATTERN.search(s)[0]),
                          filter(lambda s: len(s) > 0,
                                 tools.ffprobe.check_output(ffprobe_keyframes, universal_newlines=True,
                                                            text=True, stderr=subprocess.DEVNULL).splitlines())))
@@ -695,6 +685,7 @@ def is_codec_available(codec: str) -> bool:
 def recommended_video_quality(target_height: int, target_video_codec: str, bit_depth: Union[int, None]) -> (
 int, int, int):
     """
+    # FIXME: bit-rates need to be revisited
     CRF
     https://slhck.info/video/2017/02/24/crf-guide.html
     Defaults to H265 the upcoming standard (2022), specifics for H264 the current most compatible
@@ -1029,6 +1020,7 @@ def cli_wrapper(func, *args, **kwargs):
 
     def wrapped_func() -> int:
         try:
+            atexit.register(finish)
             procprofile.memory_monitor_start()
             if cli:
                 return func(args)
@@ -1259,6 +1251,18 @@ def is_from_dvr(input_info):
     return not already_cut
 
 
+def is_ripped_from_media(input_info: dict) -> bool:
+    if not input_info:
+        return False
+    tag_values = list()
+    tag_values.extend(input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).values())
+    for stream in input_info[constants.K_STREAMS]:
+        tag_values.extend(stream.get(constants.K_TAGS, {}).values())
+    if any(filter(lambda v: 'makemkv' in v.lower(), tag_values)):
+        return True
+    return False
+
+
 def get_arguments_from_config(argv, filename) -> list[str]:
     """
     Read command line arguments from files stored in the filename searching:
@@ -1304,6 +1308,9 @@ def get_arguments_from_config(argv, filename) -> list[str]:
     return []
 
 
+EPISODE_PATTERN = re.compile(r"E(\d+)-E(\d+)")
+
+
 def episode_info(input_info: dict) -> (int, float, float):
     """
     :param input_info:
@@ -1314,7 +1321,7 @@ def episode_info(input_info: dict) -> (int, float, float):
     episode_count = 1
     filename = input_info[constants.K_FORMAT]['filename']
     if filename:
-        episode_range = re.search(r"E(\d+)-E(\d+)", filename)
+        episode_range = EPISODE_PATTERN.search(filename)
         if episode_range:
             count = (int(episode_range.group(2)) - int(episode_range.group(1))) + 1
             if count > 0:
@@ -1373,19 +1380,22 @@ def is_truthy(value) -> bool:
     return str(value).lower() in ['true', 't', 'yes', 'y', '1']
 
 
+_FRAME_RATE_INVALID_CHARS = re.compile(r'\D')
+
+
 def frame_rate_from_s(frame_rate_s: Union[str, None]) -> Union[float, None]:
     if frame_rate_s is None:
         return None
-    framerate: Union[float, None] = None
+    frame_rate: Union[float, None] = None
     frame_rate_s = frame_rate_s.lower()
     if frame_rate_s[0].isdigit():
         # remove suffix, like 'p'
-        framerate = float(re.sub(r'\D', '', frame_rate_s))
+        frame_rate = float(_FRAME_RATE_INVALID_CHARS.sub('', frame_rate_s))
     elif frame_rate_s in constants.FRAME_RATE_NAMES.keys():
-        framerate = float(eval(constants.FRAME_RATE_NAMES[frame_rate_s]))
+        frame_rate = float(eval(constants.FRAME_RATE_NAMES[frame_rate_s]))
     else:
         logger.warning("Unknown framerate %s", frame_rate_s)
-    return framerate
+    return frame_rate
 
 
 def should_adjust_frame_rate(current_frame_rate: Union[None, str, float], desired_frame_rate: Union[None, str, float],

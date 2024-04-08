@@ -458,6 +458,7 @@ douche[\w-]*
 (dick|pecker)[\s-]?heads?
 (dick|pecker)[\s-]?head's
 (dick|pecker)[\s-]?head’s
+(dick|pecker)[\s-]?less
 \w+-dicks?
 dicking
 dicked

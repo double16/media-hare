@@ -403,17 +403,19 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
         _CURSESUI_LAST_RESIZE = time.time()
         progress.start_compute_gauges(2)
 
-        return func(*args, **kwargs)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            # show the cursor
+            try:
+                curses.curs_set(1)
+            except:
+                pass
 
     stderr_capture = StreamCapture('stderr')
     stdout_capture = StreamCapture('stdout')
     try:
         return curses.wrapper(main)
     finally:
-        # show the cursor
-        try:
-            curses.curs_set(1)
-        except:
-            pass
         stderr_capture.finish()
         stdout_capture.finish(output=False)

@@ -4,7 +4,6 @@ import atexit
 import copy
 import getopt
 import hashlib
-import json
 import logging
 import os
 import re
@@ -12,29 +11,28 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import weakref
 from bisect import bisect_left, bisect_right
 from math import ceil, floor
 from pathlib import Path
+from statistics import mean, stdev
 from typing import Tuple, Union
-from websockets.sync.client import connect as wsconnect
-from vosk import Model, KaldiRecognizer, SetLogLevel
 
 import language_tool_python
 import pysrt
 from ass_parser import read_ass, write_ass, AssFile, AssEventList, CorruptAssLineError
+from num2words import num2words
 from numpy import loadtxt, average, concatenate
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from thefuzz import fuzz
 from thefuzz import process as fuzzprocess
-from num2words import num2words
 
 import common
 from common import subtitle, tools, config, constants, progress, edl_util
+from common.vosk import kaldi_recognizer
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 12
-AUDIO_TO_TEXT_VERSION = 4
+AUDIO_TO_TEXT_VERSION = 5
 AUDIO_TO_TEXT_SUBTITLE_VERSION = 5
 
 # exit code for content had filtering applied, file has been significantly changed
@@ -103,8 +101,6 @@ def profanity_filter(*args, **kwargs) -> int:
     except CorruptAssLineError:
         logger.error("Corrupt ASS subtitle in %s", args[0])
         return CMD_RESULT_ERROR
-    finally:
-        common.finish()
 
 
 def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,
@@ -198,6 +194,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         constants.K_AUDIO_TO_TEXT_VERSION)
     current_audio2text_subtitle_version = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
         constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION)
+    transcribe_notes = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
+        constants.K_AUDIO_TO_TEXT_NOTES)
     logger.info("current filter hash = %s, current filter version = %s, current audio-to-text version = %s",
                 current_filter_hash, current_filter_version, current_audio2text_version)
 
@@ -277,10 +275,11 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
             if audio_channels > 2:
-                audio_to_text_filter = 'pan=1c|FC<0.3*FL+FC+0.3*FR'
+                # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC'
+                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR'
             else:
                 audio_to_text_filter = None
-            subtitle_srt_words = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
+            subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
             if subtitle_srt_words and os.stat(subtitle_srt_words).st_size > 0:
                 audio_to_text_version = AUDIO_TO_TEXT_VERSION
             else:
@@ -314,6 +313,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     tags[constants.K_AUDIO_TO_TEXT_FILTER] = audio_to_text_filter if audio_to_text_filter else ''
     tags[
         constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION] = audio_to_text_subtitle_version if audio_to_text_subtitle_version else ''
+    tags[
+        constants.K_AUDIO_TO_TEXT_NOTES] = transcribe_notes if transcribe_notes else ''
     if mute_channels:
         tags[constants.K_MUTE_CHANNELS] = mute_channels.name
     if common.should_replace_media_title(input_info):
@@ -400,6 +401,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                               f'{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_subtitle_version else ""}',
                               "-metadata:s:s:0",
                               f'{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={audio_to_text_subtitle_version if audio_to_text_subtitle_version else ""}',
+                              "-metadata:s:s:0",
+                              f'{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ""}',
                               "-disposition:s:0", "default"])
             subtitle_output_idx = 1
         else:
@@ -432,6 +435,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         arguments.extend(
             ["-metadata",
              f"{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={audio_to_text_subtitle_version if audio_to_text_subtitle_version else ''}"])
+        arguments.extend(
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ''}"])
         arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}="])
         if mark_skip:
             arguments.extend(["-metadata", f"{constants.K_FILTER_SKIP}=true"])
@@ -485,7 +491,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                     aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
                                                                           pysrt.open(subtitle_words_filename),
                                                                           lang=language,
-                                                                          filename=base_filename)
+                                                                          filename=base_filename,
+                                                                          input_info=input_info)
                 except ValueError as e:
                     logger.error("Cannot using aligned subtitle", e)
                     aligned = False
@@ -522,7 +529,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 try:
                     aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
                                                                           lang=language,
-                                                                          filename=base_filename)
+                                                                          filename=base_filename,
+                                                                          input_info=input_info)
                 except ValueError as e:
                     logger.error("Cannot using aligned subtitle", e)
                     aligned = False
@@ -590,6 +598,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ["-metadata",
              f"{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ''}"])
         arguments.extend(
+            ["-metadata",
+             f"{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ''}"])
+        arguments.extend(
             ["-metadata", f"{constants.K_AUDIO_TO_TEXT_FILTER}={audio_to_text_filter if audio_to_text_filter else ''}"])
         if len(stopped_spans) > 0:
             arguments.extend(["-metadata", f"{constants.K_FILTER_STOPPED}={span_list_to_str(stopped_spans)}"])
@@ -655,6 +666,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 f'{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_subtitle_version else ""}',
                 f"-metadata:s:s:{subtitle_output_idx}",
                 f'{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={audio_to_text_subtitle_version if audio_to_text_subtitle_version else ""}',
+                f"-metadata:s:s:{subtitle_output_idx}",
+                f'{constants.K_AUDIO_TO_TEXT_NOTES}={transcribe_notes if transcribe_notes else ""}',
             ])
         elif subtitle_original_idx is not None:
             arguments.extend(["-map", f"{streams_file}:{subtitle_original_idx}"])
@@ -1020,98 +1033,19 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
     return subtitle_srt_filename
 
 
-class BaseKaldiRecognizer(object):
-    def __init__(self, vosk_language: str, freq: int):
-        self.vosk_language = vosk_language
-        self.freq = freq
-
-    def accept_waveform(self, data) -> int:
-        return 0
-
-    def result(self) -> dict:
-        return {}
-
-    def final_result(self) -> dict:
-        return {}
-
-
-class LocalKaldiRecognizer(BaseKaldiRecognizer):
-    vosk_model_cache = weakref.WeakValueDictionary()
-
-    def __init__(self, vosk_language: str, freq: int):
-        super().__init__(vosk_language, freq)
-        SetLogLevel(-99)
-        try:
-            model = self.vosk_model_cache[self.vosk_language]
-        except KeyError:
-            model = Model(model_name=vosk_model(self.vosk_language), lang=self.vosk_language)
-            self.vosk_model_cache[self.vosk_language] = model
-        self.rec = KaldiRecognizer(model, freq)
-        self.rec.SetWords(True)
-
-    def accept_waveform(self, data) -> int:
-        return self.rec.AcceptWaveform(data)
-
-    def result(self) -> dict:
-        return json.loads(self.rec.Result())
-
-    def final_result(self) -> dict:
-        try:
-            return json.loads(self.rec.FinalResult())
-        finally:
-            self.rec = None
-
-
-# map from language to whether server is available
-REMOTE_KALDI_SERVER: dict[str, bool] = {}
-
-
-class RemoteKaldiRecognizer(BaseKaldiRecognizer):
-    def __init__(self, vosk_language: str, freq: int):
-        super().__init__(vosk_language, freq)
-        lang2 = vosk_language[0:2]
-        remote_host = os.getenv(f'KALDI_{lang2.upper()}_HOST', f'kaldi-{lang2.lower()}')
-        remote_port = os.getenv(f'KALDI_{lang2.upper()}_PORT', '2700')
-        remote_url = f'ws://{remote_host}:{remote_port}'
-        self.socket = wsconnect(remote_url)
-        self.socket.send('{ "config" : { "words" : true, "max_alternatives" : 0, "sample_rate" : %d } }' % freq)
-
-    def accept_waveform(self, data) -> int:
-        self.socket.send(data)
-        return 1
-
-    def result(self) -> dict:
-        message = self.socket.recv()
-        if message:
-            return json.loads(message)
-        else:
-            return {}
-
-    def final_result(self) -> dict:
-        try:
-            self.socket.send('{"eof" : 1}')
-            final_message = self.socket.recv()
-            if final_message:
-                return json.loads(final_message)
-            else:
-                return {}
-        finally:
-            self.socket.close()
-            self.socket = None
-
-
 def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None) \
-        -> Union[str, None]:
+        -> (Union[str, None], Union[str, None]):
     """
     Create a SRT subtitle with an event for each word.
     1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
     2. --tasks is being set but so far it doesn't seem to yield more cores used
     :return: srt filename for words
     """
-    global debug, REMOTE_KALDI_SERVER
+    global debug
 
-    freq = 16000
-    chunk_size = ceil(freq * 0.4)
+    freq = 48000
+    chunk_size = ceil(freq * 1.0)  # coefficient is the number of seconds
+    num_channels = 1  # num_channels 2 doesn't work (2024-02-17), it takes the input as mono
 
     temp_fd, words_filename = tempfile.mkstemp(dir=workdir, suffix='.srt')
     os.close(temp_fd)
@@ -1123,28 +1057,22 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
                        '-map', f'0:{audio_original[constants.K_STREAM_INDEX]}',
                        '-ar', str(freq)]
     if audio_filter:
-        if 'pan=' not in audio_filter:
-            extract_command.extend(['-ac', '1'])
+        if 'pan=' in audio_filter:
+            if 'stereo' in audio_filter:
+                num_channels = 2
+            else:
+                num_channels = 1
+        else:
+            extract_command.extend(['-ac', str(num_channels)])
         extract_command.extend(['-af', audio_filter])
     else:
-        extract_command.extend(['-ac', '1'])
-    extract_command.extend(['-f', 's16le', '-'])
+        extract_command.extend(['-ac', str(num_channels)])
+    extract_command.extend(['-f', 'wav', '-'])
 
-    _vosk_language = vosk_language(language)
-    try:
-        if _vosk_language not in REMOTE_KALDI_SERVER or REMOTE_KALDI_SERVER[_vosk_language]:
-            rec: BaseKaldiRecognizer = RemoteKaldiRecognizer(_vosk_language, freq)
-            REMOTE_KALDI_SERVER[_vosk_language] = True
-        else:
-            rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
-    except BaseException as e:
-        logger.debug("Remote transcriber not available")
-        REMOTE_KALDI_SERVER[_vosk_language] = False
-        rec: BaseKaldiRecognizer = LocalKaldiRecognizer(_vosk_language, freq)
+    rec = kaldi_recognizer(language, freq, num_channels)
 
     logger.debug(tools.ffmpeg.array_as_command(extract_command))
     audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    audio_process.stdout.read(44)  # skip header
     results = []
     audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0,
                                        int(float(
@@ -1170,13 +1098,17 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     audio_progress.stop()
     extract_return_code = audio_process.wait()
     if extract_return_code != 0:
-        logger.error("Cannot transcribe audio, ffmpeg returned %s", extract_return_code)
-        return None
+        logger.error("Cannot transcribe audio, ffmpeg returned %s, command: %s",
+                     extract_return_code,
+                     tools.ffmpeg.array_as_command(extract_command))
+        return None, None
 
+    confs = []
     subs_words = []
     for i, res in enumerate(results):
         words = res['result']
         for word in words:
+            confs.append(word['conf'])
             s = SubRipItem(index=len(subs_words),
                            start=SubRipTime(seconds=word['start']),
                            end=SubRipTime(seconds=word['end']),
@@ -1191,7 +1123,16 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     srt_words = SubRipFile(items=subs_words, path=words_filename)
     srt_words.save(Path(words_filename), 'utf-8')
 
-    return words_filename
+    if len(confs) > 5:
+        conf_min = min(confs)
+        conf_max = max(confs)
+        conf_avg = mean(confs)
+        conf_stdev = stdev(confs)
+        conf_notes = f'freq {freq} buf {chunk_size} af {audio_filter} conf [{conf_min:.3f},{conf_max:.3f}] {conf_avg:.3f}σ{conf_stdev:.3f}'
+    else:
+        conf_notes = ""
+
+    return words_filename, conf_notes
 
 
 def words_to_subtitle_srt(input_info: dict, words_filename: str, workdir, language=None) -> Union[str, None]:
@@ -1417,36 +1358,6 @@ def phrase_list_accept_condition(e):
     if len(e) == 0:
         return False
     return e[0] != '#'
-
-
-def vosk_language(language: str) -> str:
-    """
-    Get the language code for the Vosk transcriber from the three character language code.
-    :param language: three character language code
-    :returns: language code appropriate for Vosk
-    """
-    if language == 'spa':
-        return 'es'
-    if language in ['eng', 'en']:
-        return 'en-us'
-    return language[0:2]
-
-
-def vosk_model(language: str) -> Union[None, str]:
-    """
-    Get the Vosk transcriber model to use from the three character language code.
-    See https://alphacephei.com/vosk/models
-    :param language: three character language code
-    :returns: model name or None to let Vosk choose a model based on the language
-    """
-    if not language:
-        return None
-    if language in ['en-us', 'en']:
-        # vosk-model-en-us-daanzu-20200905 sometimes is better, but not for the average case
-        return 'vosk-model-en-us-0.22'
-    elif language == 'es':
-        return 'vosk-model-es-0.42'
-    return None
 
 
 def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run: bool, debug: bool,
@@ -1861,7 +1772,8 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
 
 
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
-                                 should_add_new_events=True, filename: str = None) -> tuple[bool, str]:
+                                 should_add_new_events=True, filename: str = None, input_info: dict = None) -> tuple[
+    bool, str]:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
     :param subtitle_inout: the subtitle to align, srt or ssa
@@ -1882,6 +1794,9 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     unclaimed_word_capture_duration_max_ms = 1800
     # multiple runs work, it would be better to fix so a single pass works *shrug
     passes = 2
+    # for non-DVR source, passes = 0, so we don't move events but we still capture missing words
+    if common.is_ripped_from_media(input_info):
+        passes = 0
 
     subtitle_facade = subtitle.new_subtitle_file_facade(subtitle_inout)
 
@@ -2575,7 +2490,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
             event_idx += 1
             last_word_idx = end_word_idx + 1
 
-        # ensure monotonically increasing indicies
+        # ensure monotonically increasing indices
         for event_idx, event in enumerate(events):
             event.set_index(event_idx + 1)
 
@@ -2585,7 +2500,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     logger.info(
         "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
         max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, new_events_count)
-    stats_str = f"max_start_adj {max_start_adjustment}ms, max_end_adj {max_end_adjustment}ms, ave_start_adj {ave_start_adjustment}ms, ave_end_adj {ave_end_adjustment}ms, new_events {new_events_count}"
+    stats_str = f"max_start_adj {max_start_adjustment:.1f}ms, max_end_adj {max_end_adjustment:.1f}ms, ave_start_adj {ave_start_adjustment:.1f}ms, ave_end_adj {ave_end_adjustment:.1f}ms, new_events {new_events_count}"
     for event_idx, adjustment in enumerate(adjustments):
         adjustment_log_level = 0
         if adjustment[0] > max_start_adjustment / 2 or adjustment[1] > max_end_adjustment / 2:

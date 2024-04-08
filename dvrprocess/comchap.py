@@ -8,10 +8,11 @@ import os
 import shutil
 import sys
 import tempfile
+from functools import lru_cache
 
 import common
-from common import hwaccel, tools, config, constants, edl_util
 import edl_normalize
+from common import hwaccel, tools, config, constants, edl_util
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ INI_GROUP_OUTPUT_CONTROL = 'Output Control'
 INI_GROUP_GLOBAL_REMOVES = 'Global Removes'
 INI_GROUP_LOGO_FINDING = 'Logo Finding'
 INI_GROUP_LOGO_INTERPRETATION = 'Logo Interpretation'
+INI_GROUP_ASPECT_RATIO = 'Aspect Ratio'
+INI_GROUP_INPUT_CORRECTION = 'Input Correction'
 INI_GROUP_VERSIONS = 'Versions'
 INI_ITEM_VERSIONS_VIDEO_STATS = 'video_stats'
 INI_ITEM_VERSIONS_GAD_TUNING = 'gad_tuning'
@@ -60,6 +63,7 @@ Usage: {sys.argv[0]} infile [outfile]
 """, file=sys.stderr)
 
 
+@lru_cache(maxsize=None)
 def find_comskip_ini():
     return config.find_config('comskip.ini')
 
@@ -83,7 +87,8 @@ def get_added_recording_seconds(video_info):
     """
     # This is the full config, including previously tuned parameters
     comskip_config = configparser.ConfigParser()
-    comskip_config_file = build_comskip_ini(find_comskip_ini(), input_info=video_info, workdir=tempfile.gettempdir())
+    comskip_config_file = build_comskip_ini(find_comskip_ini(), input_info=video_info, workdir=tempfile.gettempdir(),
+                                            log_file=False)
     comskip_config.read(comskip_config_file)
     os.remove(comskip_config_file)
 
@@ -95,9 +100,9 @@ def get_added_recording_seconds(video_info):
 
 
 def compute_comskip_ini_hash(comskip_ini, leaf_comskip_ini=None, video_path=None, input_info=None,
-                             workdir=tempfile.gettempdir()):
+                             workdir=tempfile.gettempdir(), log_file=False):
     final_comskip_ini = build_comskip_ini(comskip_ini, leaf_comskip_ini=leaf_comskip_ini, video_path=video_path,
-                                          input_info=input_info, workdir=workdir)
+                                          input_info=input_info, workdir=workdir, log_file=log_file)
     try:
         hash_input = ""
         with open(final_comskip_ini, "r") as fd:
@@ -111,7 +116,7 @@ def compute_comskip_ini_hash(comskip_ini, leaf_comskip_ini=None, video_path=None
 
 
 def build_comskip_ini(comskip_ini, leaf_comskip_ini=None, video_path=None, input_info=None,
-                      workdir=tempfile.gettempdir(), keep=False) -> str:
+                      workdir=tempfile.gettempdir(), keep=False, log_file=False) -> str:
     """
     Build a final comskip.ini file from a base comskip.ini and customize based on video properties.
     :param comskip_ini:
@@ -206,7 +211,7 @@ def build_comskip_ini(comskip_ini, leaf_comskip_ini=None, video_path=None, input
     # Necessary for the log file
     if not comskip_obj.has_section(INI_GROUP_MAIN_SETTINGS):
         comskip_obj.add_section(INI_GROUP_MAIN_SETTINGS)
-    comskip_obj[INI_GROUP_MAIN_SETTINGS]['verbose'] = '10'
+    comskip_obj[INI_GROUP_MAIN_SETTINGS]['verbose'] = '10' if log_file else '0'
 
     with open(comskip_temp, "w") as f:
         comskip_obj.write(f, space_around_delimiters=False)
@@ -260,10 +265,7 @@ def get_comskip_hwassist_options() -> list[str]:
 
 
 def comchap(*args, **kwargs):
-    try:
-        return do_comchap(*args, **kwargs)
-    finally:
-        common.finish()
+    return do_comchap(*args, **kwargs)
 
 
 def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True, delete_log=True, delete_logo=True,
@@ -335,7 +337,8 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
 
     comskipini_hash = compute_comskip_ini_hash(comskipini, leaf_comskip_ini=leaf_comskip_ini, video_path=infile,
                                                input_info=input_info,
-                                               workdir=workdir if delete_ini else tempfile.gettempdir())
+                                               workdir=workdir if delete_ini else tempfile.gettempdir(),
+                                               log_file=not delete_log)
     current_comskip_hash = input_info.get(constants.K_FORMAT, {}).get(constants.K_TAGS, {}).get(
         constants.K_COMSKIP_HASH)
     logger.debug("comskip.ini hash is %s, current hash is %s", comskipini_hash, current_comskip_hash)
@@ -362,7 +365,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     if run_comskip:
         comskip_temp = build_comskip_ini(comskipini, leaf_comskip_ini=leaf_comskip_ini, video_path=infile,
                                          input_info=input_info, workdir=workdir,
-                                         keep=not delete_ini)
+                                         keep=not delete_ini, log_file=not delete_log)
 
         comskip_command = []
 
@@ -371,6 +374,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             comskip_command.append("-w")
         else:
             comskip_invoker = tools.comskip
+            # TODO: only include hwassist when csv isn't available
             comskip_command.extend(get_comskip_hwassist_options())
 
         # check for csv and logo file which makes the process much faster
@@ -397,7 +401,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         ret = comskip_invoker.run(comskip_command, check=False)
         if not os.path.isfile(hidden_edlfile):
             logger.fatal(f"Error running comskip. EDL File not found: {hidden_edlfile}")
-            return ret.returncode
+            return ret
         try:
             if hidden_edlfile != edlfile:
                 shutil.move(hidden_edlfile, edlfile)

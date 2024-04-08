@@ -5,7 +5,7 @@ import signal
 import sys
 import threading
 import time
-from math import ceil
+from math import ceil, floor
 from multiprocessing import Queue
 from multiprocessing.managers import RemoteError
 from queue import Empty
@@ -31,6 +31,8 @@ class Progress(object):
         self.eta: Union[None, float] = None
         """ Records when start(...) was called. """
         self._start_time: Union[None, float] = None
+        """ Records when start(...) was called at each 10% boundary. """
+        self._pct_start_time: list[Union[None, float]] = [None]*10
         """ The last time progress was reported. """
         self._last_progress_time: Union[None, float] = None
         """ The last percent we logged, used to keep the noise down. """
@@ -97,9 +99,15 @@ class Progress(object):
             self.eta = None
         else:
             self.pct = ceil(100 * (position / (self._end - self._start)))
+            pct_index = min(len(self._pct_start_time)-1, max(0, floor(self.pct / 10)))
+            if not self._pct_start_time[pct_index]:
+                self._pct_start_time[pct_index] = self._last_progress_time
             if self.pct <= 100 and (self.pct >= 10 or (self.pct >= 2 and (time.time() - self._start_time) > 60)):
-                remaining_s = (time.time() - self._start_time) / self.pct * (100.0 - self.pct)
-                # TODO: save time for each 10% and use weighed calculation
+                if pct_index >= 2 and self._pct_start_time[pct_index - 2]:
+                    start_time = self._pct_start_time[pct_index - 2]
+                    remaining_s = (time.time() - start_time) / (20.0 + self.pct % 10) * (100.0 - self.pct)
+                else:
+                    remaining_s = (time.time() - self._start_time) / self.pct * (100.0 - self.pct)
                 self.eta = time.time() + remaining_s
             else:
                 self.eta = None

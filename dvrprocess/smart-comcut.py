@@ -158,6 +158,10 @@ def smart_comcut_cli(argv):
                        no_curses=no_curses)
 
 
+def _breaks_to_populated(breaks: list[edl_util.EdlEvent]) -> list[bool]:
+    return list(map(lambda e: e is not None, breaks))
+
+
 def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encode,
                          crop_frame_op, crop_frame_fixed, desired_video_codecs, commercial_details, strict, all_videos, sigma) -> int:
     for arg in args:
@@ -188,14 +192,9 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                         if cc_return_code == 255:
                             return cc_return_code
                     if os.access(edl_path, os.R_OK):
-                        cuts = edl_util.parse_edl_cuts(edl_path)
-                        for idx, event in enumerate(cuts):
-                            has_com = True
-                            this_duration = (event.end - event.start)
-                            if this_duration >= 20 or (event.start > 0 and idx < len(cuts) - 1):
-                                commercial_break_count += 1
-                                commercial_breaks.append(event)
-                            adjusted_duration -= this_duration
+                        has_com, commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, duration, True)
+                        commercial_break_count = len(commercial_breaks)
+                        adjusted_duration -= duration_adjustment
                 # remove the following else to consider already cut durations
                 else:
                     continue
@@ -254,8 +253,8 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                         f"average adjusted = {common.seconds_to_timespec(average_adjusted_duration)} "
                         f"σ{common.seconds_to_timespec(stdev_adjusted_duration)}")
 
-            # TODO: organize breaks into "slots" with similar start times. If there is a break starting at 0, use the
-            # length to adjust start time
+            aligned_commercial_breaks, commercial_break_score, combined_commercial_breaks = edl_util.align_commercial_breaks(
+                list(map(lambda v: v['commercial_breaks'], filter(lambda v: v['has_com'], videos))))
 
             # Compute the expected number of commercial breaks
             commercial_break_histo = {}
@@ -268,7 +267,14 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                     commercial_break_histo[key] += 1
                 else:
                     commercial_break_histo[key] = 1
+
             logger.info(f"{show_label}: commercial_break_histo = {commercial_break_histo}")
+            logger.info(
+                f"{show_label}: commercial break score = {commercial_break_score}\n"
+                f"{show_label}: commercial breaks combined = ({len(combined_commercial_breaks)}) {edl_util.pretty_print_commercial_breaks([combined_commercial_breaks])}\n"
+                f"{edl_util.pretty_print_commercial_breaks(aligned_commercial_breaks)}"
+            )
+
             commercial_break_count_min = math.floor((commercial_break_histo_data_count * 9) / 10)
             target_commercial_breaks = dict(
                 filter(lambda x: x[1] >= commercial_break_count_min, commercial_break_histo.items()))
@@ -328,25 +334,7 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                 this_commercial_break_count = video['commercial_break_count']
                 duration_ok = accepted_range[0] < adjusted_duration < accepted_range[1]
                 if commercial_details:
-                    # TODO: account for optional break at beginning or ending, depends on when recording started
-                    # TODO: adjust start time based on break starting at 0
-                    if this_commercial_break_count == required_commercial_break_count:
-                        commercials_ok = True
-                        commercial_breaks = video['commercial_breaks']
-                        for i, val in enumerate(commercial_breaks):
-                            expected = required_commercial_breaks[i]
-                            if not expected.start.begin < val.start < expected.start.end:
-                                logger.debug(f"{filepath}: break {i} start {val.start} out of range {expected.start}")
-                                commercials_ok = False
-                            if not expected.end.begin < val.end < expected.end.end:
-                                logger.debug(f"{filepath}: break {i} end {val.end} out of range {expected.end}")
-                                commercials_ok = False
-                            if not expected.duration.begin < (val.end - val.start) < expected.duration.end:
-                                logger.debug(
-                                    f"{filepath}: break {i} duration {val.end - val.start} out of range {expected.duration}")
-                                commercials_ok = False
-                    else:
-                        commercials_ok = False
+                    commercials_ok = commercial_break_score < 800
                 else:
                     commercials_ok = None
                 if all_videos or (duration_ok and commercials_ok in [None, True]):
