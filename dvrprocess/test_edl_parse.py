@@ -274,7 +274,7 @@ class EdlParseTest(unittest.TestCase):
         for root, dirs, files in os.walk('../fixtures/combreaks/one'):
             for file in files:
                 if file.endswith(".edl"):
-                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3597)
+                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3597, False)
                     input.append(commercial_breaks)
         output, score, combined = edl_util.align_commercial_breaks(input)
         # print()
@@ -292,7 +292,7 @@ class EdlParseTest(unittest.TestCase):
         for root, dirs, files in os.walk('../fixtures/combreaks/two'):
             for file in files:
                 if file.endswith(".edl"):
-                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3597)
+                    _, commercial_breaks, _ = edl_util.parse_commercials(os.path.join(root, file), 3597, False)
                     input.append(commercial_breaks)
         output, score, combined = edl_util.align_commercial_breaks(input)
         self.validated_align_commercial_breaks(input, output, combined)

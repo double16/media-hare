@@ -29,7 +29,7 @@ import common
 from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_adjusted_duration, \
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
-    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_ASPECT_RATIO, INI_GROUP_INPUT_CORRECTION
+    INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_INPUT_CORRECTION
 from common import tools, config, constants, edl_util, progress
 
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
@@ -325,7 +325,7 @@ def do_comtune(infile, verbose=False, workdir=None, force=0, dry_run=False):
     max_avg_brightness, max_volume, non_uniformity = compute_black_frame_tunings(infile, workdir)
     infile_base, csv_path, video_ini = paths(infile, workdir)
     write_ini(video_ini, max_avg_brightness=max_avg_brightness, max_volume=max_volume, non_uniformity=non_uniformity)
-    comchap(infile, infile, force=True, delete_edl=False, workdir=workdir)
+    comchap(infile, infile, force=True, delete_edl=False, backup_edl=True, workdir=workdir)
 
     return 0
 
@@ -700,7 +700,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
             adjusted_duration = video_duration
             edl_path = edl_tempfile(file_path, workdir)
             if os.access(edl_path, os.R_OK):
-                _, this_commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, video_duration)
+                _, this_commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, video_duration, True, 0)
                 adjusted_duration -= duration_adjustment
                 commercial_breaks.append(this_commercial_breaks)
             adjusted_durations.append(adjusted_duration / episode_count)
@@ -759,7 +759,8 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
     if episode_common_duration <= 30:
         duration_tolerance = 30.0
     else:
-        duration_tolerance = 60.0
+        duration_tolerance = 30.0
+        # duration_tolerance = 60.0
 
     commercial_break_score = 1000000  # closer to 0 is better
     aligned_commercial_breaks = None
@@ -777,19 +778,16 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
     result = 0
 
     # sigma good values 0 - 120
-    result += 1.1 / (sigma + 0.00001)
+    result += 1.0 * (1000 - sigma/1.104)
 
     # expected_adjusted_duration_diff good values 0 - 240
     # If the numerator is too great, less ideal results occur to fit the expected duration
     # If too less, sigma and commercial_break_score converge to cutting nothing or far too much
-    result += 0.7 / max(1.0, abs(expected_adjusted_duration_diff) - duration_tolerance)
-
-    # This doesn't help much:
-    # # count_of_non_defaults good values 0 - 16
-    # result += 1.0 / (count_of_non_defaults + 10000.0)
+    result += 5.0 * (1000 - max(1.0, abs(expected_adjusted_duration_diff) - duration_tolerance)/1.4)
 
     # commercial_break_score, good values 0 - 800
-    result += 80.0 / (commercial_break_score + 0.00001)
+    if commercial_break_score < 1000000:
+        result += 4.0 * (1000 - commercial_break_score/3)
 
     if fitness_json_path:
         with open(fitness_json_path, "a") as f:
@@ -940,7 +938,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
-    sol_per_pop = 200  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
+    sol_per_pop = 50  # 50-100 for 22 genes, non-extended permutations ~392,931,000,000
     num_parents_mating = ceil(sol_per_pop / 2)
     keep_elitism = 5
 
@@ -1058,6 +1056,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         process_pool.apply_async(common.pool_apply_wrapper(comchap), (filepath, filepath),
                                  {'force': True,
                                   'delete_edl': False,
+                                  'backup_edl': True,
                                   'workdir': workdir},
                                  callback=return_code.callback,
                                  error_callback=common.error_callback_dump)

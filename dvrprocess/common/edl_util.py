@@ -1,5 +1,5 @@
 import logging
-from copy import copy
+from copy import copy, deepcopy
 from enum import Enum
 from typing import Union
 
@@ -120,7 +120,7 @@ def parse_edl_ts(s: str) -> float:
     return round(float(s), 3)
 
 
-def parse_commercials(filename: str, duration: int = 0) -> (bool, list[EdlEvent], int):
+def parse_commercials(filename: str, duration: int = 0, adjust_start_time: bool = False, min_commercial_length: int = 20) -> (bool, list[EdlEvent], int):
     """
     Find "real" commercials. Removes things too short, or at the beginning or end.
     :param filename: path to EDL file
@@ -130,18 +130,22 @@ def parse_commercials(filename: str, duration: int = 0) -> (bool, list[EdlEvent]
     cuts = parse_edl_cuts(filename)
     commercial_breaks = []
     duration_adjustment = 0
+    start_time_adjustment = 0
     has_com = False
     for idx, event in enumerate(cuts):
         has_com = True
         this_duration = (event.end - event.start)
         duration_adjustment += this_duration
-        if event.start == 0:
+        if event.start == 0 and event.length() < 35:
             # skip portion of recording before show
-            pass
-        elif duration > 0 and abs(event.end - duration) < 2:
+            if adjust_start_time:
+                start_time_adjustment = event.end
+        elif duration > 0 and abs(event.end - duration) < 8 and event.length() < 35:
             # skip portion of recording after show
             pass
-        elif this_duration >= 20:
+        elif this_duration >= min_commercial_length:
+            event.start -= start_time_adjustment
+            event.end -= start_time_adjustment
             commercial_breaks.append(event)
     return has_com, commercial_breaks, duration_adjustment
 

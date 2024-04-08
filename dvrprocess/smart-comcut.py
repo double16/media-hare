@@ -192,7 +192,7 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                         if cc_return_code == 255:
                             return cc_return_code
                     if os.access(edl_path, os.R_OK):
-                        has_com, commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, duration)
+                        has_com, commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, duration, True)
                         commercial_break_count = len(commercial_breaks)
                         adjusted_duration -= duration_adjustment
                 # remove the following else to consider already cut durations
