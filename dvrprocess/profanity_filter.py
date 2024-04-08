@@ -1073,7 +1073,6 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
 
     logger.debug(tools.ffmpeg.array_as_command(extract_command))
     audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    # audio_process.stdout.read(44)  # skip header
     results = []
     audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0,
                                        int(float(

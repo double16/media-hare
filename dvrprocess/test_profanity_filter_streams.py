@@ -68,8 +68,10 @@ from common import tools, proc_invoker, constants, config, vosk, is_ripped_from_
 #    - Q -> T
 #    - R -> M
 #    - S -> S, T -> T
-
-# TODO: filtered.wav doesn't have profanity, one word "shut" is mis-transcribed
+#
+#  To extract .wav from .mkv
+#      ffmpeg -ss 01:26:14 -i input.mkv -t 00:00:06 -ac 1 -map 0:1 filtered.wav
+#
 
 EMPTY_WAV: bytes = (
         b'RIFF' +
