@@ -1,6 +1,6 @@
 import unittest
 import comtune
-from dvrprocess.common import edl_util
+from common import edl_util
 
 
 class ComTuneTest(unittest.TestCase):
