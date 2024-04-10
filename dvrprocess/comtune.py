@@ -410,7 +410,7 @@ def write_ini(path, max_avg_brightness, max_volume, non_uniformity):
 
 
 def write_ini_from_solution(path, genes: list[ComskipGene], solution: list, write_complete_config=False,
-                            comskip_defaults: configparser.ConfigParser=None):
+                            comskip_defaults: configparser.ConfigParser = None):
     if write_complete_config and comskip_defaults:
         config = copy.deepcopy(comskip_defaults)
     else:
@@ -508,7 +508,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
 
     genes = list(
         filter(lambda g: (experimental or not g.experimental) and g.space_has_elements() and (
-                    g.use_csv or expensive_genes), GENES))
+                g.use_csv or expensive_genes), GENES))
     permutations = math.prod(map(lambda g: len(g.space), genes))
     logger.debug("fitting for genes: %s, permutations %d", list(map(lambda e: e.config, genes)), permutations)
     gene_space = list(map(lambda g: g.space, genes))
@@ -700,7 +700,8 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
             adjusted_duration = video_duration
             edl_path = edl_tempfile(file_path, workdir)
             if os.access(edl_path, os.R_OK):
-                _, this_commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, video_duration, True, 0)
+                _, this_commercial_breaks, duration_adjustment = edl_util.parse_commercials(edl_path, video_duration,
+                                                                                            True, 0)
                 adjusted_duration -= duration_adjustment
                 commercial_breaks.append(this_commercial_breaks)
             adjusted_durations.append(adjusted_duration / episode_count)
@@ -778,16 +779,16 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
     result = 0
 
     # sigma good values 0 - 120
-    result += 1.0 * (1000 - sigma/1.104)
+    result += 1.0 * (1000 - sigma / 1.104)
 
     # expected_adjusted_duration_diff good values 0 - 240
     # If the numerator is too great, less ideal results occur to fit the expected duration
     # If too less, sigma and commercial_break_score converge to cutting nothing or far too much
-    result += 5.0 * (1000 - max(1.0, abs(expected_adjusted_duration_diff) - duration_tolerance)/1.4)
+    result += 5.0 * (1000 - max(1.0, abs(expected_adjusted_duration_diff) - duration_tolerance) / 1.4)
 
     # commercial_break_score, good values 0 - 800
     if commercial_break_score < 1000000:
-        result += 4.0 * (1000 - commercial_break_score/3)
+        result += 4.0 * (1000 - commercial_break_score / 3)
 
     if fitness_json_path:
         with open(fitness_json_path, "a") as f:
@@ -991,6 +992,15 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     else:
         initial_population = initial_solutions
 
+    convergence_gauge = progress.gauge("CONV")
+    convergence_gauge.renderer = lambda v: f"{v:.2f}"
+
+    def gen_callback(ga_instance: pygad.GA):
+        best_fitness = ga_instance.best_solutions_fitness
+        if len(best_fitness) > 1:
+            convergence_gauge.value(stdev(best_fitness))
+        return None
+
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     ga_instance = pygad.GA(num_generations=num_generations,
                            num_parents_mating=num_parents_mating,
@@ -1005,7 +1015,9 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
                            parent_selection_type="sss",
                            keep_elitism=keep_elitism,
                            save_best_solutions=False,  # 2024-03-05 results are better with False
-                           suppress_warnings=True)
+                           suppress_warnings=True,
+                           on_generation=gen_callback,
+                           )
     ga_instance.run()
     tuning_progress.stop()
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
