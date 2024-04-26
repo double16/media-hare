@@ -167,7 +167,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                         return 0
 
                 if check_compute and common.should_stop_processing():
-                    logger.info(f"INFO: not enough compute available")
+                    logger.info("INFO: not enough compute available")
                     return 0
 
     bytes_progress.stop()

@@ -804,7 +804,7 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
                     if i > 0:
                         mute_filter_complex += '+'
                     mute_filter_complex += f"c{in_ch_idx[0]}"
-        mute_filter_complex += f'[afiltered]'
+        mute_filter_complex += '[afiltered]'
         arguments.extend(["-filter_complex", mute_filter_complex, "-map", "[afiltered]"])
     else:
         arguments.extend(["-map", f"{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}"])
@@ -888,8 +888,8 @@ def filepath_is_mkv(filepath):
     return filename.endswith(".mkv") and not filename.startswith('.')
 
 
-def filter_for_mkv(l):
-    return filter(lambda f: filepath_is_mkv(f), l)
+def filter_for_mkv(file_list):
+    return filter(lambda f: filepath_is_mkv(f), file_list)
 
 
 def split_every(n, iterable):

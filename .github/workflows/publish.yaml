@@ -32,6 +32,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          cache: 'pip'
 
       - uses: actions/setup-java@v4
         with:
@@ -41,13 +42,30 @@ jobs:
       - name: Install hunspell
         run:  sudo apt-get install -y hunspell libhunspell-dev hunspell-en-us
 
+      - name: Lint with Ruff
+        run: |
+          pip install ruff
+          ruff check --output-format=github .
+        continue-on-error: true
+
       - name: test
         run: |
           pip install -r requirements.txt
           pip install -r dev_requirements.txt
           python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')"
           cd dvrprocess
-          pytest --cov . --cov-branch --cov-report term-missing
+          pytest . --junitxml=../junit/test-results.xml --cov --cov-branch --cov-report=xml:../coverage.xml --cov-report=html:../htmlcov --cov-report=term-missing
+
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: |
+            junit/test-results.xml
+            coverage.xml
+            htmlcov
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}
 
   build-and-push-image:
     runs-on: ubuntu-22.04

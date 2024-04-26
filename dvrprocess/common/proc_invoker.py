@@ -21,13 +21,13 @@ class BaseProcInvoker(object):
         _all_invokers.append(self)
 
     def run(self, arguments: list[str], **kwargs) -> int:
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def check_output(self, arguments: list[str], **kwargs) -> str:
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def Popen(self, arguments: list[str], **kwargs) -> subprocess.Popen[str]:
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def present(self) -> bool:
         """
