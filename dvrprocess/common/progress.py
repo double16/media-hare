@@ -544,7 +544,8 @@ class ComputeGauges(object):
         self.cpu_percent.renderer = _percent_renderer
         self.cpu_percent.critical_range = (90, 101)
 
-        loadavg_renderer = lambda v: f"{v: 2.2f}"
+        def loadavg_renderer(value):
+            return f"{value: 2.2f}"
         self.loadavg1 = gauge('load1')
         self.loadavg1.renderer = loadavg_renderer
         # self.loadavg5 = gauge('load5')

@@ -68,7 +68,7 @@ class AudioLayoutTest(unittest.TestCase):
 
     def setUp(self) -> None:
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
-            {'method_name': 'check_output', 'result': _read_file(f'../fixtures/ffmpeg-5-layouts.txt')},
+            {'method_name': 'check_output', 'result': _read_file('../fixtures/ffmpeg-5-layouts.txt')},
         ])
         self.layouts = tools.get_audio_layouts(refresh=True)
 

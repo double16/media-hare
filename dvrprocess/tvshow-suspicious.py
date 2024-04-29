@@ -110,9 +110,9 @@ def episode_human_sort_key(e):
 
 
 def episode_human_sort(seq):
-    l = list(seq)
-    l.sort(key=episode_human_sort_key)
-    return l
+    result = list(seq)
+    result.sort(key=episode_human_sort_key)
+    return result
 
 
 # Print a CSV of all shows, all episodes

@@ -851,7 +851,7 @@ def get_comskip_starter_ini_sources():
     script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
     return [f"{os.environ['HOME']}/.comskip-starter.ini",
             f"{script_dir}/comskip-starter.ini",
-            f"/etc/comskip-starter.ini"]
+            "/etc/comskip-starter.ini"]
 
 
 @lru_cache(maxsize=None)
@@ -1170,7 +1170,7 @@ def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, 
                 return True
 
         if check_compute and common.should_stop_processing():
-            logger.info(f"INFO: not enough compute available")
+            logger.info("INFO: not enough compute available")
             return True
 
         return False

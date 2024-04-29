@@ -58,13 +58,13 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         duration = None
         ffmpeg_progress = None
         stream_gen = ProcessStreamGenerator(proc)
-        for _, l in stream_gen.generator():
-            duration_match = self.duration_matcher.search(l)
+        for _, err_line in stream_gen.generator():
+            duration_match = self.duration_matcher.search(err_line)
             if duration_match:
                 duration = ceil(edl_util.parse_edl_ts(duration_match.group(1)))
                 if ffmpeg_progress is None:
                     ffmpeg_progress = progress.progress(task_name, 0, duration)
-            time_match = self.time_matcher.search(l)
+            time_match = self.time_matcher.search(err_line)
             if time_match and ffmpeg_progress:
                 ffmpeg_progress.progress(ceil(edl_util.parse_edl_ts(time_match.group(1))), end=duration)
         proc.wait()
@@ -125,8 +125,8 @@ class CCExtractorProcInvoker(SubprocessProcInvoker):
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
         stream_gen = ProcessStreamGenerator(proc)
-        for l, _ in stream_gen.generator():
-            pct_match = self.pct_matcher.search(l)
+        for output_line, _ in stream_gen.generator():
+            pct_match = self.pct_matcher.search(output_line)
             if pct_match:
                 if se_progress is None:
                     se_progress = progress.progress(task_name, 0, 100)
@@ -172,8 +172,8 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         proc = subprocess.Popen(arguments, **kwargs2)
         se_progress = None
         stream_gen = ProcessStreamGenerator(proc)
-        for l, _ in stream_gen.generator():
-            pct_match = self.pct_matcher.search(l)
+        for output_line, _ in stream_gen.generator():
+            pct_match = self.pct_matcher.search(output_line)
             if pct_match:
                 if se_progress is None:
                     se_progress = progress.progress(task_name, 0, 100)

@@ -364,7 +364,7 @@ def _nvenc_encoding(output_stream: str, codec: str, output_type: str, tune: str,
 
     options = [f"-c:{output_stream}"]
     if codec in ['h265']:
-        options.extend([f"hevc_nvenc"])
+        options.extend(["hevc_nvenc"])
     else:
         options.extend([f"{codec}_nvenc"])
 
