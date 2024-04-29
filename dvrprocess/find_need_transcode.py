@@ -427,7 +427,7 @@ def _plex_host_name_to_local(file_name: str, media_roots: list[str]) -> Tuple[st
         if i >= 0:
             for root in media_roots:
                 f = os.path.join(root, file_name[i:])
-                logger.debug(f"Checking if %s is a valid path for %s", f, file_name)
+                logger.debug("Checking if %s is a valid path for %s", f, file_name)
                 if os.path.isfile(f):
                     return f, file_name[i:]
     return None, None

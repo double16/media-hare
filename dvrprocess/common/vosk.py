@@ -133,7 +133,7 @@ def kaldi_recognizer(language: str, freq: int, num_channels: int) -> BaseKaldiRe
             logger.info(f"Using remote transcriber at {rec.remote_url}")
         else:
             rec = LocalKaldiRecognizer(_vosk_language, freq, num_channels)
-    except BaseException as e:
+    except BaseException:
         logger.info("Remote transcriber not available")
         REMOTE_KALDI_SERVER[_vosk_language] = False
         rec = LocalKaldiRecognizer(_vosk_language, freq, num_channels)

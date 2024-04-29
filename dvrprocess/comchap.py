@@ -458,7 +458,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     with open(metafile, "w") as metafd:
         metafd.write(";FFMETADATA1\n")
         with open(mkvchapterfile, "w") as mkvchapterfd:
-            mkvchapterfd.write(f"""<?xml version="1.0" encoding="ISO-8859-1"?>
+            mkvchapterfd.write("""<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE Chapters SYSTEM "matroskachapters.dtd">
 <Chapters><EditionEntry>\n""")
 
@@ -485,7 +485,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                     write_chapter_metadata(metafd, start, duration, f"Chapter {chapter_num}")
                     write_chapter_atom(mkvchapterfd, start, duration, f"Chapter {chapter_num}")
 
-            mkvchapterfd.write(f"""</EditionEntry></Chapters>\n""")
+            mkvchapterfd.write("""</EditionEntry></Chapters>\n""")
 
     # need this outside of metafd and mkvchapterfd blocks to ensure it's flushed and closed
     if hascommercials:

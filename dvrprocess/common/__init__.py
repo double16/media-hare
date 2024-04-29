@@ -22,7 +22,7 @@ import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants, progress, procprofile
-from .proc_invoker import StreamCapture
+from .proc_invoker import StreamCapture, pre_flight_check
 from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
@@ -804,7 +804,7 @@ def map_opus_audio_stream(arguments: list[str], audio_info: dict, audio_stream_i
                     if i > 0:
                         mute_filter_complex += '+'
                     mute_filter_complex += f"c{in_ch_idx[0]}"
-        mute_filter_complex += f'[afiltered]'
+        mute_filter_complex += '[afiltered]'
         arguments.extend(["-filter_complex", mute_filter_complex, "-map", "[afiltered]"])
     else:
         arguments.extend(["-map", f"{audio_stream_idx}:{audio_info[constants.K_STREAM_INDEX]}"])
@@ -888,8 +888,8 @@ def filepath_is_mkv(filepath):
     return filename.endswith(".mkv") and not filename.startswith('.')
 
 
-def filter_for_mkv(l):
-    return filter(lambda f: filepath_is_mkv(f), l)
+def filter_for_mkv(file_list):
+    return filter(lambda f: filepath_is_mkv(f), file_list)
 
 
 def split_every(n, iterable):
@@ -994,7 +994,7 @@ def setup_logging(level=logging.INFO):
 
 
 def setup_cli(level=logging.INFO, start_gauges=True):
-    proc_invoker.pre_flight_check()
+    pre_flight_check()
     setup_logging(level)
     setup_debugging()
     if start_gauges:

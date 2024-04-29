@@ -233,7 +233,7 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
 
             # Sort and ignore top and bottom durations numbers for average. Probably should use sigma instead.
             videos.sort(key=lambda v: v['duration'])
-            video_count_to_trim = int(math.ceil(len(videos) / 10.0))
+            # video_count_to_trim = int(math.ceil(len(videos) / 10.0))
             # videos_for_stats = videos[video_count_to_trim:-video_count_to_trim]
             videos_for_stats = videos
 
@@ -381,7 +381,6 @@ def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
         crop_frame_op: crop_frame.CropFrameOperation = crop_frame.CropFrameOperation.NONE,
         crop_frame_fixed: Union[str, None] = None,
         desired_video_codecs=None):
-    filepath_stat = os.stat(filepath)
     dirname = os.path.dirname(filepath)
     basename = os.path.basename(filepath)
     tempfilename = f"{dirname}/.~{basename.replace('.mkv', '.transcoded.mkv')}"
@@ -395,6 +394,7 @@ def cut(filepath, keep=False, workdir=None, preset=None, force_encode=False,
         if os.path.exists(tempfilename):
             os.remove(tempfilename)
         return
+    # filepath_stat = os.stat(filepath)
     # if os.stat(tempfilename).st_size < (filepath_stat.st_size / 2):
     #     logger.error(f"Cut file is less than half of original, skipping")
     #     os.remove(tempfilename)

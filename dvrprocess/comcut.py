@@ -126,7 +126,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     input_duration = float(input_info[constants.K_FORMAT]['duration'])
     if len(edl_events) > 0:
         if edl_events[-1].end > input_duration + 3:
-            logger.fatal(f"edl cuts past end of file")
+            logger.fatal("edl cuts past end of file")
             return 255
 
     keyframes = common.load_keyframes_by_seconds(infile)
@@ -468,7 +468,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
             output_mapping = f"[v{output_stream_idx}]"
             video_filter_str += output_mapping
 
-            ffmpeg_command.extend([f"-filter_complex", video_filter_str])
+            ffmpeg_command.extend(["-filter_complex", video_filter_str])
             ffmpeg_command.extend(["-map", output_mapping])
 
             ffmpeg_command.extend(encoding_options)
@@ -539,8 +539,8 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     # verify video is valid
     try:
         common.find_input_info(temp_outfile or outfile)
-    except:
-        logger.error(f"Cut file is not readable by ffmpeg, skipping")
+    except Exception:
+        logger.error("Cut file is not readable by ffmpeg, skipping")
         os.remove(temp_outfile or outfile)
         return 255
 

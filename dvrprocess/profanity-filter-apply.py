@@ -226,7 +226,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                     return 0
 
                 if check_compute and common.should_stop_processing():
-                    logger.info(f"not enough compute available")
+                    logger.info("not enough compute available")
                     return 0
 
                 try:

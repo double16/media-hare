@@ -376,7 +376,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         f"subtitle filtered = {subtitle_filtered_idx}, subtitle filtered forced = {subtitle_filtered_forced_idx}, audio filtered = {audio_filtered_idx}, subtitle per words = {subtitle_words_idx}")
 
     if filter_skip:
-        logger.debug(f"Removing filtered streams")
+        logger.debug("Removing filtered streams")
 
         # Original audio stream
         arguments.extend(["-map", f"{streams_file}:{audio_original_idx}",
@@ -410,10 +410,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if subtitle_srt_words is not None:
             arguments.extend(["-i", subtitle_srt_words,
                               "-map", f"{streams_file + 2}:0",
-                              f"-metadata:s:s:1", f'title={constants.TITLE_WORDS}',
+                              "-metadata:s:s:1", f'title={constants.TITLE_WORDS}',
                               "-metadata:s:s:1",
                               f'{constants.K_AUDIO_TO_TEXT_VERSION}={audio_to_text_version if audio_to_text_version else ""}',
-                              f"-disposition:s:1", "-default+metadata"])
+                              "-disposition:s:1", "-default+metadata"])
             subtitle_output_idx += 1
         elif subtitle_words_idx is not None:
             arguments.extend(["-map", f"{streams_file}:{subtitle_words_idx}",
@@ -872,7 +872,7 @@ def need_original_subtitle_ocr(subtitle_original: dict, media_duration: float, f
             duration = edl_util.parse_edl_ts(duration_s)
             if duration < (media_duration * 0.60):
                 return True
-    except:
+    except Exception:
         pass
 
     return force
@@ -910,7 +910,7 @@ def need_original_subtitle_transcribed(subtitle_original: dict, current_audio2te
             duration = edl_util.parse_edl_ts(duration_s)
             if duration < (media_duration * 0.60):
                 return True
-    except:
+    except Exception:
         pass
 
     if not current_audio2text_subtitle_version:
@@ -1021,7 +1021,7 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
 
     tools.subtitle_edit.run([subtitle_filename], check=True)
     if not os.access(subtitle_srt_filename, os.R_OK):
-        logger.error(f"SRT not generated from OCR")
+        logger.error("SRT not generated from OCR")
         return None
 
     word_found_pct = words_in_dictionary_pct(subtitle_srt_filename, language,
@@ -1791,7 +1791,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     min_fuzz_ratios = [88, 85, 80, 70]
     # percentage of words to fuzz +/- from each input subtitle element
     word_count_fuzz_pct = 0.40
-    unclaimed_word_capture_duration_max_ms = 1800
+    # unclaimed_word_capture_duration_max_ms = 1800
     # multiple runs work, it would be better to fix so a single pass works *shrug
     passes = 2
     # for non-DVR source, passes = 0, so we don't move events but we still capture missing words

@@ -340,7 +340,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
                 root = tree.getroot()
                 for k, v in expected_tags.items():
                     found = False
-                    for el in root.findall(f'.//Simple'):
+                    for el in root.findall('.//Simple'):
                         if el.find('Name').text == k:
                             found = True
                             if v is not None:
@@ -708,7 +708,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_audio_for_transcribing("filtered.wav"),
             self._mock_ffmpeg_extract_subtitle_original('needs_filtered.ssa.txt'),
-            {'method_name': 'check_output', 'result': self._read_file(f'../fixtures/ffmpeg-5-layouts.txt')},
+            {'method_name': 'check_output', 'result': self._read_file('../fixtures/ffmpeg-5-layouts.txt')},
             self._mock_ffmpeg_create_with_filtered_streams(4, mapped_stream_count=8),
         ])
         profanity_filter.do_profanity_filter(mkv_path, mute_channels=config.MuteChannels.VOICE)
@@ -720,7 +720,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
             self._mock_ffmpeg_extract_dvdsub,
             self._mock_ffmpeg_extract_audio_for_transcribing("filtered.wav"),
-            {'method_name': 'check_output', 'result': self._read_file(f'../fixtures/ffmpeg-5-layouts.txt')},
+            {'method_name': 'check_output', 'result': self._read_file('../fixtures/ffmpeg-5-layouts.txt')},
             self._mock_ffmpeg_create_with_filtered_streams(5, mapped_stream_count=9, expected_args=['pan=5.1']),
         ])
         tools.subtitle_edit = proc_invoker.MockProcInvoker('subtitle-edit', mocks=[
@@ -729,11 +729,11 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
         profanity_filter.do_profanity_filter(mkv_path, mute_channels=config.MuteChannels.VOICE)
 
     def test_is_ripped_from_media_true(self):
-        with open(f"../fixtures/media_state_ripped.json", "rt") as f:
+        with open("../fixtures/media_state_ripped.json", "rt") as f:
             input_info_json = json.load(f)
         self.assertTrue(is_ripped_from_media(input_info_json))
 
     def test_is_ripped_from_media_false(self):
-        with open(f"../fixtures/media_state_unfiltered_sub_orig_image.json", "rt") as f:
+        with open("../fixtures/media_state_unfiltered_sub_orig_image.json", "rt") as f:
             input_info_json = json.load(f)
         self.assertFalse(is_ripped_from_media(input_info_json))

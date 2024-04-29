@@ -35,7 +35,7 @@ class Resolution(object):
 
 def resolution_generator(paths: list[str]):
     latest_filter_hash = profanity_filter.compute_filter_hash()
-    latest_filter_version = profanity_filter.FILTER_VERSION
+    # latest_filter_version = profanity_filter.FILTER_VERSION
     for conflict_path, _ in common.generate_video_files(paths, fail_on_missing=False):
         if 'conflicted copy' not in conflict_path:
             continue
