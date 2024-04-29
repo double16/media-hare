@@ -22,7 +22,7 @@ import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants, progress, procprofile
-from .proc_invoker import StreamCapture
+from .proc_invoker import StreamCapture, pre_flight_check
 from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
@@ -994,7 +994,7 @@ def setup_logging(level=logging.INFO):
 
 
 def setup_cli(level=logging.INFO, start_gauges=True):
-    proc_invoker.pre_flight_check()
+    pre_flight_check()
     setup_logging(level)
     setup_debugging()
     if start_gauges:

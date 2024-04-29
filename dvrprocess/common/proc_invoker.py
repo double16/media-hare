@@ -87,12 +87,12 @@ class SubprocessProcInvoker(BaseProcInvoker):
             if result.stdout:
                 try:
                     logger.debug(str(result.stdout))
-                except:
+                except Exception:
                     pass
             if result.stderr:
                 try:
                     logger.debug(str(result.stderr))
-                except:
+                except Exception:
                     pass
 
         if result.returncode == 130:

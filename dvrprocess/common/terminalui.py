@@ -73,7 +73,7 @@ class CursesLogHandler(logging.Handler):
             self.y = min(self.y + 1, max_y)
 
             self.refresh()
-        except:
+        except Exception:
             # don't break the application because of a logging error
             pass
         finally:
@@ -336,7 +336,7 @@ class CursesUI(object):
         # hide the cursor
         try:
             curses.curs_set(0)
-        except:
+        except Exception:
             pass
 
         self.gauge_win: GaugeWindow = None
@@ -409,7 +409,7 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
             # show the cursor
             try:
                 curses.curs_set(1)
-            except:
+            except Exception:
                 pass
 
     stderr_capture = StreamCapture('stderr')

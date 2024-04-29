@@ -129,7 +129,7 @@ def comchap_apply(media_paths, dry_run=False, comskip_ini=None, workdir=None, fo
                             return_code = result[1].get()
                         except CalledProcessError as e:
                             return_code = e.returncode
-                        except:
+                        except Exception:
                             pool.terminate()
                             return 255
 

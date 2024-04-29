@@ -539,7 +539,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     # verify video is valid
     try:
         common.find_input_info(temp_outfile or outfile)
-    except:
+    except Exception:
         logger.error("Cut file is not readable by ffmpeg, skipping")
         os.remove(temp_outfile or outfile)
         return 255

@@ -148,8 +148,8 @@ class SubtitleElementFacade(ABC):
 
     def set_normalized_texts(self, new_values: list[str]):
         self._normalized_texts = new_values
-        l = list(map(lambda e: e[0:2], map(lambda f: f.split(), self._normalized_texts)))
-        self._normalized_start_words = set([item for sublist in l for item in sublist])
+        words = list(map(lambda e: e[0:2], map(lambda f: f.split(), self._normalized_texts)))
+        self._normalized_start_words = set([item for sublist in words for item in sublist])
 
     def normalized_start_words(self) -> set[str]:
         self._check_normalized_texts()

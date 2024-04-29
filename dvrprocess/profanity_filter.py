@@ -872,7 +872,7 @@ def need_original_subtitle_ocr(subtitle_original: dict, media_duration: float, f
             duration = edl_util.parse_edl_ts(duration_s)
             if duration < (media_duration * 0.60):
                 return True
-    except:
+    except Exception:
         pass
 
     return force
@@ -910,7 +910,7 @@ def need_original_subtitle_transcribed(subtitle_original: dict, current_audio2te
             duration = edl_util.parse_edl_ts(duration_s)
             if duration < (media_duration * 0.60):
                 return True
-    except:
+    except Exception:
         pass
 
     if not current_audio2text_subtitle_version:
@@ -1791,7 +1791,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     min_fuzz_ratios = [88, 85, 80, 70]
     # percentage of words to fuzz +/- from each input subtitle element
     word_count_fuzz_pct = 0.40
-    unclaimed_word_capture_duration_max_ms = 1800
+    # unclaimed_word_capture_duration_max_ms = 1800
     # multiple runs work, it would be better to fix so a single pass works *shrug
     passes = 2
     # for non-DVR source, passes = 0, so we don't move events but we still capture missing words
