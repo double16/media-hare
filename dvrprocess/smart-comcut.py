@@ -269,8 +269,8 @@ def smart_comcut_cli_run(args: list, dry_run, keep, workdir, preset, force_encod
                     commercial_break_histo[key] = 1
 
             logger.info(f"{show_label}: commercial_break_histo = {commercial_break_histo}")
-            logger.info(
-                f"{show_label}: commercial break score = {commercial_break_score}\n"
+            logger.info(f"{show_label}: commercial break score = {commercial_break_score}")
+            logger.debug(
                 f"{show_label}: commercial breaks combined = ({len(combined_commercial_breaks)}) {edl_util.pretty_print_commercial_breaks([combined_commercial_breaks])}\n"
                 f"{edl_util.pretty_print_commercial_breaks(aligned_commercial_breaks)}"
             )

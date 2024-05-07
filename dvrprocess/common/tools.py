@@ -19,8 +19,8 @@ disk_semaphore = Semaphore(config.get_global_config_int('background_limits', 'di
 def _ffmpeg_version_parser(path):
     _maybe_version = float(
         re.search(r"version (\d+[.]\d+)", subprocess.check_output([path, '-version'], text=True))[1])
-    if int(_maybe_version) not in [4, 5, 6]:
-        raise FileNotFoundError('ffmpeg version [4,5,6] not found')
+    if int(_maybe_version) not in [4, 5, 6, 7]:
+        raise FileNotFoundError('ffmpeg version [4,5,6,7] not found')
     return _maybe_version
 
 
@@ -83,8 +83,8 @@ ffmpeg = FFmpegProcInvoker()
 def _ffprobe_version_parser(path):
     _maybe_version = float(
         re.search(r"version (\d+[.]\d+)", subprocess.check_output([path, '-version'], text=True))[1])
-    if int(_maybe_version) not in [4, 5, 6]:
-        raise FileNotFoundError('ffprobe version [4,5,6] not found')
+    if int(_maybe_version) not in [4, 5, 6, 7]:
+        raise FileNotFoundError('ffprobe version [4,5,6,7] not found')
     return _maybe_version
 
 

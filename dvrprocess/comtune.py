@@ -125,11 +125,11 @@ GENES: list[ComskipGene] = [
     # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo'), True, "", True, [0, 1, 3, 5], int, 5),
     # Requires user entry: ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'shrink_logo_tail'), True, "", True, [0, 1, 2, 3], int, 0),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'before_logo'), True,
-                "Cutpoints can be inserted just before the logo appears. Set value set is the amount of seconds to start a search for a silence before the logo appears.",
-                False, [0, 6, 999], int, 0),
+                "Cutpoints can be inserted just before the logo appears. This is the amount of seconds to start a search for silence before the logo appears.",
+                False, [0, 2, 999], int, 0),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'after_logo'), True,
-                "Cutpoints can be inserted just after the logo disappears. Set value set is the amount of seconds to start a search for a silence after the logo disappears.",
-                False, [0, 6, 999], int, 0),
+                "Cutpoints can be inserted just after the logo disappears. This is the amount of seconds to start a search for silence after the logo disappears.",
+                False, [0, 2, 999], int, 0),
     # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_brightness'), False, "", True, range(15, 60, 5), int, 60),
     # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'test_brightness'), False, "", True, range(15, 60, 5), int, 40),
     # Calculated: ComskipGene((INI_GROUP_MAIN_SETTINGS, 'max_avg_brightness'), False, "", True, range(15, 60, 5), int, 25),
@@ -222,6 +222,20 @@ GENES: list[ComskipGene] = [
     ComskipGene((INI_GROUP_MAIN_SETTINGS, 'disable_heuristics'), True,
                 "Bit pattern for disabling heuristics",
                 False, [0, 1, 2, 4, 8, 16, 20, 32, 64, 255], int, 0),
+]
+
+# Genes for 30 minute show
+GENES_30: list[ComskipGene] = [
+    ComskipGene((INI_GROUP_GLOBAL_REMOVES, 'added_recording'), True,
+                "Number of minutes added to show content to fill up the 60 or 30 minute slot",
+                False, [7, 4], int, 7),
+]
+
+# Genes for 60 minute show
+GENES_60: list[ComskipGene] = [
+    ComskipGene((INI_GROUP_GLOBAL_REMOVES, 'added_recording'), True,
+                "Number of minutes added to show content to fill up the 60 or 30 minute slot",
+                False, [14, 9], int, 14),
 ]
 
 
@@ -488,7 +502,8 @@ def edl_tempfile(infile, workdir):
 
 def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdir, dry_run=False, force=0,
               expensive_genes=False, check_compute=True,
-              num_generations=0, comskip_defaults: configparser.ConfigParser = None, experimental=False) -> \
+              num_generations=0, comskip_defaults: configparser.ConfigParser = None, experimental=False,
+              file_sample_size=None) -> \
         (object, list, list, list, progress.progress, str):
     """
     Creates and returns a fitness function for comskip parameters for the given video files.
@@ -500,19 +515,10 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
     :param force:
     :param expensive_genes: True to use genes that require generating the CSV from video for each solution
     :param check_compute: True to stop processing if compute is too high
-    :param comskip_defaults: 
+    :param comskip_defaults:
+    :param file_sample_size: if >0 only include this many files in the algorithm to decrease total time
     :return: fitness_func, genes, gene_space, gene_type, fitness_json_path
     """
-
-    # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
-
-    genes = list(
-        filter(lambda g: (experimental or not g.experimental) and g.space_has_elements() and (
-                g.use_csv or expensive_genes), GENES))
-    permutations = math.prod(map(lambda g: len(g.space), genes))
-    logger.debug("fitting for genes: %s, permutations %d", list(map(lambda e: e.config, genes)), permutations)
-    gene_space = list(map(lambda g: g.space, genes))
-    gene_type = list(map(lambda g: g.data_type, genes))
 
     season_dir = os.path.dirname(files[0])
     comskip_ini_path = os.path.join(season_dir, 'comskip.ini')
@@ -552,9 +558,8 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
     if len(dvr_infos) == 0:
         raise UserWarning("No files look like they have commercials")
 
-    expected_adjusted_duration = get_expected_adjusted_duration(dvr_infos[0])
-    logger.info(f"Expected adjusted duration: {common.seconds_to_timespec(expected_adjusted_duration)}, "
-                f"mean duration {common.seconds_to_timespec(mean(dvr_durations))}")
+    expected_adjusted_duration_default = get_expected_adjusted_duration(dvr_infos[0])
+    logger.info(f"Mean duration {common.seconds_to_timespec(mean(dvr_durations))}")
 
     black_frame_tuning_done = False
     if os.path.isfile(comskip_ini_path):
@@ -588,7 +593,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
                 try:
                     result.result()
                     video_stats_progress.progress(result_idx)
-                except subprocess.CalledProcessError as e:
+                except subprocess.CalledProcessError:
                     # generate with the files we have
                     pass
                 except KeyboardInterrupt as e:
@@ -616,6 +621,26 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
                   non_uniformity=int(median(non_uniformity_list)) if non_uniformity_list else None,
                   max_volume=int(median(max_volume_list)) if non_uniformity_list else None,
                   )
+
+    # construct list of genes
+    # TODO: support locking genes, i.e. detect_method if we need to exclude methods we know are broken for the recording
+    genes_all = GENES.copy()
+    if episode_common_duration == 30*60:
+        genes_all.extend(GENES_30)
+    elif episode_common_duration == 60*60:
+        genes_all.extend(GENES_60)
+    genes = list(
+        filter(lambda g: (experimental or not g.experimental) and g.space_has_elements() and (
+                g.use_csv or expensive_genes), genes_all))
+    permutations = math.prod(map(lambda g: len(g.space), genes))
+    logger.info("fitting for genes: %s, permutations %d", list(map(lambda e: e.config, genes)), permutations)
+    gene_space = list(map(lambda g: g.space, genes))
+    gene_type = list(map(lambda g: g.data_type, genes))
+    added_recording_gene_idx = -1
+    for idx, g in enumerate(genes):
+        if g.config[1] == 'added_recording':
+            added_recording_gene_idx = idx
+            break
 
     # create fitness function
     filename_hash = hashlib.sha512(",".join(filter(lambda e: os.path.basename(e), files)).encode("utf-8")).hexdigest()
@@ -646,8 +671,13 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
         else:
             csv_suffix = "-fitness"
 
+        dvr_infos_sample = dvr_infos.copy()
+        if file_sample_size and file_sample_size > 0:
+            random.shuffle(dvr_infos_sample)
+            dvr_infos_sample = dvr_infos_sample[:file_sample_size]
+
         results: list[Future] = []
-        for video_info in dvr_infos:
+        for video_info in dvr_infos_sample:
             file_path = video_info[constants.K_FORMAT]['filename']
             csvfile = common.replace_extension(
                 os.path.join(workdir, common.remove_extension(os.path.basename(file_path)) + csv_suffix),
@@ -667,34 +697,31 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
                                               force_csv_regen=(force > 1 or not black_frame_tuning_done)
                                               ))
 
-        csv_config_d = dict(zip(csv_configs, csv_values))
-        video_stats_progress = progress.progress(
-            'video stats ' + ','.join(map(lambda k: f"{k[1]}={csv_config_d[k]}", csv_config_d.keys())),
-            0, len(results) - 1)
-        try:
-            for result_idx, result in enumerate(results):
-                if check_compute and common.should_stop_processing():
-                    thread_pool.shutdown(cancel_futures=True)
-                    raise StopIteration('over loaded')
-                try:
-                    result.result()
-                    video_stats_progress.progress(result_idx)
-                except subprocess.CalledProcessError:
-                    # generate fitness with the files we have
-                    pass
-                except KeyboardInterrupt as e:
-                    thread_pool.shutdown(cancel_futures=True)
-                    os.remove(comskip_fitness_ini_path)
-                    raise e
-        finally:
-            video_stats_progress.stop()
+        for result_idx, result in enumerate(results):
+            if check_compute and common.should_stop_processing():
+                thread_pool.shutdown(cancel_futures=True)
+                raise StopIteration('over loaded')
+            try:
+                result.result()
+            except subprocess.CalledProcessError:
+                # generate fitness with the files we have
+                pass
+            except KeyboardInterrupt as e:
+                thread_pool.shutdown(cancel_futures=True)
+                os.remove(comskip_fitness_ini_path)
+                raise e
+
+        # added_recording may be a gene, so we need to calculate it for each run
+        if added_recording_gene_idx >= 0:
+            expected_adjusted_duration = common.round_episode_duration(dvr_infos_sample[0]) - ((int(solution[added_recording_gene_idx])+1) * 60.0)
+        else:
+            expected_adjusted_duration = expected_adjusted_duration_default
 
         os.remove(comskip_fitness_ini_path)
 
         adjusted_durations = []
         commercial_breaks: list[list[edl_util.EdlEvent]] = []
-        # if we want to ignore already cut files, iterate over dvr_infos instead of video_infos
-        for video_info in video_infos:
+        for video_info in dvr_infos_sample:
             file_path = video_info[constants.K_FORMAT]['filename']
             episode_count, episode_duration, video_duration = common.episode_info(video_info)
             adjusted_duration = video_duration
@@ -714,10 +741,11 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
         sigma = stdev(adjusted_durations)
         avg = mean(adjusted_durations)
         expected_adjusted_duration_diff = abs(expected_adjusted_duration - avg)
-        logger.info(
+        logger.debug(
             f"Fitness for {solution_repl(genes, solution)}\nis "
             f"σ{common.seconds_to_timespec(sigma)}, "
             f"duration {common.seconds_to_timespec(avg)}, "
+            f"expected_adjusted_duration {common.seconds_to_timespec(expected_adjusted_duration)}, "
             f"expected_adjusted_duration_diff = {common.seconds_to_timespec(expected_adjusted_duration_diff)}, "
             f"count_of_non_defaults = {count_of_non_defaults}"
         )
@@ -773,7 +801,7 @@ def fitness_value(sigma: float, expected_adjusted_duration_diff: float, count_of
                 logger.warning("Commercial break score < 1: %f", commercial_break_score)
         else:
             # we care about removing commercials, so do not consider solutions that found no commercials
-            logger.info("No commercial breaks available for scoring")
+            logger.debug("No commercial breaks available for scoring")
             return -9999
 
     result = 0
@@ -939,7 +967,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 50
-    sol_per_pop = 200
+    sol_per_pop = 500
     num_parents_mating = ceil(sol_per_pop / 2)
     keep_elitism = 5
 
@@ -949,7 +977,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
             process_pool=process_pool, thread_pool=thread_pool, files=files, workdir=workdir, dry_run=dry_run,
             force=force, comskip_defaults=comskip_defaults,
             expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations,
-            experimental=experimental)
+            experimental=experimental,
+            file_sample_size=10)
     except UserWarning as e:
         logger.warning(e.args[0])
         thread_pool.shutdown(cancel_futures=True)
@@ -1047,7 +1076,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
             if config_default in [None, val, str(genes[idx].default_value)] and genes[idx].exclude_if_default:
                 logger.info(f"{config} removing because the default value is part of the solution space")
                 solution[idx] = None
-            if type(genes[idx].space) is list and len(genes[idx].space) == len(val):
+            if isinstance(genes[idx].space, list) and len(genes[idx].space) == len(val):
                 logger.info(f"{config} removing because all gene space is part of the solution space")
                 solution[idx] = None
         else:
