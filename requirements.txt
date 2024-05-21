@@ -2,7 +2,7 @@ ass-parser==1.0
 pysrt==1.1.2
 plexapi==4.15.12
 psutil==5.9.8
-requests==2.31.0
+requests==2.32.0
 pygad==3.3.1
 # specific version of numpy required for pygad 2023-01-18
 # numpy==1.23.5
