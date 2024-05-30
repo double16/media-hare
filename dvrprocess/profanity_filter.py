@@ -1015,6 +1015,12 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
         if verbose:
             logger.info(tools.ffmpeg.array_as_command(extract_command))
         tools.ffmpeg.run(extract_command, check=True)
+        # Add an idx file to remove transparency. OCR doesn't like transparency.
+        subtitle_idx_filename = f"{temp_base}.idx"
+        if not debug:
+            common.TEMPFILENAMES.append(subtitle_idx_filename)
+        width, height = common.get_video_width_height(input_info)
+        create_subtitle_idx_file(subtitle_idx_filename, width, height)
 
     if subtitle_filename is None:
         return None
@@ -2522,6 +2528,16 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     align_progress.stop()
 
     return changed, stats_str
+
+
+def create_subtitle_idx_file(subtitle_idx_filename: str, width: int, height: int):
+    with open(subtitle_idx_filename, 'wt') as idx_file:
+        # https://wiki.multimedia.cx/index.php?title=VOBsub
+        idx_file.write(f"""# VobSub index file, v7 (do not modify this line!)
+size: {width}x{height}
+palette: 000000, 828282, 828282, 828282, 828282, 828282, 828282, ffffff, 828282, bababa, 828282, 828282, 828282, 828282, 828282, 828282
+custom colors: ON, tridx: 1000, colors: 000000, ffffff, 000000, 000000
+""")
 
 
 def profanity_filter_cli(argv) -> int:

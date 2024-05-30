@@ -312,6 +312,23 @@ def get_video_width(video_info: dict) -> [None, int]:
     return width
 
 
+def get_video_width_height(video_info: dict) -> [None, tuple[int, int]]:
+    """
+    Get the (width, height) of the video considering symbolic names.
+    :param video_info: can be all of the input_info to use default video stream, or a single video stream
+    :return: int of width or None
+    """
+    if 'streams' in video_info:
+        video_info = find_video_stream(video_info)
+    width = video_info['width']
+    if not width:
+        return None
+    height = video_info['height']
+    if not height:
+        return None
+    return width, height
+
+
 def get_video_depth(video_info: dict) -> [None, int]:
     """
     Get the bit depth of the video.

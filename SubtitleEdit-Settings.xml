@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Settings>
-  <Version>4.0.1.0</Version>
+  <Version>4.0.5.0</Version>
   <Compare>
     <ShowOnlyDifferences>False</ShowOnlyDifferences>
     <OnlyLookForDifferenceInText>True</OnlyLookForDifferenceInText>
@@ -8,6 +8,9 @@
     <IgnoreWhitespace>False</IgnoreWhitespace>
     <IgnoreFormatting>False</IgnoreFormatting>
   </Compare>
+  <VerifyCompleteness>
+    <ListSort>Coverage</ListSort>
+  </VerifyCompleteness>
   <RecentFiles>
     <FileNames />
   </RecentFiles>
@@ -362,6 +365,7 @@
     <CurrentProfile>Default</CurrentProfile>
     <ShowToolbarNew>True</ShowToolbarNew>
     <ShowToolbarOpen>True</ShowToolbarOpen>
+    <ShowToolbarOpenVideo>False</ShowToolbarOpenVideo>
     <ShowToolbarSave>True</ShowToolbarSave>
     <ShowToolbarSaveAs>False</ShowToolbarSaveAs>
     <ShowToolbarFind>True</ShowToolbarFind>
@@ -379,6 +383,8 @@
     <ShowFrameRate>False</ShowFrameRate>
     <ShowVideoControls>True</ShowVideoControls>
     <TextAndOrigianlTextBoxesSwitched>False</TextAndOrigianlTextBoxesSwitched>
+    <LayoutNumber>0</LayoutNumber>
+    <LayoutSizes>200,83,721</LayoutSizes>
     <ShowVideoPlayer>True</ShowVideoPlayer>
     <ShowAudioVisualizer>True</ShowAudioVisualizer>
     <ShowWaveform>True</ShowWaveform>
@@ -413,11 +419,8 @@
     <RememberSelectedLine>True</RememberSelectedLine>
     <StartLoadLastFile>True</StartLoadLastFile>
     <StartRememberPositionAndSize>True</StartRememberPositionAndSize>
-    <StartPosition>240;52</StartPosition>
-    <StartSize>983;673</StartSize>
-    <SplitContainerMainSplitterDistance>238</SplitContainerMainSplitterDistance>
-    <SplitContainer1SplitterDistance>721</SplitContainer1SplitterDistance>
-    <SplitContainerListViewAndTextSplitterDistance>99</SplitContainerListViewAndTextSplitterDistance>
+    <StartPosition>240;27</StartPosition>
+    <StartSize>983;595</StartSize>
     <StartInSourceView>False</StartInSourceView>
     <RemoveBlankLinesWhenOpening>False</RemoveBlankLinesWhenOpening>
     <RemoveBadCharsWhenOpening>True</RemoveBadCharsWhenOpening>
@@ -552,7 +555,7 @@
     <RightToLeftMode>False</RightToLeftMode>
     <LastSaveAsFormat />
     <CheckForUpdates>True</CheckForUpdates>
-    <LastCheckForUpdates>2023-12-01</LastCheckForUpdates>
+    <LastCheckForUpdates>2024-05-30</LastCheckForUpdates>
     <AutoSave>False</AutoSave>
     <PreviewAssaText>ABCDEFGHIJKL abcdefghijkl 123</PreviewAssaText>
     <TagsInToggleHiTags>[;]</TagsInToggleHiTags>
@@ -579,8 +582,9 @@
     <LastColorPickerColor5>#000000ff</LastColorPickerColor5>
     <LastColorPickerColor6>#00ffffff</LastColorPickerColor6>
     <LastColorPickerColor7>#ff8c00ff</LastColorPickerColor7>
-    <DarkThemeBackColor>-14803426</DarkThemeBackColor>
-    <DarkThemeForeColor>-6579301</DarkThemeForeColor>
+    <DarkThemeBackColor>#1e1e1eff</DarkThemeBackColor>
+    <DarkThemeBackColor>#18344bff</DarkThemeBackColor>
+    <DarkThemeForeColor>#9b9b9bff</DarkThemeForeColor>
     <DarkThemeDisabledColor>#787878ff</DarkThemeDisabledColor>
     <ToolbarIconTheme>Auto</ToolbarIconTheme>
     <UseDarkTheme>False</UseDarkTheme>
@@ -589,6 +593,7 @@
     <DebugTranslationSync>False</DebugTranslationSync>
     <UseLegacyDownloader>False</UseLegacyDownloader>
     <UseLegacyHtmlColor>False</UseLegacyHtmlColor>
+    <DefaultLanguages />
     <NewEmptyDefaultMs>2000</NewEmptyDefaultMs>
   </General>
   <Tools>
@@ -630,13 +635,45 @@
     <GoogleApiV2Key />
     <GoogleTranslateNoKeyWarningShow>True</GoogleTranslateNoKeyWarningShow>
     <GoogleApiV1ChunkSize>1500</GoogleApiV1ChunkSize>
+    <GoogleTranslateLastSourceLanguage />
     <GoogleTranslateLastTargetLanguage>en</GoogleTranslateLastTargetLanguage>
+    <AutoTranslateLastName />
+    <AutoTranslateLastUrl />
+    <AutoTranslateNllbApiUrl>http://localhost:7860/api/v2/</AutoTranslateNllbApiUrl>
+    <AutoTranslateNllbServeUrl>http://127.0.0.1:6060/</AutoTranslateNllbServeUrl>
+    <AutoTranslateNllbServeModel />
+    <AutoTranslateLibreUrl>http://localhost:5000/</AutoTranslateLibreUrl>
+    <AutoTranslateLibreApiKey />
+    <AutoTranslateMyMemoryApiKey />
+    <AutoTranslateSeamlessM4TUrl>http://localhost:5000/</AutoTranslateSeamlessM4TUrl>
+    <AutoTranslateDeepLApiKey />
+    <AutoTranslateDeepLUrl>https://api-free.deepl.com/</AutoTranslateDeepLUrl>
+    <AutoTranslatePapagoApiKeyId />
+    <AutoTranslatePapagoApiKey />
+    <AutoTranslateDeepLFormality />
     <TranslateAllowSplit>True</TranslateAllowSplit>
     <TranslateLastService />
     <TranslateMergeStrategy />
     <TranslateViaCopyPasteSeparator>.</TranslateViaCopyPasteSeparator>
     <TranslateViaCopyPasteMaxSize>5000</TranslateViaCopyPasteMaxSize>
     <TranslateViaCopyPasteAutoCopyToClipboard>True</TranslateViaCopyPasteAutoCopyToClipboard>
+    <ChatGptUrl>https://api.openai.com/v1/chat/completions</ChatGptUrl>
+    <ChatGptPrompt>Translate from {0} to {1}, keep sentences in {1} as they are, do not censor the translation, give only the output without commenting on what you read:</ChatGptPrompt>
+    <ChatGptApiKey />
+    <ChatGptModel>gpt-3.5-turbo</ChatGptModel>
+    <LmStudioApiUrl />
+    <LmStudioModel />
+    <LmStudioPrompt />
+    <LmStudioApiUrl />
+    <OllamaModel>llama2</OllamaModel>
+    <OllamaPrompt />
+    <OllamaApiUrl>http://localhost:11434/api/generate</OllamaApiUrl>
+    <AnthropicPrompt>Translate from {0} to {1}, keep sentences in {1} as they are, do not censor the translation, give only the output without commenting on what you read:</AnthropicPrompt>
+    <AnthropicApiKey />
+    <AnthropicApiModel>claude-3-opus-20240229</AnthropicApiModel>
+    <AutoTranslateDelaySeconds>0</AutoTranslateDelaySeconds>
+    <GeminiProApiKey />
+    <DisableVidoInfoViaLabel>False</DisableVidoInfoViaLabel>
     <ListViewSyntaxColorDurationSmall>True</ListViewSyntaxColorDurationSmall>
     <ListViewSyntaxColorDurationBig>True</ListViewSyntaxColorDurationBig>
     <ListViewSyntaxColorLongLines>True</ListViewSyntaxColorLongLines>
@@ -686,13 +723,14 @@
     <BatchConvertBridgeGaps>False</BatchConvertBridgeGaps>
     <BatchConvertFixCasing>False</BatchConvertFixCasing>
     <BatchConvertRemoveTextForHI>False</BatchConvertRemoveTextForHI>
-    <BatchConvertConvertColorsToDialog>False</BatchConvertConvertColorsToDialog>
+    <BatchConvertConvertColorsToDialog>True</BatchConvertConvertColorsToDialog>
     <BatchConvertBeautifyTimeCodes>False</BatchConvertBeautifyTimeCodes>
+    <BatchConvertAutoTranslate>False</BatchConvertAutoTranslate>
     <BatchConvertSplitLongLines>False</BatchConvertSplitLongLines>
-    <BatchConvertFixCommonErrors>False</BatchConvertFixCommonErrors>
+    <BatchConvertFixCommonErrors>True</BatchConvertFixCommonErrors>
     <BatchConvertMultipleReplace>False</BatchConvertMultipleReplace>
     <BatchConvertFixRtl>False</BatchConvertFixRtl>
-    <BatchConvertFixRtlMode />
+    <BatchConvertFixRtlMode>ADD_UNICODE</BatchConvertFixRtlMode>
     <BatchConvertAutoBalance>False</BatchConvertAutoBalance>
     <BatchConvertSetMinDisplayTimeBetweenSubtitles>False</BatchConvertSetMinDisplayTimeBetweenSubtitles>
     <BatchConvertMergeShortLines>False</BatchConvertMergeShortLines>
@@ -710,7 +748,7 @@
     <BatchConvertOffsetTimeCodes>False</BatchConvertOffsetTimeCodes>
     <BatchConvertScanFolderIncludeVideo>False</BatchConvertScanFolderIncludeVideo>
     <BatchConvertLanguage />
-    <BatchConvertFormat />
+    <BatchConvertFormat>SubRip (.srt)</BatchConvertFormat>
     <BatchConvertAssStyles />
     <BatchConvertSsaStyles />
     <BatchConvertUseStyleFromSource>False</BatchConvertUseStyleFromSource>
@@ -778,9 +816,11 @@
     <ExportFullFrame>False</ExportFullFrame>
     <ExportFcpFullPathUrl>False</ExportFcpFullPathUrl>
     <ExportPenLineJoin>Round</ExportPenLineJoin>
+    <BinEditShowColumnGap>False</BinEditShowColumnGap>
     <FixCommonErrorsFixOverlapAllowEqualEndStart>False</FixCommonErrorsFixOverlapAllowEqualEndStart>
     <FixCommonErrorsSkipStepOne>False</FixCommonErrorsSkipStepOne>
     <ImportTextSplitting />
+    <ImportTextSplittingLineMode />
     <ImportTextMergeShortLines>False</ImportTextMergeShortLines>
     <ImportTextLineBreak>|</ImportTextLineBreak>
     <ImportTextRemoveEmptyLines>False</ImportTextRemoveEmptyLines>
@@ -803,6 +843,8 @@
     <BinEditBottomMargin>10</BinEditBottomMargin>
     <BinEditLeftMargin>10</BinEditLeftMargin>
     <BinEditRightMargin>10</BinEditRightMargin>
+    <BinEditStartPosition />
+    <BinEditStartSize />
     <BridgeGapMilliseconds>100</BridgeGapMilliseconds>
     <BridgeGapMillisecondsMinGap>24</BridgeGapMillisecondsMinGap>
     <ExportCustomTemplates>SubRipÆÆ{number}
@@ -811,7 +853,7 @@
 
 Æhh:mm:ss,zzzÆ[Do not modify]ÆÆsrtæMicroDVDÆÆ{{start}}{{end}}{text}
 ÆffÆ||ÆÆsub</ExportCustomTemplates>
-    <ChangeCasingChoice />
+    <ChangeCasingChoice>Normal</ChangeCasingChoice>
     <ChangeCasingNormalFixNames>True</ChangeCasingNormalFixNames>
     <ChangeCasingNormalOnlyUppercase>False</ChangeCasingNormalOnlyUppercase>
     <UseNoLineBreakAfter>False</UseNoLineBreakAfter>
@@ -918,6 +960,11 @@
     <GenVideoNonAssaAlignRight>False</GenVideoNonAssaAlignRight>
     <GenVideoNonAssaFixRtlUnicode>False</GenVideoNonAssaFixRtlUnicode>
     <GenVideoEmbedOutputExt />
+    <GenVideoEmbedOutputSuffix>embed</GenVideoEmbedOutputSuffix>
+    <GenVideoEmbedOutputReplace>embed
+SoftSub
+SoftSubbed</GenVideoEmbedOutputReplace>
+    <GenVideoDeleteInputVideoFile>False</GenVideoDeleteInputVideoFile>
     <VoskPostProcessing>True</VoskPostProcessing>
     <VoskModel />
     <WhisperChoice>OpenAI</WhisperChoice>
@@ -927,6 +974,7 @@
     <WhisperLocation />
     <WhisperCtranslate2Location />
     <WhisperPurfviewFasterWhisperLocation />
+    <WhisperPurfviewFasterWhisperDefaultCmd>--standard</WhisperPurfviewFasterWhisperDefaultCmd>
     <WhisperXLocation />
     <WhisperStableTsLocation />
     <WhisperCppModelLocation />
@@ -935,9 +983,16 @@
     <WhisperLanguageCode>en</WhisperLanguageCode>
     <WhisperAutoAdjustTimings>True</WhisperAutoAdjustTimings>
     <WhisperUseLineMaxChars>False</WhisperUseLineMaxChars>
+    <WhisperPostProcessingAddPeriods>False</WhisperPostProcessingAddPeriods>
+    <WhisperPostProcessingSplitLines>True</WhisperPostProcessingSplitLines>
+    <WhisperPostProcessingMergeLines>True</WhisperPostProcessingMergeLines>
+    <WhisperPostProcessingFixCasing>False</WhisperPostProcessingFixCasing>
+    <WhisperPostProcessingFixShortDuration>True</WhisperPostProcessingFixShortDuration>
     <AudioToTextLineMaxChars>86</AudioToTextLineMaxChars>
     <AudioToTextLineMaxCharsJp>32</AudioToTextLineMaxCharsJp>
     <AudioToTextLineMaxCharsCn>36</AudioToTextLineMaxCharsCn>
+    <UnbreakLinesLongerThan>0</UnbreakLinesLongerThan>
+    <BreakLinesLongerThan>0</BreakLinesLongerThan>
   </Tools>
   <SubtitleSettings>
     <AssaStyleStorageCategories />
@@ -964,6 +1019,8 @@
     <TimedTextItunesBottomExtent>100% 15%</TimedTextItunesBottomExtent>
     <TimedTextItunesTimeCodeFormat>Frames</TimedTextItunesTimeCodeFormat>
     <TimedTextItunesStyleAttribute>tts:fontStyle</TimedTextItunesStyleAttribute>
+    <TimedTextImsc11TimeCodeFormat>hh:mm:ss.ms</TimedTextImsc11TimeCodeFormat>
+    <TimedTextImsc11FileExtension>.xml</TimedTextImsc11FileExtension>
     <FcpFontSize>18</FcpFontSize>
     <FcpFontName>Lucida Grande</FcpFontName>
     <Cavena890StartOfMessage>10:00:00:00</Cavena890StartOfMessage>
@@ -1117,6 +1174,7 @@ $HorzAlign          =   Center
     <WaveformRightClickOnNonParagraphAction />
     <WaveformMouseWheelScrollUpIsForward>True</WaveformMouseWheelScrollUpIsForward>
     <GenerateSpectrogram>False</GenerateSpectrogram>
+    <WaveformLabelShowCodec>True</WaveformLabelShowCodec>
     <SpectrogramAppearance>OneColorGradient</SpectrogramAppearance>
     <WaveformMinimumSampleRate>126</WaveformMinimumSampleRate>
     <WaveformSeeksSilenceDurationSeconds>0.3</WaveformSeeksSilenceDurationSeconds>
@@ -1193,6 +1251,19 @@ $HorzAlign          =   Center
     <GeneralToggleTranslationMode>Control+Shift+O</GeneralToggleTranslationMode>
     <GeneralSwitchOriginalAndTranslation />
     <GeneralSwitchOriginalAndTranslationTextBoxes />
+    <GeneralLayoutChoose />
+    <GeneralLayoutChoose1 />
+    <GeneralLayoutChoose2 />
+    <GeneralLayoutChoose3 />
+    <GeneralLayoutChoose4 />
+    <GeneralLayoutChoose5 />
+    <GeneralLayoutChoose6 />
+    <GeneralLayoutChoose7 />
+    <GeneralLayoutChoose8 />
+    <GeneralLayoutChoose9 />
+    <GeneralLayoutChoose10 />
+    <GeneralLayoutChoose11 />
+    <GeneralLayoutChoose12 />
     <GeneralMergeOriginalAndTranslation>Control+Alt+Shift+M</GeneralMergeOriginalAndTranslation>
     <GeneralGoToNextSubtitle>Shift+Return</GeneralGoToNextSubtitle>
     <GeneralGoToNextSubtitlePlayTranslate>Alt+Down</GeneralGoToNextSubtitlePlayTranslate>
@@ -1237,6 +1308,7 @@ $HorzAlign          =   Center
     <MainFileCloseOriginal />
     <MainFileCloseTranslation />
     <MainFileCompare />
+    <MainFileVerifyCompleteness />
     <MainFileOpenOriginal />
     <MainFileSaveAll />
     <MainFileImportPlainText />
@@ -1245,7 +1317,9 @@ $HorzAlign          =   Center
     <MainFileExportPlainText />
     <MainFileExportEbu />
     <MainFileExportPac />
+    <MainFileExportBdSup />
     <MainFileExportEdlClip />
+    <MainFileExit />
     <MainEditUndo>Control+Z</MainEditUndo>
     <MainEditRedo>Control+Y</MainEditRedo>
     <MainEditFind>Control+F</MainEditFind>
@@ -1288,9 +1362,7 @@ $HorzAlign          =   Center
     <MainVideoPlayPauseToggle>Control+P</MainVideoPlayPauseToggle>
     <MainVideoPlay150Speed />
     <MainVideoPlay200Speed />
-    <MainVideoShowHideVideo>Control+Q</MainVideoShowHideVideo>
-    <MainVideoShowWaveform />
-    <MainVideoFoucsSetVideoPosition />
+    <MainVideoFocusSetVideoPosition />
     <MainVideoToggleVideoControls />
     <MainVideo1FrameLeft />
     <MainVideo1FrameRight />
@@ -1432,6 +1504,7 @@ $HorzAlign          =   Center
     <MainTextBoxSelectionToRuby />
     <MainTextBoxToggleAutoDuration />
     <MainCreateInsertSubAtVideoPos>Shift+F9</MainCreateInsertSubAtVideoPos>
+    <MainCreateInsertSubAtVideoPosMax />
     <MainCreateInsertSubAtVideoPosNoTextBoxFocus />
     <MainCreateSetStart>F11</MainCreateSetStart>
     <MainCreateSetEnd>F12</MainCreateSetEnd>
@@ -1445,10 +1518,12 @@ $HorzAlign          =   Center
     <MainAdjustSetStartAndOffsetTheWholeSubtitle />
     <MainAdjustSetEndAndOffsetTheRest />
     <MainAdjustSetEndAndOffsetTheRestAndGoToNext />
+    <MainAdjustSetStartAndGotoNext />
     <MainAdjustSetEndAndGotoNext>F10</MainAdjustSetEndAndGotoNext>
     <MainAdjustViaEndAutoStart />
     <MainAdjustViaEndAutoStartAndGoToNext />
     <MainAdjustSetEndMinusGapAndStartNextHere />
+    <MainSetEndAndStartNextAfterGap />
     <MainAdjustSetStartAutoDurationAndGoToNext />
     <MainAdjustSetEndNextStartAndGoToNext />
     <MainAdjustStartDownEndUpAndGoToNext />
@@ -1499,6 +1574,7 @@ $HorzAlign          =   Center
     <MainMergeDialogWithNext />
     <MainMergeDialogWithPrevious />
     <MainAutoBalanceSelectedLines />
+    <MainEvenlyDistributeSelectedLines />
     <MainToggleFocus />
     <MainToggleFocusWaveform />
     <MainToggleFocusWaveformTextBox />
@@ -1530,6 +1606,7 @@ $HorzAlign          =   Center
     <MainTranslateGoogleIt />
     <MainTranslateGoogleTranslateIt />
     <MainTranslateAuto>Control+Shift+G</MainTranslateAuto>
+    <MainTranslateAutoSelectedLines />
     <MainTranslateCustomSearch1 />
     <MainTranslateCustomSearch2 />
     <MainTranslateCustomSearch3 />
@@ -1553,6 +1630,7 @@ $HorzAlign          =   Center
     <RemoveIfAllUppercase>False</RemoveIfAllUppercase>
     <RemoveIfContains>False</RemoveIfContains>
     <RemoveIfContainsText>¶</RemoveIfContainsText>
+    <RemoveIfOnlyMusicSymbols>True</RemoveIfOnlyMusicSymbols>
   </RemoveTextForHearingImpaired>
   <SubtitleBeaming>
     <FontName>Verdana</FontName>
@@ -1565,6 +1643,7 @@ $HorzAlign          =   Center
     <AlignTimeCodes>True</AlignTimeCodes>
     <ExtractExactTimeCodes>False</ExtractExactTimeCodes>
     <SnapToShotChanges>True</SnapToShotChanges>
+    <OverlapThreshold>1000</OverlapThreshold>
     <Profile>
       <Gap>3</Gap>
       <InCuesGap>0</InCuesGap>
@@ -1595,10 +1674,14 @@ $HorzAlign          =   Center
       <ChainingInCueOnShotMaxGap>1000</ChainingInCueOnShotMaxGap>
       <ChainingInCueOnShotLeftGreenZone>25</ChainingInCueOnShotLeftGreenZone>
       <ChainingInCueOnShotLeftRedZone>24</ChainingInCueOnShotLeftRedZone>
+      <ChainingInCueOnShotShotChangeBehavior>ExtendUntilShotChange</ChainingInCueOnShotShotChangeBehavior>
+      <ChainingInCueOnShotCheckGeneral>True</ChainingInCueOnShotCheckGeneral>
       <ChainingOutCueOnShotUseZones>False</ChainingOutCueOnShotUseZones>
       <ChainingOutCueOnShotMaxGap>500</ChainingOutCueOnShotMaxGap>
       <ChainingOutCueOnShotRightRedZone>11</ChainingOutCueOnShotRightRedZone>
       <ChainingOutCueOnShotRightGreenZone>12</ChainingOutCueOnShotRightGreenZone>
+      <ChainingOutCueOnShotShotChangeBehavior>ExtendUntilShotChange</ChainingOutCueOnShotShotChangeBehavior>
+      <ChainingOutCueOnShotCheckGeneral>True</ChainingOutCueOnShotCheckGeneral>
     </Profile>
   </BeautifyTimeCodes>
 </Settings>
