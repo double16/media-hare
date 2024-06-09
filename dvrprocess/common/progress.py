@@ -298,9 +298,12 @@ class ProgressReporter(object):
 _progress_reporter = ProgressReporter()
 
 
-def set_progress_reporter(new_reporter: ProgressReporter):
+def set_progress_reporter(new_reporter: Union[ProgressReporter, None]):
     global _progress_reporter
-    _progress_reporter = new_reporter
+    if new_reporter is None:
+        _progress_reporter = ProgressReporter()
+    else:
+        _progress_reporter = new_reporter
 
 
 def progress(task: str, start: int, end: int, msg: Union[None, str] = None) -> Progress:

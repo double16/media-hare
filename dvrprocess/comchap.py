@@ -367,16 +367,6 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                                          input_info=input_info, workdir=workdir,
                                          keep=not delete_ini, log_file=not delete_log)
 
-        comskip_command = []
-
-        if debug:
-            comskip_invoker = tools.comskip_gui
-            comskip_command.append("-w")
-        else:
-            comskip_invoker = tools.comskip
-            # TODO: only include hwassist when csv isn't available
-            comskip_command.extend(get_comskip_hwassist_options())
-
         # check for csv and logo file which makes the process much faster
         if not os.path.exists(csvfile):
             csvfile = common.replace_extension(infile, 'csv')
@@ -385,6 +375,14 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         logofile = common.replace_extension(csvfile, 'logo.txt')
         if not os.path.isfile(logofile):
             logofile = common.replace_extension(os.path.join(workdir, os.path.basename(infile)), 'logo.txt')
+
+        comskip_command = []
+
+        if debug:
+            comskip_invoker = tools.comskip_gui
+            comskip_command.append("-w")
+        else:
+            comskip_invoker = tools.comskip
 
         comskip_command.extend([f"--output={workdir}", f"--output-filename={outfile_base}",
                                 f"--ini={comskip_temp}"])
@@ -395,6 +393,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         if use_csv and os.path.isfile(csvfile):
             comskip_command.append(csvfile)
         else:
+            comskip_command.extend(get_comskip_hwassist_options())
             comskip_command.append(infile)
 
         logger.debug(' '.join(comskip_command))

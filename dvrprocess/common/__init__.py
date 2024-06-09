@@ -143,11 +143,11 @@ def finish():
     global TEMPFILENAMES
     while TEMPFILENAMES:
         fn = TEMPFILENAMES.pop()
-        if os.path.isfile(fn):
-            try:
+        try:
+            if os.path.isfile(fn):
                 os.remove(fn)
-            except FileNotFoundError:
-                pass
+        except FileNotFoundError:
+            pass
 
 
 def get_plex_url():
@@ -1018,40 +1018,52 @@ def setup_cli(level=logging.INFO, start_gauges=True):
         progress.start_compute_gauges()
 
 
+_CLI_WRAPPED: bool = False
+
+
 def cli_wrapper(func, *args, **kwargs):
-    if not args and not kwargs:
-        cli = True
-        args = sys.argv[1:]
-    else:
-        cli = False
+    global _CLI_WRAPPED
+    try:
+        if _CLI_WRAPPED:
+            return func(*args, **kwargs)
+        _CLI_WRAPPED = True
 
-    no_curses_opt = False
-    if '--no-curses' in args:
-        no_curses_opt = True
-        args = list(filter(lambda e: e != '--no-curses', args))
-    if kwargs:
-        no_curses_opt = kwargs.get('no_curses', False) or kwargs.get('no-curses', False)
-        kwargs = kwargs.copy()
-        kwargs.pop('no_curses', '')
-        kwargs.pop('no-curses', '')
+        if not args and not kwargs:
+            cli = True
+            args = sys.argv[1:]
+        else:
+            cli = False
 
-    def wrapped_func() -> int:
-        try:
-            atexit.register(finish)
-            procprofile.memory_monitor_start()
-            if cli:
-                return func(args)
-            else:
-                return func(*args, **kwargs)
-        finally:
-            procprofile.memory_monitor_stop()
+        no_curses_opt = False
+        if '--no-curses' in args:
+            no_curses_opt = True
+            args = list(filter(lambda e: e != '--no-curses', args))
+        if kwargs:
+            no_curses_opt = kwargs.get('no_curses', False) or kwargs.get('no-curses', False)
+            kwargs = kwargs.copy()
+            kwargs.pop('no_curses', '')
+            kwargs.pop('no-curses', '')
 
-    use_curses = sys.stdout.isatty() and not no_curses_opt
-    if use_curses:
-        sys.exit(terminalui_wrapper(wrapped_func))
-    else:
-        setup_cli()
-        sys.exit(wrapped_func())
+        def wrapped_func() -> int:
+            try:
+                atexit.register(finish)
+                procprofile.memory_monitor_start()
+                if cli:
+                    return func(args)
+                else:
+                    return func(*args, **kwargs)
+            finally:
+                procprofile.memory_monitor_stop()
+
+        use_curses = sys.stdout.isatty() and not no_curses_opt
+        if use_curses:
+            sys.exit(terminalui_wrapper(wrapped_func))
+        else:
+            setup_cli()
+            sys.exit(wrapped_func())
+
+    finally:
+        _CLI_WRAPPED = False
 
 
 class PoolApplyWrapper:
@@ -1382,7 +1394,7 @@ def match_owner_and_perm(target_path: str, source_path: str) -> bool:
         st_mode = source_stat.st_mode
         # if source is dir and has suid or guid and target is a file, mask suid/guid
         if os.path.isfile(target_path):
-            st_mode &= ~(stat.S_ISUID | stat.S_ISGID)
+            st_mode &= ~(stat.S_ISUID | stat.S_ISGID | 0o111)
         os.chmod(target_path, st_mode)
     except OSError:
         logger.warning(f"Changing permission of {target_path} failed, continuing")

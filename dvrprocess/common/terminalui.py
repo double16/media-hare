@@ -113,6 +113,9 @@ class CursesProgressListener(object):
     def stop(self, task):
         pass
 
+    def close(self):
+        pass
+
 
 class ProgressCurses(progress.Progress):
 
@@ -141,13 +144,23 @@ class ProgressCurses(progress.Progress):
 class ProgressWindow(CursesProgressListener):
 
     def __init__(self, window):
+        self._closed = False
         self.window = window
         self.tasks: Dict[str, ProgressCurses] = dict()
 
+    def close(self):
+        self._closed = True
+
     def refresh(self):
+        if self._closed:
+            return
+
         self.window.refresh()
 
     def resize(self):
+        if self._closed:
+            return
+
         try:
             _curses_ui_lock.acquire()
             lines, cols = self.window.getmaxyx()
@@ -222,6 +235,9 @@ class ProgressWindow(CursesProgressListener):
         self.window.clrtoeol()
 
     def start(self, task: ProgressCurses):
+        if self._closed:
+            return
+
         _check_resize()
         try:
             _curses_ui_lock.acquire()
@@ -238,6 +254,9 @@ class ProgressWindow(CursesProgressListener):
             _curses_ui_lock.release()
 
     def progress(self, task: ProgressCurses, position: int, msg: str):
+        if self._closed:
+            return
+
         _check_resize()
         try:
             _curses_ui_lock.acquire()
@@ -251,6 +270,9 @@ class ProgressWindow(CursesProgressListener):
             _curses_ui_lock.release()
 
     def stop(self, task: ProgressCurses):
+        if self._closed:
+            return
+
         _check_resize()
         try:
             _curses_ui_lock.acquire()
@@ -270,6 +292,9 @@ class CursesGaugeListener(object):
     def value(self, gauge, value: float):
         pass
 
+    def close(self):
+        pass
+
 
 class GaugeCurses(progress.Gauge):
     def __init__(self, name: str, low: float, high: float, listener: CursesGaugeListener):
@@ -285,10 +310,17 @@ class GaugeCurses(progress.Gauge):
 
 class GaugeWindow(CursesGaugeListener):
     def __init__(self, window):
+        self._closed = False
         self.window = window
         self.gauges: Dict[str, GaugeCurses] = dict()
 
+    def close(self):
+        self._closed = True
+
     def resize(self):
+        if self._closed:
+            return
+
         self.window.erase()
         self.window.move(self.window.getbegyx()[0], self.window.getbegyx()[1])
         try:
@@ -311,10 +343,16 @@ class GaugeWindow(CursesGaugeListener):
         self.window.refresh()
 
     def create(self, gauge):
+        if self._closed:
+            return
+
         self.gauges[gauge.name] = gauge
         self.resize()
 
     def value(self, gauge, value: float):
+        if self._closed:
+            return
+
         self.resize()
 
 
@@ -333,6 +371,8 @@ class CursesProgressReporter(progress.ProgressReporter):
 
 class CursesUI(object):
     def __init__(self, screen):
+        self._closed = False
+
         # hide the cursor
         try:
             curses.curs_set(0)
@@ -362,6 +402,23 @@ class CursesUI(object):
         self.gauge_win.resize()
         self.log_handler.resize()
 
+    def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
+        logging.root.removeHandler(self.log_handler)
+        self.log_handler.close()
+        progress.set_progress_reporter(None)
+        self.progress_win.close()
+        self.gauge_win.close()
+
+        # show the cursor
+        try:
+            curses.curs_set(1)
+        except Exception:
+            pass
+
     def _compute_window_dims(self) -> list[tuple[int, int, int, int]]:
         """
         :return: tuples of (lines, columns, y, x): [ status, progress, log ]
@@ -373,6 +430,9 @@ class CursesUI(object):
         return [status_win, progress_win, log_win]
 
     def resize(self):
+        if self._closed:
+            return
+
         self.screen.refresh()
         window_dims = self._compute_window_dims()
         self._resize_window(self.gauge_win.window, window_dims[0])
@@ -407,10 +467,8 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
             return func(*args, **kwargs)
         finally:
             # show the cursor
-            try:
-                curses.curs_set(1)
-            except Exception:
-                pass
+            _CURSESUI.close()
+            _CURSESUI = None
 
     stderr_capture = StreamCapture('stderr')
     stdout_capture = StreamCapture('stdout')

@@ -47,6 +47,13 @@ This program will run only if configuration profanity_filter.enable is set to tr
     Find files to process from a Plex Media Server. Specify the URL such as http://127.0.0.1:32400 or '.' for {common.get_plex_url()}
 --verbose
     Verbose information about the process
+
+Environment:
+    LANGUAGE_TOOL_HOST=127.0.0.1
+    LANGUAGE_TOOL_PORT=8100
+    KALDI_EN_HOST=kaldi-en
+    KALDI_EN_PORT=2700
+      (duplicate KALDI_* above for other languages use 2-letter code)
 """, file=sys.stderr)
 
 
