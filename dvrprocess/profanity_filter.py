@@ -92,6 +92,13 @@ Filter audio and subtitles for profanity.
     Unmark file(s) for the filter to skip, so they will be filtered. Filtering will be performed. 
 --force
     Force re-filtering
+    
+Environment:
+    LANGUAGE_TOOL_HOST=127.0.0.1
+    LANGUAGE_TOOL_PORT=8100
+    KALDI_EN_HOST=kaldi-en
+    KALDI_EN_PORT=2700
+      (duplicate KALDI_* above for other languages use 2-letter code)
 """, file=sys.stderr)
 
 
@@ -959,7 +966,8 @@ def detect_transcribed_by_version_3(current_audio2text_version: str, input_info:
         if transcribed:
             logger.info("Detected original subtitle was transcribed in version 3")
         subtitle_original_proc.stdout.close()
-        subtitle_original_proc.wait()
+        if subtitle_original_proc.wait() in [130, 255]:
+            raise KeyboardInterrupt()
         return transcribed
     return False
 
@@ -1103,6 +1111,8 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     audio_process.stdout.close()
     audio_progress.stop()
     extract_return_code = audio_process.wait()
+    if extract_return_code in [130, 255]:
+        raise KeyboardInterrupt()
     if extract_return_code != 0:
         logger.error("Cannot transcribe audio, ffmpeg returned %s, command: %s",
                      extract_return_code,

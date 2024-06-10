@@ -966,7 +966,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     target_comskip_ini = os.path.join(season_dir, 'comskip.ini')
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
-    num_generations = 50
+    num_generations = 100
     sol_per_pop = 500
     num_parents_mating = ceil(sol_per_pop / 2)
     keep_elitism = 5
@@ -978,7 +978,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
             force=force, comskip_defaults=comskip_defaults,
             expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations,
             experimental=experimental,
-            file_sample_size=10)
+            file_sample_size=15,
+        )
     except UserWarning as e:
         logger.warning(e.args[0])
         thread_pool.shutdown(cancel_futures=True)
@@ -1165,8 +1166,6 @@ def comtune_cli(argv) -> int:
 def comtune_cli_run(media_paths: list[str], verbose: bool, workdir, force: int, dry_run: bool, expensive_genes: bool,
                     check_compute: bool, time_limit: int, processes: int) -> int:
     logger.debug("work_dir is %s, processes is %s", workdir, processes)
-
-    atexit.register(common.finish)
 
     time_start = time.time()
     time_progress = progress.progress("time limit", 0, time_limit)
