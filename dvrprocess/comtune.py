@@ -1005,6 +1005,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     if experimental:
         gad_name_parts.append('experimental')
     gad_state_filename = os.path.join(season_dir, f"{'-'.join(gad_name_parts)}.pkl")
+    gad_state_filename_tmp = gad_state_filename + ".tmp"
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 100
@@ -1052,7 +1053,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         if len(best_fitness) > 1:
             convergence_gauge.value(stdev(best_fitness))
 
-        ga_instance_save(ga_instance, gad_state_filename)
+        ga_instance_save(ga_instance, gad_state_filename_tmp)
+        shutil.move(gad_state_filename_tmp, gad_state_filename)
 
         return None
 
