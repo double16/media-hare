@@ -70,6 +70,8 @@ class FFmpegProcInvoker(SubprocessProcInvoker):
         proc.wait()
         if ffmpeg_progress:
             ffmpeg_progress.stop()
+        if proc.returncode in [130, 255]:
+            raise KeyboardInterrupt()
         if check and proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, proc.args,
                                                 stream_gen.stdout_str(),
@@ -134,6 +136,8 @@ class CCExtractorProcInvoker(SubprocessProcInvoker):
         proc.wait()
         if se_progress:
             se_progress.stop()
+        if proc.returncode == 130:
+            raise KeyboardInterrupt()
         if check and proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, proc.args,
                                                 stream_gen.stdout_str(),
@@ -181,6 +185,8 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
         proc.wait()
         if se_progress:
             se_progress.stop()
+        if proc.returncode == 130:
+            raise KeyboardInterrupt()
         if check and proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, proc.args,
                                                 stream_gen.stdout_str(),
