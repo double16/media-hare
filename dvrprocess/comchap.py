@@ -8,6 +8,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 from functools import lru_cache
 
 import common
@@ -271,7 +272,34 @@ def comchap(*args, **kwargs):
 def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True, delete_log=True, delete_logo=True,
                delete_txt=True,
                delete_ini=True, verbose=False, workdir=None, comskipini=None, leaf_comskip_ini=None, modify_video=True,
-               force=False, debug=False, backup_edl=False, use_csv=True, csvfile=None, input_info=None):
+               force=False, debug=False, backup_edl=False, use_csv=True, csvfile=None, input_info=None) -> int:
+
+    outextension = outfile.split('.')[-1]
+    infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
+
+    outfile_base = f".~{infile_base}"
+    if edlfile is None:
+        edlfile = os.path.join(os.path.dirname(infile) or '.', f"{infile_base}.edl")
+    edlbakfile = common.replace_extension(edlfile, "bak.edl")
+
+    if not comskipini:
+        try:
+            comskipini = find_comskip_ini()
+        except OSError as e:
+            logger.fatal(f"finding {comskipini}", exc_info=e)
+            return 255
+
+    # Short circuit a lot of IOPS. This is called a lot by Plex during maintenance.
+    if (not delete_edl and not force and os.path.isfile(edlbakfile)
+            and os.stat(edlbakfile).st_mtime >= os.stat(comskipini).st_mtime
+            and os.stat(edlbakfile).st_mtime >= os.stat(infile).st_mtime):
+        local_comskip_ini = os.path.join(os.path.dirname(infile), 'comskip.ini')
+        if not os.path.isfile(local_comskip_ini) or os.stat(edlbakfile).st_mtime >= os.stat(local_comskip_ini).st_mtime:
+            if not os.path.isfile(edlfile):
+                edl_normalize.edl_simplify(edlbakfile, edlfile)
+                common.match_owner_and_perm(edlfile, infile)
+            return 0
+
     if input_info is None:
         input_info = common.find_input_info(infile)
     duration = float(input_info[constants.K_FORMAT]['duration'])
@@ -291,26 +319,12 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     if workdir is None:
         workdir = config.get_work_dir()
 
-    if not comskipini:
-        try:
-            comskipini = find_comskip_ini()
-        except OSError as e:
-            logger.fatal(f"finding {comskipini}", exc_info=e)
-            return 255
-
     logger.debug(f"comskipini at {comskipini}")
 
     if not os.path.isdir(workdir) or not os.access(workdir, os.W_OK):
         logger.fatal(f"Workdir not a writable directory at {workdir}")
         return 255
 
-    outextension = outfile.split('.')[-1]
-    infile_base = '.'.join(os.path.basename(infile).split('.')[0:-1])
-
-    outfile_base = f".~{infile_base}"
-    if edlfile is None:
-        edlfile = os.path.join(os.path.dirname(infile) or '.', f"{infile_base}.edl")
-    edlbakfile = common.replace_extension(edlfile, "bak.edl")
     hidden_edlfile = os.path.join(workdir, f"{outfile_base}.edl")
     metafile = os.path.join(workdir, f"{outfile_base}.ffmeta")
     mkvchapterfile = os.path.join(workdir, f"{outfile_base}.chapters.xml")
@@ -447,6 +461,11 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
                 mkvpropedit_command = [infile, "--tags", f"global:{tags_filename}"]
                 logger.debug(' '.join(mkvpropedit_command))
                 tools.mkvpropedit.run(mkvpropedit_command, check=True)
+            now = time.time()
+            if edlbakfile and os.path.isfile(edlbakfile):
+                os.utime(edlbakfile, (now, now))
+            if edlfile and os.path.isfile(edlfile):
+                os.utime(edlfile, (now, now))
             return 255
 
     start = 0
