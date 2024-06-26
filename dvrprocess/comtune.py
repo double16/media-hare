@@ -116,7 +116,6 @@ GENES: list[ComskipGene] = [
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'connect_blocks_with_logo'), True,
                 "When enabled all blocks that have logo at the cut-point between the blocks will be considered one block",
                 False, [0, 1], int, 1),
-    # TODO: If average aspect ratio is less than video, set this to "1":
     ComskipGene((INI_GROUP_LOGO_FINDING, 'aggressive_logo_rejection'), False,
                 "Set to higher values when the spatial logo detection is difficult",
                 False, [0, 1], int, 0),
@@ -1006,6 +1005,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         gad_name_parts.append('experimental')
     gad_state_filename = os.path.join(season_dir, f"{'-'.join(gad_name_parts)}.pkl")
     gad_state_filename_tmp = gad_state_filename + ".tmp"
+    gad_state_ini_filename = os.path.join(season_dir, f"{'-'.join(gad_name_parts)}.ini")
 
     # https://pygad.readthedocs.io/en/latest/README_pygad_ReadTheDocs.html#pygad-ga-class
     num_generations = 100
@@ -1056,6 +1056,9 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         ga_instance_save(ga_instance, gad_state_filename_tmp)
         shutil.move(gad_state_filename_tmp, gad_state_filename)
 
+        if ga_instance.best_solutions:
+            write_ini_from_solution(gad_state_ini_filename, genes, ga_instance.best_solutions[-1], True)
+
         return None
 
     try:
@@ -1081,7 +1084,9 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
                            sol_per_pop=additional_solutions_needed,
                            num_genes=len(genes),
                            gene_space=gene_space.copy(),
-                           gene_type=gene_type.copy())
+                           gene_type=gene_type.copy(),
+                           suppress_warnings=True,
+                           )
         additional_solutions = ga_temp.initial_population
 
         # Concatenate the initial and additional solutions
@@ -1103,25 +1108,26 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
                            mutation_percent_genes=[25, 12],
                            parent_selection_type="sss",
                            keep_elitism=keep_elitism,
-                           save_best_solutions=False,  # 2024-03-05 results are better with False
+                           save_best_solutions=True,  # 2024-03-05 results are better with False
                            suppress_warnings=True,
                            on_generation=gen_callback,
                            )
 
     # restore state
     for attr_name in filter(lambda e: e in ga_in, GA_INSTANCE_ATTR_SAVE):
-        setattr(ga_instance, attr_name, ga_in[attr_name])
+        attr_value = ga_in[attr_name]
+        setattr(ga_instance, attr_name, attr_value)
 
     ga_instance.run()
     tuning_progress.stop()
-    solution, solution_fitness, solution_idx = ga_instance.best_solution()
+    solution, solution_fitness, solution_idx = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
 
     thread_pool.shutdown()
 
     logger.info(
         "Parameters of the best solution : {solution}".format(solution=solution_repl(genes, solution)))
     logger.info("Fitness value of the best solution = {solution_fitness}".format(
-        solution_fitness=(1.0 / solution_fitness)))
+        solution_fitness=solution_fitness))
     logger.debug("Best solutions = {best}\n   fitness = {fitness}".format(best=ga_instance.best_solutions,
                                                                           fitness=ga_instance.best_solutions_fitness))
     logger.info("Best fitness reached at generation %d", ga_instance.best_solution_generation)
@@ -1161,6 +1167,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
 
     if os.path.isfile(gad_state_filename):
         os.remove(gad_state_filename)
+    if os.path.isfile(gad_state_ini_filename):
+        os.remove(gad_state_ini_filename)
 
     return_code = common.ReturnCodeReducer()
     for filepath in files:
