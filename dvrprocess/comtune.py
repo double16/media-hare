@@ -118,7 +118,7 @@ GENES: list[ComskipGene] = [
                 False, [0, 1], int, 1),
     ComskipGene((INI_GROUP_LOGO_FINDING, 'aggressive_logo_rejection'), False,
                 "Set to higher values when the spatial logo detection is difficult",
-                False, [0, 1], int, 0),
+                False, [0, 1, 4], int, 0),
     ComskipGene((INI_GROUP_LOGO_INTERPRETATION, 'min_black_frames_for_break'), True,
                 "",
                 True, [1, 3, 5], int, 1),

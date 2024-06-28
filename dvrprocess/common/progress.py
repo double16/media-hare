@@ -653,12 +653,13 @@ def start_compute_gauges(interval=30):
     else:
         io_gauge = None
 
-    def update():
-        gauges.update()
-        if io_gauge:
-            io_gauge.update()
+    def update(first = False):
+        if not first:
+            gauges.update()
+            if io_gauge:
+                io_gauge.update()
         t = threading.Timer(interval, update)
         t.daemon = True
         t.start()
 
-    update()
+    update(True)

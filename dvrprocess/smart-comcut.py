@@ -128,6 +128,7 @@ def smart_comcut_cli(argv):
             sigma = float(arg)
         elif opt == "--verbose":
             logging.getLogger().setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
         elif opt == "--force-encode":
             force_encode = True
         elif opt in ("-p", "--preset"):
