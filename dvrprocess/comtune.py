@@ -905,13 +905,13 @@ GA_INSTANCE_ATTR_SAVE = [
     'last_generation_elitism',
     'last_generation_elitism_indices',
     'pareto_fronts',
+    'generations_completed',
 ]
 
 
 def ga_instance_save(ga_instance: pygad.GA, filename):
     gad_state = {
         'num_generations': ga_instance.num_generations,
-        'generations_completed': ga_instance.generations_completed,
         'population': ga_instance.population,
     }
 
@@ -1051,7 +1051,8 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     def gen_callback(ga_instance: pygad.GA):
         best_fitness = ga_instance.best_solutions_fitness
         if len(best_fitness) > 1:
-            convergence_gauge.value(stdev(best_fitness))
+            cma = numpy.cumsum(best_fitness) / numpy.arange(1, len(best_fitness) + 1)
+            convergence_gauge.value(stdev(cma))
 
         ga_instance_save(ga_instance, gad_state_filename_tmp)
         shutil.move(gad_state_filename_tmp, gad_state_filename)
@@ -1059,13 +1060,16 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         if ga_instance.best_solutions:
             write_ini_from_solution(gad_state_ini_filename, genes, ga_instance.best_solutions[-1], True)
 
+        if len(best_fitness) > 7 and len(set(best_fitness[-7:])) == 1:
+            logger.info("Stable fitness at generation %d", ga_instance.generations_completed)
+
         return None
 
     try:
         ga_in: dict[str, Any] = dict()
         with open(gad_state_filename, 'rb') as file:
             ga_in = cloudpickle.load(file)
-        num_generations = max(1, int(ga_in.get('num_generations', num_generations)) - int(ga_in.get('generations_completed', 0)))
+        num_generations = max(1, num_generations - int(ga_in.get('generations_completed', 0)))
         initial_solutions = ga_in.get('population', initial_solutions)
         logging.info("Resuming from %s, %d generations left", gad_state_filename, num_generations)
     except FileNotFoundError:
@@ -1116,7 +1120,11 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     # restore state
     for attr_name in filter(lambda e: e in ga_in, GA_INSTANCE_ATTR_SAVE):
         attr_value = ga_in[attr_name]
+        logger.debug("Restoring GAD attribute %s with %s", attr_name, repr(attr_value))
         setattr(ga_instance, attr_name, attr_value)
+    # Fix up best_solutions/best_solutions_fitness. They are not both updated before on_generation is called.
+    while len(ga_instance.best_solutions) > len(ga_instance.best_solutions_fitness):
+        ga_instance.best_solutions.pop()
 
     ga_instance.run()
     tuning_progress.stop()
@@ -1210,6 +1218,7 @@ def comtune_cli(argv) -> int:
         elif opt == "--verbose":
             verbose = True
             logging.getLogger().setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
         elif opt == "--no-curses":
             no_curses = True
         elif opt == "--work-dir":

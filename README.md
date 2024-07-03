@@ -77,8 +77,6 @@ The LibreOffice language tool is used for spell checking and generating subtitle
 two environment variables `LANGUAGE_TOOL_HOST` and `LANGUAGE_TOOL_PORT` are used to configure it.
 
 ```yaml
-version: "3.4"
-
 services:
   kaldi-en:
     image: alphacep/kaldi-en:latest
@@ -106,6 +104,25 @@ services:
 
 ## Development Recommendation
 
+You'll need to place `media-hare.ini` into your workspace directory.
+
+- Mount media folder to /path/to/media
+- Mount your source folder to ~/Workspace
+
+### language and vosk servers
+
+Performance is better using language and vosk servers running on docker. Otherwise media-hare will start them in each
+process, using unnecessary memory and compute.
+
+```shell
+docker run -d --name kaldi-en -e VOSK_SHOW_WORDS=true -e VOSK_ALTERNATIVES=0 -p 2700:2700 alphacep/kaldi-en:latest
+docker run -d --name langtool -p 8100:8100 ghcr.io/double16/libreoffice-langtool:main
+export LANGUAGE_TOOL_HOST=localhost
+export KALDI_EN_HOST=localhost
+export KALDI_EN_PORT=2700
+export LANGUAGE_TOOL_PORT=8100
+```
+
 ### docker / Docker Desktop
 
 ```shell
@@ -115,11 +132,6 @@ $ docker run -it --rm --entrypoint /bin/zsh --device /dev/dri --device /dev/nvid
 ```
 
 ### podman
-
-You'll need to place `media-hare.ini` into your workspace directory.
-
-- Mount media folder to /path/to/media
-- Mount your source folder to ~/Workspace
 
 ```shell
 $ podman machine init --cpus 10 --disk-size 30 -m 16384 -v ~/Movies:/Movies -v ~/Workspace:/Workspace -v /path/to/media:/media

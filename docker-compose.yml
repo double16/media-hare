@@ -1,10 +1,6 @@
-version: "3.8"
-
 #
 # Stack for local development.
 # Create a docker-compose.local.yml with your directories similar to:
-#
-#    version: "3.8"
 #
 #    services:
 #      media-hare:
