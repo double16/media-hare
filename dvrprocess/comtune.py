@@ -1048,6 +1048,9 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     convergence_gauge = progress.gauge("CONV")
     convergence_gauge.renderer = lambda v: f"{v:.2f}"
 
+    stable_gen_first_idx: int = ceil(num_generations / 4)  # perform at least these many generations before considering stable
+    stable_gen_count: int = ceil(num_generations / 10)  # consider the same fitness for these many generations stable
+
     def gen_callback(ga_instance: pygad.GA):
         best_fitness = ga_instance.best_solutions_fitness
         if len(best_fitness) > 1:
@@ -1058,10 +1061,13 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
         shutil.move(gad_state_filename_tmp, gad_state_filename)
 
         if ga_instance.best_solutions:
-            write_ini_from_solution(gad_state_ini_filename, genes, ga_instance.best_solutions[-1], True)
+            write_ini_from_solution(
+                gad_state_ini_filename, genes, ga_instance.best_solutions[-1],
+                write_complete_config=True, comskip_defaults=comskip_defaults
+            )
 
-        if len(best_fitness) > 7 and len(set(best_fitness[-7:])) == 1:
-            logger.info("Stable fitness at generation %d", ga_instance.generations_completed)
+        if len(best_fitness) > (stable_gen_first_idx + stable_gen_count) and len(set(best_fitness[-stable_gen_count:])) == 1:
+            logger.info("Stable fitness %s at generation %d", best_fitness[-1], ga_instance.generations_completed)
 
         return None
 
