@@ -31,7 +31,7 @@ RUN cd ccextractor/linux &&\
 
 FROM ubuntu:23.10
 
-ARG SYSTEMCTL_VER=1.5.4505
+ARG SYSTEMCTL_VER=v1.5.8066
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY requirements.txt /tmp/
@@ -52,10 +52,10 @@ RUN apt-get -q update && \
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
     rm -rf /tmp/*
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.6/SE406.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.7/SE407.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
-    curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/v${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
+    curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
     chmod +x /usr/bin/systemctl &&\
     useradd -g 100 -u 99 plex
 
