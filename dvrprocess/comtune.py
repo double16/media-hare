@@ -33,6 +33,8 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_INPUT_CORRECTION
 from common import tools, config, constants, edl_util, progress
 
+TUNE_SHOW_MIN_VIDEO_COUNT = 5
+
 CSV_SUFFIX_BLACKFRAME = "-blackframe"
 
 logger = logging.getLogger(__name__)
@@ -546,8 +548,8 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
             logger.info("Not considering %s because it has %d episodes", file_path, episode_count)
         input_dirs.add(os.path.dirname(file_path))
 
-    if len(dvr_infos) == 0:
-        raise UserWarning("No files look like they have commercials")
+    if len(dvr_infos) < TUNE_SHOW_MIN_VIDEO_COUNT:
+        raise UserWarning(f"Too few files look like they have commercials {len(dvr_infos)} < {TUNE_SHOW_MIN_VIDEO_COUNT}")
 
     # Ignore special longer episodes, such as the pilot
     episode_common_duration = common.get_common_episode_duration(dvr_infos)
@@ -555,8 +557,8 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
     dvr_infos = list(filter(lambda info: episode_common_duration == common.round_episode_duration(info), dvr_infos))
     dvr_durations = list(map(lambda info: common.episode_info(info)[1], dvr_infos))
 
-    if len(dvr_infos) == 0:
-        raise UserWarning("No files look like they have commercials")
+    if len(dvr_infos) < TUNE_SHOW_MIN_VIDEO_COUNT:
+        raise UserWarning(f"Too few files look like they have commercials {len(dvr_infos)} < {TUNE_SHOW_MIN_VIDEO_COUNT}, after excluding specials")
 
     expected_adjusted_duration_default = get_expected_adjusted_duration(dvr_infos[0])
     logger.info(f"Mean duration {common.seconds_to_timespec(mean(dvr_durations))}")
@@ -980,8 +982,8 @@ def initial_solution_values_from_ini(path) -> dict[ComskipGene, list]:
 
 def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, expensive_genes=False, check_compute=True,
               processes=0, experimental=False):
-    if len(files) < 5:
-        logger.warning("too few video files %d to tune %s, need 5", len(files), season_dir)
+    if len(files) < TUNE_SHOW_MIN_VIDEO_COUNT:
+        logger.warning("too few video files %d to tune %s, need %d", len(files), season_dir, TUNE_SHOW_MIN_VIDEO_COUNT)
         return
 
     logger.info("tuning show %s", season_dir)

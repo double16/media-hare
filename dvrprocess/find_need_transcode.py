@@ -149,7 +149,7 @@ def find_need_transcode_cli(argv):
                                                   desired_audio_codecs=desired_audio_codecs,
                                                   max_resolution=max_resolution,
                                                   desired_frame_rate=desired_frame_rate):
-            sys.stdout.write(file_info.file_name)
+            sys.stdout.write(file_info.host_file_path)
             sys.stdout.write(terminator)
         return 0
 
