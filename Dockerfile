@@ -95,6 +95,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/edl_normalize.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/find_need_transcode.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/find_need_comcut.py /usr/local/bin/ &&\
+    ln -s /usr/local/share/dvrprocess/find_media_errors.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/transcode-apply.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/smart-comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/tvshow-summary.py /usr/local/bin/ &&\

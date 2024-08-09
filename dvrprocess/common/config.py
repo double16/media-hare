@@ -1,9 +1,11 @@
 import configparser
+import hashlib
 import logging
 import os
 import sys
 import tempfile
 import threading
+from configparser import ConfigParser
 from enum import Enum
 from functools import lru_cache
 
@@ -263,3 +265,70 @@ def bytes_to_human_str(byte_count: int) -> str:
     if byte_count > KILOBYTES_MULT:
         return "{:.2f}M".format(float(byte_count) / KILOBYTES_MULT)
     return str(byte_count)
+
+
+def _mkv_fingerprint(path: str) -> str:
+    stat = os.stat(path)
+    hash_object = hashlib.sha256()
+    hash_object.update(os.path.basename(path).encode())
+    hash_object.update(str(stat.st_size).encode())
+    # Include the first 32k of data? Is it unnecessary I/O?
+    # with open(path, 'rb') as file:
+    #     hash_object.update(file.read(32768))
+    return hash_object.hexdigest()
+
+
+def get_file_config(path: str) -> ConfigParser:
+    """
+    Gets file level configuration using an .ini file.
+    :param path: path to the media file.
+    :return: config, never None
+    """
+    config_path = path + ".ini"
+    config = ConfigParser()
+    if os.path.exists(config_path):
+        config.read(config_path)
+        if config.get('general', 'fingerprint') != _mkv_fingerprint(path):
+            config = ConfigParser()
+    return config
+
+
+def set_file_config(path: str, config: ConfigParser):
+    """
+    Sets file level configuration using an .ini file.
+    :param path: path to the media file.
+    :param config: the config
+    """
+    config_path = path + ".ini"
+    if not config.has_section('general'):
+        config.add_section('general')
+    config.set('general', 'fingerprint', _mkv_fingerprint(path))
+    with open(config_path, "wt") as file:
+        config.write(file)
+
+
+def get_file_config_option(path: str, section: str, option: str) -> str:
+    """
+    Get an option from the file config.
+    :param path:
+    :param section:
+    :param option:
+    :return:
+    """
+    return get_file_config(path).get(section, option, fallback=None)
+
+
+def set_file_config_option(path: str, section: str, option: str, value: str):
+    """
+    Set an option for the file config.
+    :param path:
+    :param section:
+    :param option:
+    :param value:
+    :return:
+    """
+    config = get_file_config(path)
+    if not config.has_section(section):
+        config.add_section(section)
+    config.set(section, option, value)
+    set_file_config(path, config)

@@ -8,9 +8,6 @@ from collections.abc import Iterable
 import common
 from common import constants, edl_util
 
-#
-# Find media that has pending commercials to cut.
-#
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +16,8 @@ def usage():
     print(f"""{sys.argv[0]} [media_paths]
 
 List files needing commercials cut.
+
+Output options:
 
 1. Absolute paths terminated with null (this can be changed) with the intent to be piped into xargs or similar tool.
 2. Nagios monitoring output, which is also human readable. This also provides some estimates on time to transcode.
