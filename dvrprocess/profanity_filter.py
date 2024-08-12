@@ -27,7 +27,7 @@ from thefuzz import fuzz
 from thefuzz import process as fuzzprocess
 
 import common
-from common import subtitle, tools, config, constants, progress, edl_util
+from common import subtitle, tools, config, constants, progress, edl_util, fsutil
 from common.vosk import kaldi_recognizer
 
 # Increment when a coding change materially effects the output
@@ -773,7 +773,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     #
     logger.info(f"Finished filtering of {filename} to {temp_filename}")
 
-    common.match_owner_and_perm(target_path=temp_filename, source_path=filename)
+    fsutil.match_owner_and_perm(target_path=temp_filename, source_path=filename)
 
     # Hide original file in case OUTPUT_TYPE is the same as input
     if not debug:

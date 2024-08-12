@@ -13,7 +13,7 @@ from functools import lru_cache
 
 import common
 import edl_normalize
-from common import hwaccel, tools, config, constants, edl_util
+from common import hwaccel, tools, config, constants, edl_util, fsutil
 
 logger = logging.getLogger(__name__)
 
@@ -297,7 +297,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
         if not os.path.isfile(local_comskip_ini) or os.stat(edlbakfile).st_mtime >= os.stat(local_comskip_ini).st_mtime:
             if not os.path.isfile(edlfile):
                 edl_normalize.edl_simplify(edlbakfile, edlfile)
-                common.match_owner_and_perm(edlfile, infile)
+                fsutil.match_owner_and_perm(edlfile, infile)
             return 0
 
     if input_info is None:
@@ -361,13 +361,13 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
     if not os.path.isfile(edlfile):
         if backup_edl and not force and os.path.isfile(edlbakfile):
             edl_normalize.edl_simplify(edlbakfile, edlfile)
-            common.match_owner_and_perm(edlfile, infile)
+            fsutil.match_owner_and_perm(edlfile, infile)
         else:
             run_comskip = True
     elif backup_edl:
         if not os.path.isfile(edlbakfile):
             edl_normalize.edl_normalize(edlfile, edlbakfile)
-            common.match_owner_and_perm(edlbakfile, infile)
+            fsutil.match_owner_and_perm(edlbakfile, infile)
 
     if modify_video:
         # the current hash is only available if we're allowed to modify the video
@@ -422,10 +422,10 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             # copying permissions may have failed, but the file may have been copied
             if not os.path.exists(edlfile):
                 raise e
-        common.match_owner_and_perm(edlfile, infile)
+        fsutil.match_owner_and_perm(edlfile, infile)
         if backup_edl or os.path.exists(edlbakfile):
             edl_normalize.edl_normalize(edlfile, edlbakfile)
-            common.match_owner_and_perm(edlbakfile, infile)
+            fsutil.match_owner_and_perm(edlbakfile, infile)
 
     if not modify_video:
         return 0
@@ -535,7 +535,7 @@ def do_comchap(infile, outfile, edlfile=None, delete_edl=True, delete_meta=True,
             if tempoutfile is not None:
                 os.replace(tempoutfile, outfile)
         if infile != outfile:
-            common.match_owner_and_perm(target_path=outfile, source_path=infile)
+            fsutil.match_owner_and_perm(target_path=outfile, source_path=infile)
     else:
         # add K_COMSKIP_HASH marker
         if infile.endswith(".mkv") and infile == outfile:

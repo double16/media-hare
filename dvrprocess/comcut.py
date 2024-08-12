@@ -12,7 +12,7 @@ from typing import Iterable, Union
 
 import common
 from comchap import comchap, write_chapter_metadata, compute_comskip_ini_hash, find_comskip_ini
-from common import crop_frame, hwaccel, subtitle, tools, config, constants, edl_util
+from common import crop_frame, hwaccel, subtitle, tools, config, constants, edl_util, fsutil
 from profanity_filter import MASK_STR
 
 KEYFRAME_DISTANCE_TOLERANCE = 1.0
@@ -547,7 +547,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     if temp_outfile is not None:
         shutil.move(temp_outfile, outfile)
 
-    common.match_owner_and_perm(target_path=outfile, source_path=infile)
+    fsutil.match_owner_and_perm(target_path=outfile, source_path=infile)
 
     if force_clear_edl or (not delete_edl and infile == outfile):
         # change EDL file to match cut

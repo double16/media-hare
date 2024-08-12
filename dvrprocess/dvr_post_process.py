@@ -16,7 +16,7 @@ from typing import Union
 from ass_parser import CorruptAssLineError
 
 import common
-from common import crop_frame, hwaccel, tools, config, constants
+from common import crop_frame, hwaccel, tools, config, constants, fsutil
 from profanity_filter import do_profanity_filter
 
 SHORT_VIDEO_SECONDS = 30
@@ -440,7 +440,7 @@ def do_dvr_post_process(input_file,
                     if file.startswith(f".~{base_filename}.") and file.endswith(".srt") and not file.endswith('.cc.srt'):
                         os.remove(os.path.join(cc_root, file))
                     elif file.startswith(f".~{base_filename}.cc."):
-                        common.match_owner_and_perm(target_path=os.path.join(cc_root, file), source_path=filename)
+                        fsutil.match_owner_and_perm(target_path=os.path.join(cc_root, file), source_path=filename)
         else:
             cc_returncode = 0
 
@@ -684,7 +684,7 @@ def do_dvr_post_process(input_file,
                     f", keeping the original")
         return 0
 
-    common.match_owner_and_perm(target_path=temp_filename, source_path=filename)
+    fsutil.match_owner_and_perm(target_path=temp_filename, source_path=filename)
 
     # Hide original file in case OUTPUT_TYPE is the same as input
     os.replace(filename, hidden_filename)

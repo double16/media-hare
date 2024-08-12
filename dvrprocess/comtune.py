@@ -31,7 +31,7 @@ from comchap import comchap, build_comskip_ini, find_comskip_ini, get_expected_a
     INI_GROUP_MAIN_SETTINGS, INI_GROUP_MAIN_SCORING, INI_GROUP_GLOBAL_REMOVES, INI_GROUP_LOGO_FINDING, \
     INI_GROUP_LOGO_INTERPRETATION, INI_GROUP_VERSIONS, INI_ITEM_VERSIONS_VIDEO_STATS, INI_ITEM_VERSIONS_GAD_TUNING, \
     INI_GROUP_DETAILED_SETTINGS, get_comskip_hwassist_options, INI_GROUP_INPUT_CORRECTION
-from common import tools, config, constants, edl_util, progress
+from common import tools, config, constants, edl_util, progress, fsutil
 
 TUNE_SHOW_MIN_VIDEO_COUNT = 5
 
@@ -422,7 +422,7 @@ def write_ini(path, max_avg_brightness, max_volume, non_uniformity):
 
     with open(path, "w") as f:
         config.write(f, space_around_delimiters=False)
-    common.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
+    fsutil.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
 
 
 def write_ini_from_solution(path, genes: list[ComskipGene], solution: list, write_complete_config=False,
@@ -448,7 +448,7 @@ def write_ini_from_solution(path, genes: list[ComskipGene], solution: list, writ
 
     with open(path, "w") as f:
         config.write(f, space_around_delimiters=False)
-    common.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
+    fsutil.match_owner_and_perm(target_path=path, source_path=os.path.dirname(os.path.abspath(path)))
 
 
 def is_tuned(path, workdir):

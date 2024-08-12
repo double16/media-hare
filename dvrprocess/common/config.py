@@ -10,6 +10,7 @@ from enum import Enum
 from functools import lru_cache
 
 from . import constants
+from .fsutil import match_owner_and_perm
 
 _config_lock = threading.Lock()
 
@@ -305,6 +306,7 @@ def set_file_config(path: str, config: ConfigParser):
     config.set('general', 'fingerprint', _mkv_fingerprint(path))
     with open(config_path, "wt") as file:
         config.write(file)
+    match_owner_and_perm(target_path=config_path, source_path=path)
 
 
 def get_file_config_option(path: str, section: str, option: str) -> str:
