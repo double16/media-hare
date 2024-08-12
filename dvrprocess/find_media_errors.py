@@ -124,25 +124,30 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                            time_limit=config.get_global_config_time_seconds('background_limits', 'time_limit'),
                            check_compute=True) -> Iterable[MediaErrorFileInfo]:
     time_start = time.time()
+    only_cached = False
 
     for media_path in media_paths:
         for root, dirs, files in os.walk(media_path, topdown=True):
             for file in common.filter_for_mkv(files):
-                duration = time.time() - time_start
-                if 0 < time_limit < duration:
-                    logger.debug(
-                        f"Exiting normally after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached")
-                    return
-
                 filepath = os.path.join(root, file)
                 cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
                 if cached_error_count:
                     error_count = int(cached_error_count)
+                elif only_cached:
+                    continue
                 else:
+                    duration = time.time() - time_start
+                    if 0 < time_limit < duration:
+                        logger.debug(
+                            f"Time limit expired after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached, only using cached data")
+                        only_cached = True
+                        continue
                     if check_compute and common.should_stop_processing():
                         # when compute limit is reached, use cached data
                         logger.debug("not enough compute available, only using cached data")
+                        only_cached = True
                         continue
+
                     error_count = len(tools.ffmpeg.check_output(
                         ['-y', '-v', 'error', '-i', filepath, '-c:v', 'vnull', '-c:a', 'anull', '-f', 'null',
                          '/dev/null'],
