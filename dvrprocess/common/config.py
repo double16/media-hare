@@ -289,7 +289,7 @@ def get_file_config(path: str) -> ConfigParser:
     config = ConfigParser()
     if os.path.exists(config_path):
         config.read(config_path)
-        if config.get('general', 'fingerprint') != _mkv_fingerprint(path):
+        if config.get('general', 'fingerprint', fallback=None) != _mkv_fingerprint(path):
             config = ConfigParser()
     return config
 

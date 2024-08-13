@@ -31,6 +31,8 @@ Output options:
     Directory containing media. Defaults to {common.get_media_roots()}
 --nagios
     Output for Nagios monitoring. Also human readable with statistics and estimates of transcode time.
+--cache-only
+    Only report cached results, do not look for new media errors.
 --time-limit={config.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
 --ignore-compute
@@ -44,10 +46,11 @@ def find_media_errors_cli(argv):
     nagios_output = False
     time_limit = config.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
+    cache_only = False
 
     try:
         opts, args = getopt.getopt(argv, "t:d:",
-                                   ["terminator=", "dir=", "nagios", "time-limit=", "ignore-compute"])
+                                   ["terminator=", "dir=", "nagios", "time-limit=", "ignore-compute", "cache-only"])
     except getopt.GetoptError:
         usage()
         return 2
@@ -70,6 +73,8 @@ def find_media_errors_cli(argv):
             time_limit = config.parse_seconds(arg)
         elif opt == '--ignore-compute':
             check_compute = False
+        elif opt == '--cache-only':
+            cache_only = True
 
     if not roots:
         roots = common.get_media_roots()
@@ -84,7 +89,7 @@ def find_media_errors_cli(argv):
         return 0
 
     generator = media_errors_generator(media_paths=media_paths, media_roots=roots,
-                                       time_limit=time_limit, check_compute=check_compute)
+                                       time_limit=time_limit, check_compute=check_compute, cache_only=cache_only)
 
     if nagios_output:
         corrupt_files = list(generator)
@@ -122,9 +127,8 @@ class MediaErrorFileInfo(object):
 
 def media_errors_generator(media_paths: list[str], media_roots: list[str],
                            time_limit=config.get_global_config_time_seconds('background_limits', 'time_limit'),
-                           check_compute=True) -> Iterable[MediaErrorFileInfo]:
+                           check_compute=True, cache_only=False) -> Iterable[MediaErrorFileInfo]:
     time_start = time.time()
-    only_cached = False
 
     for media_path in media_paths:
         for root, dirs, files in os.walk(media_path, topdown=True):
@@ -133,19 +137,19 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                 cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
                 if cached_error_count:
                     error_count = int(cached_error_count)
-                elif only_cached:
+                elif cache_only:
                     continue
                 else:
                     duration = time.time() - time_start
                     if 0 < time_limit < duration:
                         logger.debug(
                             f"Time limit expired after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached, only using cached data")
-                        only_cached = True
+                        cache_only = True
                         continue
                     if check_compute and common.should_stop_processing():
                         # when compute limit is reached, use cached data
                         logger.debug("not enough compute available, only using cached data")
-                        only_cached = True
+                        cache_only = True
                         continue
 
                     error_count = len(tools.ffmpeg.check_output(
