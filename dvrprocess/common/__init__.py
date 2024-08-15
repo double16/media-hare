@@ -912,7 +912,7 @@ def split_every(n, iterable):
     return [iterable[i:i + n] for i in range(0, len(iterable), n)]
 
 
-def check_already_running():
+def check_already_running(quiet=False):
     """
     Check if other processes like me are running.
     :return: True if there are other processes, False if I'm the only one.
@@ -926,7 +926,8 @@ def check_already_running():
         except (PermissionError, AccessDenied, ProcessLookupError, NoSuchProcess):
             pass
     if len(others) > 0:
-        logger.error(f"process(es) already running: {list(map(lambda p: p.pid, others))}")
+        if not quiet:
+            logger.error(f"process(es) already running: {list(map(lambda p: p.pid, others))}")
         return True
     return False
 

@@ -85,8 +85,8 @@ def find_media_errors_cli(argv):
         media_paths = common.get_media_paths(roots)
     logger.debug("media_paths = %s", media_paths)
 
-    if common.check_already_running():
-        return 0
+    if common.check_already_running(quiet=True):
+        cache_only = True
 
     generator = media_errors_generator(media_paths=media_paths, media_roots=roots,
                                        time_limit=time_limit, check_compute=check_compute, cache_only=cache_only)
