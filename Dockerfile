@@ -74,6 +74,7 @@ COPY comtune-apply.sh /etc/cron.daily/comtune-apply
 COPY transcode-apply.sh /etc/cron.hourly/transcode-apply
 COPY media-errors.sh /etc/cron.daily/media-errors
 COPY profanity-filter-apply.sh /etc/cron.daily/profanity-filter-apply
+COPY clean-orphaned-files.sh /etc/cron.weekly/clean-orphaned-files
 COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/
