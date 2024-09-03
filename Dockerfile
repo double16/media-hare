@@ -101,6 +101,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     ln -s /usr/local/share/dvrprocess/smart-comcut.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/tvshow-summary.py /usr/local/bin/ &&\
     ln -s /usr/local/share/dvrprocess/tvshow-suspicious.py /usr/local/bin/ &&\
+    ln -s /usr/local/share/dvrprocess/clean_orphaned_files.py /usr/local/bin/ &&\
     chmod +x /usr/local/bin/* /usr/sbin/sendmail /usr/bin/hwaccel-drivers* && \
     ln -s /usr/bin/hwaccel-drivers-wrapper /etc/cron.daily/1hwaccel-drivers &&\
     systemctl enable cron &&\
