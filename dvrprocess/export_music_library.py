@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import json
 from plexapi.server import PlexServer
 import argparse
