@@ -49,5 +49,5 @@ if __name__ == "__main__":
     if args.root_dir:
         find_orphaned_files(args.root_dir, dry_run=args.dry_run)
     else:
-        for root_dir in common.get_media_roots():
+        for root_dir in common.get_media_paths():
             find_orphaned_files(root_dir, dry_run=args.dry_run)
