@@ -8,6 +8,7 @@ import common
 
 # Define the metadata extensions
 metadata_extensions = [".bak.edl", ".edl", ".mkv.ini", ".comskip.ini"]
+metadata_files = ['comskip.ini', '.DS_Store']
 
 def find_orphaned_files(root_dir, dry_run=False):
     # Walk through all directories and files within the root directory
@@ -33,12 +34,21 @@ def find_orphaned_files(root_dir, dry_run=False):
                             os.remove(orphan_file)
                             print(f"Removed: {orphan_file}")
         # After processing files, check if the directory is empty
-        if not os.listdir(dirpath) and removed_files:
-            if dry_run:
-                print(f"[DRY RUN] Would remove empty directory: {dirpath}")
-            else:
-                os.rmdir(dirpath)
-                print(f"Removed empty directory: {dirpath}")
+        if removed_files:
+            contents = os.listdir(dirpath)
+            contents_to_remove = list()
+            for file in metadata_files:
+                if file in contents:
+                    contents.remove(file)
+                    contents_to_remove.append(file)
+            if not contents:
+                if dry_run:
+                    print(f"[DRY RUN] Would remove empty directory: {dirpath}")
+                else:
+                    for file in contents_to_remove:
+                        os.remove(os.path.join(dirpath, file))
+                    os.rmdir(dirpath)
+                    print(f"Removed empty directory: {dirpath}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Remove orphaned metadata files.")
