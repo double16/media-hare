@@ -20,7 +20,11 @@ if [ -s '/sys/module/nvidia/version' ]; then
         APT_UPDATED=1
       fi
       NV_PKG_VERSION="$(apt list -a "${NV_PKG}-${NV_MAJOR_VER}${NV_PKG_SUFFIX}" 2>/dev/null | grep -F "${NV_VERSION}" | head -n 1 | tr -s '[:space:]' | cut -d ' ' -f 2)"
-      NV_PKG_INSTALL+=("${NV_PKG}-${NV_MAJOR_VER}${NV_PKG_SUFFIX}=${NV_PKG_VERSION}")
+      if [ -n "${NV_PKG_VERSION}" ]; then
+        NV_PKG_INSTALL+=("${NV_PKG}-${NV_MAJOR_VER}${NV_PKG_SUFFIX}=${NV_PKG_VERSION}")
+      else
+        NV_PKG_INSTALL+=("${NV_PKG}-${NV_MAJOR_VER}${NV_PKG_SUFFIX}")
+      fi
     fi
   done
   for SUPPORT_PKG in gpustat; do
