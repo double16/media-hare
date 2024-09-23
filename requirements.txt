@@ -11,4 +11,6 @@ IMDbPY==2022.7.9
 thefuzz[speedup]==0.19.0
 Levenshtein==0.25.1
 num2words==0.5.13
-language-tool-python==2.8
+language-tool-python==2.8.1
+# 2024-09-23 python 3.12 removed 'distutils', some packages use it, this installs it:
+setuptools==75.1.0
