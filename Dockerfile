@@ -1,4 +1,4 @@
-FROM ubuntu:23.10 as comskipbuild
+FROM ubuntu:24.04 as comskipbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,7 @@ RUN cd Comskip &&\
     make &&\
     make install
 
-FROM ubuntu:23.10 as ccbuild
+FROM ubuntu:24.04 as ccbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,9 +29,9 @@ RUN cd ccextractor/linux &&\
     ./ccextractor --version &&\
     cp ccextractor /usr/local/bin
 
-FROM ubuntu:23.10
+FROM ubuntu:24.04
 
-ARG SYSTEMCTL_VER=v1.5.8066
+ARG SYSTEMCTL_VER=ac9b3916dd069ba053e4259cf74131028935f5e1
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY requirements.txt /tmp/
