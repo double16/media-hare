@@ -921,8 +921,13 @@ def check_already_running(quiet=False):
     others = []
     for p in psutil.process_iter():
         try:
-            if my_name in " ".join(p.cmdline()) and p.pid != os.getpid():
-                others.append(p)
+            if p.pid != os.getpid():
+                cmdline = list(p.cmdline())
+                if len(cmdline) > 0:
+                    if 'python' in os.path.basename(cmdline[0]).lower():
+                        cmdline.pop(0)
+                if len(cmdline) > 0 and my_name in cmdline[0]:
+                    others.append(p)
         except (PermissionError, AccessDenied, ProcessLookupError, NoSuchProcess):
             pass
     if len(others) > 0:
