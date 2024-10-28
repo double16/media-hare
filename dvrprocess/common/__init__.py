@@ -1430,3 +1430,13 @@ def should_adjust_frame_rate(current_frame_rate: Union[None, str, float], desire
 
     frame_rate_pct = abs(current_frame_rate_f - desired_frame_rate_f) / max(current_frame_rate_f, desired_frame_rate_f)
     return frame_rate_pct >= tolerance
+
+
+def is_file_in_hidden_dir(filepath) -> bool:
+    """
+    Check if the file is inside a hidden directory, i.e. a directory name starting
+    with ".". Any directory in the path starting with "." will return True.
+    :param filepath: the full or partial path
+    :return:
+    """
+    return filepath.startswith('.') or f"{os.path.sep}." in filepath

@@ -134,6 +134,8 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
         for root, dirs, files in os.walk(media_path, topdown=True):
             for file in common.filter_for_mkv(files):
                 filepath = os.path.join(root, file)
+                if common.is_file_in_hidden_dir(filepath):
+                    continue
                 cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
                 if cached_error_count:
                     error_count = int(cached_error_count)

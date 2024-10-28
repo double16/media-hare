@@ -193,6 +193,8 @@ def _os_walk_media_generator(media_paths, desired_audio_codecs: list[str], desir
 
             for file in common.filter_for_mkv(files):
                 filepath = os.path.join(root, file)
+                if common.is_file_in_hidden_dir(filepath):
+                    continue
 
                 # check the transcode overrides based on the folder structure
                 if desired_video_codecs != ['all']:
