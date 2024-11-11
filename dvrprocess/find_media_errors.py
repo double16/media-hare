@@ -7,6 +7,10 @@ import sys
 import time
 from collections.abc import Iterable
 
+import numpy as np
+from scipy.signal import find_peaks
+from statsmodels import robust
+
 import common
 from common import tools, config
 
@@ -107,7 +111,7 @@ def find_media_errors_cli(argv):
 
         print(f"MEDIA_ERRORS {level}: files: {len(corrupt_files)} | MEDIA_ERRORS;{len(corrupt_files)}")
         for e in corrupt_files:
-            print(f"{e.file_name};{e.error_count}")
+            print(f"{e.file_name};{e.error_count};eas={str(e.eas_detected).lower()}")
         return code
     else:
         for e in generator:
@@ -118,11 +122,130 @@ def find_media_errors_cli(argv):
 
 class MediaErrorFileInfo(object):
 
-    def __init__(self, file_name: str, host_file_path: str, size: float, error_count: int):
+    def __init__(self, file_name: str, host_file_path: str, size: float, error_count: int, eas_detected: bool):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.size = size
         self.error_count = error_count
+        self.eas_detected = eas_detected
+
+
+def detect_eas_tones(filepath) -> bool:
+    # Audio stream parameters
+    sample_rate = 44100
+    dtype = np.int16  # Data type for 16-bit PCM
+
+    ffmpeg_cmd = [
+        '-hide_banner',
+        '-loglevel', 'error',
+        '-nostdin',
+        '-i', filepath,
+        '-f', 's16le',
+        '-acodec', 'pcm_s16le',
+        '-ar', str(sample_rate),
+        '-ac', '1',
+        '-'
+    ]
+    process = tools.ffmpeg.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+    try:
+        # Define the window size and overlap for the FFT
+        window_duration = 0.3  # Duration of each window in seconds
+        window_size = int(sample_rate * window_duration)
+        overlap = int(window_size * 0.5)  # 50% overlap
+
+        # Initialize a buffer to hold audio data
+        buffer_size = window_size - overlap
+        audio_buffer = np.array([], dtype=dtype)
+
+        # Initialize variables for dynamic thresholding
+        magnitude_1562_list = []
+        magnitude_2083_list = []
+        time_stamps = []
+
+        time_position = 0.0
+
+        while True:
+            raw_data = process.stdout.read(buffer_size * dtype().nbytes)
+            if not raw_data:
+                break
+
+            audio_chunk = np.frombuffer(raw_data, dtype=dtype)
+
+            audio_buffer = np.concatenate((audio_buffer, audio_chunk))
+
+            # If the buffer has enough data, process it
+            if len(audio_buffer) >= window_size:
+                # Extract the current window
+                window_data = audio_buffer[:window_size]
+
+                # Apply a Hamming window to reduce spectral leakage
+                windowed_data = window_data * np.hamming(len(window_data))
+
+                # Perform FFT
+                fft_spectrum = np.fft.rfft(windowed_data)
+                freq = np.fft.rfftfreq(len(windowed_data), d=1. / sample_rate)
+
+                # Compute magnitude spectrum in dB
+                magnitude = np.abs(fft_spectrum)
+                magnitude_db = 20 * np.log10(magnitude + 1e-6)  # Add epsilon to avoid log(0)
+
+                # Detect frequencies near EAS tones
+                idx_1562 = np.where((freq >= 1560) & (freq <= 1565))[0]
+                idx_2083 = np.where((freq >= 2080) & (freq <= 2085))[0]
+
+                # Calculate average magnitude at target frequencies
+                avg_magnitude_1562 = np.mean(magnitude_db[idx_1562]) if idx_1562.size > 0 else -np.inf
+                avg_magnitude_2083 = np.mean(magnitude_db[idx_2083]) if idx_2083.size > 0 else -np.inf
+
+                # Append magnitudes and time stamps to lists
+                magnitude_1562_list.append(avg_magnitude_1562)
+                magnitude_2083_list.append(avg_magnitude_2083)
+                time_stamps.append(time_position)
+
+                # Update time position
+                time_position += (window_size - overlap) / sample_rate
+
+                # Remove the processed window from the buffer
+                audio_buffer = audio_buffer[window_size - overlap:]
+
+        # After processing, convert lists to numpy arrays
+        magnitude_1562_array = np.array(magnitude_1562_list)
+        magnitude_2083_array = np.array(magnitude_2083_list)
+        time_stamps_array = np.array(time_stamps)
+
+        median_1562 = np.median(magnitude_1562_array)
+        mad_1562 = robust.mad(magnitude_1562_array)
+        median_2083 = np.median(magnitude_2083_array)
+        mad_2083 = robust.mad(magnitude_2083_array)
+
+        # Set the threshold as median + N * MAD
+        N = 3
+        threshold_1562 = median_1562 + N * mad_1562
+        threshold_2083 = median_2083 + N * mad_2083
+
+        # Use the higher threshold for peak detection to reduce false positives
+        threshold = max(threshold_1562, threshold_2083)
+
+        # Use peak detection to find peaks in the magnitude arrays
+        peaks_1562, _ = find_peaks(magnitude_1562_array, height=threshold)
+        peaks_2083, _ = find_peaks(magnitude_2083_array, height=threshold)
+
+        # Find overlapping peaks (peaks that occur at the same time)
+        peaks_common = np.intersect1d(peaks_1562, peaks_2083)
+
+        # Report detected EAS tones
+        if peaks_common.size >= 2:
+            # for peak_idx in peaks_common:
+            #     peak_time = time_stamps_array[peak_idx]
+            #     print(f"{filepath}: EAS tones detected at {peak_time:.2f} seconds.", file=sys.stderr)
+            return True
+        else:
+            # print(f"{filepath}: No EAS tones detected.", file=sys.stderr)
+            return False
+
+    finally:
+        process.terminate()
 
 
 def media_errors_generator(media_paths: list[str], media_roots: list[str],
@@ -136,6 +259,7 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                 filepath = os.path.join(root, file)
                 if common.is_file_in_hidden_dir(filepath):
                     continue
+
                 cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
                 if cached_error_count:
                     error_count = int(cached_error_count)
@@ -159,13 +283,24 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                          '/dev/null'],
                         stderr=subprocess.STDOUT, text=True).splitlines())
                     config.set_file_config_option(filepath, 'error', 'count', str(error_count))
-                if error_count <= ERROR_THRESHOLD:
+
+                cached_eas_detected = config.get_file_config_option(filepath, 'error', 'eas')
+                if cached_eas_detected is not None:
+                    eas_detected = cached_eas_detected.lower() == "true"
+                elif cache_only:
+                    continue
+                else:
+                    eas_detected = detect_eas_tones(filepath)
+                    config.set_file_config_option(filepath, 'error', 'eas', str(eas_detected))
+
+                if error_count <= ERROR_THRESHOLD and not eas_detected:
                     continue
                 file_info = MediaErrorFileInfo(
                     file_name=common.get_media_file_relative_to_root(filepath, media_roots)[0],
                     host_file_path=filepath,
                     size=os.stat(filepath).st_size,
-                    error_count=error_count)
+                    error_count=error_count,
+                    eas_detected=eas_detected)
                 yield file_info
 
 
