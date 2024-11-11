@@ -546,6 +546,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
                 logger.info("Not considering %s because it's not from DVR", file_path)
         else:
             logger.info("Not considering %s because it has %d episodes", file_path, episode_count)
+        # TODO: don't consider if there are media errors above the threshold
         input_dirs.add(os.path.dirname(file_path))
 
     if len(dvr_infos) < TUNE_SHOW_MIN_VIDEO_COUNT:
@@ -655,6 +656,7 @@ def setup_gad(process_pool: Pool, thread_pool: ThreadPoolExecutor, files, workdi
 
     tuning_progress = progress.progress(f"{input_dirs.pop()} tuning", 0, num_generations + 1)
 
+    # TODO: use logic from smart-comcut to identify files outside of accepted parameters, count the occurrences, and remove files from considered that reach a threshold. There is likely something wrong with the video causing an issue.
     def f(gad: pygad.GA, solution, solution_idx):
         write_ini_from_solution(comskip_fitness_ini_path, genes, solution)
         logger.debug(f"Calculating fitness for {solution_repl(genes, solution)}")

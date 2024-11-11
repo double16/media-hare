@@ -1,15 +1,15 @@
 ass-parser==1.0
 pysrt==1.1.2
-plexapi==4.15.15
-psutil==5.9.8
+plexapi==4.15.16
+psutil==6.1.0
 requests==2.32.3
 pygad==3.3.1
 # vosk==0.3.45 doesn't install correctly
 vosk==0.3.44
-websockets==12.0
+websockets==14.0
 IMDbPY==2022.7.9
 thefuzz[speedup]==0.19.0
-Levenshtein==0.25.1
+Levenshtein==0.26.1
 num2words==0.5.13
 language-tool-python==2.8.1
 # 2024-09-23 python 3.12 removed 'distutils', some packages use it, this installs it:
