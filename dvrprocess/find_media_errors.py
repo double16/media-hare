@@ -261,11 +261,11 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                     continue
 
                 cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
-                if cached_error_count:
-                    error_count = int(cached_error_count)
-                elif cache_only:
-                    continue
-                else:
+                cached_eas_detected = config.get_file_config_option(filepath, 'error', 'eas')
+                if cached_error_count is None or cached_eas_detected is None:
+                    # We need to calculate one or both, check if we should
+                    if cache_only:
+                        continue
                     duration = time.time() - time_start
                     if 0 < time_limit < duration:
                         logger.debug(
@@ -278,17 +278,17 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                         cache_only = True
                         continue
 
+                if cached_error_count is not None:
+                    error_count = int(cached_error_count)
+                else:
                     error_count = len(tools.ffmpeg.check_output(
                         ['-y', '-v', 'error', '-i', filepath, '-c:v', 'vnull', '-c:a', 'anull', '-f', 'null',
                          '/dev/null'],
                         stderr=subprocess.STDOUT, text=True).splitlines())
                     config.set_file_config_option(filepath, 'error', 'count', str(error_count))
 
-                cached_eas_detected = config.get_file_config_option(filepath, 'error', 'eas')
                 if cached_eas_detected is not None:
                     eas_detected = cached_eas_detected.lower() == "true"
-                elif cache_only:
-                    continue
                 else:
                     eas_detected = detect_eas_tones(filepath)
                     config.set_file_config_option(filepath, 'error', 'eas', str(eas_detected))
