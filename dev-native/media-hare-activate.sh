@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-docker compose -p mh -f "$(dirname "$0")/docker-compose-langtools.yml" up -d
-source "$(dirname "$0")/../.venv/bin/activate"
-export PATH="${PATH}:$(pwd)/$(dirname "$0")/../dvrprocess"
+script_dir=$(cd "$(dirname "$0")" && pwd)
+docker compose -p mh -f "${script_dir}/docker-compose-langtools.yml" up -d
+source "${script_dir}/../.venv/bin/activate"
+export PATH="${PATH}:${script_dir}/../dvrprocess"
 export LANGUAGE_TOOL_HOST=localhost
 export KALDI_EN_HOST=localhost
 export KALDI_EN_PORT=2700

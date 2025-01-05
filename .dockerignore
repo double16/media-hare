@@ -1,6 +1,10 @@
+docs/
 venv/
+dev-native/
+fixtures/
 .venv/
 .git/
+.github/
 .idea/
 .pytest_cache/
 .coverage/
