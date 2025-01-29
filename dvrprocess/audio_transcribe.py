@@ -113,19 +113,23 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     if duration is not None:
         ffmpeg_command.extend(['-to', str(edl_util.parse_edl_ts(duration))])
 
-    if audio_filter:
-        if 'pan=' not in audio_filter:
-            ffmpeg_command.extend(['-ac', str(num_channels)])
+    if audio_filter and 'pan=' in audio_filter:
         ffmpeg_command.extend(['-af', audio_filter])
     else:
         channels = int(audio_original.get(constants.K_CHANNELS, 0))
         if channels > 2:
             if num_channels == 1:
-                ffmpeg_command.extend(['-af', 'pan=mono|FC<FC+0.5*FL+0.5*FR'])
+                pan='pan=mono|FC<FC+0.5*FL+0.5*FR'
             else:
-                ffmpeg_command.extend(['-af', 'pan=stereo|FL<FL+FC|FR<FR+FC'])
+                pan='pan=stereo|FL<FL+FC|FR<FR+FC'
+            if audio_filter:
+                ffmpeg_command.extend(['-af', pan+","+audio_filter])
+            else:
+                ffmpeg_command.extend(['-af', pan])
         else:
             ffmpeg_command.extend(['-ac', str(num_channels)])
+            if audio_filter:
+                ffmpeg_command.extend(['-af', audio_filter])
 
     ffmpeg_command.extend(['-f', 'wav', '-'])
     print(tools.ffmpeg.array_as_command(ffmpeg_command))
@@ -253,6 +257,7 @@ def audio_transcribe_cli(argv):
     ]
     with open(audio_filter_file, "rt") as audio_filter_fh:
         for line in audio_filter_fh.readlines():
+            line = line.strip()
             if not line or line.startswith("#"):
                 continue
             if '","' in line:

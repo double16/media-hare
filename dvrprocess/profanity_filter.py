@@ -281,11 +281,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if need_words_transcribed(subtitle_words, audio_to_text_version, force):
             logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
+            audio_to_text_filter = "acompressor=threshold=-30dB:ratio=3:attack=10:release=200:knee=6:makeup=6,loudnorm=I=-16:TP=-1.5"
             if audio_channels > 2:
-                # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC'
-                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR'
-            else:
-                audio_to_text_filter = None
+                # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC,'+audio_to_text_filter
+                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR,'+audio_to_text_filter
             subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
             if subtitle_srt_words and os.stat(subtitle_srt_words).st_size > 0:
                 audio_to_text_version = AUDIO_TO_TEXT_VERSION
