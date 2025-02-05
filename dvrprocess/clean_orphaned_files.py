@@ -8,7 +8,7 @@ import common
 
 # Define the metadata extensions
 metadata_extensions = [".bak.edl", ".edl", ".mkv.ini", ".comskip.ini"]
-metadata_files = ['comskip.ini', '.DS_Store']
+metadata_files = ['comskip.ini', '.DS_Store', 'gad.pkl', 'gad.ini', 'fitness.json']
 
 def find_orphaned_files(root_dir, dry_run=False):
     # Walk through all directories and files within the root directory
