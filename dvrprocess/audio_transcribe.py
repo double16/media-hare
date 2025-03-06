@@ -171,7 +171,7 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     conf_avg = mean(confs)
     conf_stdev = stdev(confs)
 
-    notes = f'# freq {freq} buf {buffer_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
+    notes = f'# model {model_name} freq {freq} buf {buffer_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
     notes_item = SubRipItem(index=0, start=SubRipTime(seconds=0), end=SubRipTime(seconds=1), text=notes)
 
     subs_words = []
@@ -254,6 +254,7 @@ def audio_transcribe_cli(argv):
         (None, "vosk-model-en-us-0.22-lgraph"),
         (None, "vosk-model-en-us-0.22"),
         (None, "vosk-model-en-us-daanzu-20200905"),
+        (None, "vosk-model-en-us-0.42-gigaspeech"),
     ]
     with open(audio_filter_file, "rt") as audio_filter_fh:
         for line in audio_filter_fh.readlines():

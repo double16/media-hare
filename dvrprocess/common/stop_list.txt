@@ -192,3 +192,5 @@ felch\w*
 humped
 humping
 (hump|jump) (me|my|you|your|his|him|hers|her)
+give head
+give (him|them) head

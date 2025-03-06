@@ -34,8 +34,8 @@ def vosk_model(language: str) -> Union[None, str]:
         return None
     if language in ['en-us', 'en']:
         # vosk-model-en-us-daanzu-20200905 sometimes is better, but not for the average case
-        # 'vosk-model-en-us-0.42-gigaspeech' is not better
         # return 'vosk-model-en-us-0.22'
+        # 'vosk-model-en-us-0.42-gigaspeech' is slightly better than 'vosk-model-en-us-0.22'
         return 'vosk-model-en-us-0.42-gigaspeech'
     elif language == 'es':
         return 'vosk-model-es-0.42'
