@@ -42,6 +42,24 @@ def vosk_model(language: str) -> Union[None, str]:
     return None
 
 
+def _kaldi_config(freq: Union[int, None], num_channels: Union[int, None]) -> dict:
+    # beam: A larger beam forces the decoder to keep more possible paths open during recognition. This tends to increase CPU usage and decoding time.
+    # lattice_beam: Governs which paths remain in the final lattice. A higher value also slows decoding but may produce better final results.
+    # max_active: Limits how many tokens can be active at once. Increasing this helps in very confusing audio or big vocab scenarios.
+    config = {
+        "words": True,
+        "max_alternatives" : 0,
+        "beam": 25,            # 0.42-gigaspeech is 13.0
+        "lattice_beam": 20,     # 0.42-gigaspeech is 8.0
+        "max_active": 20000,    # 0.42-gigaspeech is 7000
+    }
+    if freq:
+        config["sample_rate"] = freq
+    if num_channels:
+        config["num_channels"] = num_channels
+    return config
+
+
 class BaseKaldiRecognizer(object):
     def __init__(self, vosk_language: str, freq: int):
         self.vosk_language = vosk_language
@@ -68,8 +86,8 @@ class LocalKaldiRecognizer(BaseKaldiRecognizer):
         except KeyError:
             model = Model(model_name=vosk_model(self.vosk_language), lang=self.vosk_language)
             self.vosk_model_cache[self.vosk_language] = model
-        # self.rec = KaldiRecognizer(model, freq, num_channels)  # num_channels is not an argument
-        self.rec = KaldiRecognizer(model, freq)
+
+        self.rec = KaldiRecognizer(model, freq, json.dumps(_kaldi_config(freq, num_channels)))
         self.rec.SetWords(True)
 
     def accept_waveform(self, data) -> int:
@@ -97,9 +115,10 @@ class RemoteKaldiRecognizer(BaseKaldiRecognizer):
         self.remote_port = os.getenv(f'KALDI_{lang2.upper()}_PORT', '2700')
         self.remote_url = f'ws://{self.remote_host}:{self.remote_port}'
         self.socket = wsconnect(self.remote_url)
-        self.socket.send(
-            '{ "config" : { "words" : true, "max_alternatives" : 0, "sample_rate" : %d, "num_channels": %d } }'
-            % (freq, num_channels))
+        config_payload = {
+            "config": _kaldi_config(freq, num_channels)
+        }
+        self.socket.send(json.dumps(config_payload))
 
     def accept_waveform(self, data) -> int:
         self.socket.send(data)

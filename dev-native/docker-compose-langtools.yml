@@ -17,6 +17,7 @@ services:
 
   kaldi-en:
     image: ghcr.io/double16/kaldi-en:latest
+    platform: "linux/amd64"
     restart: unless-stopped
     environment:
       - "VOSK_SHOW_WORDS=true"
@@ -26,6 +27,7 @@ services:
 
   langtool:
     image: ghcr.io/double16/libreoffice-langtool:6.5
+    platform: "linux/amd64"
     restart: unless-stopped
     ports:
       - "8100:8100/tcp"

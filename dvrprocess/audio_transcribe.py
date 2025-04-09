@@ -251,9 +251,9 @@ def audio_transcribe_cli(argv):
         return 0
 
     audio_filter_list = [
-        (None, "vosk-model-en-us-0.22-lgraph"),
-        (None, "vosk-model-en-us-0.22"),
-        (None, "vosk-model-en-us-daanzu-20200905"),
+        # (None, "vosk-model-en-us-0.22-lgraph"),
+        # (None, "vosk-model-en-us-0.22"),
+        # (None, "vosk-model-en-us-daanzu-20200905"),
         (None, "vosk-model-en-us-0.42-gigaspeech"),
     ]
     with open(audio_filter_file, "rt") as audio_filter_fh:
@@ -286,7 +286,7 @@ def audio_transcribe_cli(argv):
         duration_f = edl_util.parse_edl_ts(duration)
 
     expected_text = read_text_from_mkv(input_info, duration_f)
-    r = fuzz.ratio(expected_text, expected_text)
+    r = fuzz.WRatio(expected_text, expected_text)
     print(f"{r}: sanity check expected vs. expected")
     for af_idx, (audio_filter, model_name) in enumerate(audio_filter_list):
         model_name = model_name or DEFAULT_MODEL
@@ -299,7 +299,7 @@ def audio_transcribe_cli(argv):
             buffer_size=buffer_size,
         )
         transcribed_text = read_text_from_srt(text_path, duration_f)
-        r = fuzz.ratio(expected_text, transcribed_text)
+        r = fuzz.WRatio(expected_text, transcribed_text)
         print(f"{r}: {audio_filter},{model_name} - {text_path}")
 
 
