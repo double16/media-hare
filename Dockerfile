@@ -7,7 +7,7 @@ RUN apt-get -q update &&\
     apt-get install -y autoconf libtool git build-essential libargtable2-dev libavformat-dev libsdl1.2-dev libswscale-dev
 RUN git clone https://github.com/erikkaashoek/Comskip --branch master --single-branch
 RUN cd Comskip &&\
-    git reset 109b5d10b086d299d7e43878ccc7951cb7133ed8 --hard
+    git reset 55b0bcd018ddb9dacfad79addc48df55c1411073 --hard
 RUN cd Comskip &&\
     ./autogen.sh &&\
     ./configure &&\
@@ -52,7 +52,7 @@ RUN apt-get -q update && \
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
     rm -rf /tmp/*
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.10/SE4010.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.11/SE4011.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
     curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\

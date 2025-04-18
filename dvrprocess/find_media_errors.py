@@ -29,6 +29,7 @@ Output options:
 1. Absolute paths terminated with null (this can be changed) with the intent to be piped into xargs or similar tool.
 2. Nagios monitoring output, which is also human readable. This also provides some estimates on time to transcode.
 
+--verbose
 -t, --terminator="\\n"
     Set the output terminator, defaults to null (0).
 -d, --dir=
@@ -54,7 +55,7 @@ def find_media_errors_cli(argv):
 
     try:
         opts, args = getopt.getopt(argv, "t:d:",
-                                   ["terminator=", "dir=", "nagios", "time-limit=", "ignore-compute", "cache-only"])
+                                   ["terminator=", "dir=", "nagios", "time-limit=", "ignore-compute", "cache-only", "verbose"])
     except getopt.GetoptError:
         usage()
         return 2
@@ -79,6 +80,9 @@ def find_media_errors_cli(argv):
             check_compute = False
         elif opt == '--cache-only':
             cache_only = True
+        elif opt == "--verbose":
+            logging.getLogger().setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
     if not roots:
         roots = common.get_media_roots()
@@ -236,13 +240,13 @@ def detect_eas_tones(filepath) -> bool:
 
         # Report detected EAS tones
         if peaks_common.size >= 2:
-            # for peak_idx in peaks_common:
-            #     peak_time = time_stamps_array[peak_idx]
-            #     print(f"{filepath}: EAS tones detected at {peak_time:.2f} seconds.", file=sys.stderr)
+            for peak_idx in peaks_common:
+                peak_time = time_stamps_array[peak_idx]
+                logger.debug(f"{filepath}: EAS tones detected at {common.seconds_to_timespec(peak_time)} seconds.")
             return True
-        else:
-            # print(f"{filepath}: No EAS tones detected.", file=sys.stderr)
-            return False
+
+        logger.debug(f"{filepath}: No EAS tones detected.")
+        return False
 
     finally:
         process.terminate()

@@ -132,6 +132,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     keyframes = common.load_keyframes_by_seconds(infile)
     logger.debug("Loaded %s keyframes", len(keyframes))
 
+    # TODO: Detect USE_FIRST_KEYFRAME_FOR_START_TIME if majority of cut start times align with key frames when adjusted
     if USE_FIRST_KEYFRAME_FOR_START_TIME and len(keyframes) > 0:
         start_time = keyframes[0]
     elif video_info and 'start_time' in video_info:

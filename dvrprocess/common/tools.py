@@ -197,6 +197,7 @@ class SubtitleEditProcInvoker(SubprocessProcInvoker):
 subtitle_edit = SubtitleEditProcInvoker()
 
 
+# TODO: specify original audio
 class ComskipProcInvoker(SubprocessProcInvoker):
     pct_matcher = re.compile(r',\s+([0-9]{1,2})[%]')
 

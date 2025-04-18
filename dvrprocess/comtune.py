@@ -1016,6 +1016,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
     sol_per_pop = 500
     num_parents_mating = ceil(sol_per_pop / 2)
     keep_elitism = 5
+    file_sample_size = None  # 15
 
     thread_pool = ThreadPoolExecutor(max_workers=processes)
     try:
@@ -1024,7 +1025,7 @@ def tune_show(season_dir, process_pool: Pool, files, workdir, dry_run, force, ex
             force=force, comskip_defaults=comskip_defaults,
             expensive_genes=expensive_genes, check_compute=check_compute, num_generations=num_generations,
             experimental=experimental,
-            file_sample_size=15,
+            file_sample_size=file_sample_size,
         )
     except UserWarning as e:
         logger.warning(e.args[0])
