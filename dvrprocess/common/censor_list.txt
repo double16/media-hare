@@ -92,12 +92,11 @@ crap[\s-]?hole
 crappier
 crapping?
 damn
-damn it
+damn[\s]?it
+dammit
 damn straight
-goddamn
-god[\s-]damn
-goddamned
-god[\s-]damned
+god[\s-]?damn
+god[\s-]?damned
 goddamn[\s]?it
 goddammit
 god[\s-]damn it
@@ -108,9 +107,7 @@ oh god[\s-]damn you
 oh damn
 oh damn it
 oh damn you
-hotdamn
-hot damn
-hot-damn
+hot[\s-]?damn
 damned
 damn you
 darn
