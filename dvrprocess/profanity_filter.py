@@ -564,6 +564,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                     filtered_spans.append([event.start.ordinal, event.end.ordinal])
                     if stopped:
                         stopped_spans.append([event.start.ordinal, event.end.ordinal])
+            if len(srt_data.data) == 0:
+                srt_data.data.append(SubRipItem())
             srt_data.save(Path(subtitle_filtered_filename), 'utf-8')
             # Forced SRT file will be invalid unless we have at least one entry
             if len(srt_data_forced.data) == 0:
@@ -1134,6 +1136,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     # allow for no words, some videos don't have speech
     if len(subs_words) == 0:
         logger.warning("audio-to-text transcription empty")
+        subs_words.append(SubRipItem())
         # return None
 
     srt_words = SubRipFile(items=subs_words, path=words_filename)

@@ -12,6 +12,7 @@ import sys
 import threading
 import time
 import traceback
+from configparser import NoOptionError
 from enum import Enum
 from multiprocessing import Pool
 from typing import Union
@@ -59,7 +60,7 @@ def _find_media_roots() -> list[str]:
                     mount_points.append(part.mountpoint)
             if mount_points:
                 return mount_points
-    except KeyError:
+    except (KeyError, NoOptionError):
         logger.debug('No media.paths in config')
     try:
         roots = []
@@ -69,7 +70,7 @@ def _find_media_roots() -> list[str]:
                 roots.append(root)
         if roots:
             return roots
-    except KeyError:
+    except (KeyError, NoOptionError):
         logger.debug('No media.root in config')
     logger.info('No valid media.root found, returning user home')
     return [os.environ['HOME']]

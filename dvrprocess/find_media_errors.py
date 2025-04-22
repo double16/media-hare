@@ -115,7 +115,7 @@ def find_media_errors_cli(argv):
 
         print(f"MEDIA_ERRORS {level}: files: {len(corrupt_files)} | MEDIA_ERRORS;{len(corrupt_files)}")
         for e in corrupt_files:
-            print(f"{e.file_name};{e.error_count};eas={str(e.eas_detected).lower()}")
+            print(f"{e.file_name};{e.error_count};eas={str(e.eas_detected).lower()};silence={str(e.silence_detected).lower()}")
         return code
     else:
         for e in generator:
@@ -126,12 +126,13 @@ def find_media_errors_cli(argv):
 
 class MediaErrorFileInfo(object):
 
-    def __init__(self, file_name: str, host_file_path: str, size: float, error_count: int, eas_detected: bool):
+    def __init__(self, file_name: str, host_file_path: str, size: float, error_count: int, eas_detected: bool, silence_detected: bool):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.size = size
         self.error_count = error_count
         self.eas_detected = eas_detected
+        self.silence_detected = silence_detected
 
 
 def detect_eas_tones(filepath) -> bool:
@@ -218,15 +219,15 @@ def detect_eas_tones(filepath) -> bool:
         magnitude_2083_array = np.array(magnitude_2083_list)
         time_stamps_array = np.array(time_stamps)
 
-        median_1562 = np.median(magnitude_1562_array)
-        mad_1562 = robust.mad(magnitude_1562_array)
-        median_2083 = np.median(magnitude_2083_array)
-        mad_2083 = robust.mad(magnitude_2083_array)
+        median_1562: float = float(np.median(magnitude_1562_array))
+        mad_1562: float = robust.mad(magnitude_1562_array)
+        median_2083: float = float(np.median(magnitude_2083_array))
+        mad_2083: float = robust.mad(magnitude_2083_array)
 
         # Set the threshold as median + N * MAD
         N = 3
-        threshold_1562 = median_1562 + N * mad_1562
-        threshold_2083 = median_2083 + N * mad_2083
+        threshold_1562: float = median_1562 + N * mad_1562
+        threshold_2083: float = median_2083 + N * mad_2083
 
         # Use the higher threshold for peak detection to reduce false positives
         threshold = max(threshold_1562, threshold_2083)
@@ -252,6 +253,26 @@ def detect_eas_tones(filepath) -> bool:
         process.terminate()
 
 
+def detect_silent_audio(filepath) -> bool:
+    ffmpeg_cmd = [
+        '-hide_banner',
+        '-nostdin',
+        '-i', filepath,
+        '-af', 'silencedetect=noise=-50dB:d=300',
+        '-f', 'null',
+        '-'
+    ]
+
+    output = tools.ffmpeg.check_output(ffmpeg_cmd, stderr=subprocess.STDOUT, text=True)
+    silence_lines = list(filter(lambda e: "silencedetect" in e, output.splitlines()))
+    if len(silence_lines) > 0:
+        logger.debug(f"{filepath}: Silence detected.")
+        return True
+    else:
+        logger.debug(f"{filepath}: No silence detected.")
+        return False
+
+
 def media_errors_generator(media_paths: list[str], media_roots: list[str],
                            time_limit=config.get_global_config_time_seconds('background_limits', 'time_limit'),
                            check_compute=True, cache_only=False) -> Iterable[MediaErrorFileInfo]:
@@ -266,8 +287,9 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
 
                 cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
                 cached_eas_detected = config.get_file_config_option(filepath, 'error', 'eas')
-                if cached_error_count is None or cached_eas_detected is None:
-                    # We need to calculate one or both, check if we should
+                cached_silence_detected = config.get_file_config_option(filepath, 'error', 'silence')
+                if cached_error_count is None or cached_eas_detected is None or cached_silence_detected is None:
+                    # We need to calculate one of these, check if we should
                     if cache_only:
                         continue
                     duration = time.time() - time_start
@@ -297,14 +319,22 @@ def media_errors_generator(media_paths: list[str], media_roots: list[str],
                     eas_detected = detect_eas_tones(filepath)
                     config.set_file_config_option(filepath, 'error', 'eas', str(eas_detected))
 
-                if error_count <= ERROR_THRESHOLD and not eas_detected:
+                if cached_silence_detected is not None:
+                    silence_detected = cached_silence_detected.lower() == "true"
+                else:
+                    silence_detected = detect_silent_audio(filepath)
+                    config.set_file_config_option(filepath, 'error', 'silence', str(silence_detected))
+
+                if error_count <= ERROR_THRESHOLD and not eas_detected and not silence_detected:
                     continue
                 file_info = MediaErrorFileInfo(
                     file_name=common.get_media_file_relative_to_root(filepath, media_roots)[0],
                     host_file_path=filepath,
                     size=os.stat(filepath).st_size,
                     error_count=error_count,
-                    eas_detected=eas_detected)
+                    eas_detected=eas_detected,
+                    silence_detected=silence_detected,
+                )
                 yield file_info
 
 
