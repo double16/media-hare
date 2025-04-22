@@ -287,9 +287,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                 # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC,'+audio_to_text_filter
                 audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR,'+audio_to_text_filter
             subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
-            if subtitle_srt_words and os.stat(subtitle_srt_words).st_size > 0:
-                audio_to_text_version = AUDIO_TO_TEXT_VERSION
-            else:
+            audio_to_text_version = AUDIO_TO_TEXT_VERSION
+            if subtitle_srt_words and os.stat(subtitle_srt_words).st_size == 0:
                 subtitle_srt_words = None
 
         if subtitle_srt_generated is None and (
@@ -531,7 +530,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             filter_progress.stop()
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
-            if subtitle_words_filename:
+            if subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(subtitle_words_filename).st_size > 0:
                 srt_data_aligned = copy.deepcopy(srt_data)
                 try:
                     aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
@@ -1136,7 +1135,6 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     # allow for no words, some videos don't have speech
     if len(subs_words) == 0:
         logger.warning("audio-to-text transcription empty")
-        subs_words.append(SubRipItem())
         # return None
 
     srt_words = SubRipFile(items=subs_words, path=words_filename)
@@ -1675,7 +1673,7 @@ def _add_punctuation(sentence: str, lang: str) -> str:
 
 
 _LANG_TOOLS = {}
-
+LTP_DOWNLOAD_VERSION = '6.6'
 
 def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
     global _LANG_TOOLS
@@ -1689,11 +1687,14 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
     try:
         if 'LANGUAGE_TOOL_PORT' in os.environ:
             lang_tool = language_tool_python.LanguageTool(
-                lang_tool_lang,
+                language=lang_tool_lang,
                 remote_server=f"http://{os.environ.get('LANGUAGE_TOOL_HOST', '127.0.0.1')}:{os.environ['LANGUAGE_TOOL_PORT']}"
             )
         else:
-            lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
+            lang_tool = language_tool_python.LanguageTool(
+                language=lang_tool_lang,
+                language_tool_download_version=LTP_DOWNLOAD_VERSION
+            )
             atexit.register(lambda: lang_tool.close())
 
         _LANG_TOOLS[lang_tool_lang] = lang_tool

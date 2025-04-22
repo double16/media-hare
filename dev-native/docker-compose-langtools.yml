@@ -26,7 +26,7 @@ services:
       - "2700:2700/tcp"
 
   langtool:
-    image: ghcr.io/double16/libreoffice-langtool:6.5
+    image: ghcr.io/double16/libreoffice-langtool:6.6
     platform: "linux/amd64"
     restart: unless-stopped
     ports:
