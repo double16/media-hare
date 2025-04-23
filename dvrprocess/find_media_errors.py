@@ -6,6 +6,8 @@ import subprocess
 import sys
 import time
 from collections.abc import Iterable
+from itertools import groupby
+from operator import itemgetter
 
 import numpy as np
 from scipy.signal import find_peaks
@@ -154,8 +156,14 @@ def detect_eas_tones(filepath) -> bool:
     process = tools.ffmpeg.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     try:
+        # Parameters
+        MIN_MAGNITUDE_DB = 30.0      # clamp threshold
+        STD_THRESHOLD = 4.0          # skip if std is too low
+        N = 3.0                      # Number of stddevs above mean
+        MIN_CONSECUTIVE_WINDOWS = 3  # Require tone for 3s (with 1s windows)
+
         # Define the window size and overlap for the FFT
-        window_duration = 0.3  # Duration of each window in seconds
+        window_duration = 1.0  # Duration of each window in seconds
         window_size = int(sample_rate * window_duration)
         overlap = int(window_size * 0.5)  # 50% overlap
 
@@ -167,7 +175,6 @@ def detect_eas_tones(filepath) -> bool:
         magnitude_1562_list = []
         magnitude_2083_list = []
         time_stamps = []
-
         time_position = 0.0
 
         while True:
@@ -219,31 +226,39 @@ def detect_eas_tones(filepath) -> bool:
         magnitude_2083_array = np.array(magnitude_2083_list)
         time_stamps_array = np.array(time_stamps)
 
+        # Skip if stddev too low, likely silence
+        stddev_1562 = np.std(magnitude_1562_array)
+        stddev_2083 = np.std(magnitude_2083_array)
+        logger.debug(f"{filepath}: stddev_1562={stddev_1562}, stddev_2083={stddev_2083}")
+        if stddev_1562 < STD_THRESHOLD and stddev_2083 < STD_THRESHOLD:
+            logger.debug(f"{filepath}: No EAS tones detected (silent audio).")
+            return False
+
         median_1562: float = float(np.median(magnitude_1562_array))
         mad_1562: float = robust.mad(magnitude_1562_array)
         median_2083: float = float(np.median(magnitude_2083_array))
         mad_2083: float = robust.mad(magnitude_2083_array)
 
-        # Set the threshold as median + N * MAD
-        N = 3
-        threshold_1562: float = median_1562 + N * mad_1562
-        threshold_2083: float = median_2083 + N * mad_2083
+        # Set the threshold as median + N * MAD, require a minimum threshold to ignore silence
+        threshold_1562: float = max(median_1562 + N * mad_1562, MIN_MAGNITUDE_DB)
+        threshold_2083: float = max(median_2083 + N * mad_2083, MIN_MAGNITUDE_DB)
 
-        # Use the higher threshold for peak detection to reduce false positives
-        threshold = max(threshold_1562, threshold_2083)
+        # Step 1: detect above-threshold per window (no peak-finding!)
+        detections = (magnitude_1562_array > threshold_1562) & (magnitude_2083_array > threshold_2083)
 
-        # Use peak detection to find peaks in the magnitude arrays
-        peaks_1562, _ = find_peaks(magnitude_1562_array, height=threshold)
-        peaks_2083, _ = find_peaks(magnitude_2083_array, height=threshold)
-
-        # Find overlapping peaks (peaks that occur at the same time)
-        peaks_common = np.intersect1d(peaks_1562, peaks_2083)
+        # Group and filter by minimum consecutive detections
+        confirmed_times = []
+        grouped = [(k, list(g)) for k, g in groupby(enumerate(detections), key=lambda x: x[1])]
+        for is_detected, group in grouped:
+            if is_detected:
+                indices = list(map(itemgetter(0), group))
+                if len(indices) >= MIN_CONSECUTIVE_WINDOWS:
+                    confirmed_times.append(time_stamps_array[indices[0]])
 
         # Report detected EAS tones
-        if peaks_common.size >= 2:
-            for peak_idx in peaks_common:
-                peak_time = time_stamps_array[peak_idx]
-                logger.debug(f"{filepath}: EAS tones detected at {common.seconds_to_timespec(peak_time)} seconds.")
+        if confirmed_times:
+            for ts in confirmed_times:
+                logger.debug(f"{filepath}: EAS tones detected at {common.seconds_to_timespec(ts)} seconds.")
             return True
 
         logger.debug(f"{filepath}: No EAS tones detected.")
