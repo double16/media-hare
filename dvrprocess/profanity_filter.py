@@ -32,7 +32,7 @@ from common.vosk import kaldi_recognizer
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 12
-AUDIO_TO_TEXT_VERSION = 5
+AUDIO_TO_TEXT_VERSION = 6
 AUDIO_TO_TEXT_SUBTITLE_VERSION = 5
 
 # exit code for content had filtering applied, file has been significantly changed
@@ -281,15 +281,14 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
         if need_words_transcribed(subtitle_words, audio_to_text_version, force):
             logger.info("%s Transcribing for words", base_filename)
             audio_channels = int(audio_original.get(constants.K_CHANNELS, 0))
+            # audio_to_text_filter = "acompressor=threshold=-30dB:ratio=3:attack=10:release=200:knee=6:makeup=6,loudnorm=I=-16:TP=-1.5"
+            audio_to_text_filter = "loudnorm=I=-16:TP=-1.5"
             if audio_channels > 2:
-                # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC'
-                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR'
-            else:
-                audio_to_text_filter = None
+                # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC,'+audio_to_text_filter
+                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR,'+audio_to_text_filter
             subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
-            if subtitle_srt_words and os.stat(subtitle_srt_words).st_size > 0:
-                audio_to_text_version = AUDIO_TO_TEXT_VERSION
-            else:
+            audio_to_text_version = AUDIO_TO_TEXT_VERSION
+            if subtitle_srt_words and os.stat(subtitle_srt_words).st_size == 0:
                 subtitle_srt_words = None
 
         if subtitle_srt_generated is None and (
@@ -531,7 +530,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             filter_progress.stop()
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
-            if subtitle_words_filename:
+            if subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(subtitle_words_filename).st_size > 0:
                 srt_data_aligned = copy.deepcopy(srt_data)
                 try:
                     aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
@@ -564,6 +563,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                     filtered_spans.append([event.start.ordinal, event.end.ordinal])
                     if stopped:
                         stopped_spans.append([event.start.ordinal, event.end.ordinal])
+            if len(srt_data.data) == 0:
+                srt_data.data.append(SubRipItem())
             srt_data.save(Path(subtitle_filtered_filename), 'utf-8')
             # Forced SRT file will be invalid unless we have at least one entry
             if len(srt_data_forced.data) == 0:
@@ -1194,7 +1195,7 @@ def get_spell_checker(language: str):
 PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
 
 
-def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float):
+def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: float) -> float:
     spellchecker = get_spell_checker(language)
     if spellchecker is None:
         logger.warning("spell checker not found, skipping dictionary check")
@@ -1211,7 +1212,7 @@ def words_in_dictionary_pct(subtitle_srt_filename, language: str, duration: floa
     if word_count < 100 and duration > 630:
         logger.warning(f"word count less than 100 for duration {duration}, returning 0%")
         return 0.0
-    word_found_pct = 100.0 * float(word_found_count) / (float(word_count) + 0.001)
+    word_found_pct = ceil(100.0 * float(word_found_count) / (float(word_count) + 0.001))
     logger.info(f"SRT words = {word_count}, found = {word_found_count}, {word_found_pct}%")
     return word_found_pct
 
@@ -1404,7 +1405,7 @@ def _tag_as_skipped(filename: str, tags_filename: str, input_info: dict, dry_run
     return CMD_RESULT_MARKED
 
 
-def find_subtitle_element_idx_ge(time_ordinals: list[int], start: float) -> int:
+def find_subtitle_element_idx_ge(time_ordinals: list[int], start: int) -> int:
     """
     Find leftmost element greater than or equal to x
     https://docs.python.org/3/library/bisect.html
@@ -1415,7 +1416,7 @@ def find_subtitle_element_idx_ge(time_ordinals: list[int], start: float) -> int:
     raise ValueError
 
 
-def find_subtitle_element_idx_le(time_ordinals: list[int], start: float) -> int:
+def find_subtitle_element_idx_le(time_ordinals: list[int], start: int) -> int:
     """
     Find rightmost element less than or equal to x
     https://docs.python.org/3/library/bisect.html
@@ -1672,7 +1673,7 @@ def _add_punctuation(sentence: str, lang: str) -> str:
 
 
 _LANG_TOOLS = {}
-
+LTP_DOWNLOAD_VERSION = '6.6'
 
 def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
     global _LANG_TOOLS
@@ -1686,11 +1687,14 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
     try:
         if 'LANGUAGE_TOOL_PORT' in os.environ:
             lang_tool = language_tool_python.LanguageTool(
-                lang_tool_lang,
+                language=lang_tool_lang,
                 remote_server=f"http://{os.environ.get('LANGUAGE_TOOL_HOST', '127.0.0.1')}:{os.environ['LANGUAGE_TOOL_PORT']}"
             )
         else:
-            lang_tool = language_tool_python.LanguageTool(lang_tool_lang)
+            lang_tool = language_tool_python.LanguageTool(
+                language=lang_tool_lang,
+                language_tool_download_version=LTP_DOWNLOAD_VERSION
+            )
             atexit.register(lambda: lang_tool.close())
 
         _LANG_TOOLS[lang_tool_lang] = lang_tool

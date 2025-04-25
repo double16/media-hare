@@ -113,19 +113,23 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     if duration is not None:
         ffmpeg_command.extend(['-to', str(edl_util.parse_edl_ts(duration))])
 
-    if audio_filter:
-        if 'pan=' not in audio_filter:
-            ffmpeg_command.extend(['-ac', str(num_channels)])
+    if audio_filter and 'pan=' in audio_filter:
         ffmpeg_command.extend(['-af', audio_filter])
     else:
         channels = int(audio_original.get(constants.K_CHANNELS, 0))
         if channels > 2:
             if num_channels == 1:
-                ffmpeg_command.extend(['-af', 'pan=mono|FC<FC+0.5*FL+0.5*FR'])
+                pan='pan=mono|FC<FC+0.5*FL+0.5*FR'
             else:
-                ffmpeg_command.extend(['-af', 'pan=stereo|FL<FL+FC|FR<FR+FC'])
+                pan='pan=stereo|FL<FL+FC|FR<FR+FC'
+            if audio_filter:
+                ffmpeg_command.extend(['-af', pan+","+audio_filter])
+            else:
+                ffmpeg_command.extend(['-af', pan])
         else:
             ffmpeg_command.extend(['-ac', str(num_channels)])
+            if audio_filter:
+                ffmpeg_command.extend(['-af', audio_filter])
 
     ffmpeg_command.extend(['-f', 'wav', '-'])
     print(tools.ffmpeg.array_as_command(ffmpeg_command))
@@ -167,7 +171,7 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     conf_avg = mean(confs)
     conf_stdev = stdev(confs)
 
-    notes = f'# freq {freq} buf {buffer_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
+    notes = f'# model {model_name} freq {freq} buf {buffer_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
     notes_item = SubRipItem(index=0, start=SubRipTime(seconds=0), end=SubRipTime(seconds=1), text=notes)
 
     subs_words = []
@@ -247,12 +251,14 @@ def audio_transcribe_cli(argv):
         return 0
 
     audio_filter_list = [
-        (None, "vosk-model-en-us-0.22-lgraph"),
-        (None, "vosk-model-en-us-0.22"),
-        (None, "vosk-model-en-us-daanzu-20200905"),
+        # (None, "vosk-model-en-us-0.22-lgraph"),
+        # (None, "vosk-model-en-us-0.22"),
+        # (None, "vosk-model-en-us-daanzu-20200905"),
+        (None, "vosk-model-en-us-0.42-gigaspeech"),
     ]
     with open(audio_filter_file, "rt") as audio_filter_fh:
         for line in audio_filter_fh.readlines():
+            line = line.strip()
             if not line or line.startswith("#"):
                 continue
             if '","' in line:
@@ -280,7 +286,7 @@ def audio_transcribe_cli(argv):
         duration_f = edl_util.parse_edl_ts(duration)
 
     expected_text = read_text_from_mkv(input_info, duration_f)
-    r = fuzz.ratio(expected_text, expected_text)
+    r = fuzz.WRatio(expected_text, expected_text)
     print(f"{r}: sanity check expected vs. expected")
     for af_idx, (audio_filter, model_name) in enumerate(audio_filter_list):
         model_name = model_name or DEFAULT_MODEL
@@ -293,7 +299,7 @@ def audio_transcribe_cli(argv):
             buffer_size=buffer_size,
         )
         transcribed_text = read_text_from_srt(text_path, duration_f)
-        r = fuzz.ratio(expected_text, transcribed_text)
+        r = fuzz.WRatio(expected_text, transcribed_text)
         print(f"{r}: {audio_filter},{model_name} - {text_path}")
 
 
