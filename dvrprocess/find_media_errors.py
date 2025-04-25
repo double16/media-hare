@@ -8,10 +8,9 @@ import time
 from collections.abc import Iterable
 from itertools import groupby
 from operator import itemgetter
+import matplotlib.pyplot as plt
 
 import numpy as np
-from scipy.signal import find_peaks
-from statsmodels import robust
 
 import common
 from common import tools, config
@@ -54,10 +53,12 @@ def find_media_errors_cli(argv):
     time_limit = config.get_global_config_time_seconds('background_limits', 'time_limit')
     check_compute = True
     cache_only = False
+    plot = False
 
     try:
         opts, args = getopt.getopt(argv, "t:d:",
-                                   ["terminator=", "dir=", "nagios", "time-limit=", "ignore-compute", "cache-only", "verbose"])
+                                   ["terminator=", "dir=", "nagios", "time-limit=", "ignore-compute", "cache-only",
+                                    "verbose", "plot"])
     except getopt.GetoptError:
         usage()
         return 2
@@ -82,6 +83,8 @@ def find_media_errors_cli(argv):
             check_compute = False
         elif opt == '--cache-only':
             cache_only = True
+        elif opt == '--plot':
+            plot = True
         elif opt == "--verbose":
             logging.getLogger().setLevel(logging.DEBUG)
             logger.setLevel(logging.DEBUG)
@@ -91,6 +94,7 @@ def find_media_errors_cli(argv):
 
     if args:
         media_paths = common.get_media_paths(roots, args)
+        media_paths.extend(filter(lambda p: os.path.isfile(p), args))
     else:
         media_paths = common.get_media_paths(roots)
     logger.debug("media_paths = %s", media_paths)
@@ -99,7 +103,8 @@ def find_media_errors_cli(argv):
         cache_only = True
 
     generator = media_errors_generator(media_paths=media_paths, media_roots=roots,
-                                       time_limit=time_limit, check_compute=check_compute, cache_only=cache_only)
+                                       time_limit=time_limit, check_compute=check_compute, cache_only=cache_only,
+                                       plot=plot)
 
     if nagios_output:
         corrupt_files = list(generator)
@@ -117,7 +122,8 @@ def find_media_errors_cli(argv):
 
         print(f"MEDIA_ERRORS {level}: files: {len(corrupt_files)} | MEDIA_ERRORS;{len(corrupt_files)}")
         for e in corrupt_files:
-            print(f"{e.file_name};{e.error_count};eas={str(e.eas_detected).lower()};silence={str(e.silence_detected).lower()}")
+            print(
+                f"{e.file_name};{e.error_count};eas={str(e.eas_detected).lower()};silence={str(e.silence_detected).lower()}")
         return code
     else:
         for e in generator:
@@ -128,7 +134,8 @@ def find_media_errors_cli(argv):
 
 class MediaErrorFileInfo(object):
 
-    def __init__(self, file_name: str, host_file_path: str, size: float, error_count: int, eas_detected: bool, silence_detected: bool):
+    def __init__(self, file_name: str, host_file_path: str, size: float, error_count: int, eas_detected: bool,
+                 silence_detected: bool):
         self.file_name = file_name
         self.host_file_path = host_file_path
         self.size = size
@@ -137,7 +144,7 @@ class MediaErrorFileInfo(object):
         self.silence_detected = silence_detected
 
 
-def detect_eas_tones(filepath) -> bool:
+def detect_eas_tones(filepath, plot: bool = False) -> bool:
     # Audio stream parameters
     sample_rate = 44100
     dtype = np.int16  # Data type for 16-bit PCM
@@ -157,9 +164,8 @@ def detect_eas_tones(filepath) -> bool:
 
     try:
         # Parameters
-        MIN_MAGNITUDE_DB = 30.0      # clamp threshold
-        STD_THRESHOLD = 4.0          # skip if std is too low
-        N = 3.0                      # Number of stddevs above mean
+        MIN_MAGNITUDE_DB = 30.0  # clamp threshold
+        STD_THRESHOLD = 4.0  # skip if std is too low
         MIN_CONSECUTIVE_WINDOWS = 3  # Require tone for 3s (with 1s windows)
 
         # Define the window size and overlap for the FFT
@@ -174,8 +180,10 @@ def detect_eas_tones(filepath) -> bool:
         # Initialize variables for dynamic thresholding
         magnitude_1562_list = []
         magnitude_2083_list = []
+        magnitude_db_all = []
         time_stamps = []
         time_position = 0.0
+        freq = np.fft.rfftfreq(window_size, d=1. / sample_rate)
 
         while True:
             raw_data = process.stdout.read(buffer_size * dtype().nbytes)
@@ -196,7 +204,6 @@ def detect_eas_tones(filepath) -> bool:
 
                 # Perform FFT
                 fft_spectrum = np.fft.rfft(windowed_data)
-                freq = np.fft.rfftfreq(len(windowed_data), d=1. / sample_rate)
 
                 # Compute magnitude spectrum in dB
                 magnitude = np.abs(fft_spectrum)
@@ -213,6 +220,7 @@ def detect_eas_tones(filepath) -> bool:
                 # Append magnitudes and time stamps to lists
                 magnitude_1562_list.append(avg_magnitude_1562)
                 magnitude_2083_list.append(avg_magnitude_2083)
+                magnitude_db_all.append(magnitude_db)
                 time_stamps.append(time_position)
 
                 # Update time position
@@ -234,17 +242,19 @@ def detect_eas_tones(filepath) -> bool:
             logger.debug(f"{filepath}: No EAS tones detected (silent audio).")
             return False
 
-        median_1562: float = float(np.median(magnitude_1562_array))
-        mad_1562: float = robust.mad(magnitude_1562_array)
-        median_2083: float = float(np.median(magnitude_2083_array))
-        mad_2083: float = robust.mad(magnitude_2083_array)
+        program_band = (freq < 1500) | (freq > 2100)
+        program_magnitudes = [np.max(mag[program_band]) for mag in magnitude_db_all]
+        program_peak_level = np.max(program_magnitudes)
 
-        # Set the threshold as median + N * MAD, require a minimum threshold to ignore silence
-        threshold_1562: float = max(median_1562 + N * mad_1562, MIN_MAGNITUDE_DB)
-        threshold_2083: float = max(median_2083 + N * mad_2083, MIN_MAGNITUDE_DB)
+        relative_threshold = max(program_peak_level * 0.80, MIN_MAGNITUDE_DB)
+        logger.debug(f"program_peak_level = {program_peak_level}, threshold = {relative_threshold}")
 
-        # Step 1: detect above-threshold per window (no peak-finding!)
-        detections = (magnitude_1562_array > threshold_1562) & (magnitude_2083_array > threshold_2083)
+        # Additional check: suppress if other freqs are also loud
+        non_eas_loud = np.array([
+            np.max(mag[program_band]) > (program_peak_level * 0.90) for mag in magnitude_db_all
+        ])
+        detections = (magnitude_1562_array > relative_threshold) & (magnitude_2083_array > relative_threshold) & (
+            ~non_eas_loud)
 
         # Group and filter by minimum consecutive detections
         confirmed_times = []
@@ -254,6 +264,27 @@ def detect_eas_tones(filepath) -> bool:
                 indices = list(map(itemgetter(0), group))
                 if len(indices) >= MIN_CONSECUTIVE_WINDOWS:
                     confirmed_times.append(time_stamps_array[indices[0]])
+
+        if plot:
+            plt.figure(figsize=(12, 6))
+            plt.plot(time_stamps_array, magnitude_1562_array, label='1562.5 Hz')
+            plt.plot(time_stamps_array, magnitude_2083_array, label='2083.3 Hz')
+            plt.plot(time_stamps_array, program_magnitudes, label='program')
+            plt.axhline(y=relative_threshold, linestyle='--', color='purple',
+                        label=f'Tone Threshold ({relative_threshold:.1f} dB)')
+            plt.axhline(y=program_peak_level, linestyle=':', color='gray',
+                        label=f'Peak Program Level ({program_peak_level:.1f} dB)')
+
+            for ts in confirmed_times:
+                plt.axvspan(ts, ts + MIN_CONSECUTIVE_WINDOWS * (window_size - overlap) / sample_rate,
+                            color='yellow', alpha=0.3, label='Detected EAS' if ts == confirmed_times[0] else None)
+
+            plt.xlabel('Time (s)')
+            plt.ylabel('Magnitude (dB)')
+            plt.title('EAS Tone Detection (Relative to Loudest Program Audio)')
+            plt.legend()
+            plt.grid(True)
+            plt.show()
 
         # Report detected EAS tones
         if confirmed_times:
@@ -290,67 +321,76 @@ def detect_silent_audio(filepath) -> bool:
 
 def media_errors_generator(media_paths: list[str], media_roots: list[str],
                            time_limit=config.get_global_config_time_seconds('background_limits', 'time_limit'),
-                           check_compute=True, cache_only=False) -> Iterable[MediaErrorFileInfo]:
+                           check_compute=True, cache_only=False, plot=False) -> Iterable[MediaErrorFileInfo]:
     time_start = time.time()
 
+    for filepath in _generate_files(media_paths):
+        cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
+        cached_eas_detected = config.get_file_config_option(filepath, 'error', 'eas')
+        cached_silence_detected = config.get_file_config_option(filepath, 'error', 'silence')
+        if cached_error_count is None or cached_eas_detected is None or cached_silence_detected is None:
+            # We need to calculate one of these, check if we should
+            if cache_only:
+                continue
+            duration = time.time() - time_start
+            if 0 < time_limit < duration:
+                logger.debug(
+                    f"Time limit expired after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached, only using cached data")
+                cache_only = True
+                continue
+            if check_compute and common.should_stop_processing():
+                # when the compute limit is reached, use cached data
+                logger.debug("not enough compute available, only using cached data")
+                cache_only = True
+                continue
+
+        if cached_error_count is not None:
+            error_count = int(cached_error_count)
+        else:
+            error_count = len(tools.ffmpeg.check_output(
+                ['-y', '-v', 'error', '-i', filepath, '-c:v', 'vnull', '-c:a', 'anull', '-f', 'null',
+                 '/dev/null'],
+                stderr=subprocess.STDOUT, text=True).splitlines())
+            config.set_file_config_option(filepath, 'error', 'count', str(error_count))
+
+        if cached_eas_detected is not None:
+            eas_detected = cached_eas_detected.lower() == "true"
+        else:
+            eas_detected = detect_eas_tones(filepath, plot)
+            config.set_file_config_option(filepath, 'error', 'eas', str(eas_detected))
+
+        if cached_silence_detected is not None:
+            silence_detected = cached_silence_detected.lower() == "true"
+        else:
+            silence_detected = detect_silent_audio(filepath)
+            config.set_file_config_option(filepath, 'error', 'silence', str(silence_detected))
+
+        if error_count <= ERROR_THRESHOLD and not eas_detected and not silence_detected:
+            continue
+        file_info = MediaErrorFileInfo(
+            file_name=common.get_media_file_relative_to_root(filepath, media_roots)[0],
+            host_file_path=filepath,
+            size=os.stat(filepath).st_size,
+            error_count=error_count,
+            eas_detected=eas_detected,
+            silence_detected=silence_detected,
+        )
+        yield file_info
+
+
+def _generate_files(media_paths: list[str]) -> Iterable[str]:
     for media_path in media_paths:
-        for root, dirs, files in os.walk(media_path, topdown=True):
-            for file in common.filter_for_mkv(files):
-                filepath = os.path.join(root, file)
-                if common.is_file_in_hidden_dir(filepath):
-                    continue
-
-                cached_error_count = config.get_file_config_option(filepath, 'error', 'count')
-                cached_eas_detected = config.get_file_config_option(filepath, 'error', 'eas')
-                cached_silence_detected = config.get_file_config_option(filepath, 'error', 'silence')
-                if cached_error_count is None or cached_eas_detected is None or cached_silence_detected is None:
-                    # We need to calculate one of these, check if we should
-                    if cache_only:
+        abs_filepath = os.path.abspath(media_path)
+        if os.path.isfile(abs_filepath):
+            if common.filepath_is_mkv(abs_filepath):
+                yield abs_filepath
+        else:
+            for root, dirs, files in os.walk(media_path, topdown=True):
+                for file in common.filter_for_mkv(files):
+                    filepath = os.path.join(root, file)
+                    if common.is_file_in_hidden_dir(filepath):
                         continue
-                    duration = time.time() - time_start
-                    if 0 < time_limit < duration:
-                        logger.debug(
-                            f"Time limit expired after processing {common.s_to_ts(int(duration))}, limit of {common.s_to_ts(time_limit)} reached, only using cached data")
-                        cache_only = True
-                        continue
-                    if check_compute and common.should_stop_processing():
-                        # when compute limit is reached, use cached data
-                        logger.debug("not enough compute available, only using cached data")
-                        cache_only = True
-                        continue
-
-                if cached_error_count is not None:
-                    error_count = int(cached_error_count)
-                else:
-                    error_count = len(tools.ffmpeg.check_output(
-                        ['-y', '-v', 'error', '-i', filepath, '-c:v', 'vnull', '-c:a', 'anull', '-f', 'null',
-                         '/dev/null'],
-                        stderr=subprocess.STDOUT, text=True).splitlines())
-                    config.set_file_config_option(filepath, 'error', 'count', str(error_count))
-
-                if cached_eas_detected is not None:
-                    eas_detected = cached_eas_detected.lower() == "true"
-                else:
-                    eas_detected = detect_eas_tones(filepath)
-                    config.set_file_config_option(filepath, 'error', 'eas', str(eas_detected))
-
-                if cached_silence_detected is not None:
-                    silence_detected = cached_silence_detected.lower() == "true"
-                else:
-                    silence_detected = detect_silent_audio(filepath)
-                    config.set_file_config_option(filepath, 'error', 'silence', str(silence_detected))
-
-                if error_count <= ERROR_THRESHOLD and not eas_detected and not silence_detected:
-                    continue
-                file_info = MediaErrorFileInfo(
-                    file_name=common.get_media_file_relative_to_root(filepath, media_roots)[0],
-                    host_file_path=filepath,
-                    size=os.stat(filepath).st_size,
-                    error_count=error_count,
-                    eas_detected=eas_detected,
-                    silence_detected=silence_detected,
-                )
-                yield file_info
+                    yield filepath
 
 
 if __name__ == '__main__':
