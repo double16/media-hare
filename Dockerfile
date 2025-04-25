@@ -52,7 +52,7 @@ RUN apt-get -q update && \
     find /etc/cron.*/* -type f -not -name "*logrotate*" -not -name "*anacron*" -delete &&\
     rm -rf /tmp/*
 
-RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.11/SE4011.zip" &&\
+RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/releases/download/4.0.12/SE4012.zip" &&\
     unzip -d /usr/share/subtitle-edit /tmp/se.zip &&\
     rm /tmp/se.zip &&\
     curl -L -o /usr/bin/systemctl https://github.com/gdraheim/docker-systemctl-replacement/raw/${SYSTEMCTL_VER}/files/docker/systemctl3.py &&\
