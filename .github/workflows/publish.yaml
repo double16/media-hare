@@ -43,8 +43,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Install hunspell
-        run:  sudo apt-get install -y hunspell libhunspell-dev hunspell-en-us
+      - name: Install dependencies
+        run:  sudo apt-get install -y hunspell libhunspell-dev hunspell-en-us ffmpeg
 
       - name: Lint with Ruff
         run: |

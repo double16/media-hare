@@ -965,7 +965,7 @@
 SoftSub
 SoftSubbed</GenVideoEmbedOutputReplace>
     <GenVideoDeleteInputVideoFile>False</GenVideoDeleteInputVideoFile>
-    <VoskPostProcessing>True</VoskPostProcessing>
+    <VoskPostProcessing>False</VoskPostProcessing>
     <VoskModel />
     <WhisperChoice>OpenAI</WhisperChoice>
     <WhisperIgnoreVersion>False</WhisperIgnoreVersion>
@@ -983,10 +983,10 @@ SoftSubbed</GenVideoEmbedOutputReplace>
     <WhisperLanguageCode>en</WhisperLanguageCode>
     <WhisperAutoAdjustTimings>True</WhisperAutoAdjustTimings>
     <WhisperUseLineMaxChars>False</WhisperUseLineMaxChars>
-    <WhisperPostProcessingAddPeriods>False</WhisperPostProcessingAddPeriods>
+    <WhisperPostProcessingAddPeriods>True</WhisperPostProcessingAddPeriods>
     <WhisperPostProcessingSplitLines>True</WhisperPostProcessingSplitLines>
     <WhisperPostProcessingMergeLines>True</WhisperPostProcessingMergeLines>
-    <WhisperPostProcessingFixCasing>False</WhisperPostProcessingFixCasing>
+    <WhisperPostProcessingFixCasing>True</WhisperPostProcessingFixCasing>
     <WhisperPostProcessingFixShortDuration>True</WhisperPostProcessingFixShortDuration>
     <AudioToTextLineMaxChars>86</AudioToTextLineMaxChars>
     <AudioToTextLineMaxCharsJp>32</AudioToTextLineMaxCharsJp>

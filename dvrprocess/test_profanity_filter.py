@@ -3,7 +3,6 @@ import re
 import unittest
 
 import profanity_filter
-from common import vosk
 
 
 class ProfanityFilterTest(unittest.TestCase):
@@ -13,8 +12,6 @@ class ProfanityFilterTest(unittest.TestCase):
         self.censor_list = profanity_filter.load_censor_list()
         self.stop_list = profanity_filter.load_stop_list()
         self.allow_list = profanity_filter.load_allow_list()
-        vosk.REMOTE_KALDI_SERVER['en-us'] = False
-        vosk.REMOTE_KALDI_SERVER['es'] = False
 
     def test_filter_text(self):
         """
