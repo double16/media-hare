@@ -32,7 +32,7 @@ RUN cd ccextractor/linux &&\
 FROM ubuntu:24.04
 
 ARG SYSTEMCTL_VER=ac9b3916dd069ba053e4259cf74131028935f5e1
-ARG WHISPER_MODEL=large-v2
+ARG WHISPER_MODEL=medium
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY requirements.txt /tmp/

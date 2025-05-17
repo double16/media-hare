@@ -250,7 +250,7 @@ def audio_transcribe_cli(argv):
         return 0
 
     audio_filter_list = [
-        (None, "large-v2"),
+        (None, "medium"),
     ]
     with open(audio_filter_file, "rt") as audio_filter_fh:
         for line in audio_filter_fh.readlines():

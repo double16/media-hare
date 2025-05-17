@@ -56,7 +56,7 @@ SILENCE_FOR_SOUND_EFFECT = 500
 
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
 
-WHISPER_MODEL = whisper.load_model(os.getenv("WHISPER_MODEL", "large-v2"))
+WHISPER_MODEL = whisper.load_model(os.getenv("WHISPER_MODEL", "medium"))
 
 logger = logging.getLogger(__name__)
 
