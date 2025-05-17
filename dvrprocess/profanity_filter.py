@@ -12,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 from bisect import bisect_left, bisect_right
+
+import whisper
 from math import ceil, floor
 from pathlib import Path
 from statistics import mean, stdev
@@ -28,11 +30,11 @@ from thefuzz import process as fuzzprocess
 
 import common
 from common import subtitle, tools, config, constants, progress, edl_util, fsutil
-from common.vosk import kaldi_recognizer
+from common.proc_invoker import StreamCapturingProgress
 
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 12
-AUDIO_TO_TEXT_VERSION = 6
+AUDIO_TO_TEXT_VERSION = 7
 AUDIO_TO_TEXT_SUBTITLE_VERSION = 5
 
 # exit code for content had filtering applied, file has been significantly changed
@@ -53,6 +55,8 @@ SILENCE_FOR_NEW_SENTENCE = 1200
 SILENCE_FOR_SOUND_EFFECT = 500
 
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
+
+WHISPER_MODEL = whisper.load_model(os.getenv("WHISPER_MODEL", "large-v2"))
 
 logger = logging.getLogger(__name__)
 
@@ -285,8 +289,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             audio_to_text_filter = "loudnorm=I=-16:TP=-1.5"
             if audio_channels > 2:
                 # audio_to_text_filter = 'pan=stereo|FL<FL+FC|FR<FR+FC,'+audio_to_text_filter
-                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR,'+audio_to_text_filter
-            subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir, audio_to_text_filter, language)
+                audio_to_text_filter = 'pan=mono|FC<FC+0.5*FL+0.5*FR,' + audio_to_text_filter
+            subtitle_srt_words, transcribe_notes = audio_to_words_srt(input_info, audio_original, workdir,
+                                                                      audio_to_text_filter, language)
             audio_to_text_version = AUDIO_TO_TEXT_VERSION
             if subtitle_srt_words and os.stat(subtitle_srt_words).st_size == 0:
                 subtitle_srt_words = None
@@ -530,7 +535,8 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             filter_progress.stop()
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
-            if subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(subtitle_words_filename).st_size > 0:
+            if subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(
+                    subtitle_words_filename).st_size > 0:
                 srt_data_aligned = copy.deepcopy(srt_data)
                 try:
                     aligned, aligned_stats = fix_subtitle_audio_alignment(srt_data, pysrt.open(subtitle_words_filename),
@@ -1048,12 +1054,23 @@ def ocr_subtitle_bitmap_to_srt(input_info, temp_base, language=None, verbose=Fal
     return subtitle_srt_filename
 
 
+def whisper_language(language: str) -> str:
+    """
+    Get the language code for the Whisper transcriber from the three character language code.
+    :param language: three character language code
+    :returns: language code appropriate for Whisper
+    """
+    if language == 'spa':
+        return 'es'
+    if language in ['eng', 'en']:
+        return 'en'
+    return language[0:2]
+
+
 def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_filter: str = None, language=None) \
         -> (Union[str, None], Union[str, None]):
     """
     Create a SRT subtitle with an event for each word.
-    1. vosk does not seem to like filenames with spaces, it's thrown a division by zero
-    2. --tasks is being set but so far it doesn't seem to yield more cores used
     :return: srt filename for words
     """
     global debug
@@ -1067,7 +1084,12 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     if not debug:
         common.TEMPFILENAMES.append(words_filename)
 
-    extract_command = ['-nostdin', "-loglevel", "error",
+    temp_fd, audio_filename = tempfile.mkstemp(dir=workdir, suffix='.wav')
+    os.close(temp_fd)
+    if not debug:
+        common.TEMPFILENAMES.append(audio_filename)
+
+    extract_command = ['-y', '-nostdin', "-loglevel", "error",
                        '-i', input_info['format']['filename'],
                        '-map', f'0:{audio_original[constants.K_STREAM_INDEX]}',
                        '-ar', str(freq)]
@@ -1082,54 +1104,41 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         extract_command.extend(['-af', audio_filter])
     else:
         extract_command.extend(['-ac', str(num_channels)])
-    extract_command.extend(['-f', 'wav', '-'])
+    extract_command.extend(['-f', 'wav', audio_filename])
 
-    rec = kaldi_recognizer(language, freq, num_channels)
-
+    audio_progress = StreamCapturingProgress(
+        "stderr",
+        progress.progress(
+            f"{os.path.basename(input_info['format']['filename'])} transcription",
+            0, 100))
     logger.debug(tools.ffmpeg.array_as_command(extract_command))
-    audio_process = tools.ffmpeg.Popen(extract_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    results = []
-    audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0,
-                                       int(float(
-                                           input_info[constants.K_FORMAT][constants.K_DURATION])))
-    while True:
-        data = audio_process.stdout.read(chunk_size)
-        if len(data) == 0:
-            break
-        if rec.accept_waveform(data):
-            result = rec.result()
-            if 'result' in result:
-                results.append(result)
-                if len(result['result']) > 0:
-                    audio_progress.progress(result['result'][-1]['end'])
-                if 'text' in result:
-                    logger.debug("text: %s", result['text'])
-    result = rec.final_result()
-    if 'result' in result:
-        results.append(result)
-        if 'text' in result:
-            logger.debug("text: %s", result['text'])
-    audio_process.stdout.close()
-    audio_progress.stop()
-    extract_return_code = audio_process.wait()
-    if extract_return_code in [130, 255]:
-        raise KeyboardInterrupt()
-    if extract_return_code != 0:
-        logger.error("Cannot transcribe audio, ffmpeg returned %s, command: %s",
-                     extract_return_code,
-                     tools.ffmpeg.array_as_command(extract_command))
-        return None, None
+    try:
+        tools.ffmpeg.run(extract_command, check=True)
+
+        whisper_result = WHISPER_MODEL.transcribe(
+            audio=audio_filename,
+            language=whisper_language(language),
+            fp16=False,
+            word_timestamps=True,
+            verbose=False,
+            beam_size=5,
+            patience=2.5
+        )
+    finally:
+        audio_progress.finish()
+        if not debug:
+            os.remove(audio_filename)
 
     confs = []
     subs_words = []
-    for i, res in enumerate(results):
-        words = res['result']
-        for word in words:
-            confs.append(word['conf'])
+    for segment in whisper_result["segments"]:
+        for word in segment["words"]:
+            if 'probability' in word:
+                confs.append(word['probability'])
             s = SubRipItem(index=len(subs_words),
                            start=SubRipTime(seconds=word['start']),
                            end=SubRipTime(seconds=word['end']),
-                           text=word['word'])
+                           text=word['word'].strip())
             subs_words.append(s)
 
     # allow for no words, some videos don't have speech
@@ -1675,6 +1684,7 @@ def _add_punctuation(sentence: str, lang: str) -> str:
 _LANG_TOOLS = {}
 LTP_DOWNLOAD_VERSION = '6.6'
 
+
 def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTool]:
     global _LANG_TOOLS
     lang_tool_lang = 'en-US'
@@ -1726,6 +1736,9 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     max_duration_ms = 8000
     newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
+    has_punctuation = any(filter(lambda e: e.text.endswith('.') or e.text.endswith('?'), words))
+    has_capitalization = any(filter(lambda e: e.text[0].isupper() and e.text[-1].islower(), words))
+    logger.info(f"has_punctuation = {has_punctuation}, has_capitalization = {has_capitalization}")
     sentences: list[SubRipItem] = []
     spellchecker = get_spell_checker(language)
     s = None
@@ -1734,9 +1747,13 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
         if _is_transcribed_word_suspicious(word, language):
             continue
         if s is not None:
-            if word.start.ordinal - s.end.ordinal > SILENCE_FOR_NEW_SENTENCE:
+            if has_punctuation:
+                if word.text[0].isalpha() and not s.text.strip()[-1].isalpha():
+                    new_s = True
+            elif word.start.ordinal - s.end.ordinal > SILENCE_FOR_NEW_SENTENCE:
                 s.text = _add_punctuation(s.text, language)
                 new_s = True
+
             if word.end.ordinal - s.start.ordinal > max_duration_ms and word.start.ordinal - s.end.ordinal > min_duration_ms:
                 s = None
             elif s.end.ordinal - s.start.ordinal > min_duration_ms:
@@ -1744,31 +1761,39 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
                     s = None
 
         if s is None:
-            if new_s:
-                text = word.text.capitalize()
+            if has_capitalization:
+                text = word.text
             else:
-                text = _capitalize(word.text, language, spellchecker)
+                if new_s:
+                    text = word.text.capitalize()
+                else:
+                    text = _capitalize(word.text, language, spellchecker)
             new_s = False
 
             s = SubRipItem(index=len(sentences), start=word.start, end=word.end, text=text)
             sentences.append(s)
         else:
             s.end = word.end
-            if s.text.endswith(newline):
-                s.text = s.text + _capitalize(word.text, language, spellchecker)
+            if has_capitalization:
+                word_capitalized = word.text
             else:
-                s.text = s.text + ' ' + _capitalize(word.text, language, spellchecker)
+                word_capitalized = _capitalize(word.text, language, spellchecker)
+            if s.text.endswith(newline):
+                s.text = s.text + word_capitalized
+            else:
+                s.text = s.text + ' ' + word_capitalized
 
-    if s is not None:
+    if s is not None and not has_punctuation:
         s.text = _add_punctuation(s.text, language)
 
-    lang_tool = _get_lang_tool(language)
-    try:
-        if lang_tool is not None:
-            for sentence in sentences:
-                sentence.text = lang_tool.correct(sentence.text)
-    except Exception as e:
-        logger.warning("language tool failure", e)
+    if not (has_capitalization and has_punctuation):
+        lang_tool = _get_lang_tool(language)
+        try:
+            if lang_tool is not None:
+                for sentence in sentences:
+                    sentence.text = lang_tool.correct(sentence.text)
+        except Exception as e:
+            logger.warning("language tool failure", e)
 
     for sentence in sentences:
         new_text = ""

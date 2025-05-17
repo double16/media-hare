@@ -11,7 +11,7 @@ from math import ceil, floor
 from typing import Union, Dict
 
 from . import progress
-from .proc_invoker import StreamCapture, pre_flight_check
+from .proc_invoker import StreamCapturingLogger, pre_flight_check
 
 logger = logging.getLogger(__name__)
 
@@ -470,8 +470,8 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
             _CURSESUI.close()
             _CURSESUI = None
 
-    stderr_capture = StreamCapture('stderr')
-    stdout_capture = StreamCapture('stdout')
+    stderr_capture = StreamCapturingLogger('stderr')
+    stdout_capture = StreamCapturingLogger('stdout')
     try:
         return curses.wrapper(main)
     finally:

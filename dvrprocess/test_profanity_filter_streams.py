@@ -4,10 +4,11 @@ import os
 import shutil
 import tempfile
 import unittest
+from typing import Union
 from xml.etree import ElementTree as ET
 
 import profanity_filter
-from common import tools, proc_invoker, constants, config, vosk, is_ripped_from_media
+from common import tools, proc_invoker, constants, config, is_ripped_from_media
 
 #
 # Testing scenarios:
@@ -98,8 +99,6 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.getLogger().setLevel(logging.DEBUG)
         tools.mock_all()
-        vosk.REMOTE_KALDI_SERVER['en-us'] = False
-        vosk.REMOTE_KALDI_SERVER['es'] = False
         # This method will unnecessarily fail for our test cases
         profanity_filter.words_in_dictionary_pct = lambda a, b, c: 100.00
 
@@ -200,11 +199,13 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
     def _mock_ffmpeg_extract_audio_for_transcribing(self, raw_audio_basename: [None, str]):
         def mock(method_name: str, arguments: list, **kwargs):
             self.assertTrue('-map' in arguments and 'wav' in arguments, arguments)
+            audio_filename = arguments[-1]
+            self.assertTrue(audio_filename)
             if raw_audio_basename is None:
-                return EMPTY_WAV
-            with open(f"../fixtures/{raw_audio_basename}", "rb") as f:
-                audio = f.read()
-            return audio
+                with open(audio_filename, "wb") as fd:
+                    fd.write(EMPTY_WAV)
+            else:
+                shutil.copy(f"../fixtures/{raw_audio_basename}", audio_filename)
 
         return mock
 
@@ -327,7 +328,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
 
         return mock
 
-    def _mock_mkvpropedit_tags(self, expected_tags: dict[str, [None, str]] = None):
+    def _mock_mkvpropedit_tags(self, expected_tags: dict[str, Union[None, str]] = None):
         def mock(method_name: str, arguments: list, **kwargs):
             if expected_tags is not None:
                 global_tag_filename = None
@@ -634,7 +635,8 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             self._mock_ffmpeg_extract_audio_for_transcribing(None),
         ])
         tools.mkvpropedit = proc_invoker.MockProcInvoker('mkvpropedit', mocks=[
-            self._mock_mkvpropedit_tags(expected_tags={constants.K_AUDIO_TO_TEXT_VERSION: '6'})
+            self._mock_mkvpropedit_tags(
+                expected_tags={constants.K_AUDIO_TO_TEXT_VERSION: str(profanity_filter.AUDIO_TO_TEXT_VERSION)})
         ])
         profanity_filter.do_profanity_filter(mkv_path)
 

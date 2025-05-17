@@ -22,7 +22,7 @@ import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 from . import hwaccel, tools, config, constants, progress, procprofile
-from .proc_invoker import StreamCapture, pre_flight_check
+from .proc_invoker import StreamCapturingLogger, pre_flight_check
 from .terminalui import terminalui_wrapper
 
 _allocate_lock = _thread.allocate_lock
@@ -1081,8 +1081,8 @@ class PoolApplyWrapper:
 
     def __call__(self, *args, **kwargs):
         progress.setup_subprocess_progress(self.progress_queue, self.rootLogLevel)
-        stdout = StreamCapture('stdout', logger, logging.INFO)
-        stderr = StreamCapture('stderr', logger, logging.ERROR)
+        stdout = StreamCapturingLogger('stdout', logger, logging.INFO)
+        stderr = StreamCapturingLogger('stderr', logger, logging.ERROR)
         procprofile.memory_monitor_start()
         try:
             return self.func(*args, **kwargs)
