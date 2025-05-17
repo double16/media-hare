@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 as comskipbuild
+FROM ubuntu:24.04 AS comskipbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,7 @@ RUN cd Comskip &&\
     make &&\
     make install
 
-FROM ubuntu:24.04 as ccbuild
+FROM ubuntu:24.04 AS ccbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -45,7 +45,7 @@ RUN apt-get -q update && \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat60 libsdl1.2-compat &&\
     pip --no-input install --break-system-packages --compile --ignore-installed -r /tmp/requirements.txt && \
-    python3 -c "import whisper; whisper.load_model('${WHISPER_MODEL}')" && \
+#    python3 -c "import whisper; whisper.load_model('${WHISPER_MODEL}')" && \
     apt-get remove -y python3-pip software-properties-common &&\
     apt-get autoremove -y &&\
     apt-get clean &&\
