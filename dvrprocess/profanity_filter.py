@@ -35,7 +35,7 @@ from common.proc_invoker import StreamCapturingProgress
 # Increment when a coding change materially effects the output
 FILTER_VERSION = 12
 AUDIO_TO_TEXT_VERSION = 7
-AUDIO_TO_TEXT_SUBTITLE_VERSION = 5
+AUDIO_TO_TEXT_SUBTITLE_VERSION = 6
 
 # exit code for content had filtering applied, file has been significantly changed
 CMD_RESULT_FILTERED = 0
@@ -56,7 +56,10 @@ SILENCE_FOR_SOUND_EFFECT = 500
 
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
 
-WHISPER_MODEL = whisper.load_model(os.getenv("WHISPER_MODEL", "medium"))
+WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL", "medium")
+WHISPER_MODEL = whisper.load_model(WHISPER_MODEL_NAME)
+WHISPER_BEAM_SIZE = 5
+WHISPER_PATIENCE = 2.5
 
 logger = logging.getLogger(__name__)
 
@@ -1121,8 +1124,8 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
             fp16=False,
             word_timestamps=True,
             verbose=False,
-            beam_size=5,
-            patience=2.5
+            beam_size=WHISPER_BEAM_SIZE,
+            patience=WHISPER_PATIENCE,
         )
     finally:
         audio_progress.finish()
@@ -1157,6 +1160,8 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         conf_notes = f'freq {freq} buf {chunk_size} af {audio_filter} conf [{conf_min:.3f},{conf_max:.3f}] {conf_avg:.3f}σ{conf_stdev:.3f}'
     else:
         conf_notes = ""
+
+    conf_notes = f"{conf_notes} whisper(model={WHISPER_MODEL_NAME},beam_size={WHISPER_BEAM_SIZE},patience={WHISPER_PATIENCE})"
 
     return words_filename, conf_notes
 
