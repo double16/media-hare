@@ -41,5 +41,7 @@ if [ -s '/sys/module/nvidia/version' ]; then
 #  done
   if [ -n "${NV_PKG_INSTALL}" ]; then
       apt-get -y install "${NV_PKG_INSTALL[@]}"
+      # Updates may start unattended-upgrades
+      systemctl stop unattended-upgrades
   fi
 fi

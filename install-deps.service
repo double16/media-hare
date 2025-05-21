@@ -1,6 +1,6 @@
 [Unit]
 Description=Install Dependencies
-After=network-online.target boot-complete.target
+After=network-online.target boot-complete.target hwaccel-drivers.target
 
 [Service]
 Type=oneshot
