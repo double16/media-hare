@@ -34,19 +34,18 @@ FROM ubuntu:24.04
 ARG SYSTEMCTL_VER=ac9b3916dd069ba053e4259cf74131028935f5e1
 ARG WHISPER_MODEL=medium
 ENV DEBIAN_FRONTEND=noninteractive
+ENV WHISPER_MODEL=${WHISPER_MODEL}
 
-COPY requirements.txt /tmp/
+COPY requirements.txt /usr/local/share/
 
 # mono-* deps line must match Subtitle-Edit version
+# mono-devel is required beyond mono-runtime
 # hunspell needed for Subtitle-Edit
 RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre rsync \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
     libargtable2-0 libavformat60 libsdl1.2-compat &&\
-    pip --no-input install --break-system-packages --compile --ignore-installed -r /tmp/requirements.txt && \
-#    python3 -c "import whisper; whisper.load_model('${WHISPER_MODEL}')" && \
-    apt-get remove -y python3-pip software-properties-common &&\
     apt-get autoremove -y &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
@@ -80,6 +79,7 @@ COPY logrotate.conf /etc/logrotate.d/dvr
 COPY sendmail-log.sh /usr/sbin/sendmail
 COPY healthcheck.sh /usr/bin/
 COPY entrypoint.sh /
+COPY install-deps.sh /usr/bin/install-deps
 COPY hwaccel-drivers.sh /usr/bin/hwaccel-drivers
 COPY hwaccel-drivers-wrapper.sh /usr/bin/hwaccel-drivers-wrapper
 COPY anacron.cron /etc/cron.d/anacron
@@ -110,10 +110,13 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     systemctl enable xorg-dummy &&\
     systemctl enable localtime &&\
     systemctl enable environment &&\
+    systemctl enable install-deps &&\
     systemctl enable hwaccel-drivers &&\
     systemctl disable unattended-upgrades &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
+
+VOLUME ["/usr/local/lib/python3.12", "/var/cache/pip", "/root/.cache/whisper"]
 
 CMD [ "/entrypoint.sh" ]
 
