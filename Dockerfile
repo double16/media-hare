@@ -84,6 +84,7 @@ COPY hwaccel-drivers.sh /usr/bin/hwaccel-drivers
 COPY hwaccel-drivers-wrapper.sh /usr/bin/hwaccel-drivers-wrapper
 COPY anacron.cron /etc/cron.d/anacron
 COPY auto-upgrade-conf /etc/apt/apt.conf.d/20auto-upgrades
+COPY whisper.patch /usr/local/src/
 ADD *.service /etc/systemd/system/
 RUN chmod 0644 /etc/logrotate.d/dvr &&\
     find /etc/cron* -type f -print0 | xargs -r0 chmod 0755 &&\

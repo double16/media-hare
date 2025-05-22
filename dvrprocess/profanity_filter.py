@@ -115,12 +115,14 @@ def lazy_get_whisper_model() -> Whisper:
 
 
 def profanity_filter(*args, **kwargs) -> int:
-    try:
-        return do_profanity_filter(*args, **kwargs)
-    except CorruptAssLineError:
-        logger.error("Corrupt ASS subtitle in %s", args[0])
-        return CMD_RESULT_ERROR
-
+    final_result = 0
+    for input_file in list(args):
+        try:
+            final_result = max(do_profanity_filter(input_file, **kwargs), final_result)
+        except CorruptAssLineError:
+            logger.error("Corrupt ASS subtitle in %s", args[0])
+            final_result = CMD_RESULT_ERROR
+    return final_result
 
 def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filter_skip=None, mark_skip=None,
                         unmark_skip=None, language=constants.LANGUAGE_ENGLISH, workdir=None, verbose=False,
@@ -727,17 +729,23 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
     # Remaining audio streams
     for extra_audio in list(filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_AUDIO and stream[
         constants.K_STREAM_INDEX] not in [audio_original_idx, audio_filtered_idx], input_info['streams'])):
+        logger.debug(f"Extra audio stream: {extra_audio}")
         arguments.extend(["-map", f"{streams_file}:{extra_audio[constants.K_STREAM_INDEX]}",
                           f"-c:a:{audio_output_idx}", "copy",
                           f"-disposition:a:{audio_output_idx}", "0"])
         audio_output_idx += 1
 
     # Remaining subtitle streams
-    for extra_audio in list(filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_SUBTITLE and stream[
-        constants.K_STREAM_INDEX] not in [subtitle_original_idx, subtitle_filtered_idx, subtitle_filtered_forced_idx,
-                                          subtitle_words_idx],
+    for extra_subtitle in list(
+            filter(lambda stream: stream[constants.K_CODEC_TYPE] == constants.CODEC_SUBTITLE and stream[
+                constants.K_STREAM_INDEX] not in [
+                                      (subtitle_original or {}).get(constants.K_STREAM_INDEX),
+                                      subtitle_filtered_idx,
+                                      subtitle_filtered_forced_idx,
+                                      subtitle_words_idx],
                                    input_info['streams'])):
-        arguments.extend(["-map", f"{streams_file}:{extra_audio[constants.K_STREAM_INDEX]}",
+        logger.debug(f"Extra subtitle stream: {extra_subtitle}")
+        arguments.extend(["-map", f"{streams_file}:{extra_subtitle[constants.K_STREAM_INDEX]}",
                           f"-disposition:s:{subtitle_output_idx}", "0"])
         subtitle_output_idx += 1
 
@@ -1753,7 +1761,7 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
     has_punctuation = any(filter(lambda e: e.text.endswith('.') or e.text.endswith('?'), words))
     has_capitalization = any(filter(lambda e: e.text[0].isupper() and e.text[-1].islower(), words))
-    logger.info(f"has_punctuation = {has_punctuation}, has_capitalization = {has_capitalization}")
+    logger.debug(f"has_punctuation = {has_punctuation}, has_capitalization = {has_capitalization}")
     sentences: list[SubRipItem] = []
     spellchecker = get_spell_checker(language)
     s = None
@@ -2650,13 +2658,12 @@ def profanity_filter_cli(argv) -> int:
         usage()
         return CMD_RESULT_ERROR
 
-    input_file = args[0]
-
     atexit.register(common.finish)
 
-    common.cli_wrapper(profanity_filter, input_file, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
-                       mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
-                       mute_channels=mute_channels, language=language, no_curses=no_curses)
+    return common.cli_wrapper(
+        profanity_filter, *args, dry_run=dry_run, keep=keep, force=force, filter_skip=filter_skip,
+        mark_skip=mark_skip, unmark_skip=unmark_skip, workdir=workdir, verbose=True,
+        mute_channels=mute_channels, language=language, no_curses=no_curses)
 
 
 if __name__ == '__main__':

@@ -8,4 +8,10 @@ pip --cache-dir /var/cache/pip \
     --compile --ignore-installed \
     -r /usr/local/share/requirements.txt
 
+if test -f /usr/local/lib/python3.12/dist-packages/whisper/triton_ops.py && test -f /usr/local/src/whisper.patch; then
+  pushd /usr/local/lib/python3.12/dist-packages
+  patch -p0 < /usr/local/src/whisper.patch
+  popd
+fi
+
 python3 -c "import whisper; whisper.load_model('${WHISPER_MODEL}')"
