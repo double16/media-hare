@@ -499,7 +499,10 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             ass_data = read_ass(subtitle.clean_ssa(Path(subtitle_original_filename)))
             for event in ass_data.events:
                 event.text = ASSA_TYPEFACE_REMOVE.sub('', event.text)
-            if subtitle_words_filename:
+            if audio_to_text_subtitle_version:
+                logger.info("Subtitle from transcription, subtitle alignment skipped")
+            elif subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(
+                    subtitle_words_filename).st_size > 0:
                 ass_data_aligned = copy.deepcopy(ass_data)
                 try:
                     aligned, aligned_stats = fix_subtitle_audio_alignment(ass_data_aligned,
@@ -538,7 +541,9 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
             filter_progress.stop()
         elif subtitle_codec in [constants.CODEC_SUBTITLE_SRT, constants.CODEC_SUBTITLE_SUBRIP]:
             srt_data = pysrt.open(subtitle_original_filename)
-            if subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(
+            if audio_to_text_subtitle_version:
+                logger.info("Subtitle from transcription, subtitle alignment skipped")
+            elif subtitle_words_filename and os.path.exists(subtitle_words_filename) and os.stat(
                     subtitle_words_filename).st_size > 0:
                 srt_data_aligned = copy.deepcopy(srt_data)
                 try:

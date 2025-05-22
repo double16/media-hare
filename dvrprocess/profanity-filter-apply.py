@@ -275,8 +275,8 @@ def profanity_filter_apply_cli(argv) -> int:
     force = False
     selectors = None
 
-    processes = config.get_global_config_int('background_limits', 'processes',
-                                             fallback=max(1, int(common.core_count() / 2) - 1))
+    # whisper is intensive on memory, so use only one process
+    processes = 1
 
     try:
         opts, args = getopt.getopt(list(argv),
