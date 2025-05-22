@@ -27,6 +27,7 @@ from numpy import loadtxt, average, concatenate
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from thefuzz import fuzz
 from thefuzz import process as fuzzprocess
+from whisper.model import Whisper
 
 import common
 from common import subtitle, tools, config, constants, progress, edl_util, fsutil
@@ -57,7 +58,7 @@ SILENCE_FOR_SOUND_EFFECT = 500
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
 
 WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL", "medium")
-WHISPER_MODEL = whisper.load_model(WHISPER_MODEL_NAME)
+__WHISPER_MODEL = None
 WHISPER_BEAM_SIZE = 5
 WHISPER_PATIENCE = 2.5
 
@@ -103,10 +104,14 @@ Filter audio and subtitles for profanity.
 Environment:
     LANGUAGE_TOOL_HOST=127.0.0.1
     LANGUAGE_TOOL_PORT=8100
-    KALDI_EN_HOST=kaldi-en
-    KALDI_EN_PORT=2700
-      (duplicate KALDI_* above for other languages use 2-letter code)
 """, file=sys.stderr)
+
+
+def lazy_get_whisper_model() -> Whisper:
+    global __WHISPER_MODEL
+    if not __WHISPER_MODEL:
+        __WHISPER_MODEL = whisper.load_model(WHISPER_MODEL_NAME)
+    return __WHISPER_MODEL
 
 
 def profanity_filter(*args, **kwargs) -> int:
@@ -1123,7 +1128,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     try:
         tools.ffmpeg.run(extract_command, check=True)
 
-        whisper_result = WHISPER_MODEL.transcribe(
+        whisper_result = lazy_get_whisper_model().transcribe(
             audio=audio_filename,
             language=whisper_language(language),
             fp16=False,

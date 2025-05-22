@@ -35,7 +35,7 @@ This program will run only if configuration profanity_filter.enable is set to tr
     Limit changed data to this many bytes. Set to 0 for no limit.
 -t, --time-limit={config.get_global_config_option('background_limits', 'time_limit')}
     Limit runtime. Set to 0 for no limit.
--p, --processes=2
+-p, --processes=1
 --ignore-compute
     Ignore current compute availability.
 -s, --selector={','.join(ProfanityFilterSelector.__members__.keys())}
@@ -51,9 +51,6 @@ This program will run only if configuration profanity_filter.enable is set to tr
 Environment:
     LANGUAGE_TOOL_HOST=127.0.0.1
     LANGUAGE_TOOL_PORT=8100
-    KALDI_EN_HOST=kaldi-en
-    KALDI_EN_PORT=2700
-      (duplicate KALDI_* above for other languages use 2-letter code)
 """, file=sys.stderr)
 
 

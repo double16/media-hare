@@ -73,6 +73,11 @@ The LibreOffice language tool is used for spell checking and generating subtitle
 two environment variables `LANGUAGE_TOOL_HOST` and `LANGUAGE_TOOL_PORT` are used to configure it.
 
 ```yaml
+volumes:
+   media_hare_pip:
+   media_hare_python_packages:
+   media_hare_whisper_cache:
+
 services:
 
   langtool:
@@ -88,6 +93,10 @@ services:
       - "TZ=America/Chicago"
       - "LANGUAGE_TOOL_HOST=langtool"
       - "LANGUAGE_TOOL_PORT=8100"
+    volumes:
+       - media_hare_pip:/var/cache/pip
+       - media_hare_python_packages:/usr/local/lib/python3.12
+       - media_hare_whisper_cache:/root/.cache/whisper
 ```
 
 ## Development Recommendation
