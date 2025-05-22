@@ -10,7 +10,7 @@ pip --cache-dir /var/cache/pip \
 
 if test -f /usr/local/lib/python3.12/dist-packages/whisper/triton_ops.py && test -f /usr/local/src/whisper.patch; then
   pushd /usr/local/lib/python3.12/dist-packages
-  patch -p0 < /usr/local/src/whisper.patch
+  patch -f -p0 < /usr/local/src/whisper.patch || true
   popd
 fi
 
