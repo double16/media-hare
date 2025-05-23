@@ -10,20 +10,10 @@
 # Run with:
 #     docker compose -p mh -f docker-compose.yml -f docker-compose.local.yml up --build -d
 #
-# export LANGUAGE_TOOL_HOST=localhost LANGUAGE_TOOL_PORT=8100 KALDI_EN_HOST=localhost KALDI_EN_PORT=2700
+# export LANGUAGE_TOOL_HOST=localhost LANGUAGE_TOOL_PORT=8100
 #
 
 services:
-
-  kaldi-en:
-    image: ghcr.io/double16/kaldi-en:latest
-    platform: "linux/amd64"
-    restart: unless-stopped
-    environment:
-      - "VOSK_SHOW_WORDS=true"
-      - "VOSK_ALTERNATIVES=0"
-    ports:
-      - "2700:2700/tcp"
 
   langtool:
     image: ghcr.io/double16/libreoffice-langtool:6.6

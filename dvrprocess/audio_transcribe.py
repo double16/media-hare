@@ -8,20 +8,20 @@ import subprocess
 import sys
 from pathlib import Path
 from statistics import mean, stdev
-from subprocess import PIPE, DEVNULL
 from typing import Union
 
 import pysrt
+import whisper
 from pysrt import SubRipItem, SubRipFile, SubRipTime
 from thefuzz import fuzz
 
 import common
 from common import tools, constants, edl_util, progress
-from common.vosk import kaldi_recognizer, vosk_model
+from dvrprocess.common.proc_invoker import StreamCapturingProgress
 from profanity_filter import srt_words_to_sentences, SUBTITLE_TEXT_TO_PLAIN_WS, \
     SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS
 
-DEFAULT_MODEL = vosk_model('en-us')
+DEFAULT_MODEL = "medium"
 DEFAULT_FREQ = 16000
 DEFAULT_BUFFER_SIZE = 4000
 DEFAULT_NUM_CHANNELS = 1
@@ -53,16 +53,17 @@ audio transcriber debugging
 """, file=sys.stderr)
 
 
+WHISPER_MODELS = dict()
+
 def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=None,
                      buffer_size: int = DEFAULT_BUFFER_SIZE,
                      num_channels: int = DEFAULT_NUM_CHANNELS,
-                     duration: [None, str] = None, audio_filter: [None, str] = None,
-                     max_alternatives: [None, int] = None, no_clobber=True, input_info=None,
-                     model_name: [None, str] = None):
+                     duration: Union[None, str] = None, audio_filter: Union[None, str] = None,
+                     no_clobber=True, input_info=None,
+                     model_name: Union[str, None] = None):
     """
 
     :param input_info:
-    :param max_alternatives:
     :param model_name:
     :param input_path:
     :param freq:
@@ -80,6 +81,12 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
     """
 
     model_name = model_name or DEFAULT_MODEL
+    if model_name in WHISPER_MODELS:
+        model = WHISPER_MODELS[model_name]
+    else:
+        model = whisper.load_model(model_name)
+        WHISPER_MODELS[model_name] = model
+
 
     words_path, text_path = compute_file_paths(
         input_path=input_path,
@@ -95,11 +102,6 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
 
     if no_clobber and os.path.exists(words_path) and os.path.exists(text_path):
         return 0
-
-    rec = kaldi_recognizer("en-us", freq, num_channels)
-    # FIXME:
-    # if max_alternatives is not None:
-    #     rec.SetMaxAlternatives(max_alternatives)
 
     if not input_info:
         input_info = common.find_input_info(input_path)
@@ -131,56 +133,56 @@ def audio_transcribe(input_path, freq=DEFAULT_FREQ, words_path=None, text_path=N
             if audio_filter:
                 ffmpeg_command.extend(['-af', audio_filter])
 
-    ffmpeg_command.extend(['-f', 'wav', '-'])
+    ffmpeg_command.extend(['-f', 'wav'])
+    audio_filename = os.path.splitext(words_path)[0] + ".wav"
+    ffmpeg_command.extend(['-f', 'wav', audio_filename])
+
     print(tools.ffmpeg.array_as_command(ffmpeg_command))
-    ffmpeg = tools.ffmpeg.Popen(ffmpeg_command, stdout=PIPE, stderr=DEVNULL)
+    tools.ffmpeg.run(ffmpeg_command, check=True)
 
-    audio_progress = progress.progress(f"{os.path.basename(input_info['format']['filename'])} transcription", 0,
-                                       int(edl_util.parse_edl_ts(duration)) if duration else
-                                       int(float(input_info[constants.K_FORMAT][constants.K_DURATION])))
+    audio_progress = StreamCapturingProgress(
+        "stderr",
+        progress.progress(
+            f"{os.path.basename(input_info['format']['filename'])} transcription",
+            0, 100))
 
-    wf = ffmpeg.stdout
+    whisper_result = model.transcribe(
+        audio=audio_filename,
+        language='en',
+        fp16=False,
+        word_timestamps=True,
+        verbose=False,
+        beam_size=5,
+        patience=2.5
+    )
 
-    words = []
-    while True:
-        data = wf.read(buffer_size)
-        if len(data) == 0:
-            break
-        if rec.accept_waveform(data):
-            result = rec.result()
-            if "result" in result:
-                words.extend(result["result"])
-                audio_progress.progress(result['result'][-1]['end'])
-
-    result = rec.final_result()
-    wf.close()
-    ffmpeg_return_code = ffmpeg.wait()
-    if ffmpeg_return_code != 0:
-        return ffmpeg_return_code
-
-    if "result" in result:
-        words.extend(result["result"])
-
-    audio_progress.stop()
+    audio_progress.finish()
 
     confs = []
-    for w in words:
-        confs.append(w['conf'])
-    conf_min = min(confs)
-    conf_max = max(confs)
-    conf_avg = mean(confs)
-    conf_stdev = stdev(confs)
+    subs_words = []
+    for segment in whisper_result["segments"]:
+        for word in segment["words"]:
+            if 'probability' in word:
+                confs.append(word['probability'])
+            s = SubRipItem(index=len(subs_words),
+                           start=SubRipTime(seconds=word['start']),
+                           end=SubRipTime(seconds=word['end']),
+                           text=word['word'].strip())
+            subs_words.append(s)
+
+    if confs:
+        conf_min = min(confs)
+        conf_max = max(confs)
+        conf_avg = mean(confs)
+        conf_stdev = stdev(confs)
+    else:
+        conf_min = None
+        conf_max = None
+        conf_avg = None
+        conf_stdev = None
 
     notes = f'# model {model_name} freq {freq} buf {buffer_size} af {audio_filter} conf [{conf_min},{conf_max}] {conf_avg}σ{conf_stdev}'
     notes_item = SubRipItem(index=0, start=SubRipTime(seconds=0), end=SubRipTime(seconds=1), text=notes)
-
-    subs_words = []
-    for word in words:
-        s = SubRipItem(index=len(subs_words),
-                       start=SubRipTime(seconds=word['start']),
-                       end=SubRipTime(seconds=word['end']),
-                       text=word['word'])
-        subs_words.append(s)
 
     subs_text = srt_words_to_sentences(subs_words, 'en')
 
@@ -204,12 +206,11 @@ def audio_transcribe_cli(argv):
     num_channels = DEFAULT_NUM_CHANNELS
     audio_filter = None
     audio_filter_file = None
-    max_alternatives = None
 
     try:
         opts, args = getopt.getopt(
             list(argv), "w:t:f:d:b:a:c:",
-            ["words=", "text=", "freq=", "duration=", "buffer=", 'audio-filter=', 'max-alt=', "audio-filter-file=",
+            ["words=", "text=", "freq=", "duration=", "buffer=", 'audio-filter=', "audio-filter-file=",
              "channels="])
     except getopt.GetoptError:
         usage()
@@ -234,8 +235,6 @@ def audio_transcribe_cli(argv):
             audio_filter = arg
         elif opt == "--audio-filter-file":
             audio_filter_file = arg
-        elif opt == "--max-alt":
-            max_alternatives = int(arg)
 
     if len(args) == 0:
         usage()
@@ -246,15 +245,12 @@ def audio_transcribe_cli(argv):
     if not audio_filter_file:
         audio_transcribe(input_path, words_path=words_path, text_path=text_path, freq=freq, duration=duration,
                          num_channels=num_channels,
-                         buffer_size=buffer_size, audio_filter=audio_filter, max_alternatives=max_alternatives,
+                         buffer_size=buffer_size, audio_filter=audio_filter,
                          no_clobber=False)
         return 0
 
     audio_filter_list = [
-        # (None, "vosk-model-en-us-0.22-lgraph"),
-        # (None, "vosk-model-en-us-0.22"),
-        # (None, "vosk-model-en-us-daanzu-20200905"),
-        (None, "vosk-model-en-us-0.42-gigaspeech"),
+        (None, "medium"),
     ]
     with open(audio_filter_file, "rt") as audio_filter_fh:
         for line in audio_filter_fh.readlines():
@@ -276,7 +272,7 @@ def audio_transcribe_cli(argv):
         logger.info("transcribing: audio_filter=%s, model_name=%s", audio_filter, model_name)
         audio_transcribe(input_path, input_info=input_info, freq=freq, duration=duration,
                          buffer_size=buffer_size, audio_filter=audio_filter, model_name=model_name,
-                         max_alternatives=max_alternatives, no_clobber=True)
+                         no_clobber=True)
         audio_filter_list_progress.progress(af_idx + 1, msg=str(audio_filter))
     audio_filter_list_progress.stop()
 
@@ -301,6 +297,8 @@ def audio_transcribe_cli(argv):
         transcribed_text = read_text_from_srt(text_path, duration_f)
         r = fuzz.WRatio(expected_text, transcribed_text)
         print(f"{r}: {audio_filter},{model_name} - {text_path}")
+
+    return 0
 
 
 def compute_file_paths(

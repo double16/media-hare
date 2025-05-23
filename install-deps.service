@@ -1,0 +1,10 @@
+[Unit]
+Description=Install Dependencies
+After=network-online.target boot-complete.target hwaccel-drivers.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/install-deps
+
+[Install]
+WantedBy=multi-user.target
