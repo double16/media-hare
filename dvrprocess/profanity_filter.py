@@ -1759,7 +1759,7 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     max_duration_ms = 8000
     newline = '\n'
     words = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
-    has_punctuation = any(filter(lambda e: e.text.endswith('.') or e.text.endswith('?'), words))
+    has_punctuation = any(filter(lambda e: e.text[-1] in ['.', '?', '!'], words))
     has_capitalization = any(filter(lambda e: e.text[0].isupper() and e.text[-1].islower(), words))
     logger.debug(f"has_punctuation = {has_punctuation}, has_capitalization = {has_capitalization}")
     sentences: list[SubRipItem] = []
