@@ -596,7 +596,7 @@ class ProfanityFilterStreamsTest(unittest.TestCase):
             self._mock_ffmpeg_extract_subtitle_filtered_words('needs_filtered.srt.txt',
                                                               'needs_filtered.srt.txt'),
             self._mock_ffmpeg_create_with_filtered_streams(
-                4, mapped_stream_count=9,
+                4, mapped_stream_count=8,
                 expected_args=[
                     f"{constants.K_AUDIO_TO_TEXT_SUBTITLE_VERSION}={profanity_filter.AUDIO_TO_TEXT_SUBTITLE_VERSION}"]),
         ])

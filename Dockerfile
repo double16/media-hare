@@ -118,7 +118,7 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
 
-VOLUME ["/usr/local/lib/python3.12", "/var/cache/pip", "/root/.cache/whisper"]
+VOLUME ["/usr/local/lib/python3.12", "/var/cache/pip", "/root/.cache"]
 
 CMD [ "/entrypoint.sh" ]
 

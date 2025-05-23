@@ -76,7 +76,7 @@ two environment variables `LANGUAGE_TOOL_HOST` and `LANGUAGE_TOOL_PORT` are used
 volumes:
    media_hare_pip:
    media_hare_python_packages:
-   media_hare_whisper_cache:
+   media_hare_model_cache:
 
 services:
 
@@ -96,7 +96,7 @@ services:
     volumes:
        - media_hare_pip:/var/cache/pip
        - media_hare_python_packages:/usr/local/lib/python3.12
-       - media_hare_whisper_cache:/root/.cache/whisper
+       - media_hare_model_cache:/root/.cache
 ```
 
 ## Development Recommendation
