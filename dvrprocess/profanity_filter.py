@@ -57,8 +57,9 @@ SILENCE_FOR_SOUND_EFFECT = 500
 
 ASSA_TYPEFACE_REMOVE = re.compile(r"[{][\\][iubsIUBS]\d+[}]")
 
-WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL", "medium")
-__WHISPER_MODEL = None
+WHISPER_MODEL_NAME_FALLBACK = "medium"
+WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL", WHISPER_MODEL_NAME_FALLBACK)
+__WHISPER_MODELS: list[Whisper] = list()
 WHISPER_BEAM_SIZE = 5
 WHISPER_PATIENCE = 2.5
 
@@ -107,11 +108,16 @@ Environment:
 """, file=sys.stderr)
 
 
-def lazy_get_whisper_model() -> Whisper:
-    global __WHISPER_MODEL
-    if not __WHISPER_MODEL:
-        __WHISPER_MODEL = whisper.load_model(WHISPER_MODEL_NAME)
-    return __WHISPER_MODEL
+def lazy_get_whisper_models() -> list[Whisper]:
+    global __WHISPER_MODELS
+    if not __WHISPER_MODELS:
+        logger.info(f"Loading whisper model {WHISPER_MODEL_NAME}")
+        __WHISPER_MODELS.append(whisper.load_model(WHISPER_MODEL_NAME))
+        # fall back to medium because sometimes large returns no transcription
+        if WHISPER_MODEL_NAME != WHISPER_MODEL_NAME_FALLBACK:
+            logger.info(f"Loading fall back whisper model {WHISPER_MODEL_NAME_FALLBACK}")
+            __WHISPER_MODELS.append(whisper.load_model(WHISPER_MODEL_NAME_FALLBACK))
+    return __WHISPER_MODELS
 
 
 def profanity_filter(*args, **kwargs) -> int:
@@ -1097,7 +1103,6 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     global debug
 
     freq = 48000
-    chunk_size = ceil(freq * 1.0)  # coefficient is the number of seconds
     num_channels = 1  # num_channels 2 doesn't work (2024-02-17), it takes the input as mono
 
     temp_fd, words_filename = tempfile.mkstemp(dir=workdir, suffix='.srt')
@@ -1127,6 +1132,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         extract_command.extend(['-ac', str(num_channels)])
     extract_command.extend(['-f', 'wav', audio_filename])
 
+    whisper_result = []
     audio_progress = StreamCapturingProgress(
         "stderr",
         progress.progress(
@@ -1136,15 +1142,26 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     try:
         tools.ffmpeg.run(extract_command, check=True)
 
-        whisper_result = lazy_get_whisper_model().transcribe(
-            audio=audio_filename,
-            language=whisper_language(language),
-            fp16=False,
-            word_timestamps=True,
-            verbose=False,
-            beam_size=WHISPER_BEAM_SIZE,
-            patience=WHISPER_PATIENCE,
-        )
+        for whisper_model in lazy_get_whisper_models():
+            whisper_result = whisper_model.transcribe(
+                audio=audio_filename,
+                language=whisper_language(language),
+                fp16=False,
+                word_timestamps=True,
+                verbose=False,
+                beam_size=WHISPER_BEAM_SIZE,
+                patience=WHISPER_PATIENCE,
+            )
+
+            # need to check for words, sometimes only music symbols are returned
+            word_count = 0
+            for segment in whisper_result.get("segments", []):
+                for word in segment.get("words", []):
+                    word_text = word['word'].strip()
+                    if len(word_text) > 0 and word_text[0].isalpha():
+                        word_count += 1
+            if word_count > 100:
+                break
     finally:
         audio_progress.finish()
         if not debug:
@@ -1175,7 +1192,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
         conf_max = max(confs)
         conf_avg = mean(confs)
         conf_stdev = stdev(confs)
-        conf_notes = f'freq {freq} buf {chunk_size} af {audio_filter} conf [{conf_min:.3f},{conf_max:.3f}] {conf_avg:.3f}σ{conf_stdev:.3f}'
+        conf_notes = f'freq {freq} af {audio_filter} conf [{conf_min:.3f},{conf_max:.3f}] {conf_avg:.3f}σ{conf_stdev:.3f}'
     else:
         conf_notes = ""
 
