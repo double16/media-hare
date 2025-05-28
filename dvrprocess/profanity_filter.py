@@ -1142,7 +1142,7 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
     try:
         tools.ffmpeg.run(extract_command, check=True)
 
-        for whisper_model in lazy_get_whisper_models():
+        for whisper_model_idx, whisper_model in enumerate(lazy_get_whisper_models()):
             whisper_result = whisper_model.transcribe(
                 audio=audio_filename,
                 language=whisper_language(language),
@@ -1154,14 +1154,16 @@ def audio_to_words_srt(input_info: dict, audio_original: dict, workdir, audio_fi
             )
 
             # need to check for words, sometimes only music symbols are returned
-            word_count = 0
+            unique_words = set()
             for segment in whisper_result.get("segments", []):
                 for word in segment.get("words", []):
-                    word_text = word['word'].strip()
-                    if len(word_text) > 0 and word_text[0].isalpha():
-                        word_count += 1
-            if word_count > 100:
+                    word_text = ''.join(filter(lambda e: e.isalpha(), word['word']))
+                    if len(word_text) > 0:
+                        unique_words.add(word_text)
+            if len(unique_words) > 100:
                 break
+            elif whisper_model_idx == 0:
+                logger.warning(f"Transcribing produced {len(unique_words)} words, retrying with a different model")
     finally:
         audio_progress.finish()
         if not debug:
