@@ -67,25 +67,18 @@ Open a shell like Terminal or Powershell and run the following, replacing time z
 $ docker run -d -e "TZ=America/Chicago" --device /dev/dri --device /dev/nvidiactl --device /dev/nvidia0 --device /dev/nvidia-uvm -v /path/to/media:/media -v /path/to/media-hare.ini:/etc/media-hare.ini ghcr.io/double16/media-hare:main
 ```
 
-## Language Tools as Services
-
-The audio transcriber service `alphacep/kaldi-` needs a service per language. It's necessary to name the service
-`kaldi-{lang}` for `media-hare` to find it. If no service exists, the transcriber will be run and stopped as needed.
-This is inefficient especially for memory usage.
+## Language Tool as Service
 
 The LibreOffice language tool is used for spell checking and generating subtitles from audio. Only one is needed. The
 two environment variables `LANGUAGE_TOOL_HOST` and `LANGUAGE_TOOL_PORT` are used to configure it.
 
 ```yaml
+volumes:
+   media_hare_pip:
+   media_hare_python_packages:
+   media_hare_model_cache:
+
 services:
-  kaldi-en:
-    image: alphacep/kaldi-en:latest
-    restart: unless-stopped
-    environment:
-      - "VOSK_SHOW_WORDS=true"
-      - "VOSK_ALTERNATIVES=0"
-    ports:
-      - "2700:2700/tcp"
 
   langtool:
     image: ghcr.io/double16/libreoffice-langtool:main
@@ -100,6 +93,10 @@ services:
       - "TZ=America/Chicago"
       - "LANGUAGE_TOOL_HOST=langtool"
       - "LANGUAGE_TOOL_PORT=8100"
+    volumes:
+       - media_hare_pip:/var/cache/pip
+       - media_hare_python_packages:/usr/local/lib/python3.12
+       - media_hare_model_cache:/root/.cache
 ```
 
 ## Development Recommendation
@@ -109,17 +106,14 @@ You'll need to place `media-hare.ini` into your workspace directory.
 - Mount media folder to /path/to/media
 - Mount your source folder to ~/Workspace
 
-### language and vosk servers
+### language tool server
 
-Performance is better using language and vosk servers running on docker. Otherwise media-hare will start them in each
+Performance is better running the language tool on docker. Otherwise media-hare will it in each
 process, using unnecessary memory and compute.
 
 ```shell
-docker run -d --name kaldi-en -e VOSK_SHOW_WORDS=true -e VOSK_ALTERNATIVES=0 -p 2700:2700 alphacep/kaldi-en:latest
 docker run -d --name langtool -p 8100:8100 ghcr.io/double16/libreoffice-langtool:main
 export LANGUAGE_TOOL_HOST=localhost
-export KALDI_EN_HOST=localhost
-export KALDI_EN_PORT=2700
 export LANGUAGE_TOOL_PORT=8100
 ```
 

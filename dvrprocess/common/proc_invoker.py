@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -9,6 +10,7 @@ from shutil import which
 from threading import Lock
 from typing import Union
 from . import config
+from .progress import Progress
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +302,7 @@ def pre_flight_check():
         sys.exit(255)
 
 
-class StreamCapture(object):
+class StreamCapturingLogger(object):
     def __init__(self, name: str, logger=None, level=logging.INFO):
         self.name = name
         self.logger = logger
@@ -393,3 +395,31 @@ class ProcessStreamGenerator(object):
                 time.sleep(0.2)
             else:
                 yield line_out, line_err
+
+
+class StreamCapturingProgress(object):
+    pct_matcher = re.compile(r'([0-9]{1,3})%')
+
+    def __init__(self, name: str, progress: Progress):
+        self.name = name
+        assert progress
+        self.progress = progress
+        self.save = getattr(sys, name)
+        setattr(sys, name, self)
+
+    def isatty(self) -> bool:
+        if self.save and hasattr(self.save, 'isatty'):
+            return self.save.isatty()
+        return False
+
+    def write(self, data):
+        pct_match = self.pct_matcher.search(data)
+        if pct_match:
+            self.progress.progress(int(pct_match.group(1)))
+
+    def flush(self):
+        pass
+
+    def finish(self, output=True):
+        setattr(sys, self.name, self.save)
+        self.progress.stop()

@@ -13,15 +13,6 @@
 
 services:
 
-  kaldi-en:
-    image: ghcr.io/double16/kaldi-en:latest
-    restart: unless-stopped
-    environment:
-      - "VOSK_SHOW_WORDS=true"
-      - "VOSK_ALTERNATIVES=0"
-    ports:
-      - "2700:2700/tcp"
-
   langtool:
     image: ghcr.io/double16/libreoffice-langtool:6.5
     restart: unless-stopped
