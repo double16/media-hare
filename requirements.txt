@@ -5,7 +5,7 @@ ass-parser==1.0
 pysrt==1.1.2
 plexapi==4.16.1
 psutil==7.0.0
-requests==2.32.3
+requests==2.32.4
 pygad==3.4.0
 openai-whisper==20240930
 websockets==15.0
