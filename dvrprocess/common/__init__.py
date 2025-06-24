@@ -897,7 +897,7 @@ def write_mkv_tags(tags, filepath) -> None:
         value.text = str(v)
         simple.append(value)
     with open(filepath, "wb") as f:
-        ET.ElementTree(root).write(f)
+        ET.ElementTree(root).write(f, 'ISO-8859-1')
 
 
 def filepath_is_mkv(filepath):

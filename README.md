@@ -93,6 +93,7 @@ services:
       - "TZ=America/Chicago"
       - "LANGUAGE_TOOL_HOST=langtool"
       - "LANGUAGE_TOOL_PORT=8100"
+      - "HWACCEL_DRIVERS_INSTALL=true"
     volumes:
        - media_hare_pip:/var/cache/pip
        - media_hare_python_packages:/usr/local/lib/python3.12

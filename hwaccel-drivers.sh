@@ -8,6 +8,10 @@ set -e
 
 APT_UPDATED=
 
+if [[ "${HWACCEL_DRIVERS_INSTALL}" != "true" ]]; then
+  exit 0
+fi
+
 if [ -s '/sys/module/nvidia/version' ]; then
   NV_VERSION="$(</sys/module/nvidia/version)"
   NV_MAJOR_VER="${NV_VERSION/.*/}"
