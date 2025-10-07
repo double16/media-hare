@@ -1004,6 +1004,12 @@ def dumpstacks(signal, frame):
             if line:
                 trace.append("  %s" % (line.strip()))
     print("\n".join(trace))
+    try:
+        from guppy import hpy
+        h=hpy()
+        print("\n".join(h.heap()[0:12]))
+    except ImportError:
+        pass
 
 
 def setup_debugging():
