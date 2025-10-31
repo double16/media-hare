@@ -4,7 +4,7 @@
 [![Build](https://github.com/double16/media-hare/workflows/Build/badge.svg)](https://github.com/double16/media-hare/actions?query=workflow%3ABuild)
 [![](https://img.shields.io/badge/Donate-Buy%20me%20a%20coffee-orange.svg)](https://www.buymeacoffee.com/patDj)
 
-![](docs/media-hare.jpg)
+![](docs/media-hare.png)
 
 Sundry tools for maintaining a personal media library. Rabbits (hares) like to be clean and are frequently grooming.
 The tools here are intended to groom your media files for various purposes such as:

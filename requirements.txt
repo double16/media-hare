@@ -4,10 +4,10 @@
 ass-parser==1.0
 pysrt==1.1.2
 plexapi==4.17.1
-psutil==7.1.0
+psutil==7.1.2
 requests==2.32.5
-pygad==3.4.0
-openai-whisper==20240930
+pygad==3.5.0
+openai-whisper==20250625
 websockets==15.0.1
 IMDbPY==2022.7.9
 thefuzz[speedup]==0.19.0
@@ -19,5 +19,5 @@ setuptools==78.1.1
 numpy==1.26.4
 scipy==1.15.2
 statsmodels==0.14.5
-matplotlib==3.10.6
+matplotlib==3.10.7
 guppy3~=3.1.5
