@@ -126,7 +126,7 @@ def comcut(infile, outfile, delete_edl=True, force_clear_edl=False, delete_meta=
     input_duration = float(input_info[constants.K_FORMAT]['duration'])
     if len(edl_events) > 0:
         if edl_events[-1].end > input_duration + 3:
-            logger.fatal("edl cuts past end of file")
+            logger.fatal("edl cuts past end of file, %d > %d", edl_events[-1].end, input_duration)
             return 255
 
     keyframes = common.load_keyframes_by_seconds(infile)

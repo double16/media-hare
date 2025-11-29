@@ -79,6 +79,15 @@ jobs:
       packages: write
 
     steps:
+      - name: Maximize build space
+        uses: AdityaGarg8/remove-unwanted-software@v5
+        with:
+          remove-android: 'true'
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-large-packages: 'true'
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
