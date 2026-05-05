@@ -292,6 +292,7 @@ def do_profanity_filter(input_file, dry_run=False, keep=False, force=False, filt
                                   media_duration=media_duration,
                                   force=force):
         subtitle_srt_generated = ocr_subtitle_bitmap_to_srt(input_info, temp_base, language, verbose=verbose)
+        # TODO: if ocr is successful, clear audio_to_text_subtitle_version and related fields
 
     if audio_original and (not filter_skip or current_audio2text_subtitle_version):
         if detect_transcribed_by_version_3(current_audio2text_version, input_info, subtitle_original):

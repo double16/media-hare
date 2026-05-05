@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 AS comskipbuild
+FROM ubuntu:26.04 AS comskipbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,7 @@ RUN cd Comskip &&\
     make &&\
     make install
 
-FROM ubuntu:24.04 AS ccbuild
+FROM ubuntu:26.04 AS ccbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,7 +29,7 @@ RUN cd ccextractor/linux &&\
     ./ccextractor --version &&\
     cp ccextractor /usr/local/bin
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG SYSTEMCTL_VER=v1.5.9063
 ARG WHISPER_MODEL=medium

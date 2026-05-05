@@ -124,3 +124,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=image,oci-mediatypes=true,compression=zstd,compression-level=3,force-compression=true
+
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          delete-ghost-images: true
+          delete-tags: pr-*
+          older-than: 7 days
