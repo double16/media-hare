@@ -289,11 +289,15 @@ def hwaccel_prologue(input_video_codec: str, target_video_codec: [None, str]) ->
         # let ffmpeg figure it out
         result.extend(['-hwaccel', 'auto'])
     elif hwaccel_requested in [HWAccelRequest.FULL, HWAccelRequest.NVENC] and method == HWAccelMethod.NVENC:
+        # not all codecs have hardware decoders, let ffmpeg figure it out
+        # "-hwaccel:v", "nvdec"
         result.extend(
-            ["-hwaccel:v", "nvdec", "-init_hw_device", "cuda=cuda", "-hwaccel_device", "0", "-filter_hw_device",
+            ["-hwaccel:v", "auto", "-init_hw_device", "cuda=cuda", "-hwaccel_device", "0", "-filter_hw_device",
              "cuda"])
     elif hwaccel_requested in [HWAccelRequest.FULL, HWAccelRequest.VAAPI] and method == HWAccelMethod.VAAPI:
-        result.extend(["-hwaccel:v", "vaapi", "-init_hw_device", "vaapi=vaapi:", "-hwaccel_device", "vaapi"])
+        # not all codecs have hardware decoders, let ffmpeg figure it out
+        # "-hwaccel:v", "vaapi"
+        result.extend(["-hwaccel:v", "auto", "-init_hw_device", "vaapi=vaapi:", "-hwaccel_device", "vaapi"])
 
     return result
 

@@ -100,7 +100,8 @@ class CCExtractorProcInvoker(SubprocessProcInvoker):
 
     @classmethod
     def version_parser(cls, path):
-        return re.search(r"CCExtractor ([\d.]+)", subprocess.check_output([path, '--version'], text=True))[1]
+        m = re.search(r"CCExtractor ([\d.]+)|Version:\s+([\d.]+)", subprocess.check_output([path, '--version'], text=True))
+        return m[1] or m[2]
 
     def __init__(self):
         super().__init__('ccextractor', CCExtractorProcInvoker.version_parser)

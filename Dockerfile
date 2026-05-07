@@ -56,7 +56,8 @@ RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre rsync \
     mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng libleptonica6 xserver-xorg-video-dummy libgtk2.0-0 \
-    libargtable2-0 libavformat62 libavfilter11 libavdevice62 libsdl1.2debian libglew2.2 libglfw3 libglu1-mesa &&\
+    libargtable2-0 libavformat62 libavfilter11 libavdevice62 libsdl1.2debian libglew2.2 libglfw3 libglu1-mesa \
+    gfortran libopenblas0 libopenblas-dev cmake &&\
     apt-get autoremove -y &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
