@@ -134,6 +134,7 @@ jobs:
 
       - uses: dataaxiom/ghcr-cleanup-action@v1
         with:
+          delete-untagged: true
           delete-ghost-images: true
           delete-tags: pr-*
           older-than: 7 days
