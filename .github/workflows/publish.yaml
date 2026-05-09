@@ -116,7 +116,9 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+#          platforms: linux/amd64,linux/arm64
+          # ccextractor, libpng neon compilation is broken on arm64 for 0.96.6
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
