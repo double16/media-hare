@@ -3,21 +3,26 @@
 
 ass-parser==1.0
 pysrt==1.1.2
-plexapi==4.17.2
-psutil==7.1.3
-requests==2.32.5
+plexapi==4.18.1
+psutil==7.2.2
+requests==2.33.1
 pygad==3.5.0
 openai-whisper==20250625
 websockets==15.0.1
 IMDbPY==2022.7.9
 thefuzz[speedup]==0.19.0
-Levenshtein==0.26.1
+Levenshtein==0.27.3
 num2words==0.5.14
 language-tool-python==2.9.4
 # 2024-09-23 python 3.12 removed 'distutils', some packages use it, this installs it:
 setuptools==78.1.1
 numpy==1.26.4
-scipy==1.15.2
-statsmodels==0.14.5
-matplotlib==3.10.7
+
+# torch needs to be compatible with the CUDA driver version.
+# python3 -c "import torch; print(torch.cuda.is_available(), torch.cuda.device_count(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else None)"
+torch==2.9.1
+
+scipy==1.17.1
+statsmodels==0.14.6
+matplotlib==3.10.9
 guppy3~=3.1.5

@@ -1,39 +1,73 @@
-FROM ubuntu:24.04 AS comskipbuild
+FROM ubuntu:26.04 AS comskipbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /tmp
 RUN apt-get -q update &&\
-    apt-get install -y autoconf libtool git build-essential libargtable2-dev libavformat-dev libsdl1.2-dev libswscale-dev
-RUN git clone https://github.com/erikkaashoek/Comskip --branch master --single-branch
-RUN cd Comskip &&\
-    git reset 55b0bcd018ddb9dacfad79addc48df55c1411073 --hard
+    apt-get install -y autoconf libtool git build-essential pkg-config libargtable2-dev libavformat-dev libswscale-dev libva-dev libva-drm2 libva-x11-2 libvdpau-dev libx11-dev libdrm-dev
+RUN git clone https://github.com/heitbaum/Comskip.git --branch ticks --single-branch
+#RUN git clone https://github.com/erikkaashoek/Comskip.git --branch master --single-branch
+#RUN cd Comskip &&\
+#    git reset a140b6ac8bc8f596729e9052819affc779c3b377 --hard
 RUN cd Comskip &&\
     ./autogen.sh &&\
-    ./configure &&\
-    make &&\
+    ./configure --disable-gui &&\
+    make -j$(nproc) &&\
     make install
+RUN ldd /usr/local/bin/comskip
 
-FROM ubuntu:24.04 AS ccbuild
+FROM ubuntu:26.04 AS ccbuild
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV FFMPEG_VERSION=ffmpeg8
 
 WORKDIR /tmp
 RUN apt-get -q update &&\
-    apt-get install -y autoconf libtool git build-essential libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
-RUN git clone https://github.com/CCExtractor/ccextractor --branch master --single-branch
+    apt-get install -y autoconf libtool git build-essential rustc cargo libglew-dev libglfw3-dev cmake g++ gcc yasm libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev libleptonica-dev libavformat-dev libavfilter-dev libavdevice-dev
+RUN git clone --depth=1 https://github.com/gpac/gpac.git
+RUN cd gpac &&\
+    ./configure &&\
+    make -j$(nproc) &&\
+    make install
+RUN git clone https://github.com/CCExtractor/ccextractor.git --branch master --single-branch
 RUN cd ccextractor &&\
-    git reset v0.94 --hard
-RUN cd ccextractor/linux &&\
-    ./build -without-rust &&\
+    git reset v0.96.6 --hard
+RUN cd ccextractor &&\
+    mkdir build &&\
+    cd build &&\
+    cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src/ &&\
+    make -j$(nproc) &&\
     ./ccextractor --version &&\
     cp ccextractor /usr/local/bin
 
-FROM ubuntu:24.04
-
-ARG SYSTEMCTL_VER=v1.5.9063
-ARG WHISPER_MODEL=medium
+# torch==2.9.1 and deps require python <=3.12
+FROM ubuntu:26.04 AS python3_12builder
 ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential ca-certificates wget curl libssl-dev zlib1g-dev libbz2-dev \
+    libreadline-dev libsqlite3-dev libffi-dev libncursesw5-dev libgdbm-dev liblzma-dev tk-dev git \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG PYTHON_VERSION=3.12.13
+ARG PREFIX=/opt/python3.12
+RUN mkdir -p /usr/src && cd /usr/src \
+    && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
+    && tar xzf Python-${PYTHON_VERSION}.tgz \
+    && cd Python-${PYTHON_VERSION} \
+    && ./configure --prefix=${PREFIX} --enable-optimizations --with-ensurepip=install --enable-shared \
+    && make -j$(nproc) && make install \
+    && rm -rf /usr/src/Python-${PYTHON_VERSION}*
+
+# Install pip packages into the prefix (isolated)
+ENV PATH="${PREFIX}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${PREFIX}/lib"
+RUN ${PREFIX}/bin/python3.12 -m pip install --upgrade pip setuptools wheel
+
+FROM ubuntu:26.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ARG SYSTEMCTL_VER=v1.7.1097
+ARG WHISPER_MODEL=medium
 ENV WHISPER_MODEL=${WHISPER_MODEL}
 
 COPY requirements.txt /usr/local/share/
@@ -44,8 +78,10 @@ COPY requirements.txt /usr/local/share/
 RUN apt-get -q update && \
     apt-get install -y software-properties-common && \
     apt-get install -qy zsh ffmpeg x264 x265 imagemagick vainfo curl python3 python3-pip python3-dev cron anacron sshfs vim-tiny mkvtoolnix unzip logrotate jq less default-jre rsync \
-    mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng xserver-xorg-video-dummy libgtk2.0-0 \
-    libargtable2-0 libavformat60 libsdl1.2-compat &&\
+    mono-runtime libmono-system-windows-forms4.0-cil libmono-system-net-http-webrequest4.0-cil mono-devel libhunspell-dev hunspell-en-us tesseract-ocr-eng libleptonica6 xserver-xorg-video-dummy libgtk2.0-0 \
+    libargtable2-0 libavformat62 libavfilter11 libavdevice62 libsdl1.2debian libglew2.2 libglfw3 libglu1-mesa \
+    gfortran libopenblas0 libopenblas-dev cmake \
+    ca-certificates libssl3t64 libbz2-1.0 libncurses6 libreadline8t64 libsqlite3-0 libffi8 liblzma5 libgdbm6t64 &&\
     apt-get autoremove -y &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/* &&\
@@ -62,8 +98,19 @@ RUN curl -o /tmp/se.zip -L "https://github.com/SubtitleEdit/subtitleedit/release
 # Settings.xml is generated by running SubtitleEdit.exe and exiting. If re-generating, compare settings. Ensure that the subtitle PNGs are not transparent.
 COPY SubtitleEdit-Settings.xml /usr/share/subtitle-edit/Settings.xml
 ADD subtitle-edit /usr/local/bin/
+
+# Copy Python runtime and libs from builder
+ARG PREFIX=/opt/python3.12
+ENV PATH="${PREFIX}/bin:${PATH}"
+COPY --from=python3_12builder ${PREFIX} ${PREFIX}
+RUN echo "${PREFIX}/lib" > /etc/ld.so.conf.d/python3.12.conf &&\
+    ldconfig
+
 COPY --from=comskipbuild /usr/local/bin/comskip /usr/local/bin
+
+COPY --from=ccbuild /usr/local/lib/libgpac.* /usr/local/lib
 COPY --from=ccbuild /usr/local/bin/ccextractor /usr/local/bin
+
 ADD dvrprocess /usr/local/share/dvrprocess/
 RUN find /usr/local/share/dvrprocess -name "*.py" -print0 | xargs -r0 python3 -OO -m py_compile
 ADD xorg-dummy.conf /etc/
