@@ -132,6 +132,41 @@ class SubtitleAlignmentTest(unittest.TestCase):
     def test_idempotent_meninblack(self):
         self._assert_idempotent('men-in-black-original.srt', 'men-in-black-words.srt')
 
+    @staticmethod
+    def _srt_item(index: int, start_ms: int, end_ms: int, text: str) -> pysrt.SubRipItem:
+        return pysrt.SubRipItem(
+            index=index,
+            start=pysrt.SubRipTime.from_ordinal(start_ms),
+            end=pysrt.SubRipTime.from_ordinal(end_ms),
+            text=text)
+
+    def test_sequence_alignment_prefers_order_over_current_repeated_phrase(self):
+        original = SubRipFile(items=[
+            self._srt_item(1, 5000, 5700, "I love you"),
+            self._srt_item(2, 5000, 6200, "I love you too"),
+        ])
+        words = SubRipFile(items=[
+            self._srt_item(1, 0, 100, "i"),
+            self._srt_item(2, 200, 400, "love"),
+            self._srt_item(3, 500, 700, "you"),
+            self._srt_item(4, 5000, 5100, "i"),
+            self._srt_item(5, 5200, 5400, "love"),
+            self._srt_item(6, 5500, 5700, "you"),
+            self._srt_item(7, 6000, 6200, "too"),
+        ])
+
+        changed, _ = profanity_filter.fix_subtitle_audio_alignment(
+            original, words, should_add_new_events=False)
+
+        self.assertTrue(changed)
+        self.assertEqual(0, original[0].start.ordinal)
+        self.assertEqual(700, original[0].end.ordinal)
+        self.assertEqual(5000, original[1].start.ordinal)
+        self.assertEqual(6200, original[1].end.ordinal)
+
+    def test_transcribed_word_normalization_preserves_exact_homonym(self):
+        self.assertEqual(["too"], profanity_filter._transcribed_word_to_plain_tokens("too"))
+
     def test_subtitle_text_to_plain(self):
         self.assertEqual(
             ['worked there for fifteen years', 'worked there four fifteen years'],
