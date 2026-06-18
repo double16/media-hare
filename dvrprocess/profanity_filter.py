@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 from bisect import bisect_left, bisect_right
+from difflib import SequenceMatcher
 
 import whisper
 from math import ceil, floor
@@ -1678,6 +1679,16 @@ def _is_transcribed_word_ambiguous(word: str, lang: str = 'eng') -> bool:
     return word in ['the', 'in', 'is', 'an', 'yeah', 'that', 'hm', 'hmm', 'to']
 
 
+def _transcribed_word_to_plain_tokens(word: str, lang='en') -> list[str]:
+    plain = word.lower()
+    plain = FancyQuotesTranscribed.fancy_pattern.sub(lambda match: FancyQuotesTranscribed(lang).replacements(match)[0],
+                                                     plain)
+    plain = SUBTITLE_TEXT_TO_PLAIN_REMOVE.sub("", plain)
+    plain = SUBTITLE_TEXT_TO_PLAIN_WS.sub(" ", plain)
+    plain = SUBTITLE_TEXT_TO_PLAIN_SQUEEZE_WS.sub(" ", plain).strip()
+    return plain.split()
+
+
 ENG_VOWELS = ['a', 'e', 'i', 'o', 'u', 'y']
 
 
@@ -1999,13 +2010,180 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
     align_progress = progress.progress(f"{progress_task_name}subtitle alignment", 0,
                                        (len(min_fuzz_ratios) + 3) * passes)
 
-    # TODO: original event that is too quiet to be picked up by transcribing
-    # TODO: omitted event that transcribing picked up that should be combined with existing event
+    def apply_sequence_alignment(found_range_ms: list[Union[None, Tuple[int, int]]],
+                                 words_claimed: list[bool]) -> int:
+        """
+        Anchor subtitle events to transcribed words using global token order before the local fuzzy search.
+        This prevents repeated phrases at the current, but wrong, timestamp from claiming words that belong to
+        later subtitle events.
+        """
+        transcript_tokens: list[str] = []
+        transcript_token_word_idx: list[int] = []
+        for word_idx, word in enumerate(words_filtered):
+            tokens = _transcribed_word_to_plain_tokens(word.text, lang)
+            for token in tokens:
+                transcript_tokens.append(token)
+                transcript_token_word_idx.append(word_idx)
+
+        if not transcript_tokens:
+            return 0
+
+        transcript_token_set = set(transcript_tokens)
+        subtitle_tokens: list[str] = []
+        subtitle_token_event_idx: list[int] = []
+        event_token_counts = [0] * len(events)
+
+        for event_idx, event in enumerate(events):
+            if event.is_sound_effect() or event.is_normalized_text_blank():
+                continue
+            event_text = max(
+                event.normalized_texts(),
+                key=lambda e: (sum(1 for token in e.split() if token in transcript_token_set),
+                               len(e.split()),
+                               len(e)))
+            event_tokens = event_text.split()
+            if not event_tokens:
+                continue
+            event_token_counts[event_idx] = len(event_tokens)
+            subtitle_tokens.extend(event_tokens)
+            subtitle_token_event_idx.extend([event_idx] * len(event_tokens))
+
+        if not subtitle_tokens:
+            return 0
+
+        matched_words_by_event: list[set[int]] = [set() for _ in events]
+        matched_tokens_by_event = [0] * len(events)
+        matcher = SequenceMatcher(None, subtitle_tokens, transcript_tokens, autojunk=False)
+        for subtitle_pos, transcript_pos, size in matcher.get_matching_blocks():
+            for offset in range(size):
+                event_idx = subtitle_token_event_idx[subtitle_pos + offset]
+                matched_tokens_by_event[event_idx] += 1
+                matched_words_by_event[event_idx].add(transcript_token_word_idx[transcript_pos + offset])
+
+        current_match_info: list[Union[None, tuple[int, int, int]]] = [None] * len(events)
+        for event_idx, event in enumerate(events):
+            current_start_idx = bisect_left(words_start_ms, event.start())
+            if current_start_idx == len(words_start_ms):
+                continue
+            current_end_idx = bisect_right(words_start_ms, event.end()) - 1
+            if current_end_idx < current_start_idx:
+                continue
+            while current_end_idx >= current_start_idx and words_start_end_ms[current_end_idx][1] > event.end():
+                current_end_idx -= 1
+            if current_end_idx < current_start_idx:
+                continue
+            current_text = ' '.join(
+                list(map(lambda e: e.text, words_filtered[current_start_idx:current_end_idx + 1])))
+            current_ratio = max(map(lambda e: fuzz.ratio(e, current_text), event.normalized_texts()))
+            if current_ratio >= 90:
+                current_match_info[event_idx] = (current_start_idx, current_end_idx + 1, current_ratio)
+
+        def has_current_match_collision(event_idx: int) -> bool:
+            current = current_match_info[event_idx]
+            if current is None:
+                return False
+            for other_event_idx, other in enumerate(current_match_info):
+                if other_event_idx == event_idx or other is None:
+                    continue
+                if current[0] < other[1] and other[0] < current[1]:
+                    return True
+            return False
+
+        candidates: list[tuple[int, int, int, int, int]] = []
+        for event_idx, matched_word_indexes in enumerate(matched_words_by_event):
+            if found_range_ms[event_idx] is not None:
+                continue
+            event_token_count = event_token_counts[event_idx]
+            if event_token_count == 0 or not matched_word_indexes:
+                continue
+
+            coverage = matched_tokens_by_event[event_idx] / event_token_count
+            min_coverage = 0.75 if event_token_count < 4 else 0.55
+            if coverage < min_coverage:
+                continue
+
+            start_word_idx = min(matched_word_indexes)
+            end_word_idx = max(matched_word_indexes) + 1
+            if start_word_idx >= end_word_idx:
+                continue
+            if any(words_claimed[start_word_idx:end_word_idx]):
+                continue
+
+            event = events[event_idx]
+            word_count = event.get_normalized_word_count()
+            max_word_count = max(word_count + 3, ceil(word_count * 1.8))
+            if end_word_idx - start_word_idx > max_word_count:
+                continue
+            if words_filtered[end_word_idx - 1].start.ordinal > (
+                    words_filtered[start_word_idx].start.ordinal + event.duration() + max_offset_ms):
+                continue
+
+            transcribed_text = ' '.join(map(lambda e: e.text, words_filtered[start_word_idx:end_word_idx]))
+            ratio = max(map(lambda e: fuzz.ratio(e, transcribed_text), event.normalized_texts()))
+            min_ratio = 90 if event_token_count < 4 else 78
+            if ratio < min_ratio:
+                continue
+
+            start_new_ms = words_filtered[start_word_idx].start.ordinal
+            end_new_ms = words_filtered[end_word_idx - 1].end.ordinal
+            start_delta = abs(start_new_ms - event.start())
+            end_delta = abs(end_new_ms - event.end())
+            if start_delta > max_offset_ms and end_delta > max_offset_ms:
+                continue
+
+            current = current_match_info[event_idx]
+            if current is None or not has_current_match_collision(event_idx):
+                continue
+            current_start_idx, current_end_idx, _ = current
+            current_start_ms = words_filtered[current_start_idx].start.ordinal
+            current_end_ms = words_filtered[current_end_idx - 1].end.ordinal
+            if abs(current_start_ms - start_new_ms) <= 250 and abs(current_end_ms - end_new_ms) <= 250:
+                continue
+
+            score = int(ratio * 10 + coverage * 100 - (start_delta / 1000))
+            candidates.append((event_idx, start_word_idx, end_word_idx, ratio, score))
+
+        candidates.sort(key=lambda e: (e[0], -e[4]))
+        aligned_count = 0
+        previous_end_word_idx = -1
+        for event_idx, start_word_idx, end_word_idx, ratio, _ in candidates:
+            if found_range_ms[event_idx] is not None:
+                continue
+            if start_word_idx < previous_end_word_idx:
+                continue
+            if any(words_claimed[start_word_idx:end_word_idx]):
+                continue
+            if end_word_idx <= start_word_idx:
+                continue
+
+            start_new_ms = words_filtered[start_word_idx].start.ordinal
+            end_new_ms = words_filtered[end_word_idx - 1].end.ordinal
+            logger.debug("event %i sequence match at (%s %+i, %s %+i) r%i for '%s'",
+                         event_idx,
+                         common.ms_to_ts(start_new_ms), start_new_ms - events[event_idx].start(),
+                         common.ms_to_ts(end_new_ms), end_new_ms - events[event_idx].end(),
+                         ratio, events[event_idx].log_text())
+            found_range_ms[event_idx] = (start_new_ms, end_new_ms)
+            for word_idx in range(start_word_idx, end_word_idx):
+                words_claimed[word_idx] = True
+            events[event_idx].set_start(start_new_ms)
+            events[event_idx].set_end(end_new_ms)
+            previous_end_word_idx = end_word_idx
+            aligned_count += 1
+
+        if aligned_count:
+            logger.debug("sequence aligned %i/%i subtitle events", aligned_count, len(events))
+        return aligned_count
+
+    # TODO: handle original event that is too quiet to be picked up by transcribing, so there should be a gap in transcription or all or part of the original event
+    # TODO: omitted event that transcribing picked up that should be combined with existing event because the original was partial
     last_fuzz_ratio = min_fuzz_ratios[-1]
     for pass_num in range(1, passes + 1):
         found_range_ms: list[Union[None, Tuple[int, int]]] = [None] * len(events)
         words_claimed = [False] * len(words_filtered)
         progress_base = (pass_num - 1) * (len(min_fuzz_ratios) + 4)
+
+        apply_sequence_alignment(found_range_ms, words_claimed)
 
         # check if current ranges are good fits
         for event_idx, event in enumerate(events):
@@ -2234,7 +2412,7 @@ def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], wor
                             end_new_idx -= 1
                         while suspicious_first_word(event_idx, start_new_idx, end_new_idx):
                             logger.debug("event %i removing from match suspicious first word %s", event_idx,
-                                         words_filtered[start_new_idx - 1].text)
+                                         words_filtered[start_new_idx].text)
                             start_new_idx += 1
 
                         start_new_ms = words_filtered[start_new_idx].start.ordinal
