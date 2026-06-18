@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import getopt
+import itertools
 import logging
 import os
+import queue
 import sys
+import threading
 import time
 from enum import Enum
 from math import ceil
@@ -77,49 +80,80 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
         selectors = set(ProfanityFilterSelector)
 
     queue_max_size = 500
-    queue_new_version = []
-    queue_config_change = []
+    selector_priority = {
+        selector: priority
+        for priority, selector in enumerate(
+            selector for selector in (
+                ProfanityFilterSelector.unfiltered,
+                ProfanityFilterSelector.new_version,
+                ProfanityFilterSelector.config_change,
+            ) if selector in selectors
+        )
+    }
 
     item_progress = progress.progress("files", 0, 0)
     item_progress.renderer = lambda pos: f"{pos}/{item_progress.range()[1]}"
 
-    for item in generator:
-        if common.is_truthy(item.tags.get(constants.K_FILTER_SKIP, None)):
-            continue
+    item_queue = queue.PriorityQueue(maxsize=queue_max_size)
+    counter = itertools.count()
+    complete = object()
+    exceptions = []
+    stop_event = threading.Event()
 
-        if constants.K_FILTER_HASH not in item.tags:
-            if ProfanityFilterSelector.unfiltered in selectors:
-                item_progress.progress_inc(value=1, end_inc=1)
-                yield item
+    def put_queue(entry):
+        while not stop_event.is_set():
+            try:
+                item_queue.put(entry, timeout=0.5)
+                return True
+            except queue.Full:
+                pass
+        return False
 
-        elif is_filter_version_outdated(item.tags):
-            if ProfanityFilterSelector.new_version in selectors:
-                # Don't queue if new_version is first priority
-                if ProfanityFilterSelector.unfiltered not in selectors:
-                    item_progress.progress_inc(value=1, end_inc=1)
-                    yield item
-                elif len(queue_new_version) < queue_max_size:
-                    queue_new_version.append(item)
+    def producer():
+        completion_priority = len(selector_priority) + 1
+        try:
+            for item in generator:
+                if stop_event.is_set():
+                    break
+                if common.is_truthy(item.tags.get(constants.K_FILTER_SKIP, None)):
+                    continue
+
+                if constants.K_FILTER_HASH not in item.tags:
+                    priority = selector_priority.get(ProfanityFilterSelector.unfiltered)
+                elif is_filter_version_outdated(item.tags):
+                    priority = selector_priority.get(ProfanityFilterSelector.new_version)
+                elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
+                    priority = selector_priority.get(ProfanityFilterSelector.config_change)
+                else:
+                    priority = None
+
+                if priority is not None:
                     item_progress.end_inc()
+                    if not put_queue((priority, next(counter), item)):
+                        break
+        except BaseException as e:
+            exceptions.append(e)
+            completion_priority = -1
+        finally:
+            put_queue((completion_priority, next(counter), complete))
 
-        elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
-            if ProfanityFilterSelector.config_change in selectors:
-                # Don't queue if config_change is first priority
-                if len(selectors) == 1:
-                    item_progress.progress_inc(value=1, end_inc=1)
-                    yield item
-                elif len(queue_config_change) < queue_max_size:
-                    queue_config_change.append(item)
-                    item_progress.end_inc()
+    producer_thread = threading.Thread(target=producer, name="profanity-filter-selector", daemon=True)
+    producer_thread.start()
 
-    while queue_new_version:
-        item_progress.progress_inc()
-        yield queue_new_version.pop(0)
-    while queue_config_change:
-        item_progress.progress_inc()
-        yield queue_config_change.pop(0)
-
-    item_progress.stop()
+    try:
+        while True:
+            priority, _, item = item_queue.get()
+            if item is complete:
+                producer_thread.join()
+                if exceptions:
+                    raise exceptions[0]
+                break
+            item_progress.progress_inc()
+            yield item
+    finally:
+        stop_event.set()
+        producer_thread.join(timeout=1)
+        item_progress.stop()
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
@@ -251,6 +285,8 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
             pool.terminate()
             return 130
     finally:
+        if hasattr(generator, 'close'):
+            generator.close()
         pool.close()
         logger.info("Waiting for pool workers to finish")
         common.pool_join_with_timeout(pool)
