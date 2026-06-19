@@ -18,7 +18,7 @@ import whisper
 from math import ceil, floor
 from pathlib import Path
 from statistics import mean, stdev
-from typing import Tuple, Union
+from typing import NamedTuple, Tuple, Union
 
 import language_tool_python
 import pysrt
@@ -1242,7 +1242,10 @@ class LangToolSpellchecker(object):
 
 
 def get_spell_checker(language: str):
-    return LangToolSpellchecker(_get_lang_tool(language))
+    lang_tool = _get_lang_tool(language)
+    if lang_tool is None:
+        return None
+    return LangToolSpellchecker(lang_tool)
 
 
 PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
@@ -1764,7 +1767,7 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
         _LANG_TOOLS[lang_tool_lang] = lang_tool
         return lang_tool
     except Exception as e:
-        logger.warning("language tool instantiation failure for %s", lang_tool_lang, e)
+        logger.warning("language tool instantiation failure for %s: %s", lang_tool_lang, e)
         return None
 
 
@@ -1870,8 +1873,424 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
     return sentences
 
 
+class SubtitleAlignmentCandidate(NamedTuple):
+    event_idx: int
+    start_word_idx: int
+    end_word_idx: int
+    start_ms: int
+    end_ms: int
+    score: float
+    ratio: int
+
+
+class SubtitleAlignmentState(NamedTuple):
+    last_word_idx: int
+    score: float
+    prev_idx: Union[int, None]
+    candidate: Union[SubtitleAlignmentCandidate, None]
+
+
 def fix_subtitle_audio_alignment(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
                                  should_add_new_events=True, filename: str = None, input_info: dict = None) -> tuple[
+    bool, str]:
+    """
+    Fix subtitle timings by aligning subtitle events to transcribed words with a monotonic global match.
+
+    The original subtitles remain the source of display text. Whisper words supply timing anchors and missing
+    text only when the chosen alignment leaves transcribed words unclaimed between subtitle events.
+    """
+    max_offset_ms = 5000
+    max_candidate_silence_ms = SILENCE_FOR_NEW_SENTENCE * 2
+    max_states = 250
+
+    subtitle_facade = subtitle.new_subtitle_file_facade(subtitle_inout)
+    words_filtered = list(filter(lambda e: not _is_transcribed_word_suspicious(e), words))
+    if len(words_filtered) == 0:
+        return False, "Skipping subtitle audio alignment due to no valid transcribed words"
+    logger.debug("Removed %i suspicious words from transcription", len(words) - len(words_filtered))
+
+    events: list[subtitle.SubtitleElementFacade] = []
+    original_range_ms: list[tuple[int, int]] = []
+    original_duration_ms: list[int] = []
+    for _, event in subtitle_facade.events():
+        event.set_normalized_texts(_subtitle_text_to_plain(event.text()))
+        events.append(event)
+        original_range_ms.append((event.start(), event.end()))
+        original_duration_ms.append(event.duration())
+
+    if len(events) == 0:
+        return False, ""
+
+    words_start_ms = [word.start.ordinal for word in words_filtered]
+    words_start_end_ms = [(word.start.ordinal, word.end.ordinal) for word in words_filtered]
+    word_tokens = [_transcribed_word_to_plain_tokens(word.text, lang) for word in words_filtered]
+
+    if filename:
+        progress_task_name = filename + ' '
+    else:
+        progress_task_name = ''
+    align_progress = progress.progress(f"{progress_task_name}subtitle alignment", 0, 4)
+
+    def candidate_has_large_silence(start_word_idx: int, end_word_idx: int) -> bool:
+        for idx in range(start_word_idx, end_word_idx - 1):
+            if words_filtered[idx + 1].start.ordinal - words_filtered[idx].end.ordinal > max_candidate_silence_ms:
+                return True
+        return False
+
+    def normalized_transcribed_text(start_word_idx: int, end_word_idx: int) -> str:
+        tokens: list[str] = []
+        for word_idx in range(start_word_idx, end_word_idx):
+            tokens.extend(word_tokens[word_idx])
+        return ' '.join(tokens)
+
+    def token_coverage(event_tokens: list[str], candidate_tokens: list[str]) -> float:
+        if not event_tokens or not candidate_tokens:
+            return 0.0
+        matcher = SequenceMatcher(None, event_tokens, candidate_tokens, autojunk=False)
+        matched = sum(block.size for block in matcher.get_matching_blocks())
+        return (2.0 * matched) / (len(event_tokens) + len(candidate_tokens))
+
+    def best_event_text_match(event: subtitle.SubtitleElementFacade, candidate_text: str) -> tuple[int, float]:
+        best_ratio = 0
+        best_coverage = 0.0
+        candidate_tokens = candidate_text.split()
+        for event_text in event.normalized_texts():
+            ratio = fuzz.ratio(event_text, candidate_text)
+            if len(candidate_tokens) >= 3 and len(candidate_tokens) < len(event_text.split()):
+                ratio = max(ratio, fuzz.partial_ratio(event_text, candidate_text))
+            coverage = token_coverage(event_text.split(), candidate_tokens)
+            if (ratio, coverage) > (best_ratio, best_coverage):
+                best_ratio = ratio
+                best_coverage = coverage
+        return best_ratio, best_coverage
+
+    def candidate_score(event_idx: int, start_word_idx: int, end_word_idx: int) -> Union[SubtitleAlignmentCandidate, None]:
+        if start_word_idx >= end_word_idx:
+            return None
+        if end_word_idx > len(words_filtered):
+            return None
+        if candidate_has_large_silence(start_word_idx, end_word_idx):
+            return None
+
+        event = events[event_idx]
+        candidate_text = normalized_transcribed_text(start_word_idx, end_word_idx)
+        if not candidate_text:
+            return None
+        ratio, coverage = best_event_text_match(event, candidate_text)
+        event_word_count = event.get_normalized_word_count()
+        candidate_word_count = end_word_idx - start_word_idx
+        if event_word_count <= 2:
+            if ratio < 88 or coverage < 0.75:
+                return None
+        elif ratio < 70 and coverage < 0.60:
+            return None
+
+        start_ms = words_filtered[start_word_idx].start.ordinal
+        end_ms = words_filtered[end_word_idx - 1].end.ordinal
+        duration_ms = max(end_ms - start_ms, 1)
+        original_duration = max(original_duration_ms[event_idx], 1)
+        start_distance_ms = abs(start_ms - original_range_ms[event_idx][0])
+        end_distance_ms = abs(end_ms - original_range_ms[event_idx][1])
+        if start_distance_ms > max_offset_ms and end_distance_ms > max_offset_ms:
+            return None
+
+        word_count_penalty = abs(candidate_word_count - event_word_count) * 1.75
+        duration_penalty = abs(duration_ms - original_duration) / 900.0
+        timing_penalty = (start_distance_ms / 900.0) + (end_distance_ms / 1600.0)
+        score = ratio + (coverage * 35.0) - word_count_penalty - duration_penalty - timing_penalty
+        if score < 80:
+            return None
+        return SubtitleAlignmentCandidate(
+            event_idx=event_idx,
+            start_word_idx=start_word_idx,
+            end_word_idx=end_word_idx,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            score=score,
+            ratio=ratio)
+
+    def build_candidates_for_event(event_idx: int) -> list[SubtitleAlignmentCandidate]:
+        event = events[event_idx]
+        if event.is_sound_effect() or event.is_normalized_text_blank():
+            return []
+
+        word_count = event.get_normalized_word_count()
+        min_words = max(1, floor(word_count * 0.55))
+        max_words = max(min_words, ceil(word_count * 1.65) + 2)
+        search_start_ms = max(0, event.start() - max_offset_ms)
+        search_end_ms = event.start() + max_offset_ms
+        start_idx = bisect_left(words_start_ms, search_start_ms)
+        end_idx = bisect_right(words_start_ms, search_end_ms)
+
+        candidates: dict[tuple[int, int], SubtitleAlignmentCandidate] = {}
+        for word_idx in range(start_idx, end_idx):
+            for word_len in range(min_words, max_words + 1):
+                candidate = candidate_score(event_idx, word_idx, word_idx + word_len)
+                if candidate is not None:
+                    key = (candidate.start_word_idx, candidate.end_word_idx)
+                    if key not in candidates or candidate.score > candidates[key].score:
+                        candidates[key] = candidate
+
+        result = list(candidates.values())
+        result.sort(key=lambda e: (e.score, -abs(e.start_ms - event.start())), reverse=True)
+        return result[:18]
+
+    candidate_lists = [build_candidates_for_event(event_idx) for event_idx in range(len(events))]
+    align_progress.progress(1)
+
+    if common.is_ripped_from_media(input_info):
+        selected_candidates: list[Union[SubtitleAlignmentCandidate, None]] = [None] * len(events)
+    else:
+        states: list[SubtitleAlignmentState] = [SubtitleAlignmentState(-1, 0.0, None, None)]
+        layers: list[list[SubtitleAlignmentState]] = []
+
+        for event_idx, event_candidates in enumerate(candidate_lists):
+            next_states: list[SubtitleAlignmentState] = []
+            for state_idx, state in enumerate(states):
+                next_states.append(SubtitleAlignmentState(state.last_word_idx, state.score, state_idx, None))
+                for candidate in event_candidates:
+                    if candidate.start_word_idx < state.last_word_idx:
+                        continue
+                    next_states.append(SubtitleAlignmentState(
+                        candidate.end_word_idx,
+                        state.score + candidate.score,
+                        state_idx,
+                        candidate))
+
+            best_by_last_word: dict[int, SubtitleAlignmentState] = {}
+            for state in next_states:
+                previous = best_by_last_word.get(state.last_word_idx)
+                if previous is None or state.score > previous.score:
+                    best_by_last_word[state.last_word_idx] = state
+            states = sorted(best_by_last_word.values(), key=lambda e: e.score, reverse=True)[:max_states]
+            layers.append(states)
+
+        selected_candidates = [None] * len(events)
+        if layers:
+            best_state_idx = max(range(len(states)), key=lambda idx: states[idx].score)
+            for event_idx in range(len(layers) - 1, -1, -1):
+                state = layers[event_idx][best_state_idx]
+                selected_candidates[event_idx] = state.candidate
+                best_state_idx = state.prev_idx if state.prev_idx is not None else 0
+
+    align_progress.progress(2)
+
+    words_claimed = [False] * len(words_filtered)
+    matched_offsets: list[tuple[int, int]] = []
+    for event_idx, candidate in enumerate(selected_candidates):
+        if candidate is None:
+            continue
+        event = events[event_idx]
+        logger.debug("event %i monotonic match at (%s %+i, %s %+i) r%i score %.1f for '%s'",
+                     event_idx,
+                     common.ms_to_ts(candidate.start_ms), candidate.start_ms - event.start(),
+                     common.ms_to_ts(candidate.end_ms), candidate.end_ms - event.end(),
+                     candidate.ratio, candidate.score, event.log_text())
+        event.set_start(candidate.start_ms)
+        event.set_end(max(candidate.end_ms, candidate.start_ms + 1))
+        matched_offsets.append((event_idx, candidate.start_ms - original_range_ms[event_idx][0]))
+        for word_idx in range(candidate.start_word_idx, candidate.end_word_idx):
+            words_claimed[word_idx] = True
+
+    def interpolated_offset(event_idx: int) -> int:
+        if not matched_offsets:
+            return 0
+        previous = next((offset for offset in reversed(matched_offsets) if offset[0] < event_idx), None)
+        following = next((offset for offset in matched_offsets if offset[0] > event_idx), None)
+        if previous and following:
+            span = following[0] - previous[0]
+            if span <= 0:
+                return previous[1]
+            weight = (event_idx - previous[0]) / span
+            return round(previous[1] + ((following[1] - previous[1]) * weight))
+        if previous:
+            return previous[1]
+        return 0
+
+    for event_idx, event in enumerate(events):
+        if selected_candidates[event_idx] is not None:
+            continue
+        offset = interpolated_offset(event_idx)
+        if offset != 0:
+            event.move(max(0, original_range_ms[event_idx][0] + offset))
+
+    for event_idx in range(1, len(events)):
+        previous = events[event_idx - 1]
+        event = events[event_idx]
+        if previous.end() <= event.start():
+            continue
+        if selected_candidates[event_idx] is not None and selected_candidates[event_idx - 1] is None:
+            previous.set_end(max(previous.start() + 1, event.start() - 1))
+        elif selected_candidates[event_idx] is None and selected_candidates[event_idx - 1] is not None:
+            event.move(previous.end() + 1)
+        else:
+            midpoint = max(previous.start() + 1, min(event.end() - 1, (previous.end() + event.start()) // 2))
+            previous.set_end(midpoint)
+            event.set_start(midpoint + 1)
+
+    for event_idx, event in enumerate(events):
+        if selected_candidates[event_idx] is None:
+            continue
+        original_start, original_end = original_range_ms[event_idx]
+        if original_start < event.start():
+            current_offset = event.start() - original_start
+            previous_matched_offset = None
+            for previous_idx in range(event_idx - 1, -1, -1):
+                previous_candidate = selected_candidates[previous_idx]
+                if previous_candidate is not None:
+                    previous_matched_offset = previous_candidate.start_ms - original_range_ms[previous_idx][0]
+                    break
+            if previous_matched_offset is None or abs(current_offset - previous_matched_offset) > 500:
+                previous_end = events[event_idx - 1].end() if event_idx > 0 else 0
+                if event_idx > 0 and previous_end > original_start:
+                    previous_original_end = original_range_ms[event_idx - 1][1]
+                    previous_overrun = previous_end - previous_original_end
+                    if 0 < previous_overrun < 1000:
+                        events[event_idx - 1].set_end(previous_original_end)
+                        previous_end = previous_original_end
+                event.set_start(max(original_start, previous_end))
+        if original_end > event.end():
+            next_start = events[event_idx + 1].start() if event_idx + 1 < len(events) else sys.maxsize
+            if next_start > original_end:
+                event.set_end(original_end)
+        missing_duration = original_duration_ms[event_idx] - event.duration()
+        if missing_duration > 0:
+            next_start = events[event_idx + 1].start() if event_idx + 1 < len(events) else sys.maxsize
+            end_pad = min(missing_duration, max(0, next_start - event.end() - 1))
+            if end_pad > 0:
+                event.set_end(event.end() + end_pad)
+                missing_duration -= end_pad
+            if missing_duration > 0:
+                previous_end = events[event_idx - 1].end() if event_idx > 0 else 0
+                start_pad = min(missing_duration, max(0, event.start() - previous_end - 1))
+                if start_pad > 0:
+                    event.set_start(event.start() - start_pad)
+
+    for event_idx, event in enumerate(events):
+        if selected_candidates[event_idx] is not None or event_idx == 0:
+            continue
+        original_start = original_range_ms[event_idx][0]
+        if event.start() - original_start <= 500:
+            continue
+        previous = events[event_idx - 1]
+        previous_original_end = original_range_ms[event_idx - 1][1]
+        previous_overrun = previous.end() - previous_original_end
+        if previous.end() > original_start and 0 < previous_overrun < 1000:
+            previous.set_end(previous_original_end)
+            event.move(original_start)
+
+    for event in events:
+        if event.is_normalized_text_blank():
+            continue
+        event_tokens = set()
+        for event_text in event.normalized_texts():
+            event_tokens.update(event_text.split())
+        if not event_tokens:
+            continue
+        start_word_idx = bisect_left(words_start_ms, event.start())
+        end_word_idx = bisect_right(words_start_ms, event.end())
+        for word_idx in range(start_word_idx, end_word_idx):
+            if words_start_end_ms[word_idx][1] > event.end():
+                continue
+            if any(token in event_tokens for token in word_tokens[word_idx]):
+                words_claimed[word_idx] = True
+
+    align_progress.progress(3)
+
+    new_events_count = 0
+    if should_add_new_events:
+        existing_normalized_texts = set()
+        for event in events:
+            existing_normalized_texts.update(event.normalized_texts())
+        event_idx = 1
+        while event_idx < len(events):
+            gap_start = events[event_idx - 1].end()
+            gap_end = events[event_idx].start()
+            adjacent_tokens = set()
+            for adjacent_event in [events[event_idx - 1], events[event_idx]]:
+                for event_text in adjacent_event.normalized_texts():
+                    adjacent_tokens.update(event_text.split())
+            if gap_end - gap_start > 4000:
+                unclaimed_words = []
+            else:
+                unclaimed_words = [
+                    word for word_idx, word in enumerate(words_filtered)
+                    if (not words_claimed[word_idx]
+                        and word.start.ordinal >= gap_start
+                        and word.end.ordinal <= gap_end
+                        and not any(token in adjacent_tokens for token in word_tokens[word_idx]))
+                ]
+            if (unclaimed_words
+                    and (unclaimed_words[-1].end.ordinal - unclaimed_words[0].start.ordinal < 500
+                         or len(unclaimed_words) > 12)):
+                unclaimed_words = []
+            if unclaimed_words:
+                unclaimed_text = ' '.join(
+                    token for word in unclaimed_words for token in _transcribed_word_to_plain_tokens(word.text, lang))
+                if any(unclaimed_text in event_text or event_text in unclaimed_text
+                       for event_text in existing_normalized_texts):
+                    unclaimed_words = []
+            if unclaimed_words:
+                logger.debug("creating events for unclaimed words '%s'", list(map(lambda e: e.text, unclaimed_words)))
+                for sentence in srt_words_to_sentences(unclaimed_words, lang):
+                    inserted = subtitle_facade.insert(event_idx)
+                    inserted.set_start(sentence.start.ordinal)
+                    inserted.set_end(sentence.end.ordinal)
+                    inserted.set_text(sentence.text)
+                    inserted.set_normalized_texts(_subtitle_text_to_plain(sentence.text))
+                    existing_normalized_texts.update(inserted.normalized_texts())
+                    events.insert(event_idx, inserted)
+                    original_range_ms.insert(event_idx, (sentence.start.ordinal, sentence.end.ordinal))
+                    original_duration_ms.insert(event_idx, sentence.end.ordinal - sentence.start.ordinal)
+                    selected_candidates.insert(event_idx, None)
+                    new_events_count += 1
+                    event_idx += 1
+            event_idx += 1
+
+        for event_idx, event in enumerate(events):
+            event.set_index(event_idx + 1)
+
+    for event_idx, event in enumerate(events):
+        if event.start() >= event.end():
+            event.set_end(event.start() + 1)
+        if event_idx > 0 and events[event_idx - 1].end() > event.start():
+            duration = event.duration()
+            event.set_start(events[event_idx - 1].end())
+            event.set_end(event.start() + max(duration, 1))
+
+    align_progress.progress(4)
+
+    adjustments = []
+    changed_count = 0
+    sane_adjustment_max = 60000
+    for event_idx, event in enumerate(events):
+        if event_idx >= len(original_range_ms):
+            continue
+        start_adjustment = abs(original_range_ms[event_idx][0] - event.start())
+        end_adjustment = abs(original_range_ms[event_idx][1] - event.end())
+        if start_adjustment != 0 or end_adjustment != 0:
+            changed_count += 1
+        adjustments.append((start_adjustment, end_adjustment))
+
+    start_adjustments = [e[0] for e in adjustments if e[0] < sane_adjustment_max]
+    end_adjustments = [e[1] for e in adjustments if e[1] < sane_adjustment_max]
+    max_start_adjustment = max(start_adjustments, default=0)
+    ave_start_adjustment = average(start_adjustments) if start_adjustments else 0
+    max_end_adjustment = max(end_adjustments, default=0)
+    ave_end_adjustment = average(end_adjustments) if end_adjustments else 0
+    logger.info(
+        "subtitle alignment stats: max_start_adjustment %i, max_end_adjustment %i, ave_start_adjustment %i, ave_end_adjustment %i, new events %i",
+        max_start_adjustment, max_end_adjustment, ave_start_adjustment, ave_end_adjustment, new_events_count)
+    stats_str = f"max_start_adj {max_start_adjustment:.1f}ms, max_end_adj {max_end_adjustment:.1f}ms, ave_start_adj {ave_start_adjustment:.1f}ms, ave_end_adj {ave_end_adjustment:.1f}ms, new events {new_events_count}"
+
+    changed = ave_start_adjustment > 200 or ave_end_adjustment > 200 or new_events_count > 0
+    align_progress.stop()
+    return changed, stats_str
+
+
+def _fix_subtitle_audio_alignment_legacy(subtitle_inout: Union[AssFile, SubRipFile], words: SubRipFile, lang='en',
+                                         should_add_new_events=True, filename: str = None,
+                                         input_info: dict = None) -> tuple[
     bool, str]:
     """
     Fix the subtitle to be aligned to the audio using the transcribed words.
