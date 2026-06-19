@@ -101,7 +101,7 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
     stop_event = threading.Event()
 
     def put_queue(entry):
-        while not stop_event.is_set():
+        if not stop_event.is_set():
             try:
                 item_queue.put(entry, timeout=0.5)
                 return True
