@@ -8,7 +8,6 @@ import time
 from collections.abc import Iterable
 from itertools import groupby
 from operator import itemgetter
-import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -266,6 +265,7 @@ def detect_eas_tones(filepath, plot: bool = False) -> bool:
                     confirmed_times.append(time_stamps_array[indices[0]])
 
         if plot:
+            import matplotlib.pyplot as plt
             plt.figure(figsize=(12, 6))
             plt.plot(time_stamps_array, magnitude_1562_array, label='1562.5 Hz')
             plt.plot(time_stamps_array, magnitude_2083_array, label='2083.3 Hz')

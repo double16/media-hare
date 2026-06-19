@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -77,6 +77,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Maximize build space
@@ -89,7 +90,7 @@ jobs:
           remove-large-packages: 'true'
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Log in to the Container registry
         uses: docker/login-action@v4
@@ -113,10 +114,13 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Build and push Docker image
+        id: push
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+#          platforms: linux/amd64,linux/arm64
+          # ccextractor, libpng neon compilation is broken on arm64 for 0.96.6
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -124,3 +128,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=image,oci-mediatypes=true,compression=zstd,compression-level=3,force-compression=true
+
+#      - name: Generate artifact attestation
+#        uses: actions/attest@v4
+#        with:
+#          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+#          subject-digest: ${{ steps.push.outputs.digest }}
+#          push-to-registry: true
+
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          delete-untagged: true
+          delete-ghost-images: true
+          delete-tags: pr-*
+          older-than: 7 days
