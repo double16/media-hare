@@ -94,6 +94,34 @@ class ProfanityFilterApplyTest(unittest.TestCase):
 
         self.assertEqual(['config-change'], [item.name for item in selected])
 
+    def test_selector_completes_when_queue_fills_before_sentinel(self):
+        original_priority_queue = self.module.queue.PriorityQueue
+        module_queue = self.module.queue
+
+        class SmallPriorityQueue(original_priority_queue):
+            def __init__(self, maxsize=0):
+                super().__init__(maxsize=1)
+                self.put_count = 0
+
+            def put(self, item, block=True, timeout=None):
+                self.put_count += 1
+                if self.put_count == 2:
+                    raise module_queue.Full
+                return super().put(item, block=block, timeout=timeout)
+
+        def scanned_items():
+            yield self._unfiltered_item('first')
+            yield self._unfiltered_item('second')
+
+        self.module.queue.PriorityQueue = SmallPriorityQueue
+        try:
+            selected = list(self.selector(
+                scanned_items(), {self.module.ProfanityFilterSelector.unfiltered}))
+        finally:
+            self.module.queue.PriorityQueue = original_priority_queue
+
+        self.assertEqual(['first'], [item.name for item in selected])
+
 
 if __name__ == '__main__':
     unittest.main()

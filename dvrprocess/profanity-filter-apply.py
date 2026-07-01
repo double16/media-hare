@@ -10,13 +10,14 @@ import time
 from enum import Enum
 from math import ceil
 from multiprocessing import Pool, TimeoutError
+from multiprocessing.pool import AsyncResult
 from subprocess import CalledProcessError
 
 import requests
 
 import common
 from common import constants, config, progress
-from find_need_transcode import need_transcode_generator
+from find_need_transcode import need_transcode_generator, TranscodeFileInfo
 from profanity_filter import profanity_filter, is_filter_version_outdated, compute_filter_hash
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,13 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
     }
 
     item_progress = progress.progress("files", 0, 0)
-    item_progress.renderer = lambda pos: f"{pos}/{item_progress.range()[1]}"
+    item_progress_lock = threading.RLock()
+
+    def render_item_progress(pos):
+        with item_progress_lock:
+            return f"{pos}/{item_progress.range()[1]}"
+
+    item_progress.renderer = render_item_progress
 
     item_queue = queue.PriorityQueue(maxsize=queue_max_size)
     counter = itertools.count()
@@ -128,14 +135,21 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
                     priority = None
 
                 if priority is not None:
-                    item_progress.end_inc()
+                    with item_progress_lock:
+                        item_progress.end_inc()
                     if not put_queue((priority, next(counter), item)):
                         break
         except BaseException as e:
             exceptions.append(e)
             completion_priority = -1
         finally:
-            put_queue((completion_priority, next(counter), complete))
+            completion_entry = (completion_priority, next(counter), complete)
+            while not stop_event.is_set():
+                try:
+                    item_queue.put(completion_entry, timeout=0.5)
+                    break
+                except queue.Full:
+                    pass
 
     producer_thread = threading.Thread(target=producer, name="profanity-filter-selector", daemon=True)
     producer_thread.start()
@@ -148,12 +162,14 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
                 if exceptions:
                     raise exceptions[0]
                 break
-            item_progress.progress_inc()
+            with item_progress_lock:
+                item_progress.progress_inc()
             yield item
     finally:
         stop_event.set()
         producer_thread.join(timeout=1)
-        item_progress.stop()
+        with item_progress_lock:
+            item_progress.stop()
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
@@ -191,14 +207,16 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
     pool = Pool(processes=processes)
     try:
-        results = []
+        results: list[tuple[TranscodeFileInfo, AsyncResult]] = []
         # load the initial workers
         for i in range(processes):
             try:
                 tfi = next(generator)
-                results.append([tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter),
-                                                      (tfi.host_file_path,),
-                                                      {'dry_run': dry_run, 'workdir': workdir})])
+                results.append((
+                    tfi,
+                    pool.apply_async(common.pool_apply_wrapper(profanity_filter),
+                                     (tfi.host_file_path,),
+                                     {'dry_run': dry_run, 'workdir': workdir})))
             except StopIteration:
                 break
 
@@ -210,7 +228,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 tfi = result[0]
                 filepath = tfi.host_file_path
                 try:
-                    return_code = result[1].get(3)
+                    return_code = result[1].get(30)
                 except TimeoutError:
                     continue
                 except UnicodeDecodeError as e:
@@ -269,9 +287,11 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
                 try:
                     tfi = next(generator)
-                    results.append(
-                        [tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter), (tfi.host_file_path,),
-                                               {'dry_run': dry_run, 'workdir': workdir})])
+                    results.append((
+                        tfi,
+                        pool.apply_async(common.pool_apply_wrapper(profanity_filter),
+                                         (tfi.host_file_path,),
+                                         {'dry_run': dry_run, 'workdir': workdir})))
                 except StopIteration:
                     pass
 
