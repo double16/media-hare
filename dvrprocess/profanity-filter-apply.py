@@ -12,6 +12,7 @@ from math import ceil
 from multiprocessing import Pool, TimeoutError
 from multiprocessing.pool import AsyncResult
 from subprocess import CalledProcessError
+from typing import Optional
 
 import requests
 
@@ -67,12 +68,12 @@ class ProfanityFilterSelector(Enum):
     new_version = 2
 
 
-def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelector] = None):
+def __profanity_filter_selector(generator, selectors: Optional[set[ProfanityFilterSelector]] = None):
     """
     Filters media items based on profanity filter properties.
     :param generator: need_transcode_generator instance
     :param selectors:
-    :return: generator with same types as input, filtered by arguments
+    :return: generator with the same types as input, filtered by arguments
     """
 
     filter_hash = compute_filter_hash()
