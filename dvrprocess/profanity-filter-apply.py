@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 import getopt
+import itertools
 import logging
 import os
+import queue
 import sys
+import threading
 import time
 from enum import Enum
 from math import ceil
 from multiprocessing import Pool, TimeoutError
+from multiprocessing.pool import AsyncResult
 from subprocess import CalledProcessError
+from typing import Optional
 
 import requests
 
 import common
 from common import constants, config, progress
-from find_need_transcode import need_transcode_generator
+from find_need_transcode import need_transcode_generator, TranscodeFileInfo
 from profanity_filter import profanity_filter, is_filter_version_outdated, compute_filter_hash
 
 logger = logging.getLogger(__name__)
@@ -63,12 +68,12 @@ class ProfanityFilterSelector(Enum):
     new_version = 2
 
 
-def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelector] = None):
+def __profanity_filter_selector(generator, selectors: Optional[set[ProfanityFilterSelector]] = None):
     """
     Filters media items based on profanity filter properties.
     :param generator: need_transcode_generator instance
     :param selectors:
-    :return: generator with same types as input, filtered by arguments
+    :return: generator with the same types as input, filtered by arguments
     """
 
     filter_hash = compute_filter_hash()
@@ -77,49 +82,95 @@ def __profanity_filter_selector(generator, selectors: set[ProfanityFilterSelecto
         selectors = set(ProfanityFilterSelector)
 
     queue_max_size = 500
-    queue_new_version = []
-    queue_config_change = []
+    selector_priority = {
+        selector: priority
+        for priority, selector in enumerate(
+            selector for selector in (
+                ProfanityFilterSelector.unfiltered,
+                ProfanityFilterSelector.new_version,
+                ProfanityFilterSelector.config_change,
+            ) if selector in selectors
+        )
+    }
 
     item_progress = progress.progress("files", 0, 0)
-    item_progress.renderer = lambda pos: f"{pos}/{item_progress.range()[1]}"
+    item_progress_lock = threading.RLock()
 
-    for item in generator:
-        if common.is_truthy(item.tags.get(constants.K_FILTER_SKIP, None)):
-            continue
+    def render_item_progress(pos):
+        with item_progress_lock:
+            return f"{pos}/{item_progress.range()[1]}"
 
-        if constants.K_FILTER_HASH not in item.tags:
-            if ProfanityFilterSelector.unfiltered in selectors:
-                item_progress.progress_inc(value=1, end_inc=1)
-                yield item
+    item_progress.renderer = render_item_progress
 
-        elif is_filter_version_outdated(item.tags):
-            if ProfanityFilterSelector.new_version in selectors:
-                # Don't queue if new_version is first priority
-                if ProfanityFilterSelector.unfiltered not in selectors:
-                    item_progress.progress_inc(value=1, end_inc=1)
-                    yield item
-                elif len(queue_new_version) < queue_max_size:
-                    queue_new_version.append(item)
-                    item_progress.end_inc()
+    item_queue = queue.PriorityQueue(maxsize=queue_max_size)
+    counter = itertools.count()
+    complete = object()
+    exceptions = []
+    stop_event = threading.Event()
 
-        elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
-            if ProfanityFilterSelector.config_change in selectors:
-                # Don't queue if config_change is first priority
-                if len(selectors) == 1:
-                    item_progress.progress_inc(value=1, end_inc=1)
-                    yield item
-                elif len(queue_config_change) < queue_max_size:
-                    queue_config_change.append(item)
-                    item_progress.end_inc()
+    def put_queue(entry):
+        if not stop_event.is_set():
+            try:
+                item_queue.put(entry, timeout=0.5)
+                return True
+            except queue.Full:
+                pass
+        return False
 
-    while queue_new_version:
-        item_progress.progress_inc()
-        yield queue_new_version.pop(0)
-    while queue_config_change:
-        item_progress.progress_inc()
-        yield queue_config_change.pop(0)
+    def producer():
+        completion_priority = len(selector_priority) + 1
+        try:
+            for item in generator:
+                if stop_event.is_set():
+                    break
+                if common.is_truthy(item.tags.get(constants.K_FILTER_SKIP, None)):
+                    continue
 
-    item_progress.stop()
+                if constants.K_FILTER_HASH not in item.tags:
+                    priority = selector_priority.get(ProfanityFilterSelector.unfiltered)
+                elif is_filter_version_outdated(item.tags):
+                    priority = selector_priority.get(ProfanityFilterSelector.new_version)
+                elif filter_hash != item.tags.get(constants.K_FILTER_HASH, ""):
+                    priority = selector_priority.get(ProfanityFilterSelector.config_change)
+                else:
+                    priority = None
+
+                if priority is not None:
+                    with item_progress_lock:
+                        item_progress.end_inc()
+                    if not put_queue((priority, next(counter), item)):
+                        break
+        except BaseException as e:
+            exceptions.append(e)
+            completion_priority = -1
+        finally:
+            completion_entry = (completion_priority, next(counter), complete)
+            while not stop_event.is_set():
+                try:
+                    item_queue.put(completion_entry, timeout=0.5)
+                    break
+                except queue.Full:
+                    pass
+
+    producer_thread = threading.Thread(target=producer, name="profanity-filter-selector", daemon=True)
+    producer_thread.start()
+
+    try:
+        while True:
+            priority, _, item = item_queue.get()
+            if item is complete:
+                producer_thread.join()
+                if exceptions:
+                    raise exceptions[0]
+                break
+            with item_progress_lock:
+                item_progress.progress_inc()
+            yield item
+    finally:
+        stop_event.set()
+        producer_thread.join(timeout=1)
+        with item_progress_lock:
+            item_progress.stop()
 
 
 def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=None,
@@ -157,14 +208,16 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
     pool = Pool(processes=processes)
     try:
-        results = []
+        results: list[tuple[TranscodeFileInfo, AsyncResult]] = []
         # load the initial workers
         for i in range(processes):
             try:
                 tfi = next(generator)
-                results.append([tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter),
-                                                      (tfi.host_file_path,),
-                                                      {'dry_run': dry_run, 'workdir': workdir})])
+                results.append((
+                    tfi,
+                    pool.apply_async(common.pool_apply_wrapper(profanity_filter),
+                                     (tfi.host_file_path,),
+                                     {'dry_run': dry_run, 'workdir': workdir})))
             except StopIteration:
                 break
 
@@ -176,7 +229,7 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
                 tfi = result[0]
                 filepath = tfi.host_file_path
                 try:
-                    return_code = result[1].get(3)
+                    return_code = result[1].get(30)
                 except TimeoutError:
                     continue
                 except UnicodeDecodeError as e:
@@ -235,9 +288,11 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
 
                 try:
                     tfi = next(generator)
-                    results.append(
-                        [tfi, pool.apply_async(common.pool_apply_wrapper(profanity_filter), (tfi.host_file_path,),
-                                               {'dry_run': dry_run, 'workdir': workdir})])
+                    results.append((
+                        tfi,
+                        pool.apply_async(common.pool_apply_wrapper(profanity_filter),
+                                         (tfi.host_file_path,),
+                                         {'dry_run': dry_run, 'workdir': workdir})))
                 except StopIteration:
                     pass
 
@@ -251,6 +306,8 @@ def profanity_filter_apply(media_paths, plex_url=None, dry_run=False, workdir=No
             pool.terminate()
             return 130
     finally:
+        if hasattr(generator, 'close'):
+            generator.close()
         pool.close()
         logger.info("Waiting for pool workers to finish")
         common.pool_join_with_timeout(pool)
