@@ -159,7 +159,7 @@ def get_global_config_bytes(section: str, option: str, fallback: int = None):
 def get_work_dir() -> str:
     work_dir = get_global_config_option('general', 'work_dir', fallback=tempfile.gettempdir())
     if not os.path.exists(work_dir):
-        os.mkdir(work_dir)
+        os.makedirs(work_dir, exist_ok=True)
     return work_dir
 
 
