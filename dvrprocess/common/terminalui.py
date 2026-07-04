@@ -472,6 +472,10 @@ def terminalui_wrapper(func, *args, **kwargs) -> int:
 
     stderr_capture = StreamCapturingLogger('stderr')
     stdout_capture = StreamCapturingLogger('stdout')
+
+    from . import setup_debugging
+    setup_debugging()
+
     try:
         return curses.wrapper(main)
     finally:

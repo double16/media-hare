@@ -15,7 +15,8 @@ import traceback
 from configparser import NoOptionError
 from enum import Enum
 from multiprocessing import Pool
-from typing import Union
+from types import FrameType
+from typing import Union, Optional
 from xml.etree import ElementTree as ET
 
 import psutil
@@ -981,8 +982,8 @@ def should_start_processing():
     return True
 
 
-def debug(sig, frame):
-    """Interrupt running process, and provide a python prompt for
+def debug(sig: int, frame: Optional[FrameType]):
+    """Interrupt the running process and provide a python prompt for
     interactive debugging."""
     d = {'_frame': frame}  # Allow access to frame object.
     d.update(frame.f_globals)  # Unless shadowed by global
@@ -1003,11 +1004,11 @@ def dumpstacks(signal, frame):
             trace.append('File: "%s", line %d, in %s' % (filename, lineno, name))
             if line:
                 trace.append("  %s" % (line.strip()))
-    print("\n".join(trace))
+    print("\n".join(trace), file=sys.stderr)
     try:
         from guppy import hpy
         h=hpy()
-        print("\n".join(h.heap()[0:12]))
+        print(str(h.heap()), file=sys.stderr)
     except ImportError:
         pass
 

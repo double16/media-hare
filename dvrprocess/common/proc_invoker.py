@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 import time
+from functools import lru_cache
 from io import StringIO, BytesIO
 from multiprocessing import Semaphore
 from shutil import which
@@ -308,6 +309,7 @@ class StreamCapturingLogger(object):
         self.logger = logger
         self.level = level
         self.captured = []
+        self._lock = Lock()
         self.save = getattr(sys, name)
         setattr(sys, name, self)
 
@@ -323,35 +325,41 @@ class StreamCapturingLogger(object):
         self.logger = logging.getLogger(state[1])
         self.level = state[2]
         self.captured = state[3]
+        self._lock = Lock()
 
+    @lru_cache
     def isatty(self) -> bool:
         if self.save and hasattr(self.save, 'isatty'):
             return self.save.isatty()
         return False
 
     def write(self, data):
-        if self.logger:
-            if data.endswith("\n"):
-                self.captured.append(data[:-1])
-                self.logger.log(self.level, ''.join(self.captured))
-                self.captured.clear()
+        with self._lock:
+            if self.logger:
+                if data.endswith("\n"):
+                    self.captured.append(data[:-1])
+                    self.logger.log(self.level, ''.join(self.captured))
+                    self.captured.clear()
+                else:
+                    self.captured.append(data)
             else:
                 self.captured.append(data)
-        else:
-            self.captured.append(data)
 
     def flush(self):
-        if self.logger and self.captured:
-            self.logger.log(self.level, ''.join(self.captured))
-            self.captured.clear()
+        with self._lock:
+            if self.logger and self.captured:
+                self.logger.log(self.level, ''.join(self.captured))
+                self.captured.clear()
 
     def finish(self, output=True):
-        setattr(sys, self.name, self.save)
-        if self.logger is None and output:
-            target = getattr(sys, self.name)
-            for line in self.captured:
-                target.write(line)
-            target.flush()
+        with self._lock:
+            setattr(sys, self.name, self.save)
+            if self.logger is None and output:
+                target = getattr(sys, self.name)
+                for line in self.captured:
+                    target.write(line)
+                target.flush()
+                self.captured.clear()
 
 
 class ProcessStreamGenerator(object):
@@ -407,6 +415,7 @@ class StreamCapturingProgress(object):
         self.save = getattr(sys, name)
         setattr(sys, name, self)
 
+    @lru_cache
     def isatty(self) -> bool:
         if self.save and hasattr(self.save, 'isatty'):
             return self.save.isatty()
