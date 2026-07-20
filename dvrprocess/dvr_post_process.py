@@ -412,6 +412,8 @@ def do_dvr_post_process(input_file,
                       '-probesize', common.PROBE_SIZE])
     if forgiving:
         arguments.extend(['-err_detect', 'ignore_err'])
+    if input_type == "ts":
+        arguments.extend(["-fflags", "+genpts"])
 
     has_text_subtitle_stream = common.has_stream_with_language(input_info,
                                                                constants.CODEC_SUBTITLE,
