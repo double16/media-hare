@@ -17,7 +17,7 @@ import whisper
 from math import ceil, floor
 from pathlib import Path
 from statistics import mean, stdev
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import language_tool_python
 import pysrt
@@ -1240,8 +1240,11 @@ class LangToolSpellchecker(object):
         return True
 
 
-def get_spell_checker(language: str):
-    return LangToolSpellchecker(_get_lang_tool(language))
+def get_spell_checker(language: str) -> Optional[LangToolSpellchecker]:
+    lang_tool = _get_lang_tool(language)
+    if lang_tool is None:
+        return None
+    return LangToolSpellchecker(lang_tool)
 
 
 PATTERN_WORDS_IN_DICT_SPLIT = re.compile('[^A-Za-z\' ]+')
@@ -1753,7 +1756,7 @@ def _get_lang_tool(language: str) -> Union[None, language_tool_python.LanguageTo
         _LANG_TOOLS[lang_tool_lang] = lang_tool
         return lang_tool
     except Exception as e:
-        logger.warning("language tool instantiation failure for %s", lang_tool_lang, e)
+        logger.warning("language tool instantiation failure for %s: %s", lang_tool_lang, e)
         return None
 
 
@@ -1836,7 +1839,7 @@ def srt_words_to_sentences(words: list[SubRipItem], language: str) -> list[SubRi
                 for sentence in sentences:
                     sentence.text = lang_tool.correct(sentence.text)
         except Exception as e:
-            logger.warning("language tool failure", e)
+            logger.warning("language tool failure: %s", e)
 
     for sentence in sentences:
         new_text = ""

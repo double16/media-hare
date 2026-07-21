@@ -46,6 +46,12 @@ jobs:
       - name: Install dependencies
         run:  sudo apt-get update ; sudo apt-get install -y hunspell libhunspell-dev hunspell-en-us ffmpeg
 
+      - name: Cache LanguageTool
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/language_tool_python
+          key: ${{ runner.os }}-languagetool-6.6
+
       - name: Lint with Ruff
         run: |
           pip install ruff
@@ -56,7 +62,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r dev_requirements.txt
-          python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en')"
+          python3 -c "import language_tool_python; tool = language_tool_python.LanguageTool('en-US', language_tool_download_version='6.6')"
           cd dvrprocess
           pytest . --junitxml=../junit/test-results.xml --cov --cov-branch --cov-report=xml:../coverage.xml --cov-report=html:../htmlcov --cov-report=term-missing
 
