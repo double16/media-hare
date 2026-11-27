@@ -5,10 +5,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /tmp
 RUN apt-get -q update &&\
     apt-get install -y autoconf libtool git build-essential pkg-config libargtable2-dev libavformat-dev libswscale-dev libva-dev libva-drm2 libva-x11-2 libvdpau-dev libx11-dev libdrm-dev
-RUN git clone https://github.com/heitbaum/Comskip.git --branch ticks --single-branch
+RUN git clone https://github.com/double16/Comskip.git --branch feature/audio-stream-selection --single-branch --depth=1
+#RUN git clone https://github.com/heitbaum/Comskip.git --branch ticks --single-branch
 #RUN git clone https://github.com/erikkaashoek/Comskip.git --branch master --single-branch
 #RUN cd Comskip &&\
-#    git reset a140b6ac8bc8f596729e9052819affc779c3b377 --hard
+#    git reset 0b0785b320dc15a3cf497a7ed6731a930debee94 --hard
 RUN cd Comskip &&\
     ./autogen.sh &&\
     ./configure --disable-gui &&\
@@ -23,7 +24,9 @@ ENV FFMPEG_VERSION=ffmpeg8
 
 WORKDIR /tmp
 RUN apt-get -q update &&\
-    apt-get install -y autoconf libtool git build-essential rustc cargo libglew-dev libglfw3-dev cmake g++ gcc yasm libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev libleptonica-dev libavformat-dev libavfilter-dev libavdevice-dev
+    apt-get install -y autoconf libtool git build-essential rustc cargo libglew-dev libglfw3-dev cmake g++ gcc yasm\
+     libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev libleptonica-dev\
+     libavformat-dev libavfilter-dev libavdevice-dev
 RUN git clone --depth=1 https://github.com/gpac/gpac.git
 RUN cd gpac &&\
     ./configure &&\
@@ -31,7 +34,7 @@ RUN cd gpac &&\
     make install
 RUN git clone https://github.com/CCExtractor/ccextractor.git --branch master --single-branch
 RUN cd ccextractor &&\
-    git reset v0.96.6 --hard
+    git reset 2c1c1c6f0602563d2064f2b0c36f13b3c7a09489 --hard
 RUN cd ccextractor &&\
     mkdir build &&\
     cd build &&\
@@ -164,6 +167,10 @@ RUN chmod 0644 /etc/logrotate.d/dvr &&\
     systemctl disable unattended-upgrades &&\
     echo "DISPLAY=:0" >> /etc/environment &&\
     cat /etc/zsh/newuser.zshrc.recommended > /root/.zshrc
+
+# RUN quick checks
+RUN ldd /usr/local/bin/ccextractor &&\
+    ldd /usr/local/bin/comskip
 
 VOLUME ["/usr/local/lib/python3.12", "/var/cache/pip", "/root/.cache"]
 
