@@ -60,6 +60,24 @@ class ToolsTest(unittest.TestCase):
                 self.assertEqual(['FL', 'FR', 'FC', 'LFE', 'SL', 'SR'], layout_51side.channels)
                 self.assertEqual(['FL', 'FR', 'FC'], layout_51side.voice_channels)
 
+    def test_get_audio_layouts_ffmpeg_9(self):
+        for layout_basename in ['ffmpeg-9-layouts.txt']:
+            with self.subTest():
+                tools.ffmpeg = proc_invoker.MockProcInvoker('ffmpeg', mocks=[
+                    {'method_name': 'check_output', 'result': _read_file(f'../fixtures/{layout_basename}')},
+                ])
+                layouts = tools.get_audio_layouts(refresh=True)
+                self.assertEqual(36, len(layouts))
+                layout_51 = list(filter(lambda e: e.name == '5.1', layouts))[0]
+                self.assertIsNotNone(layout_51, '5.1 present')
+                self.assertEqual(['FL', 'FR', 'FC', 'LFE', 'BL', 'BR'], layout_51.channels)
+                self.assertEqual(['FL', 'FR', 'FC'], layout_51.voice_channels)
+
+                layout_51side = list(filter(lambda e: e.name == '5.1(side)', layouts))[0]
+                self.assertIsNotNone(layout_51side, '5.1(side) present')
+                self.assertEqual(['FL', 'FR', 'FC', 'LFE', 'SL', 'SR'], layout_51side.channels)
+                self.assertEqual(['FL', 'FR', 'FC'], layout_51side.voice_channels)
+
 
 class AudioLayoutTest(unittest.TestCase):
 
